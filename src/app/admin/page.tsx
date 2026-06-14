@@ -1,0 +1,103 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import Link from "next/link";
+
+export default function AdminDashboard() {
+  const [profile, setProfile] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) { router.push("/auth/login"); return; }
+      const res = await fetch("/api/profile");
+      if (res.ok) {
+        const d = await res.json();
+        setProfile(d.profile);
+        if (!d.profile?.is_admin) {
+          setError("管理者のみアクセスできます");
+          return;
+        }
+      }
+      const sres = await fetch("/api/admin/login-activity");
+      if (sres.ok) {
+        const sd = await sres.json();
+        setStats(sd);
+      }
+    });
+  }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-red-50 text-red-600 p-6 rounded-lg text-center max-w-sm">
+          <p className="font-bold text-lg mb-2">アクセス拒否</p>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-gradient-to-b from-gray-900 to-blue-900 border-b-4 border-yellow-600 text-center py-6 shadow-lg">
+        <h1 className="text-3xl text-yellow-600 font-serif tracking-wider m-0" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
+          管理者ダッシュボード
+        </h1>
+        <p className="text-sm text-yellow-600 tracking-widest mt-1">
+          {profile?.display_name || profile?.username} で管理中
+        </p>
+      </div>
+
+      <div className="max-w-2xl mx-auto p-4 space-y-4">
+
+        {/* リュッターを開く */}
+        <Link
+          href="/"
+          className="block bg-white rounded-2xl shadow p-6 hover:shadow-lg transition text-center"
+        >
+          <div className="text-4xl mb-2">📖</div>
+          <div className="text-xl font-bold text-primary">リュッターを開く</div>
+          <div className="text-sm text-gray-500 mt-1">勉強SNSのメイン画面へ</div>
+        </Link>
+
+        {/* 各種管理機能 */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/admin/login-activity"
+            className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center"
+          >
+            <div className="text-2xl mb-1">👁️</div>
+            <div className="font-bold text-sm">ログイン監視</div>
+            <div className="text-xs text-gray-500 mt-1">
+              アクティブ: {stats?.active_count ?? "-"}人
+            </div>
+          </Link>
+
+          <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
+            <div className="text-2xl mb-1">👥</div>
+            <div className="font-bold text-sm">ユーザー管理</div>
+            <div className="text-xs text-gray-500 mt-1">準備中</div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
+            <div className="text-2xl mb-1">📊</div>
+            <div className="font-bold text-sm">統計</div>
+            <div className="text-xs text-gray-500 mt-1">準備中</div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
+            <div className="text-2xl mb-1">⚙️</div>
+            <div className="font-bold text-sm">設定</div>
+            <div className="text-xs text-gray-500 mt-1">準備中</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

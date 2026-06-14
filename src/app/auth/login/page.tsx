@@ -47,6 +47,20 @@ export default function LoginPage() {
         return;
       }
 
+      // 管理者は管理者ダッシュボードへ
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const { profile } = await res.json();
+          if (profile?.is_admin) {
+            router.push("/admin");
+            router.refresh();
+            return;
+          }
+        }
+      }
+
       router.push("/");
       router.refresh();
     } catch {

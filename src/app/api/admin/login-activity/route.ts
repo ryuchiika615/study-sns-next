@@ -8,17 +8,13 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 邂｡逅・・メ繧ｧ繝・け
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name")
+    .select("is_admin")
     .eq("id", user.id)
     .single();
 
-  const adminName = process.env.NEXT_PUBLIC_SITE_ADMIN_USERNAME || "admin";
-  const userEmail = user.email?.split("@")[0] || "";
-
-  if (userEmail !== adminName && userEmail !== "admin") {
+  if (!profile?.is_admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
