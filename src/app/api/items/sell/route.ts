@@ -11,70 +11,63 @@ export async function POST(request: NextRequest) {
   const SELL_VALUES: Record<string, number> = {
     N: 1, R: 4, SR: 15, SSR: 60, UR: 180, LR: 650,
   };
+  const RARITY_ORDER: Record<string, number> = {
+    N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6,
+  };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  const [profileResult, userItemsResult] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", user.id),
+  ]);
 
+  const profile = profileResult.data;
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
+  const allItems = userItemsResult.data || [];
+  const protectedNames = new Set([profile.current_title_id, profile.current_avatar_id]);
+
   let totalPoints = 0;
-  let itemsToDelete: any[] = [];
+  let idsToDelete: number[] = [];
 
   if (maxRarity) {
-    // 荳諡ｬ螢ｲ蜊ｴ
-    const RARITY_ORDER: Record<string, number> = {
-      N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6,
-    };
     const maxVal = RARITY_ORDER[maxRarity] || 0;
-
-    const { data: allItems } = await supabase
-      .from("user_items")
-      .select("*, item:item_id(*)")
-      .eq("user_id", user.id);
-
-    const protectedNames = new Set([profile.current_title_id, profile.current_avatar_id]);
-
-    itemsToDelete = (allItems || []).filter((ui: any) => {
-      const rarityVal = RARITY_ORDER[ui.item?.rarity] || 0;
-      return rarityVal <= maxVal && !protectedNames.has(ui.item?.id) && !ui.item?.name.startsWith("精錬:") && !ui.item?.name.startsWith("邊ｾ骭ｬ:");
-    });
-
-    totalPoints = itemsToDelete.reduce((sum: number, ui: any) => {
-      return sum + (SELL_VALUES[ui.item?.rarity] || 0);
-    }, 0);
+    idsToDelete = allItems
+      .filter((ui: any) => {
+        const rarityVal = RARITY_ORDER[ui.item?.rarity] || 0;
+        return rarityVal <= maxVal && !protectedNames.has(ui.item?.id)
+          && !ui.item?.name?.startsWith("精錬:") && !ui.item?.name?.startsWith("邊ｾ骭ｬ:");
+      })
+      .map((ui: any) => ui.item_id);
   } else if (itemIds?.length) {
-    const { data: selectedItems } = await supabase
-      .from("user_items")
-      .select("*, item:item_id(*)")
-      .eq("user_id", user.id)
-      .in("item_id", itemIds);
-
-    itemsToDelete = (selectedItems || []).filter((ui: any) => {
-      return ui.item?.id !== profile.current_title_id && ui.item?.id !== profile.current_avatar_id && !ui.item?.name.startsWith("精錬:") && !ui.item?.name.startsWith("邊ｾ骭ｬ:");
-    });
-
-    totalPoints = itemsToDelete.reduce((sum: number, ui: any) => {
-      return sum + (SELL_VALUES[ui.item?.rarity] || 0);
-    }, 0);
+    idsToDelete = allItems
+      .filter((ui: any) => itemIds.includes(ui.item_id))
+      .filter((ui: any) => {
+        return ui.item?.id !== profile.current_title_id && ui.item?.id !== profile.current_avatar_id
+          && !ui.item?.name?.startsWith("精錬:") && !ui.item?.name?.startsWith("邊ｾ骭ｬ:");
+      })
+      .map((ui: any) => ui.item_id);
   }
 
-  for (const ui of itemsToDelete) {
+  totalPoints = idsToDelete.reduce((sum: number, id: number) => {
+    const ui = allItems.find((u: any) => u.item_id === id);
+    return sum + (SELL_VALUES[ui?.item?.rarity] || 0);
+  }, 0);
+
+  if (idsToDelete.length > 0) {
     await supabase
       .from("user_items")
       .delete()
       .eq("user_id", user.id)
-      .eq("item_id", ui.item_id);
-  }
+      .in("item_id", idsToDelete);
 
-  if (totalPoints > 0) {
     await supabase
       .from("profiles")
       .update({ exchange_points: (profile.exchange_points || 0) + totalPoints })
       .eq("id", user.id);
   }
 
-  return NextResponse.json({ sold: totalPoints, remaining_points: (profile.exchange_points || 0) + totalPoints });
+  return NextResponse.json({
+    sold: totalPoints,
+    remaining_points: (profile.exchange_points || 0) + totalPoints,
+  });
 }

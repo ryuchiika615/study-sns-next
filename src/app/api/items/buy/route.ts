@@ -15,23 +15,17 @@ export async function POST(request: NextRequest) {
   const cost = BUY_COSTS[rarity];
   if (!cost) return NextResponse.json({ error: "Invalid rarity" }, { status: 400 });
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("exchange_points")
-    .eq("id", user.id)
-    .single();
+  const [profileResult, existingItemResult] = await Promise.all([
+    supabase.from("profiles").select("exchange_points").eq("id", user.id).single(),
+    supabase.from("gacha_items").select("*").eq("name", itemName).maybeSingle(),
+  ]);
 
+  const profile = profileResult.data;
   if (!profile || profile.exchange_points < cost) {
     return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
   }
 
-  // 繧｢繧､繝・Β繧貞叙蠕励∪縺溘・菴懈・
-  let { data: item } = await supabase
-    .from("gacha_items")
-    .select("*")
-    .eq("name", itemName)
-    .maybeSingle();
-
+  let item = existingItemResult.data;
   if (!item) {
     const { data: newItem } = await supabase
       .from("gacha_items")
@@ -43,16 +37,10 @@ export async function POST(request: NextRequest) {
 
   if (!item) return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
 
-  // 謇謖√い繧､繝・Β縺ｫ霑ｽ蜉
-  await supabase
-    .from("user_items")
-    .insert({ user_id: user.id, item_id: item.id });
-
-  // 繝昴う繝ｳ繝域ｸ帷ｮ・
-  await supabase
-    .from("profiles")
-    .update({ exchange_points: profile.exchange_points - cost })
-    .eq("id", user.id);
+  await Promise.all([
+    supabase.from("user_items").insert({ user_id: user.id, item_id: item.id }),
+    supabase.from("profiles").update({ exchange_points: profile.exchange_points - cost }).eq("id", user.id),
+  ]);
 
   return NextResponse.json({ item, remaining_points: profile.exchange_points - cost });
 }

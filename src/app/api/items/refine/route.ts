@@ -1,7 +1,6 @@
 ﻿import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
-// 驛ｨ菴榊粋謌撰ｼ医き繧ｹ繧ｿ繝遘ｰ蜿ｷ菴懈・・・
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
       ? `${noun || ""}${word || ""}${namePart || ""}`
       : `${word || ""}${noun || ""}${namePart || ""}`;
 
-  // 謇謖√ヱ繝ｼ繝・・繝ｬ繧｢繝ｪ繝・ぅ縺九ｉ譛螟ｧ蛟､繧定ｨ育ｮ・
   const { data: userItems } = await supabase
     .from("user_items")
     .select("*, item:item_id(*)")
@@ -57,8 +55,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (newItem) {
-    await supabase.from("user_items").insert({ user_id: user.id, item_id: newItem.id });
-    await supabase.from("profiles").update({ current_title_id: newItem.id }).eq("id", user.id);
+    await Promise.all([
+      supabase.from("user_items").insert({ user_id: user.id, item_id: newItem.id }),
+      supabase.from("profiles").update({ current_title_id: newItem.id }).eq("id", user.id),
+    ]);
   }
 
   return NextResponse.json({ item: newItem });

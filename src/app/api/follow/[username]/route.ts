@@ -32,16 +32,14 @@ export async function POST(request: NextRequest, { params }: { params: { usernam
 
     return NextResponse.json({ following: false });
   } else {
-    await supabase
-      .from("follows")
-      .insert({ follower_id: currentUser.id, following_id: profile.id });
-
-    // 通知
-    await supabase.from("notifications").insert({
-      recipient_id: profile.id,
-      sender_id: currentUser.id,
-      notification_type: "follow",
-    });
+    await Promise.all([
+      supabase.from("notifications").insert({
+        recipient_id: profile.id,
+        sender_id: currentUser.id,
+        notification_type: "follow",
+      }),
+      supabase.from("follows").insert({ follower_id: currentUser.id, following_id: profile.id }),
+    ]);
 
     return NextResponse.json({ following: true });
   }

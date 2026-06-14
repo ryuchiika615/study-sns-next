@@ -25,21 +25,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: "empty" }, { status: 400 });
   }
 
-  const { data: comment, error } = await supabase
-    .from("comments")
-    .insert({ post_id: params.id, user_id: user.id, text: text.trim() })
-    .select("*, user:user_id(*)")
-    .single();
+  const [commentResult, postResult] = await Promise.all([
+    supabase.from("comments").insert({ post_id: params.id, user_id: user.id, text: text.trim() })
+      .select("*, user:user_id(*)").single(),
+    supabase.from("posts").select("user_id").eq("id", params.id).single(),
+  ]);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (commentResult.error) return NextResponse.json({ error: commentResult.error.message }, { status: 500 });
 
-  // 通知
-  const { data: post } = await supabase
-    .from("posts")
-    .select("user_id")
-    .eq("id", params.id)
-    .single();
-
+  const post = postResult.data;
   if (post && post.user_id !== user.id) {
     await supabase.from("notifications").insert({
       recipient_id: post.user_id,
@@ -49,5 +43,5 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
   }
 
-  return NextResponse.json({ comment });
+  return NextResponse.json({ comment: commentResult.data });
 }

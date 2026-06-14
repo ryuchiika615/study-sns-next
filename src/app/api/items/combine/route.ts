@@ -7,7 +7,6 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { itemIdA, itemIdB, order } = await request.json();
-  // order: "normal" or "reverse"
 
   const { data: items } = await supabase
     .from("gacha_items")
@@ -54,8 +53,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (newItem) {
-    await supabase.from("user_items").insert({ user_id: user.id, item_id: newItem.id });
-    await supabase.from("profiles").update({ current_title_id: newItem.id }).eq("id", user.id);
+    await Promise.all([
+      supabase.from("user_items").insert({ user_id: user.id, item_id: newItem.id }),
+      supabase.from("profiles").update({ current_title_id: newItem.id }).eq("id", user.id),
+    ]);
   }
 
   return NextResponse.json({ item: newItem });
