@@ -1,0 +1,130 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import AppShell from "@/components/AppShell";
+import PostCard from "@/components/PostCard";
+import { PieChart } from "@/components/Charts";
+
+export default function UserProfilePage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const username = params.username as string;
+  const [data, setData] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "posts");
+  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: authData }) => {
+      if (!authData.user) { router.push("/auth/login"); return; }
+      setUser(authData.user);
+      loadData();
+    });
+  }, [username]);
+
+  const loadData = async () => {
+    const res = await fetch(`/api/users/${username}`);
+    if (res.ok) {
+      const d = await res.json();
+      setData(d);
+      setIsFollowing(d.is_following);
+    }
+
+    // ユーザーの投稿
+    const postsRes = await fetch(`/api/posts?page=${page}`);
+    if (postsRes.ok) {
+      const d = await postsRes.json();
+      setPosts(d.posts.filter((p: any) => p.user_id === data?.profile?.id));
+    }
+  };
+
+  const handleFollow = async () => {
+    const res = await fetch(`/api/follow/${username}`, { method: "POST" });
+    if (res.ok) {
+      const d = await res.json();
+      setIsFollowing(d.following);
+    }
+  };
+
+  if (!data) return <AppShell><div className="p-4 text-center text-gray-500">読み込み中...</div></AppShell>;
+
+  return (
+    <AppShell>
+      <div className="p-4">
+        {/* プロフィールヘッダー */}
+        <div className="flex items-start gap-4 mb-6">
+          <div className="avatar-frame">
+            {data.profile?.icon_url ? (
+              <img src={data.profile.icon_url} className="w-16 h-16 rounded-full object-cover" />
+            ) : (
+              <i className="fas fa-user-circle text-5xl text-gray-300" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold">{data.profile?.display_name || username}</h2>
+            <p className="text-gray-500 text-sm">@{username}</p>
+            {data.profile?.bio && <p className="text-sm mt-1">{data.profile.bio}</p>}
+            {data.profile?.department && (
+              <p className="text-sm text-gray-500"><i className="fas fa-building mr-1" />{data.profile.department}</p>
+            )}
+
+            <div className="flex gap-4 mt-2 text-sm">
+              <span><strong>{data.post_count}</strong> 投稿</span>
+              <span><strong>{data.followers_count}</strong> フォロワー</span>
+              <span><strong>{data.following_count}</strong> フォロー中</span>
+            </div>
+
+            <div className="flex gap-4 mt-2 text-sm">
+              <span className="text-primary font-bold"><i className="fas fa-book-open" /> {data.total_study_display}</span>
+              <span className="text-green-600 font-bold">今月 {data.month_study_display}</span>
+            </div>
+
+            {user && user.id !== data.profile?.id && (
+              <button onClick={handleFollow}
+                className={`mt-2 px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer ${
+                  isFollowing ? "bg-gray-200 text-gray-700" : "bg-primary text-white"
+                }`}>
+                {isFollowing ? "フォロー中" : "フォローする"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 科目内訳 */}
+        {data.subject_labels && JSON.parse(data.subject_labels).length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+            <h3 className="font-bold mb-2">科目内訳</h3>
+            <PieChart
+              labels={data.subject_labels}
+              data={data.subject_data}
+              colors="[]"
+            />
+          </div>
+        )}
+
+        {/* タブ */}
+        <div className="flex border-b border-gray-200 mb-4">
+          {["posts", "likes", "followers", "following"].map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 text-sm font-bold text-center cursor-pointer ${
+                activeTab === tab ? "text-primary border-b-2 border-primary" : "text-gray-500"
+              }`}>
+              {tab === "posts" ? "投稿" : tab === "likes" ? "いいね" : tab === "followers" ? "フォロワー" : "フォロー中"}
+            </button>
+          ))}
+        </div>
+
+        {/* 投稿一覧 */}
+        {activeTab === "posts" && posts.map((post: any) => (
+          <PostCard key={post.id} post={post} currentUserId={user?.id || ""} />
+        ))}
+      </div>
+    </AppShell>
+  );
+}

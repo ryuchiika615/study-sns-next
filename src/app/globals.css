@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  padding-bottom: 75px;
+  background: #fff;
+  color: #0f1419;
+}
+
+/* 称号バッジ */
+.title-badge {
+  @apply text-xs font-bold inline-block px-2 py-0.5 rounded;
+}
+.LR {
+  background: linear-gradient(135deg, #09090b, #f43f5e, #fde047, #09090b);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(244,63,94,.8), 0 0 20px rgba(253,224,71,.45);
+  animation: lrBeat 1.5s ease-in-out infinite alternate;
+}
+.UR {
+  background: linear-gradient(135deg, #00d2ff, #7b2ff7, #ff4fd8);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(123,47,247,.7);
+  animation: urShift 2.2s linear infinite;
+}
+.SSR {
+  background: linear-gradient(135deg, #ffe259, #ff7a18, #facc15);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(250,204,21,.65);
+  animation: ssrPulse 1.8s ease-in-out infinite alternate;
+}
+.SR { background: #9c27b0; color: #fff; }
+.R  { background: #2196f3; color: #fff; }
+.N  { background: #666; color: #fff; }
+
+@keyframes ssrPulse {
+  from { filter: saturate(1); }
+  to { filter: saturate(1.35) brightness(1.08); }
+}
+@keyframes urShift {
+  to { filter: hue-rotate(360deg); }
+}
+@keyframes lrBeat {
+  from { transform: scale(0.98); }
+  to { transform: scale(1.04); }
+}
+
+/* アバターフレーム */
+.avatar-frame {
+  @apply relative flex items-center justify-center w-12 h-12 min-w-[48px] rounded-full flex-shrink-0;
+}
+.avatar-frame.SSR {
+  box-shadow: 0 0 10px rgba(255,216,77,.7);
+  border: 2px dashed #ffd84d;
+}
+.avatar-frame.UR {
+  box-shadow: 0 0 12px #38bdf8;
+  border: 2px solid #38bdf8;
+}
+.avatar-frame.LR {
+  box-shadow: 0 0 14px #f43f5e, 0 0 20px #fde047;
+  border: 2px dashed #f43f5e;
+  animation: avatarPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes avatarPulse {
+  from { transform: scale(0.96); }
+  to { transform: scale(1.05); }
+}
+
+/* 科目チップ */
+.subject-chip {
+  @apply inline-block px-3 py-0.5 rounded-full text-xs font-bold text-white;
+}
+
+/* 投稿カード */
+.post-card {
+  @apply border-b border-gray-200 pt-3;
+}
+
+/* 固定ボトムナビ */
+.bottom-nav {
+  @apply fixed bottom-0 left-0 w-full bg-dark flex justify-around items-center py-3 pb-5 border-t border-gray-700 z-50;
+}
+.bottom-nav a {
+  @apply text-white text-2xl no-underline;
+}
+.bottom-nav a.active {
+  @apply text-primary;
+}
