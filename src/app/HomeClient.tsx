@@ -113,16 +113,22 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     });
 
     setIsSubmitting(false);
-    if (!error && data) {
-      if (data.streak) {
-        addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
-      }
-      setContent("");
-      setSubject("");
-      setStudyMinutes("");
-      fetchPosts(1, search);
-      setPage(1);
+    if (error) {
+      addToast({ message: `投稿失敗: ${error.message}`, type: "error" });
+      return;
     }
+    if (!data) {
+      addToast({ message: "投稿失敗: 応答がありません", type: "error" });
+      return;
+    }
+    if (data.streak) {
+      addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
+    }
+    setContent("");
+    setSubject("");
+    setStudyMinutes("");
+    fetchPosts(1, search);
+    setPage(1);
   };
 
   const handleSearch = (e: React.FormEvent) => {

@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 type Toast = {
   id: number;
   message: string;
-  type: "streak" | "info" | "like" | "reply" | "follow" | "gift";
+  type: "streak" | "info" | "like" | "reply" | "follow" | "gift" | "error";
   streak?: number;
   bonus?: number;
 };

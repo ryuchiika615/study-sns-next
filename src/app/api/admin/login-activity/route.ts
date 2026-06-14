@@ -1,4 +1,5 @@
 ﻿import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +19,10 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const admin = createAdminClient();
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-  const { data: sessions, error } = await supabase
+  const { data: sessions, error } = await admin
     .from("login_sessions")
     .select("*, user:user_id(id, display_name, username)")
     .order("login_at", { ascending: false })

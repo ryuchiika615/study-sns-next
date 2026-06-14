@@ -22,6 +22,9 @@ export default function EditProfilePage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [message, setMessage] = useState("");
   const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [passwordChanging, setPasswordChanging] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -103,6 +106,28 @@ export default function EditProfilePage() {
     if (!error) {
       setMessage("保存しました！");
       loadData(user.id);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== newPasswordConfirm) {
+      setMessage("パスワードが一致しません");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setMessage("パスワードは6文字以上で入力してください");
+      return;
+    }
+    setPasswordChanging(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordChanging(false);
+    if (error) {
+      setMessage(`パスワード変更失敗: ${error.message}`);
+    } else {
+      setMessage("パスワードを変更しました！");
+      setNewPassword("");
+      setNewPasswordConfirm("");
     }
   };
 
@@ -265,6 +290,25 @@ export default function EditProfilePage() {
 
           <button type="submit" className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm">
             保存
+          </button>
+        </form>
+
+        {/* パスワード変更 */}
+        <form onSubmit={handleChangePassword} className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+          <h2 className="text-lg font-bold">パスワード変更</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード</label>
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full rounded-lg border-gray-300 text-sm" minLength={6} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード（確認）</label>
+            <input type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}
+              className="w-full rounded-lg border-gray-300 text-sm" minLength={6} required />
+          </div>
+          <button type="submit" disabled={passwordChanging}
+            className="bg-gray-800 text-white font-bold rounded-full px-6 py-2 text-sm disabled:opacity-50">
+            パスワードを変更
           </button>
         </form>
 
