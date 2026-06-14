@@ -1,0 +1,128 @@
+"use client";
+
+import { useState } from "react";
+import AppShell from "@/components/AppShell";
+import PostCard from "@/components/PostCard";
+import { PieChart } from "@/components/Charts";
+import { clearCache } from "@/lib/api-cache";
+
+type ProfileClientProps = {
+  user: { id: string };
+  profile: any;
+  initialPosts: any[];
+  isFollowing: boolean;
+  subjectLabels: string;
+  subjectData: string;
+  subjectColors: string;
+  followersCount: number;
+  followingCount: number;
+  postCount: number;
+  totalStudyDisplay: string;
+  monthStudyDisplay: string;
+  totalStudyMinutes: number;
+  unreadCount: number;
+};
+
+export default function ProfileClient({
+  user, profile, initialPosts, isFollowing: initialFollow,
+  subjectLabels, subjectData, subjectColors,
+  followersCount, followingCount, postCount,
+  totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
+  unreadCount,
+}: ProfileClientProps) {
+  const [isFollowing, setIsFollowing] = useState(initialFollow);
+  const [activeTab, setActiveTab] = useState("posts");
+  const [posts] = useState(initialPosts);
+
+  const handleFollow = async () => {
+    const res = await fetch(`/api/follow/${profile.username}`, { method: "POST" });
+    if (res.ok) {
+      const d = await res.json();
+      setIsFollowing(d.following);
+      clearCache(`/api/users/${profile.username}`);
+    }
+  };
+
+  return (
+    <AppShell unreadCount={unreadCount}>
+      <div className="p-4">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="avatar-frame">
+            {profile?.icon_url ? (
+              <img src={profile.icon_url} className="w-16 h-16 rounded-full object-cover" />
+            ) : (
+              <i className="fas fa-user-circle text-5xl text-gray-300" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold">{profile?.display_name || profile.username}</h2>
+            <p className="text-gray-500 text-sm">@{profile?.username || profile.username}</p>
+            {profile?.bio && <p className="text-sm mt-1">{profile.bio}</p>}
+            {profile?.department && (
+              <p className="text-sm text-gray-500"><i className="fas fa-building mr-1" />{profile.department}</p>
+            )}
+
+            <div className="flex gap-4 mt-2 text-sm">
+              <span><strong>{postCount}</strong> リュイート</span>
+              <span><strong>{followersCount}</strong> フォロワー</span>
+              <span><strong>{followingCount}</strong> フォロー中</span>
+            </div>
+
+            <div className="flex gap-4 mt-2 text-sm">
+              <span className="text-primary font-bold"><i className="fas fa-book-open" /> {totalStudyDisplay}</span>
+              <span className="text-green-600 font-bold">今月 {monthStudyDisplay}</span>
+            </div>
+            {profile?.target_date && profile?.target_minutes > 0 && (
+              <div className="mt-2 text-sm text-yellow-700 font-bold">
+                <i className="fas fa-bullseye" /> 目標 {profile.target_date} まであと{(() => {
+                  const remaining = profile.target_minutes - totalStudyMinutes;
+                  if (remaining <= 0) return "目標達成！🎉";
+                  const h = Math.floor(remaining / 60);
+                  const m = remaining % 60;
+                  return `${h > 0 ? `${h}時間` : ""}${m}分`;
+                })()}
+              </div>
+            )}
+
+            {user.id !== profile?.id && (
+              <button onClick={handleFollow}
+                className={`mt-2 px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer ${
+                  isFollowing ? "bg-gray-200 text-gray-700" : "bg-primary text-white"
+                }`}>
+                {isFollowing ? "フォロー中" : "フォローする"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {(() => {
+          const labels = JSON.parse(subjectLabels || "[]");
+          if (labels.length > 0) {
+            return (
+              <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                <h3 className="font-bold mb-2">科目内訳</h3>
+                <PieChart labels={subjectLabels} data={subjectData} colors={subjectColors} />
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        <div className="flex border-b border-gray-200 mb-4">
+          {["posts", "likes"].map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 text-sm font-bold text-center cursor-pointer ${
+                activeTab === tab ? "text-primary border-b-2 border-primary" : "text-gray-500"
+              }`}>
+              {tab === "posts" ? "リュイート" : "いいね"}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "posts" && posts.map((post: any) => (
+          <PostCard key={post.id} post={post} currentUserId={user.id} />
+        ))}
+      </div>
+    </AppShell>
+  );
+}

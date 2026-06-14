@@ -1,37 +1,25 @@
-"use client";
+import { createServerSupabase } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+export default async function BannedPage() {
+  const supabase = createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
 
-export default function BannedPage() {
-  const [banReason, setBanReason] = useState("");
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) { router.push("/auth/login"); return; }
-      const res = await fetch("/api/profile");
-      if (res.ok) {
-        const d = await res.json();
-        setBanReason(d.profile?.ban_reason || "");
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) return null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("ban_reason")
+    .eq("id", user.id)
+    .single();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-sm w-full text-center">
         <div className="text-6xl mb-4">🚫</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">アカウントがBANされました</h1>
-        {banReason && (
+        {profile?.ban_reason && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
-            理由: {banReason}
+            理由: {profile.ban_reason}
           </div>
         )}
         <p className="text-gray-500 mb-6">

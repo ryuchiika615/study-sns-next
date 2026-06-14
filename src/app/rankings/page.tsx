@@ -1,90 +1,75 @@
-"use client";
+import { createServerSupabase } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
+import RankingsClient from "./RankingsClient";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
-import { Rarity } from "@/lib/types";
+const DEFAULT_DAYS = 7;
 
-export default function RankingsPage() {
-  const [ranking, setRanking] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
-  const [days, setDays] = useState(7);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const router = useRouter();
-  const supabase = createClient();
+export default async function RankingsPage() {
+  const supabase = createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) { router.push("/auth/login"); return; }
-      setUser(data.user);
-      fetchRankings(days);
-      fetch("/api/notifications").then((r) => r.ok && r.json()).then((d) => {
-        if (d) setUnreadCount(d.unread_count);
-      });
-    });
-  }, []);
-
-  const fetchRankings = async (d: number) => {
-    const res = await fetch(`/api/rankings?days=${d}`);
-    if (res.ok) {
-      const data = await res.json();
-      setRanking(data.ranking);
-    }
-  };
-
-  const changeDays = (d: number) => {
-    setDays(d);
-    fetchRankings(d);
-  };
-
-  const getRankStyle = (rank: number) => {
-    if (rank === 1) return "text-yellow-500";
-    if (rank === 2) return "text-gray-400";
-    if (rank === 3) return "text-amber-700";
-    return "text-gray-500";
-  };
+  const [rankingsData, unreadResult] = await Promise.all([
+    fetchRankingsData(supabase, DEFAULT_DAYS),
+    supabase
+      .from("notifications")
+      .select("*", { count: "exact", head: true })
+      .eq("recipient_id", user.id)
+      .eq("is_read", false),
+  ]);
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="p-4">
-        <div className="flex justify-center gap-2 mb-4">
-          {[7, 30, 90, 365].map((d) => (
-            <button key={d} onClick={() => changeDays(d)}
-              className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer ${
-                days === d ? "bg-primary text-white" : "bg-gray-100 text-gray-700"
-              }`}>
-              {d === 7 ? "週間" : d === 30 ? "月間" : d === 90 ? "3ヶ月" : "年間"}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          {ranking.map((entry: any) => (
-            <div key={entry.rank} className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-3">
-              <span className={`text-xl font-bold w-8 text-center ${getRankStyle(entry.rank)}`}>
-                {entry.rank}
-              </span>
-              <div className="avatar-frame">
-                {entry.user?.icon_url ? (
-                  <img src={entry.user.icon_url} className="w-10 h-10 rounded-full object-cover" />
-                ) : (
-                  <i className="fas fa-user-circle text-3xl text-gray-300" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-sm">{entry.user?.display_name || "ユーザー"}</p>
-                <p className="text-xs text-gray-500">{entry.display_time} · {entry.post_count}回</p>
-              </div>
-              <span className="text-primary font-bold">{entry.display_time}</span>
-            </div>
-          ))}
-        </div>
-
-        {ranking.length === 0 && (
-          <p className="text-center text-gray-500 py-10">ランキングデータがありません</p>
-        )}
-      </div>
-    </AppShell>
+    <RankingsClient
+      initialRanking={rankingsData}
+      initialDays={DEFAULT_DAYS}
+      unreadCount={unreadResult.count || 0}
+    />
   );
+}
+
+async function fetchRankingsData(supabase: any, days: number) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("user_id, study_minutes")
+    .gt("study_minutes", 0)
+    .gte("created_at", startDate.toISOString());
+
+  const userTotals = new Map<string, { total: number; posts: number }>();
+  (posts || []).forEach((row: any) => {
+    const current = userTotals.get(row.user_id) || { total: 0, posts: 0 };
+    current.total += row.study_minutes || 0;
+    current.posts += 1;
+    userTotals.set(row.user_id, current);
+  });
+
+  const sorted = Array.from(userTotals.entries())
+    .sort((a, b) => b[1].total - a[1].total)
+    .slice(0, 50);
+
+  const userIds = sorted.map(([id]) => id);
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("*")
+    .in("id", userIds);
+
+  const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
+
+  return sorted.map(([userId, data], index) => ({
+    rank: index + 1,
+    user: profileMap.get(userId),
+    total_minutes: data.total,
+    post_count: data.posts,
+    display_time: formatStudyTime(data.total),
+  }));
+}
+
+function formatStudyTime(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h}時間${m}分`;
+  if (h > 0) return `${h}時間`;
+  return `${m}分`;
 }
