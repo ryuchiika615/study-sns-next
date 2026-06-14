@@ -84,6 +84,8 @@ export default function HomePage() {
           addToast({ message: `${lastNotif.sender?.display_name || "誰か"}が返信しました`, type: "reply" });
         } else if (lastNotif.notification_type === "follow") {
           addToast({ message: `${lastNotif.sender?.display_name || "誰か"}がフォローしました`, type: "follow" });
+        } else if (lastNotif.notification_type === "gift") {
+          addToast({ message: `おプレゼントが届きました！！`, type: "gift" });
         }
       }
       setUnreadCount(data.unread_count);

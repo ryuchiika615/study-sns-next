@@ -48,7 +48,6 @@ export async function middleware(request: NextRequest) {
       .single();
 
     if (profile?.is_banned && !pathname.startsWith("/banned")) {
-      await supabase.auth.signOut();
       const url = request.nextUrl.clone();
       url.pathname = "/banned";
       return NextResponse.redirect(url);

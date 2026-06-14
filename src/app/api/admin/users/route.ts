@@ -83,24 +83,24 @@ export async function PUT(request: NextRequest) {
     case "set_points": {
       const pts = parseInt(value);
       if (isNaN(pts) || pts < 0) return NextResponse.json({ error: "invalid points" }, { status: 400 });
-      await supabase.from("profiles").update({ points: pts }).eq("id", userId);
+      await admin.from("profiles").update({ points: pts }).eq("id", userId);
       return NextResponse.json({ success: true, points: pts });
     }
 
     case "toggle_admin": {
       const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", userId).single();
       const newValue = !profile?.is_admin;
-      await supabase.from("profiles").update({ is_admin: newValue }).eq("id", userId);
+      await admin.from("profiles").update({ is_admin: newValue }).eq("id", userId);
       return NextResponse.json({ success: true, is_admin: newValue });
     }
 
     case "ban": {
-      await supabase.from("profiles").update({ is_banned: true, ban_reason: value || null }).eq("id", userId);
+      await admin.from("profiles").update({ is_banned: true, ban_reason: value || null }).eq("id", userId);
       return NextResponse.json({ success: true, message: "BANしました" });
     }
 
     case "unban": {
-      await supabase.from("profiles").update({ is_banned: false, ban_reason: null }).eq("id", userId);
+      await admin.from("profiles").update({ is_banned: false, ban_reason: null }).eq("id", userId);
       return NextResponse.json({ success: true, message: "BANを解除しました" });
     }
 
