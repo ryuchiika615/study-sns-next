@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   });
 
   // 繧ｽ繝ｼ繝・
-  const sorted = [...userTotals.entries()]
+  const sorted = Array.from(userTotals.entries())
     .sort((a, b) => b[1].total - a[1].total)
     .slice(0, limit);
 

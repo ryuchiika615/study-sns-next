@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     dayMap.set(day, (dayMap.get(day) || 0) + (post.study_minutes || 0));
   });
 
-  const subjectRows = [...subjectMap.entries()]
+  const subjectRows = Array.from(subjectMap.entries())
     .map(([subject, data]) => ({
       subject,
       total: data.total,
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     }
   });
 
-  const datasets = [...weeklySubjects.entries()].map(([subject, data]) => ({
+  const datasets = Array.from(weeklySubjects.entries()).map(([subject, data]) => ({
     label: subject,
     data,
     backgroundColor: subjectColor(subject),
