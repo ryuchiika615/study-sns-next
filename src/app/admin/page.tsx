@@ -79,6 +79,12 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
+          <Link href="/admin/posts" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">📝</div>
+            <div className="font-bold text-sm">リュイート管理</div>
+            <div className="text-xs text-gray-500 mt-1">一括削除・管理</div>
+          </Link>
+
           <Link href="/admin/users" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
             <div className="text-2xl mb-1">👥</div>
             <div className="font-bold text-sm">ユーザー管理</div>

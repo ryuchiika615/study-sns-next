@@ -31,8 +31,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // 認証不要ページ
-  const publicPaths = ["/auth/login", "/auth/signup", "/healthz", "/api/auth"];
+  const publicPaths = ["/auth/login", "/auth/signup", "/healthz", "/api/auth", "/banned"];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
   if (!user && !isPublic) {
@@ -41,10 +40,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (pathname === "/auth/login" || pathname === "/auth/signup")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_banned")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.is_banned && !pathname.startsWith("/banned")) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = "/banned";
+      return NextResponse.redirect(url);
+    }
+
+    if (pathname === "/auth/login" || pathname === "/auth/signup") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
