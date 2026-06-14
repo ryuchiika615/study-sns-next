@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+﻿import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
     .from("user_items")
     .insert({ user_id: user.id, item_id: item.id });
 
-  // 繝昴う繝ｳ繝域ｸ帷ｮ・  await supabase
+  // 繝昴う繝ｳ繝域ｸ帷ｮ・
+  await supabase
     .from("profiles")
     .update({ exchange_points: profile.exchange_points - cost })
     .eq("id", user.id);

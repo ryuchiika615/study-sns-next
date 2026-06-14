@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+﻿import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 import { subjectColor, formatStudyTime } from "@/lib/utils";
 
@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
 
   const totalMinutes = (posts || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0);
 
-  // 騾ｱ髢薙げ繝ｩ繝・  const weeklyLabels: string[] = [];
+  // 騾ｱ髢薙げ繝ｩ繝・
+  const weeklyLabels: string[] = [];
   const weeklySubjects = new Map<string, number[]>();
   const today = new Date();
   for (let i = 6; i >= 0; i--) {

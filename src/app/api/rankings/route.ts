@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+﻿import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 繝ｦ繝ｼ繧ｶ繝ｼ縺斐→縺ｫ髮・ｨ・  const userTotals = new Map<string, { total: number; posts: number }>();
+  // 繝ｦ繝ｼ繧ｶ繝ｼ縺斐→縺ｫ髮・ｨ・
+  const userTotals = new Map<string, { total: number; posts: number }>();
   (rankings || []).forEach((row: any) => {
     const current = userTotals.get(row.user_id) || { total: 0, posts: 0 };
     current.total += row.study_minutes || 0;
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest) {
     userTotals.set(row.user_id, current);
   });
 
-  // 繧ｽ繝ｼ繝・  const sorted = [...userTotals.entries()]
+  // 繧ｽ繝ｼ繝・
+  const sorted = [...userTotals.entries()]
     .sort((a, b) => b[1].total - a[1].total)
     .slice(0, limit);
 

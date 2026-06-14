@@ -1,7 +1,8 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+﻿import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
-// 驛ｨ菴榊粋謌撰ｼ医き繧ｹ繧ｿ繝遘ｰ蜿ｷ菴懈・・・export async function POST(request: NextRequest) {
+// 驛ｨ菴榊粋謌撰ｼ医き繧ｹ繧ｿ繝遘ｰ蜿ｷ菴懈・・・
+export async function POST(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +23,8 @@ import { NextRequest, NextResponse } from "next/server";
       ? `${noun || ""}${word || ""}${namePart || ""}`
       : `${word || ""}${noun || ""}${namePart || ""}`;
 
-  // 謇謖√ヱ繝ｼ繝・・繝ｬ繧｢繝ｪ繝・ぅ縺九ｉ譛螟ｧ蛟､繧定ｨ育ｮ・  const { data: userItems } = await supabase
+  // 謇謖√ヱ繝ｼ繝・・繝ｬ繧｢繝ｪ繝・ぅ縺九ｉ譛螟ｧ蛟､繧定ｨ育ｮ・
+  const { data: userItems } = await supabase
     .from("user_items")
     .select("*, item:item_id(*)")
     .eq("user_id", user.id);
