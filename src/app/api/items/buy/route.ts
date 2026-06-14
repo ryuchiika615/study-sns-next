@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
   }
 
-  // アイテムを取得または作成
+  // 繧｢繧､繝・Β繧貞叙蠕励∪縺溘・菴懈・
   let { data: item } = await supabase
     .from("gacha_items")
     .select("*")
@@ -43,13 +43,12 @@ export async function POST(request: NextRequest) {
 
   if (!item) return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
 
-  // 所持アイテムに追加
+  // 謇謖√い繧､繝・Β縺ｫ霑ｽ蜉
   await supabase
     .from("user_items")
     .insert({ user_id: user.id, item_id: item.id });
 
-  // ポイント減算
-  await supabase
+  // 繝昴う繝ｳ繝域ｸ帷ｮ・  await supabase
     .from("profiles")
     .update({ exchange_points: profile.exchange_points - cost })
     .eq("id", user.id);

@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const { itemId, slot } = await request.json();
   // slot: "current_title_id" or "current_avatar_id"
 
-  // 所有チェック
+  // 謇譛峨メ繧ｧ繝・け
   const { data: ownership } = await supabase
     .from("user_items")
     .select("*")

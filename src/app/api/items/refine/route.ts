@@ -1,8 +1,7 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
-// 部位合成（カスタム称号作成）
-export async function POST(request: NextRequest) {
+// 驛ｨ菴榊粋謌撰ｼ医き繧ｹ繧ｿ繝遘ｰ蜿ｷ菴懈・・・export async function POST(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,8 +22,7 @@ export async function POST(request: NextRequest) {
       ? `${noun || ""}${word || ""}${namePart || ""}`
       : `${word || ""}${noun || ""}${namePart || ""}`;
 
-  // 所持パーツのレアリティから最大値を計算
-  const { data: userItems } = await supabase
+  // 謇謖√ヱ繝ｼ繝・・繝ｬ繧｢繝ｪ繝・ぅ縺九ｉ譛螟ｧ蛟､繧定ｨ育ｮ・  const { data: userItems } = await supabase
     .from("user_items")
     .select("*, item:item_id(*)")
     .eq("user_id", user.id);
@@ -40,14 +38,14 @@ export async function POST(request: NextRequest) {
   let { data: newItem } = await supabase
     .from("gacha_items")
     .select("*")
-    .eq("name", `精錬:${fullTitle.slice(0, 47)}`)
+    .eq("name", `邊ｾ骭ｬ:${fullTitle.slice(0, 47)}`)
     .maybeSingle();
 
   if (!newItem) {
     const { data: created } = await supabase
       .from("gacha_items")
       .insert({
-        name: `精錬:${fullTitle.slice(0, 47)}`,
+        name: `邊ｾ骭ｬ:${fullTitle.slice(0, 47)}`,
         rarity: RARITY_BY_VALUE[rarityValue],
         category: "title",
       })

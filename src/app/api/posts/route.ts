@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 import { formatRelativeTime, formatStudyTime, subjectColor } from "@/lib/utils";
 
@@ -33,8 +33,7 @@ export async function GET(request: NextRequest) {
   const { data: posts, count, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // いいね状態を取得
-  const postIds = posts.map((p: any) => p.id);
+  // 縺・＞縺ｭ迥ｶ諷九ｒ蜿門ｾ・  const postIds = posts.map((p: any) => p.id);
   const { data: likes } = await supabase
     .from("likes")
     .select("post_id")
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   const likedPostIds = new Set(likes?.map((l: any) => l.post_id) || []);
 
-  // 称号・アバター情報
+  // 遘ｰ蜿ｷ繝ｻ繧｢繝舌ち繝ｼ諠・ｱ
   const titleIds = posts
     .map((p: any) => p.user?.current_title_id)
     .filter(Boolean);
@@ -84,7 +83,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const content = formData.get("content") as string;
-  const subject = (formData.get("subject") as string) || "その他";
+  const subject = (formData.get("subject") as string) || "縺昴・莉・;
   const studyMinutes = parseInt((formData.get("study_minutes") as string) || "0");
   const studyDate = (formData.get("study_date") as string) || new Date().toISOString().split("T")[0];
   const imageFile = formData.get("image") as File | null;
@@ -124,7 +123,7 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 連続投稿ボーナス
+  // 騾｣邯壽兜遞ｿ繝懊・繝翫せ
   await updateStreakBonus(supabase, user.id, studyMinutes);
 
   return NextResponse.json({ post });

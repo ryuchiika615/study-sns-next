@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 所持アイテム
+  // 謇謖√い繧､繝・Β
   const { data: userItems, error } = await supabase
     .from("user_items")
     .select("*, item:item_id(*)")

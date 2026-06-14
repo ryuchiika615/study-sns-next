@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 管理者チェック
+  // 邂｡逅・・メ繧ｧ繝・け
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name")

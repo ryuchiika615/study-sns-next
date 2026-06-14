@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 import { subjectColor, formatStudyTime } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 科目別
+  // 遘醍岼蛻･
   const subjectMap = new Map<string, { total: number; count: number }>();
   const dayMap = new Map<string, number>();
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => b.total - a.total)
     .slice(0, 12);
 
-  // 日別
+  // 譌･蛻･
   const dayLabels: string[] = [];
   const dayData: number[] = [];
   const start = new Date(startStr);
@@ -62,8 +62,7 @@ export async function GET(request: NextRequest) {
 
   const totalMinutes = (posts || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0);
 
-  // 週間グラフ
-  const weeklyLabels: string[] = [];
+  // 騾ｱ髢薙げ繝ｩ繝・  const weeklyLabels: string[] = [];
   const weeklySubjects = new Map<string, number[]>();
   const today = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -95,7 +94,7 @@ export async function GET(request: NextRequest) {
 
   if (datasets.length === 0) {
     datasets.push({
-      label: "勉強時間",
+      label: "蜍牙ｼｷ譎る俣",
       data: new Array(7).fill(0),
       backgroundColor: "#1877f2",
     });

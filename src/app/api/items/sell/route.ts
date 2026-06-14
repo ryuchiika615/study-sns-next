@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   let itemsToDelete: any[] = [];
 
   if (maxRarity) {
-    // 一括売却
+    // 荳諡ｬ螢ｲ蜊ｴ
     const RARITY_ORDER: Record<string, number> = {
       N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6,
     };
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     itemsToDelete = (allItems || []).filter((ui: any) => {
       const rarityVal = RARITY_ORDER[ui.item?.rarity] || 0;
-      return rarityVal <= maxVal && !protectedNames.has(ui.item?.id) && !ui.item?.name.startsWith("精錬:");
+      return rarityVal <= maxVal && !protectedNames.has(ui.item?.id) && !ui.item?.name.startsWith("邊ｾ骭ｬ:");
     });
 
     totalPoints = itemsToDelete.reduce((sum: number, ui: any) => {
