@@ -79,17 +79,17 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
-          <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
+          <Link href="/admin/users" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
             <div className="text-2xl mb-1">👥</div>
             <div className="font-bold text-sm">ユーザー管理</div>
-            <div className="text-xs text-gray-500 mt-1">準備中</div>
-          </div>
+            <div className="text-xs text-gray-500 mt-1">パスワードリセット・権限管理</div>
+          </Link>
 
-          <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
+          <Link href="/admin/stats" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
             <div className="text-2xl mb-1">📊</div>
             <div className="font-bold text-sm">統計</div>
-            <div className="text-xs text-gray-500 mt-1">準備中</div>
-          </div>
+            <div className="text-xs text-gray-500 mt-1">システム全体のデータ</div>
+          </Link>
 
           <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
             <div className="text-2xl mb-1">⚙️</div>
