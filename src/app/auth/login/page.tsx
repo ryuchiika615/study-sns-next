@@ -6,28 +6,53 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      let email = loginId;
 
-    if (authError) {
-      setError("ログインに失敗しました。IDかパスワードが違います。");
-      return;
+      if (!email.includes("@")) {
+        const res = await fetch("/api/auth/resolve-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: loginId.trim() }),
+        });
+        if (!res.ok) {
+          setError("ユーザーIDが見つかりません。");
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        email = data.email;
+      }
+
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setError("ログインに失敗しました。IDかパスワードが違います。");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("エラーが発生しました。");
+      setLoading(false);
     }
-
-    router.push("/");
-    router.refresh();
   };
 
   return (
@@ -44,14 +69,14 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ユーザーIDまたはメールアドレス</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               required
               className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
-              placeholder="your@email.com"
+              placeholder="ユーザーID"
             />
           </div>
 
@@ -68,9 +93,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-primary text-white font-bold py-2.5 rounded-full hover:bg-blue-600 transition"
+            disabled={loading}
+            className="w-full bg-primary text-white font-bold py-2.5 rounded-full hover:bg-blue-600 transition disabled:opacity-50"
           >
-            ログイン
+            {loading ? "ログイン中..." : "ログイン"}
           </button>
 
           <p className="text-center text-sm text-gray-500">

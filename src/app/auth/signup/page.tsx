@@ -6,28 +6,37 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function SignupPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     if (password.length < 6) {
       setError("パスワードは6文字以上にしてください。");
+      setLoading(false);
       return;
     }
+
+    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "_")}@study-sns.local`;
 
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { username },
+      },
     });
 
     if (authError) {
       setError(authError.message);
+      setLoading(false);
       return;
     }
 
@@ -49,14 +58,14 @@ export default function SignupPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ユーザーID</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
-              placeholder="your@email.com"
+              placeholder="ユーザーID"
             />
           </div>
 
@@ -74,9 +83,10 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            className="w-full bg-primary text-white font-bold py-2.5 rounded-full hover:bg-blue-600 transition"
+            disabled={loading}
+            className="w-full bg-primary text-white font-bold py-2.5 rounded-full hover:bg-blue-600 transition disabled:opacity-50"
           >
-            アカウント作成
+            {loading ? "作成中..." : "アカウント作成"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
