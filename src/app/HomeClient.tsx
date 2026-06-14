@@ -231,7 +231,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       </div>
 
       {posts.map((post: any) => (
-        <PostCard key={post.id} post={post} currentUserId={user.id} />
+        <PostCard key={post.id} post={post} currentUserId={user.id} onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))} />
       ))}
 
       {posts.length === 0 && (

@@ -73,6 +73,13 @@ export default function PostCard({
     }
   };
 
+  const deleteComment = async (commentId: string) => {
+    const { error } = await supabase.from("comments").delete().eq("id", commentId).eq("user_id", currentUserId);
+    if (!error) {
+      setComments(comments.filter((c: any) => c.id !== commentId));
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm("削除しますか？")) return;
     const { error } = await supabase.from("posts").delete().eq("id", post.id).eq("user_id", currentUserId);
@@ -154,10 +161,18 @@ export default function PostCard({
       {showComments && (
         <div className="px-4 pb-4 bg-white">
           {comments.map((c: any) => (
-            <div key={c.id} className="mb-2.5 pb-2.5 border-b border-gray-100 text-sm">
-              <strong>{c.user?.display_name || "ユーザー"}</strong>
-              <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
-              <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
+            <div key={c.id} className="mb-2.5 pb-2.5 border-b border-gray-100 text-sm flex items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <strong>{c.user?.display_name || "ユーザー"}</strong>
+                <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
+                <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
+              </div>
+              {c.user_id === currentUserId && (
+                <button onClick={() => deleteComment(c.id)}
+                  className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
+                  <i className="fas fa-times" />
+                </button>
+              )}
             </div>
           ))}
           <div className="flex gap-2 mt-2">

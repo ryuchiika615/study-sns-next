@@ -56,7 +56,7 @@ as $$
 declare
   v_user_id uuid;
   v_profile record;
-  v_today text;
+  v_today date;
   v_is_backdate boolean;
   v_created_at timestamptz;
   v_post_id uuid;
@@ -65,8 +65,8 @@ declare
   v_is_new_streak boolean;
   v_total_points integer;
   v_exchange_points integer;
-  v_last_date text;
-  v_yesterday text;
+  v_last_date date;
+  v_yesterday date;
 begin
   v_user_id := auth.uid();
   if v_user_id is null then
@@ -78,8 +78,8 @@ begin
     raise exception 'Profile not found';
   end if;
 
-  v_today := to_char(timezone('JST', now()), 'YYYY-MM-DD');
-  v_yesterday := to_char(timezone('JST', now()) - interval '1 day', 'YYYY-MM-DD');
+  v_today := (timezone('JST', now()))::date;
+  v_yesterday := (timezone('JST', now()) - interval '1 day')::date;
   v_is_backdate := p_study_date is not null and p_study_date != v_today;
 
   if v_is_backdate then

@@ -33,7 +33,7 @@ export default function ProfileClient({
   const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
   const [activeTab, setActiveTab] = useState("posts");
-  const [posts] = useState(initialPosts);
+  const [posts, setPosts] = useState(initialPosts);
 
   const handleFollow = async () => {
     const wasFollowing = isFollowing;
@@ -131,7 +131,10 @@ export default function ProfileClient({
         </div>
 
         {activeTab === "posts" && posts.map((post: any) => (
-          <PostCard key={post.id} post={post} currentUserId={user.id} />
+          <PostCard key={post.id} post={post} currentUserId={user.id} onDelete={(id) => {
+            const idx = posts.findIndex((p: any) => p.id === id);
+            if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
+          }} />
         ))}
       </div>
     </AppShell>
