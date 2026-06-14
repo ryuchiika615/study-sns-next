@@ -130,10 +130,9 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 騾｣邯壽兜遞ｿ繝懊・繝翫せ
-  await updateStreakBonus(supabase, user.id, studyMinutes);
+  const streakInfo = await updateStreakBonus(supabase, user.id, studyMinutes);
 
-  return NextResponse.json({ post });
+  return NextResponse.json({ post, streak: streakInfo });
 }
 
 async function updateStreakBonus(supabase: any, userId: string, minutes: number) {
@@ -143,12 +142,14 @@ async function updateStreakBonus(supabase: any, userId: string, minutes: number)
     .eq("id", userId)
     .single();
 
-  if (!profile) return;
+  if (!profile) return null;
 
   const today = new Date().toISOString().split("T")[0];
   const lastDate = profile.last_post_date;
   let streak = profile.consecutive_post_days || 0;
   let points = profile.points || 0;
+  let bonusPoints = 0;
+  let isNewStreak = false;
 
   if (lastDate !== today) {
     if (lastDate === getYesterdayString()) {
@@ -157,8 +158,9 @@ async function updateStreakBonus(supabase: any, userId: string, minutes: number)
       streak = 1;
     }
 
-    const bonusPoints = streak <= 7 ? Math.pow(2, streak - 1) : 100;
+    bonusPoints = streak <= 7 ? Math.pow(2, streak - 1) : 100;
     points += minutes + bonusPoints;
+    isNewStreak = true;
   } else {
     points += minutes;
   }
@@ -171,6 +173,8 @@ async function updateStreakBonus(supabase: any, userId: string, minutes: number)
       last_post_date: today,
     })
     .eq("id", userId);
+
+  return isNewStreak ? { streak, bonus_points: bonusPoints } : null;
 }
 
 function getYesterdayString(): string {

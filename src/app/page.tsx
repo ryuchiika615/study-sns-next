@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import PostCard from "@/components/PostCard";
 import AppShell from "@/components/AppShell";
 import { WeeklyChart } from "@/components/WeeklyChart";
+import { useToast } from "@/components/ToastProvider";
 
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -21,6 +22,9 @@ export default function HomePage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [weeklyData, setWeeklyData] = useState<any>(null);
   const [totalMinutes, setTotalMinutes] = useState(0);
+  const [lastNotifId, setLastNotifId] = useState(0);
+  const addToast = useToast();
+  const notifTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -63,8 +67,37 @@ export default function HomePage() {
           setTotalMinutes(total);
         }
       });
+
+      // 通知ポーリング
+      pollNotifications();
+      notifTimer.current = setInterval(pollNotifications, 15000);
     });
+
+    return () => {
+      if (notifTimer.current) clearInterval(notifTimer.current);
+    };
   }, []);
+
+  const pollNotifications = async () => {
+    const res = await fetch("/api/notifications");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.unread_count > 0 && data.unread_count !== unreadCount) {
+      // 新しい通知があればトースト表示
+      const lastNotif = data.notifications?.[0];
+      if (lastNotif && lastNotif.id > lastNotifId) {
+        setLastNotifId(lastNotif.id);
+        if (lastNotif.notification_type === "like") {
+          addToast({ message: `${lastNotif.sender?.display_name || "誰か"}がいいねしました`, type: "like" });
+        } else if (lastNotif.notification_type === "reply") {
+          addToast({ message: `${lastNotif.sender?.display_name || "誰か"}が返信しました`, type: "reply" });
+        } else if (lastNotif.notification_type === "follow") {
+          addToast({ message: `${lastNotif.sender?.display_name || "誰か"}がフォローしました`, type: "follow" });
+        }
+      }
+      setUnreadCount(data.unread_count);
+    }
+  };
 
   useEffect(() => {
     if (user) fetchPosts(page, search);
@@ -87,6 +120,10 @@ export default function HomePage() {
 
     const res = await fetch("/api/posts", { method: "POST", body: formData });
     if (res.ok) {
+      const data = await res.json();
+      if (data.streak) {
+        addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
+      }
       setContent("");
       setSubject("");
       setStudyMinutes("");
