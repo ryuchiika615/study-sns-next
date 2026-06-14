@@ -11,19 +11,23 @@ export default async function UserProfilePage({ params }: { params: { username: 
 
   const { username } = params;
 
+  const fields = "id, username, display_name, bio, department, icon_url, target_date, target_minutes";
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
 
-  let query = supabase
+  let { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, department, icon_url, target_date, target_minutes");
+    .select(fields)
+    .eq(isUuid ? "id" : "username", username)
+    .maybeSingle();
 
-  if (isUuid) {
-    query = query.eq("id", username);
-  } else {
-    query = query.eq("username", username);
+  if (!profile && !isUuid) {
+    const { data: byDisplay } = await supabase
+      .from("profiles")
+      .select(fields)
+      .eq("display_name", username)
+      .maybeSingle();
+    profile = byDisplay;
   }
-
-  const { data: profile, error } = await query.maybeSingle();
 
   if (error || !profile) notFound();
 
