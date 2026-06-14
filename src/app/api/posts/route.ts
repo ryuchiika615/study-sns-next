@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const content = formData.get("content") as string;
-  const subject = (formData.get("subject") as string) || "縺昴・莉・;
+  const subject = (formData.get("subject") as string) || "その他";
   const studyMinutes = parseInt((formData.get("study_minutes") as string) || "0");
   const studyDate = (formData.get("study_date") as string) || new Date().toISOString().split("T")[0];
   const imageFile = formData.get("image") as File | null;

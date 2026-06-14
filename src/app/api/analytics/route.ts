@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
   if (datasets.length === 0) {
     datasets.push({
-      label: "蜍牙ｼｷ譎る俣",
+      label: "勉強時間",
       data: new Array(7).fill(0),
       backgroundColor: "#1877f2",
     });

@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 function formatStudyTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h > 0 && m > 0) return `${h}譎る俣${m}蛻・;
-  if (h > 0) return `${h}譎る俣`;
-  return `${m}蛻・;
+  if (h > 0 && m > 0) return `${h}時間${m}分`;
+  if (h > 0) return `${h}時間`;
+  return `${m}分`;
 }
