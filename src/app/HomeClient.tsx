@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { createClient } from "@/lib/supabase";
 import PostCard from "@/components/PostCard";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
-import { getCached, setCache, clearCache } from "@/lib/api-cache";
+import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
@@ -16,6 +17,7 @@ type HomeClientProps = {
 };
 
 export default function HomeClient({ user, profile: initialProfile, unreadCount: initialUnread, weeklyLabels, weeklyDatasets, totalMinutes: initialTotal }: HomeClientProps) {
+  const supabase = createClient();
   const [posts, setPosts] = useState<any[]>([]);
   const [profile] = useState(initialProfile);
   const [page, setPage] = useState(1);
@@ -33,40 +35,35 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const notifTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchPosts = async (p: number, q: string) => {
-    const params = new URLSearchParams({ page: String(p) });
-    if (q) params.set("search", q);
-    const cacheKey = `/api/posts?${params}`;
-    const cached = getCached(cacheKey);
-    if (cached) { setPosts(cached.posts); setTotalPages(cached.totalPages); return; }
-    const res = await fetch(cacheKey);
-    if (res.ok) {
-      const data = await res.json();
-      setCache(cacheKey, data);
-      setPosts(data.posts);
-      setTotalPages(data.totalPages);
-    }
+    const result = await fetchAndEnrichPosts(supabase, user.id, { page: p, search: q });
+    setPosts(result.posts);
+    setTotalPages(result.totalPages);
   };
 
   const pollNotifications = async () => {
-    const res = await fetch("/api/notifications");
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.unread_count > 0 && data.unread_count !== unreadCount) {
-      const lastNotif = data.notifications?.[0];
-      if (lastNotif && lastNotif.id > lastNotifId) {
-        setLastNotifId(lastNotif.id);
-        if (lastNotif.notification_type === "like") {
-          addToast({ message: `${lastNotif.sender?.display_name || "誰か"}がいいねしました`, type: "like" });
-        } else if (lastNotif.notification_type === "reply") {
-          addToast({ message: `${lastNotif.sender?.display_name || "誰か"}が返信しました`, type: "reply" });
-        } else if (lastNotif.notification_type === "follow") {
-          addToast({ message: `${lastNotif.sender?.display_name || "誰か"}がフォローしました`, type: "follow" });
-        } else if (lastNotif.notification_type === "gift") {
-          addToast({ message: `おプレゼントが届きました！！`, type: "gift" });
-        }
+    const { data: notifications, count } = await supabase
+      .from("notifications")
+      .select("id, notification_type, sender_id, created_at, sender:sender_id(id, display_name, username)", { count: "estimated", head: false })
+      .eq("recipient_id", user.id)
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    const unread = count || 0;
+    const lastNotif = notifications?.[0];
+    if (lastNotif && lastNotif.id > lastNotifId) {
+      setLastNotifId(lastNotif.id);
+      if (lastNotif.notification_type === "like") {
+        addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}がいいねしました`, type: "like" });
+      } else if (lastNotif.notification_type === "reply") {
+        addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}が返信しました`, type: "reply" });
+      } else if (lastNotif.notification_type === "follow") {
+        addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}がフォローしました`, type: "follow" });
+      } else if (lastNotif.notification_type === "gift") {
+        addToast({ message: `おプレゼントが届きました！！`, type: "gift" });
       }
-      setUnreadCount(data.unread_count);
     }
+    setUnreadCount(unread);
   };
 
   useEffect(() => {
@@ -85,25 +82,38 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("content", content);
-    formData.append("subject", subject || "その他");
-    formData.append("study_minutes", studyMinutes || "0");
-    const jstNow = new Date();
-    jstNow.setHours(jstNow.getHours() + 9);
-    formData.append("study_date", studyDate || jstNow.toISOString().split("T")[0]);
 
+    let imageUrl: string | null = null;
     const imageInput = document.querySelector<HTMLInputElement>('input[name="image"]');
     if (imageInput?.files?.[0]) {
-      formData.append("image", imageInput.files[0]);
+      const file = imageInput.files[0];
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("post-images")
+        .upload(fileName, file);
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("post-images")
+          .getPublicUrl(fileName);
+        imageUrl = urlData?.publicUrl || null;
+      }
     }
 
-    const res = await fetch("/api/posts", { method: "POST", body: formData });
+    const jstNow = new Date();
+    jstNow.setHours(jstNow.getHours() + 9);
+    const studyDateVal = studyDate || jstNow.toISOString().split("T")[0];
+
+    const { data, error } = await supabase.rpc("create_post", {
+      p_content: content,
+      p_subject: subject || "その他",
+      p_study_minutes: parseInt(studyMinutes || "0"),
+      p_image_url: imageUrl,
+      p_study_date: studyDateVal,
+    });
+
     setIsSubmitting(false);
-    if (res.ok) {
-      const data = await res.json();
-      clearCache("/api/posts");
-      clearCache("/api/home");
+    if (!error && data) {
       if (data.streak) {
         addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
       }

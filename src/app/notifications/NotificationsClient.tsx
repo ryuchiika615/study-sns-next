@@ -2,10 +2,18 @@
 
 import { useEffect } from "react";
 import AppShell from "@/components/AppShell";
+import { createClient } from "@/lib/supabase";
 
 export default function NotificationsClient({ notifications: initial }: { notifications: any[] }) {
   useEffect(() => {
-    fetch("/api/notifications", { method: "POST" });
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      supabase.from("notifications").update({ is_read: true })
+        .eq("recipient_id", data.user.id)
+        .eq("is_read", false)
+        .then(({ error }) => { if (error) console.error(error); });
+    });
   }, []);
 
   const getNotificationText = (notif: any) => {

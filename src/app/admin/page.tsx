@@ -15,11 +15,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
-      const res = await fetch("/api/profile");
-      if (res.ok) {
-        const d = await res.json();
-        setProfile(d.profile);
-        if (!d.profile?.is_admin) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+      if (profile) {
+        setProfile(profile);
+        if (!profile.is_admin) {
           setError("管理者のみアクセスできます");
           return;
         }

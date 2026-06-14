@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
 import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
 
@@ -15,6 +16,7 @@ export default function PostCard({
   currentUserId: string;
   onDelete?: (id: string) => void;
 }) {
+  const supabase = createClient();
   const [liked, setLiked] = useState(post.is_liked);
   const [likeCount, setLikeCount] = useState(post.likes_count);
   const [showComments, setShowComments] = useState(false);
@@ -24,20 +26,34 @@ export default function PostCard({
   const router = useRouter();
 
   const handleLike = async () => {
-    const res = await fetch(`/api/posts/${post.id}/like`, { method: "POST" });
-    if (res.ok) {
-      const data = await res.json();
-      setLiked(data.liked);
-      setLikeCount(data.count);
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount(wasLiked ? likeCount - 1 : likeCount + 1);
+
+    if (wasLiked) {
+      const { error } = await supabase
+        .from("likes")
+        .delete()
+        .eq("user_id", currentUserId)
+        .eq("post_id", post.id);
+      if (error) { setLiked(true); setLikeCount(likeCount); }
+    } else {
+      const { error } = await supabase
+        .from("likes")
+        .insert({ user_id: currentUserId, post_id: post.id });
+      if (error) { setLiked(false); setLikeCount(likeCount); }
     }
   };
 
   const toggleComments = async () => {
     if (!showComments && !commentsLoaded) {
-      const res = await fetch(`/api/posts/${post.id}/comments`);
-      if (res.ok) {
-        const data = await res.json();
-        setComments(data.comments);
+      const { data } = await supabase
+        .from("comments")
+        .select("*, user:user_id(*)")
+        .eq("post_id", post.id)
+        .order("created_at", { ascending: true });
+      if (data) {
+        setComments(data);
         setCommentsLoaded(true);
       }
     }
@@ -46,24 +62,22 @@ export default function PostCard({
 
   const addComment = async () => {
     if (!commentText.trim()) return;
-    const res = await fetch(`/api/posts/${post.id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: commentText }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setComments([...comments, data.comment]);
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({ post_id: post.id, user_id: currentUserId, text: commentText.trim() })
+      .select("*, user:user_id(*)")
+      .single();
+    if (!error && data) {
+      setComments([...comments, data]);
       setCommentText("");
     }
   };
 
   const handleDelete = async () => {
     if (!confirm("削除しますか？")) return;
-    const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
-    if (res.ok) {
+    const { error } = await supabase.from("posts").delete().eq("id", post.id).eq("user_id", currentUserId);
+    if (!error) {
       onDelete?.(post.id);
-      router.refresh();
     }
   };
 

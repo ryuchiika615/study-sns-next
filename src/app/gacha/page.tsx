@@ -16,11 +16,11 @@ export default function GachaPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
       setUser(data.user);
-      fetch("/api/profile").then((r) => r.ok && r.json()).then((d) => {
-        if (d?.profile) setProfile(d.profile);
+      supabase.from("profiles").select("*").eq("id", data.user.id).single().then(({ data: profile }) => {
+        if (profile) setProfile(profile);
       });
-      fetch("/api/notifications").then((r) => r.ok && r.json()).then((d) => {
-        if (d) setUnreadCount(d.unread_count);
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", data.user.id).eq("is_read", false).then(({ count }) => {
+        setUnreadCount(count || 0);
       });
     });
   }, []);

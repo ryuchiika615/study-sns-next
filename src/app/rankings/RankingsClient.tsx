@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
+import { formatStudyTime } from "@/lib/utils";
 
 export default function RankingsClient({ initialRanking, initialDays, unreadCount }: {
   initialRanking: any[];
@@ -10,13 +12,45 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
 }) {
   const [ranking, setRanking] = useState(initialRanking);
   const [days, setDays] = useState(initialDays);
+  const supabase = createClient();
 
   const fetchRankings = async (d: number) => {
-    const res = await fetch(`/api/rankings?days=${d}`);
-    if (res.ok) {
-      const data = await res.json();
-      setRanking(data.ranking);
-    }
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - d);
+
+    const { data: posts } = await supabase
+      .from("posts")
+      .select("user_id, study_minutes")
+      .gt("study_minutes", 0)
+      .gte("created_at", startDate.toISOString());
+
+    const userTotals = new Map<string, { total: number; posts: number }>();
+    (posts || []).forEach((row: any) => {
+      const current = userTotals.get(row.user_id) || { total: 0, posts: 0 };
+      current.total += row.study_minutes || 0;
+      current.posts += 1;
+      userTotals.set(row.user_id, current);
+    });
+
+    const sorted = Array.from(userTotals.entries())
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 50);
+
+    const userIds = sorted.map(([id]) => id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, display_name, icon_url")
+      .in("id", userIds);
+
+    const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
+
+    setRanking(sorted.map(([userId, data], index) => ({
+      rank: index + 1,
+      user: profileMap.get(userId),
+      total_minutes: data.total,
+      post_count: data.posts,
+      display_time: formatStudyTime(data.total),
+    })));
     setDays(d);
   };
 

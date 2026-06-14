@@ -52,7 +52,7 @@ async function fetchRankingsData(supabase: any, days: number) {
   const userIds = sorted.map(([id]) => id);
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id, username, display_name, icon_url")
     .in("id", userIds);
 
   const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);

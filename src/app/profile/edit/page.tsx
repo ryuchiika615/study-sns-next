@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
@@ -24,98 +24,125 @@ export default function EditProfilePage() {
   const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
   const router = useRouter();
   const supabase = createClient();
+  const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
-      loadData();
+      userIdRef.current = data.user.id;
+      loadData(data.user.id);
     });
   }, []);
 
-  const loadData = async () => {
-    const [profileRes, itemsRes, notifRes] = await Promise.all([
-      fetch("/api/profile"),
-      fetch("/api/items"),
-      fetch("/api/notifications"),
+  const loadData = async (userId?: string) => {
+    const uid = userId || userIdRef.current;
+    if (!uid) return;
+    const [profileResult, userItemsResult, notifResult] = await Promise.all([
+      supabase.from("profiles").select("id, display_name, bio, department, icon_url, theme_color, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", uid).single(),
+      supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", uid),
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", uid).eq("is_read", false),
     ]);
 
-    if (profileRes.ok) {
-      const data = await profileRes.json();
-      setProfile(data.profile);
-      setDisplayName(data.profile.display_name || "");
-      setBio(data.profile.bio || "");
-      setDepartment(data.profile.department || "");
-      setThemeColor(data.profile.theme_color || "dark");
-      setTargetDate(data.profile.target_date || "");
-      setTargetMinutes(String(data.profile.target_minutes || 0));
+    if (profileResult.data) {
+      setProfile(profileResult.data);
+      setDisplayName(profileResult.data.display_name || "");
+      setBio(profileResult.data.bio || "");
+      setDepartment(profileResult.data.department || "");
+      setThemeColor(profileResult.data.theme_color || "dark");
+      setTargetDate(profileResult.data.target_date || "");
+      setTargetMinutes(String(profileResult.data.target_minutes || 0));
     }
 
-    if (itemsRes.ok) {
-      const data = await itemsRes.json();
-      setItems(data.items);
-      setTitles(data.titles);
-      setIcons(data.icons);
+    if (userItemsResult.data) {
+      const items = userItemsResult.data.map((ui: any) => ui.item);
+      setItems(items);
+      setTitles(items.filter((i: any) => i.category === "title"));
+      setIcons(items.filter((i: any) => i.category === "icon"));
     }
 
-    if (notifRes.ok) {
-      const data = await notifRes.json();
-      setUnreadCount(data.unread_count);
-    }
+    setUnreadCount(notifResult.count || 0);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("display_name", displayName);
-    formData.append("bio", bio);
-    formData.append("department", department);
-    formData.append("theme_color", themeColor);
-    formData.append("target_date", targetDate);
-    formData.append("target_minutes", targetMinutes);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const updateData: Record<string, any> = {
+      display_name: displayName,
+      bio,
+      department,
+      theme_color: themeColor,
+      target_date: targetDate || null,
+      target_minutes: parseInt(targetMinutes) || 0,
+    };
 
     const iconInput = document.querySelector<HTMLInputElement>('input[name="icon"]');
     if (iconInput?.files?.[0]) {
-      formData.append("icon", iconInput.files[0]);
+      const file = iconInput.files[0];
+      const fileExt = file.name.split(".").pop();
+      const fileName = `icons/${user.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file);
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(fileName);
+        if (urlData?.publicUrl) updateData.icon_url = urlData.publicUrl;
+      }
     }
 
-    const res = await fetch("/api/profile", { method: "PUT", body: formData });
-    if (res.ok) {
+    const { error } = await supabase
+      .from("profiles")
+      .update(updateData)
+      .eq("id", user.id);
+
+    if (!error) {
       setMessage("保存しました！");
-      loadData();
+      loadData(user.id);
     }
   };
 
   const handleEquip = async (itemId: string, slot: string) => {
-    await fetch("/api/items/equip", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, slot }),
-    });
-    loadData();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: ownership } = await supabase
+      .from("user_items")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("item_id", itemId)
+      .maybeSingle();
+
+    if (ownership) {
+      await supabase
+        .from("profiles")
+        .update({ [slot]: itemId })
+        .eq("id", user.id);
+      loadData(user.id);
+    }
   };
 
   const handleBuy = async (rarity: string, itemType: string, itemName: string) => {
-    const res = await fetch("/api/items/buy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rarity, itemType, itemName }),
+    const { data, error } = await supabase.rpc("buy_item", {
+      p_rarity: rarity, p_item_type: itemType, p_item_name: itemName,
     });
-    if (res.ok) {
+    if (!error && data) {
       setMessage(`${itemName} を交換しました！`);
       loadData();
     } else {
-      const err = await res.json();
-      setMessage(err.error || "交換に失敗しました");
+      setMessage(error?.message || "交換に失敗しました");
     }
   };
 
   const handleSell = async (itemIds: string[]) => {
-    const res = await fetch("/api/items/sell", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIds }),
+    const { data, error } = await supabase.rpc("sell_items", {
+      p_item_ids: itemIds.map(Number),
     });
-    if (res.ok) {
+    if (!error && data) {
       setMessage("売却しました！");
       setSelectedSell(new Set());
       loadData();
@@ -123,44 +150,36 @@ export default function EditProfilePage() {
   };
 
   const handleBulkSell = async (maxRarity: string) => {
-    const res = await fetch("/api/items/sell", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ maxRarity }),
+    const { data, error } = await supabase.rpc("sell_items", {
+      p_item_ids: [], p_max_rarity: maxRarity,
     });
-    if (res.ok) {
+    if (!error && data) {
       setMessage("売却しました！");
       loadData();
     }
   };
 
   const handleCombine = async (itemIdA: string, itemIdB: string, order: string) => {
-    const res = await fetch("/api/items/combine", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIdA, itemIdB, order }),
+    const { data, error } = await supabase.rpc("combine_items", {
+      p_item_id_a: parseInt(itemIdA), p_item_id_b: parseInt(itemIdB), p_order: order,
     });
-    if (res.ok) {
+    if (!error && data) {
       setMessage("精錬しました！");
       loadData();
     } else {
-      const err = await res.json();
-      setMessage(err.error || "精錬に失敗しました");
+      setMessage(error?.message || "精錬に失敗しました");
     }
   };
 
   const handleRefineParts = async (word: string, noun: string, namePart: string, order: string) => {
-    const res = await fetch("/api/items/refine", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ word, noun, namePart, order }),
+    const { data, error } = await supabase.rpc("refine_parts", {
+      p_word: word, p_noun: noun, p_name_part: namePart, p_order: order,
     });
-    if (res.ok) {
+    if (!error && data) {
       setMessage("精錬しました！");
       loadData();
     } else {
-      const err = await res.json();
-      setMessage(err.error || "精錬に失敗しました");
+      setMessage(error?.message || "精錬に失敗しました");
     }
   };
 

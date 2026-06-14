@@ -13,7 +13,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("*, current_title:current_title_id(*), current_avatar:current_avatar_id(*)")
+    .select("id, username, display_name, bio, department, icon_url, target_date, target_minutes")
     .eq("username", username)
     .maybeSingle();
 

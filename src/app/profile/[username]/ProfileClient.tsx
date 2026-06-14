@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
 import { PieChart } from "@/components/Charts";
-import { clearCache } from "@/lib/api-cache";
 
 type ProfileClientProps = {
   user: { id: string };
@@ -30,16 +30,27 @@ export default function ProfileClient({
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
   unreadCount,
 }: ProfileClientProps) {
+  const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
   const [activeTab, setActiveTab] = useState("posts");
   const [posts] = useState(initialPosts);
 
   const handleFollow = async () => {
-    const res = await fetch(`/api/follow/${profile.username}`, { method: "POST" });
-    if (res.ok) {
-      const d = await res.json();
-      setIsFollowing(d.following);
-      clearCache(`/api/users/${profile.username}`);
+    const wasFollowing = isFollowing;
+    setIsFollowing(!wasFollowing);
+
+    if (wasFollowing) {
+      const { error } = await supabase
+        .from("follows")
+        .delete()
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id);
+      if (error) setIsFollowing(true);
+    } else {
+      const { error } = await supabase
+        .from("follows")
+        .insert({ follower_id: user.id, following_id: profile.id });
+      if (error) setIsFollowing(false);
     }
   };
 

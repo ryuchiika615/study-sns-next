@@ -22,18 +22,17 @@ export default function LoginPage() {
       let email = loginId;
 
       if (!email.includes("@")) {
-        const res = await fetch("/api/auth/resolve-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: loginId.trim() }),
-        });
-        if (!res.ok) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("username", loginId.trim())
+          .maybeSingle();
+        if (!profiles?.email) {
           setError("ユーザーIDが見つかりません。");
           setLoading(false);
           return;
         }
-        const data = await res.json();
-        email = data.email;
+        email = profiles.email;
       }
 
       const { error: authError } = await supabase.auth.signInWithPassword({
@@ -50,14 +49,15 @@ export default function LoginPage() {
       // 管理者は管理者ダッシュボードへ
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
-        const res = await fetch("/api/profile");
-        if (res.ok) {
-          const { profile } = await res.json();
-          if (profile?.is_admin) {
-            router.push("/admin");
-            router.refresh();
-            return;
-          }
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", currentUser.id)
+          .single();
+        if (profile?.is_admin) {
+          router.push("/admin");
+          router.refresh();
+          return;
         }
       }
 

@@ -1,10 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import { PieChart, BarChart } from "@/components/Charts";
+import { subjectColor, formatStudyTime } from "@/lib/utils";
+
+function getTodayString(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getDateNDaysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split("T")[0];
+}
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
@@ -15,29 +26,87 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const fetchData = useCallback(async (s?: string, e?: string) => {
+    const uid = user?.id;
+    if (!uid) return;
+    const startStr = s || getDateNDaysAgo(29);
+    const endStr = e || getTodayString();
+
+    const { data: posts } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("user_id", uid)
+      .gt("study_minutes", 0)
+      .gte("created_at", startStr)
+      .lte("created_at", endStr + "T23:59:59Z")
+      .order("created_at", { ascending: true });
+
+    if (!posts) return;
+
+    const subjectMap = new Map<string, { total: number; count: number }>();
+    const dayMap = new Map<string, number>();
+    let totalMinutes = 0;
+
+    posts.forEach((post: any) => {
+      const sub = subjectMap.get(post.subject) || { total: 0, count: 0 };
+      sub.total += post.study_minutes || 0;
+      sub.count += 1;
+      subjectMap.set(post.subject, sub);
+
+      const day = post.created_at.split("T")[0];
+      dayMap.set(day, (dayMap.get(day) || 0) + (post.study_minutes || 0));
+      totalMinutes += post.study_minutes || 0;
+    });
+
+    const subjectRows = Array.from(subjectMap.entries())
+      .map(([subject, sdata]) => ({
+        subject,
+        total: sdata.total,
+        count: sdata.count,
+        display_time: formatStudyTime(sdata.total),
+        color: subjectColor(subject),
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 12);
+
+    const dayLabels: string[] = [];
+    const dayData: number[] = [];
+    const startD = new Date(startStr);
+    const endD = new Date(endStr);
+    for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().split("T")[0];
+      dayLabels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+      dayData.push(dayMap.get(key) || 0);
+    }
+
+    setData({
+      start: startStr,
+      end: endStr,
+      pie_labels: JSON.stringify(subjectRows.map((s) => s.subject)),
+      pie_data: JSON.stringify(subjectRows.map((s) => s.total)),
+      pie_colors: JSON.stringify(subjectRows.map((s) => s.color)),
+      bar_labels: JSON.stringify(dayLabels),
+      bar_data: JSON.stringify(dayData),
+      subject_list: subjectRows,
+      total_all_time_display: formatStudyTime(totalMinutes),
+    });
+    setStart(startStr);
+    setEnd(endStr);
+  }, [user?.id]);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: authData }) => {
       if (!authData.user) { router.push("/auth/login"); return; }
       setUser(authData.user);
-      fetchData();
-      fetch("/api/notifications").then((r) => r.ok && r.json()).then((d) => {
-        if (d) setUnreadCount(d.unread_count);
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", authData.user.id).eq("is_read", false).then(({ count }) => {
+        setUnreadCount(count || 0);
       });
     });
   }, []);
 
-  const fetchData = async (s?: string, e?: string) => {
-    const params = new URLSearchParams();
-    if (s) params.set("start", s);
-    if (e) params.set("end", e);
-    const res = await fetch(`/api/analytics?${params}`);
-    if (res.ok) {
-      const d = await res.json();
-      setData(d);
-      setStart(d.start);
-      setEnd(d.end);
-    }
-  };
+  useEffect(() => {
+    if (user) fetchData();
+  }, [user]);
 
   const handleDateSearch = (e: React.FormEvent) => {
     e.preventDefault();

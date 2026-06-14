@@ -11,11 +11,12 @@ export function Sidebar() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
-      const res = await fetch("/api/profile");
-      if (res.ok) {
-        const { profile } = await res.json();
-        setIsAdmin(!!profile?.is_admin);
-      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", data.user.id)
+        .single();
+      setIsAdmin(!!profile?.is_admin);
     });
   }, []);
 
