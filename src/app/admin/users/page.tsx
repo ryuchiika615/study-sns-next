@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
             <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-bold mb-4">{mc.title}</h3>
               <p className="text-sm text-gray-500 mb-3">
-                対象: <span className="font-bold text-gray-900">{user?.display_name || user?.username}</span>
+                対象: <span className="font-bold text-gray-900">{modal.user?.display_name || modal.user?.username}</span>
               </p>
               {mc.input && (
                 <input
