@@ -29,7 +29,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [studyDate, setStudyDate] = useState("");
   const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [totalMinutes] = useState(initialTotal);
-  const [lastNotifId, setLastNotifId] = useState(0);
+  const [lastNotifSeen, setLastNotifSeen] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const latestCreatedAt = useRef<string | null>(null);
@@ -57,8 +57,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
     const unread = count || 0;
     const lastNotif = notifications?.[0];
-    if (lastNotif && lastNotif.id > lastNotifId) {
-      setLastNotifId(lastNotif.id);
+    if (lastNotif && lastNotif.id !== lastNotifSeen) {
+      setLastNotifSeen(lastNotif.id);
       if (lastNotif.notification_type === "like") {
         addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}がいいねしました`, type: "like" });
       } else if (lastNotif.notification_type === "reply") {
