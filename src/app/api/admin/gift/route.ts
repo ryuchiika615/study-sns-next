@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // アイテムを取得または作成
+  // アイテムを取得または作成（service_roleでRLS回避）
   let { data: item } = await supabase
     .from("gacha_items")
     .select("*")
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (!item) {
-    const { data: newItem } = await supabase
+    const { data: newItem } = await admin
       .from("gacha_items")
       .insert({ name: itemName, rarity: rarity || "N", category: itemType || "title" })
       .select()
@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
   if (!item) return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
 
   // ユーザーに付与
-  await supabase.from("user_items").insert({ user_id: userId, item_id: item.id });
+  await admin.from("user_items").insert({ user_id: userId, item_id: item.id });
 
   // 通知を作成
-  await supabase.from("notifications").insert({
+  await admin.from("notifications").insert({
     recipient_id: userId,
     sender_id: user.id,
     notification_type: "gift",

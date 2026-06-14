@@ -22,9 +22,9 @@ export async function GET() {
 
   const { data: sessions, error } = await supabase
     .from("login_sessions")
-    .select("*, user:user_id(*)")
+    .select("*, user:user_id(id, display_name, username)")
     .order("login_at", { ascending: false })
-    .limit(100);
+    .limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
