@@ -76,7 +76,9 @@ export default function HomePage() {
     formData.append("content", content);
     formData.append("subject", subject || "その他");
     formData.append("study_minutes", studyMinutes || "0");
-    formData.append("study_date", studyDate || new Date().toISOString().split("T")[0]);
+    const jstNow = new Date();
+    jstNow.setHours(jstNow.getHours() + 9);
+    formData.append("study_date", studyDate || jstNow.toISOString().split("T")[0]);
 
     const imageInput = document.querySelector<HTMLInputElement>('input[name="image"]');
     if (imageInput?.files?.[0]) {

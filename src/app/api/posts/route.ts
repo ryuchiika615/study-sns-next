@@ -105,7 +105,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const createdDate = studyDate
+  const todayJST = new Date();
+  todayJST.setHours(todayJST.getHours() + 9);
+  const todayStr = todayJST.toISOString().split("T")[0];
+
+  // 今日の日付なら現在時刻、過去の日付なら12:00 JST
+  const isBackdate = studyDate && studyDate !== todayStr;
+  const createdDate = isBackdate
     ? new Date(studyDate + "T12:00:00+09:00").toISOString()
     : new Date().toISOString();
 
