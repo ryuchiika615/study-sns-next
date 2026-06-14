@@ -29,6 +29,9 @@ export default function AdminLoginActivityPage() {
     if (res.ok) {
       const data = await res.json();
       setSessions(data.sessions || []);
+    } else {
+      const text = await res.text();
+      setError(`APIエラー: ${res.status} ${text.slice(0, 200)}`);
     }
   };
 
@@ -70,6 +73,7 @@ export default function AdminLoginActivityPage() {
                     <th className="px-3 py-2 text-left whitespace-nowrap">ログアウト</th>
                     <th className="px-3 py-2 text-left whitespace-nowrap">接続時間</th>
                     <th className="px-3 py-2 text-left whitespace-nowrap">IP</th>
+                    <th className="px-3 py-2 text-left whitespace-nowrap">所在地</th>
                     <th className="px-3 py-2 text-center whitespace-nowrap">状態</th>
                   </tr>
                 </thead>
@@ -84,6 +88,7 @@ export default function AdminLoginActivityPage() {
                       <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{formatJst(session.logout_at)}</td>
                       <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{calcDuration(session.login_at, session.logout_at)}</td>
                       <td className="px-3 py-2 text-gray-500 whitespace-nowrap font-mono text-xs">{session.ip_address || "-"}</td>
+                      <td className="px-3 py-2 text-gray-500 whitespace-nowrap text-xs">{session.location || "-"}</td>
                       <td className="px-3 py-2 text-center whitespace-nowrap">
                         {session.is_active_now ? (
                           <span className="text-green-600 font-bold">● オンライン</span>

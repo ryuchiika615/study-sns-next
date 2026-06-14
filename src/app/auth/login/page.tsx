@@ -46,7 +46,8 @@ export default function LoginPage() {
         return;
       }
 
-      // 管理者は管理者ダッシュボードへ
+      fetch("/api/auth/track-session", { method: "POST" }).catch(() => {});
+
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
         const { data: profile } = await supabase
