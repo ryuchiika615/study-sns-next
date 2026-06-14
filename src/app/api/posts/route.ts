@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     .from("posts")
     .select(`
       *,
-      user:user_id(*),
+      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
       likes_count:likes(count),
       comments_count:comments(count)
     `, { count: "exact" })

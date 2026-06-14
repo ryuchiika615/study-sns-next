@@ -10,10 +10,10 @@ export async function GET() {
 
   const { data: notifications, error } = await supabase
     .from("notifications")
-    .select("*, sender:sender_id(*)")
+    .select("id, notification_type, sender_id, created_at, sender:sender_id(id, display_name, username)")
     .eq("recipient_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(30);
+    .limit(5);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

@@ -45,27 +45,17 @@ export default function HomePage() {
       if (!data.user) { router.push("/auth/login"); return; }
       setUser(data.user);
 
-      // プロフィール取得
-      fetch("/api/profile").then((r) => r.ok && r.json()).then((d) => {
+      fetch("/api/home").then(async (r) => {
+        if (!r.ok) return;
+        const d = await r.json();
         if (d?.profile) setProfile(d.profile);
-      });
-
-      // 未読通知数
-      fetch("/api/notifications").then((r) => r.ok && r.json()).then((d) => {
         if (d) setUnreadCount(d.unread_count);
-      });
-
-      // 週間データ
-      fetch("/api/analytics").then((r) => r.ok && r.json()).then((d) => {
         if (d?.weekly_labels) {
           setWeeklyData({
             labels: JSON.parse(d.weekly_labels),
             datasets: JSON.parse(d.weekly_datasets),
           });
-          // 合計時間計算
-          const parsed = JSON.parse(d.weekly_datasets);
-          const total = parsed.reduce((sum: number, ds: any) => sum + ds.data.reduce((a: number, b: number) => a + b, 0), 0);
-          setTotalMinutes(total);
+          setTotalMinutes(d.total_minutes || 0);
         }
       });
 
