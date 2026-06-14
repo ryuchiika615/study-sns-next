@@ -87,7 +87,7 @@ begin
 
   v_today := (timezone('JST', now()))::date;
   v_yesterday := (timezone('JST', now()) - interval '1 day')::date;
-  v_is_backdate := p_study_date is not null and p_study_date != v_today;
+  v_is_backdate := p_study_date is not null and p_study_date::date != v_today;
 
   if v_is_backdate then
     v_created_at := (p_study_date || 'T12:00:00+09:00')::timestamptz;
