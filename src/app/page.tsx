@@ -112,6 +112,13 @@ export default function HomePage() {
 
   return (
     <AppShell unreadCount={unreadCount}>
+      {totalMinutes > 0 && (
+        <div className="mx-4 mb-4 p-4 rounded-lg bg-gradient-to-r from-blue-900 to-blue-700 text-white border border-blue-400 text-center">
+          <p className="text-sm text-blue-200">総勉強時間</p>
+          <p className="text-2xl font-bold">{formatRemaining(totalMinutes)}</p>
+        </div>
+      )}
+
       {profile?.target_date && profile?.target_minutes > 0 && (
         <div className="mx-4 mb-4 p-4 rounded-lg bg-gradient-to-r from-gray-900 to-gray-800 text-white border border-yellow-600 text-center">
           <h4 className="text-yellow-500 m-0 mb-2"><i className="fas fa-bullseye" /> {profile.target_date} までの目標</h4>

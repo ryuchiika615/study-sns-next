@@ -50,7 +50,7 @@ export default function GachaPage() {
 
   return (
     <AppShell unreadCount={unreadCount}>
-      <header className="lytter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-4 shadow-lg mb-4">
+      <header className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-4 shadow-lg mb-4">
         <h1 className="text-3xl text-yellow-600 font-serif tracking-wider m-0" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
           LOGIN BONUS
         </h1>

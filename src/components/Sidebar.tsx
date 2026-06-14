@@ -21,7 +21,7 @@ export function Sidebar() {
     <>
       <button
         type="button"
-        className="absolute top-1/2 left-4 -translate-y-1/2 text-2xl text-gray-900 z-50 cursor-pointer bg-white/90 border-none w-10 h-10 rounded-full shadow flex items-center justify-center"
+        className="fixed top-4 left-4 text-2xl text-gray-900 z-50 cursor-pointer bg-white/90 border-none w-10 h-10 rounded-full shadow flex items-center justify-center"
         onClick={() => {
           document.getElementById("sidebar")!.style.width = "250px";
           document.getElementById("overlay")!.style.display = "block";
