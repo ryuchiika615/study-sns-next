@@ -20,6 +20,7 @@ export default function HomePage() {
   const [studyDate, setStudyDate] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [weeklyData, setWeeklyData] = useState<any>(null);
+  const [totalMinutes, setTotalMinutes] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
@@ -56,6 +57,10 @@ export default function HomePage() {
             labels: JSON.parse(d.weekly_labels),
             datasets: JSON.parse(d.weekly_datasets),
           });
+          // 合計時間計算
+          const parsed = JSON.parse(d.weekly_datasets);
+          const total = parsed.reduce((sum: number, ds: any) => sum + ds.data.reduce((a: number, b: number) => a + b, 0), 0);
+          setTotalMinutes(total);
         }
       });
     });
@@ -94,6 +99,15 @@ export default function HomePage() {
     fetchPosts(1, search);
   };
 
+  const formatRemaining = (minutes: number) => {
+    if (minutes <= 0) return "目標達成！🎉";
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h > 0 && m > 0) return `${h}時間${m}分`;
+    if (h > 0) return `${h}時間`;
+    return `${m}分`;
+  };
+
   if (!user) return null;
 
   return (
@@ -102,6 +116,7 @@ export default function HomePage() {
         <div className="mx-4 mb-4 p-4 rounded-lg bg-gradient-to-r from-gray-900 to-gray-800 text-white border border-yellow-600 text-center">
           <h4 className="text-yellow-500 m-0 mb-2"><i className="fas fa-bullseye" /> {profile.target_date} までの目標</h4>
           <p className="text-sm text-gray-400">目標合計 {Math.floor(profile.target_minutes / 60)}時間{profile.target_minutes % 60}分</p>
+          <p className="text-lg text-yellow-400 font-bold mt-1">あと {formatRemaining(profile.target_minutes - totalMinutes)}</p>
         </div>
       )}
 
@@ -114,7 +129,7 @@ export default function HomePage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="投稿を検索"
+            placeholder="リュイートを検索"
             className="w-full rounded-full border border-gray-200 bg-gray-100 px-4 py-2.5 text-sm"
           />
         </form>
@@ -162,7 +177,7 @@ export default function HomePage() {
 
           <div className="text-right mt-2.5">
             <button type="submit" className="bg-primary text-white font-bold rounded-full px-5 py-2 border-none cursor-pointer text-base">
-              ポストする
+              リュイートする
             </button>
           </div>
         </form>

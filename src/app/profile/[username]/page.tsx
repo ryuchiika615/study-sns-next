@@ -75,7 +75,7 @@ export default function UserProfilePage() {
             )}
 
             <div className="flex gap-4 mt-2 text-sm">
-              <span><strong>{data.post_count}</strong> 投稿</span>
+              <span><strong>{data.post_count}</strong> リュイート</span>
               <span><strong>{data.followers_count}</strong> フォロワー</span>
               <span><strong>{data.following_count}</strong> フォロー中</span>
             </div>
@@ -84,6 +84,17 @@ export default function UserProfilePage() {
               <span className="text-primary font-bold"><i className="fas fa-book-open" /> {data.total_study_display}</span>
               <span className="text-green-600 font-bold">今月 {data.month_study_display}</span>
             </div>
+            {data.profile?.target_date && data.profile?.target_minutes > 0 && (
+              <div className="mt-2 text-sm text-yellow-700 font-bold">
+                <i className="fas fa-bullseye" /> 目標 {data.profile.target_date} まであと{(() => {
+                  const remaining = data.profile.target_minutes - data.total_study_minutes;
+                  if (remaining <= 0) return "目標達成！🎉";
+                  const h = Math.floor(remaining / 60);
+                  const m = remaining % 60;
+                  return `${h > 0 ? `${h}時間` : ""}${m}分`;
+                })()}
+              </div>
+            )}
 
             {user && user.id !== data.profile?.id && (
               <button onClick={handleFollow}
@@ -115,7 +126,7 @@ export default function UserProfilePage() {
               className={`flex-1 py-2 text-sm font-bold text-center cursor-pointer ${
                 activeTab === tab ? "text-primary border-b-2 border-primary" : "text-gray-500"
               }`}>
-              {tab === "posts" ? "投稿" : tab === "likes" ? "いいね" : tab === "followers" ? "フォロワー" : "フォロー中"}
+              {tab === "posts" ? "リュイート" : tab === "likes" ? "いいね" : tab === "followers" ? "フォロワー" : "フォロー中"}
             </button>
           ))}
         </div>

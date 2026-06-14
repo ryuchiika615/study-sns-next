@@ -15,7 +15,7 @@ export function BottomNav({ unreadCount = 0 }: { unreadCount?: number }) {
           </span>
         )}
       </a>
-      <a href="/" className="nav-item"><i className="fas fa-user-circle text-2xl text-gray-400" /></a>
+      <a href="/profile/edit" className="nav-item"><i className="fas fa-user-circle text-2xl text-gray-400" /></a>
     </nav>
   );
 }

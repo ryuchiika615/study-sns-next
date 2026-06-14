@@ -150,7 +150,7 @@ export default function PostCard({
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="返信をポスト"
+               placeholder="返信をリュイート"
               className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm bg-gray-100 focus:bg-white focus:border-primary outline-none"
               onKeyDown={(e) => e.key === "Enter" && addComment()}
             />

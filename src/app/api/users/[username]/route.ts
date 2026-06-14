@@ -74,6 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: { username
     followers_count: followersCount || 0,
     following_count: followingCount || 0,
     post_count: postCount || 0,
+    total_study_minutes: totalMinutes,
     total_study_display: formatStudyTime(totalMinutes),
     month_study_display: formatStudyTime(monthMinutes),
     subject_labels: JSON.stringify([...subjectMap.keys()]),

@@ -143,19 +143,16 @@ async function updateStreakBonus(supabase: any, userId: string, minutes: number)
   const lastDate = profile.last_post_date;
   let streak = profile.consecutive_post_days || 0;
   let points = profile.points || 0;
-  let exchangePoints = profile.exchange_points || 0;
 
   if (lastDate !== today) {
     if (lastDate === getYesterdayString()) {
       streak += 1;
-      if (streak > 7) streak = 1;
     } else {
       streak = 1;
     }
 
-    const bonusPoints = Math.pow(2, streak - 1);
-    points += minutes;
-    exchangePoints += bonusPoints;
+    const bonusPoints = streak <= 7 ? Math.pow(2, streak - 1) : 100;
+    points += minutes + bonusPoints;
   } else {
     points += minutes;
   }
@@ -164,7 +161,6 @@ async function updateStreakBonus(supabase: any, userId: string, minutes: number)
     .from("profiles")
     .update({
       points,
-      exchange_points: exchangePoints,
       consecutive_post_days: streak,
       last_post_date: today,
     })

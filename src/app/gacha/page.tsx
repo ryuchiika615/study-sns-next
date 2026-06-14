@@ -36,11 +36,15 @@ export default function GachaPage() {
     { day: 4, pt: 8 },
     { day: 5, pt: 16 },
     { day: 6, pt: 32 },
+    { day: 7, pt: 64 },
   ];
+
+  const extraDay = currentStreak >= 8 ? currentStreak : null;
 
   const isClaimed = (day: number) => currentStreak >= day;
   const isCurrent = (day: number) => {
     if (day === 1) return currentStreak === 0;
+    if (day === 8) return false;
     return currentStreak === day - 1;
   };
 
@@ -70,7 +74,7 @@ export default function GachaPage() {
                     : isCurrent(b.day)
                     ? "border-blue-500 shadow-lg shadow-blue-200 scale-105"
                     : "border-gray-200"
-                } ${b.day === 7 ? "col-span-3 bg-gradient-to-br from-amber-50 to-yellow-100 border-yellow-400" : ""}`}
+                }`}
               >
                 <p className="text-xs font-bold text-gray-500 mb-1">{b.day}日目</p>
                 <p className="text-xl font-black text-gray-800">{b.pt}pt</p>
@@ -80,22 +84,18 @@ export default function GachaPage() {
               </div>
             ))}
 
-            {/* 7日目は特別表示 */}
-            <div
-              className={`relative bg-white rounded-lg border-2 p-4 text-center col-span-3 bg-gradient-to-br from-amber-50 to-yellow-100 border-yellow-400 ${
-                isClaimed(7) ? "border-green-400 bg-green-50" : isCurrent(7) ? "border-blue-500 shadow-lg shadow-blue-200 scale-105" : ""
-              }`}
-            >
-              <p className="text-xs font-bold text-amber-700 mb-1">7日目達成ボーナス！</p>
-              <p className="text-2xl font-black text-amber-800">64 pt</p>
-              {isClaimed(7) && (
-                <i className="fas fa-check-circle text-green-400 text-4xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-60" />
+            {/* 8日目以降は100pt固定 */}
+            <div className="col-span-3 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg p-4 text-center">
+              <p className="text-xs font-bold text-purple-700 mb-1">8日目以降</p>
+              <p className="text-2xl font-black text-purple-800">100 pt 固定</p>
+              {extraDay && (
+                <p className="text-sm text-purple-600 mt-1">現在 {extraDay}日連続！</p>
               )}
             </div>
           </div>
 
           <div className="p-5 text-sm text-gray-500 text-center leading-relaxed border-t border-gray-100">
-            <i className="fas fa-info-circle" /> 1日1回、勉強記録をポストするとポイントがもらえます。<br />
+            <i className="fas fa-info-circle" /> 1日1回、勉強記録をリュイートするとポイントがもらえます。<br />
             連続でポストするほどもらえるポイントが倍増！<br />
             <span className="text-red-500 font-bold">※過去の日付でポストしても連続記録にはなりません。</span>
           </div>

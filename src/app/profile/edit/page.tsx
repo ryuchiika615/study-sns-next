@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
-import { SELL_VALUES, BUY_COSTS, RARITY_LABELS } from "@/lib/utils";
-import { SHOP_CATALOG } from "@/lib/data";
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -92,57 +90,6 @@ export default function EditProfilePage() {
     loadData();
   };
 
-  const handleBuy = async (rarity: string, itemType: string, itemName: string) => {
-    const res = await fetch("/api/items/buy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rarity, itemType, itemName }),
-    });
-    if (res.ok) {
-      setMessage("購入しました！");
-      loadData();
-    } else {
-      const data = await res.json();
-      setMessage(data.error || "購入に失敗しました");
-    }
-  };
-
-  const handleSell = async (itemIds: string[]) => {
-    const res = await fetch("/api/items/sell", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIds }),
-    });
-    if (res.ok) {
-      setMessage("売却しました！");
-      loadData();
-    }
-  };
-
-  const handleBulkSell = async (maxRarity: string) => {
-    const res = await fetch("/api/items/sell", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ maxRarity }),
-    });
-    if (res.ok) {
-      setMessage("一括売却しました！");
-      loadData();
-    }
-  };
-
-  const handleCombine = async (itemIdA: string, itemIdB: string, order: string) => {
-    const res = await fetch("/api/items/combine", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIdA, itemIdB, order }),
-    });
-    if (res.ok) {
-      setMessage("合成しました！");
-      loadData();
-    }
-  };
-
   if (!profile) return null;
 
   return (
@@ -204,17 +151,9 @@ export default function EditProfilePage() {
         </form>
 
         {/* ポイント表示 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-primary">{profile.points}</p>
-              <p className="text-xs text-gray-500">ポイント</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-yellow-600">{profile.exchange_points}</p>
-              <p className="text-xs text-gray-500">交換ポイント</p>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-3xl font-bold text-primary">{profile.points}</p>
+          <p className="text-xs text-gray-500">ポイント</p>
         </div>
 
         {/* 称号一覧 */}
@@ -247,39 +186,6 @@ export default function EditProfilePage() {
                   装備する
                 </button>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ショップ */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">ショップ</h2>
-          {["N", "R", "SR", "SSR", "UR", "LR"].map((rarity) => (
-            <details key={rarity} className="mb-2">
-              <summary className="cursor-pointer font-bold text-sm p-2 rounded-lg hover:bg-gray-50">
-                {rarity} - {BUY_COSTS[rarity as keyof typeof BUY_COSTS]}ポイント (売却: {SELL_VALUES[rarity as keyof typeof SELL_VALUES]})
-              </summary>
-              <div className="grid grid-cols-2 gap-1 mt-1">
-                {(SHOP_CATALOG.title[rarity as keyof typeof SHOP_CATALOG.title] || []).slice(0, 6).map((name: string) => (
-                  <button key={name} onClick={() => handleBuy(rarity, "title", name)}
-                    className="text-left text-xs p-1.5 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    {name.slice(0, 20)}
-                  </button>
-                ))}
-              </div>
-            </details>
-          ))}
-        </div>
-
-        {/* 一括売却 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">一括売却</h2>
-          <div className="flex gap-2 flex-wrap">
-            {["N", "R", "SR", "SSR", "UR"].map((rarity) => (
-              <button key={rarity} onClick={() => handleBulkSell(rarity)}
-                className="text-xs px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer">
-                {rarity}以下を売却
-              </button>
             ))}
           </div>
         </div>

@@ -1,6 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
+
 export function Sidebar() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const res = await fetch("/api/profile");
+      if (res.ok) {
+        const { profile } = await res.json();
+        setIsAdmin(!!profile?.is_admin);
+      }
+    });
+  }, []);
   return (
     <>
       <button
@@ -37,6 +53,14 @@ export function Sidebar() {
         <a href="/profile/edit" className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-user-gear w-6 text-center mr-3" /> 設定
         </a>
+        {isAdmin && (
+          <>
+            <hr className="border-gray-700 my-5 mx-6" />
+            <a href="/admin" className="block text-lg text-yellow-400 no-underline py-4 px-6 hover:bg-gray-800 font-bold">
+              <i className="fas fa-shield-alt w-6 text-center mr-3" /> 管理者画面
+            </a>
+          </>
+        )}
         <hr className="border-gray-700 my-5 mx-6" />
         <form action="/auth/logout" method="POST" id="logout-form" className="hidden" />
         <a href="javascript:void(0)" className="block text-lg text-red-400 no-underline py-4 px-6 hover:bg-gray-800 font-bold"
