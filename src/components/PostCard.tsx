@@ -71,7 +71,7 @@ export default function PostCard({
   return (
     <div className="post-card">
       <div className="flex px-4 pt-1">
-        <a href={`/profile/${post.user?.display_name || post.user_id}`} className="no-underline">
+        <a href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
             {post.user?.icon_url ? (
               <img src={post.user.icon_url} className="w-12 h-12 rounded-full object-cover border-2 border-white" />
@@ -90,11 +90,11 @@ export default function PostCard({
 
           <div className="flex items-baseline gap-1 flex-wrap">
             <strong className="text-[15px]">
-              <a href={`/profile/${post.user?.display_name || post.user_id}`} className="text-gray-900 no-underline hover:underline">
+              <a href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="text-gray-900 no-underline hover:underline">
                 {post.user?.display_name || "ユーザー"}
               </a>
             </strong>
-            <span className="text-gray-500 text-sm">@{post.user_id?.slice(0, 8)}</span>
+            <span className="text-gray-500 text-sm">@{post.user?.username || post.user?.display_name || post.user_id?.slice(0, 8)}</span>
             <span className="text-gray-500 text-sm">·</span>
             <span className="text-gray-500 text-sm">{post.formatted_time}</span>
           </div>
@@ -141,7 +141,7 @@ export default function PostCard({
           {comments.map((c: any) => (
             <div key={c.id} className="mb-2.5 pb-2.5 border-b border-gray-100 text-sm">
               <strong>{c.user?.display_name || "ユーザー"}</strong>
-              <span className="text-gray-500 text-xs ml-1">@{c.user_id?.slice(0, 8)}</span>
+              <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
               <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
             </div>
           ))}

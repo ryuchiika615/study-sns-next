@@ -68,7 +68,7 @@ export default function UserProfilePage() {
           </div>
           <div className="flex-1">
             <h2 className="text-xl font-bold">{data.profile?.display_name || username}</h2>
-            <p className="text-gray-500 text-sm">@{username}</p>
+            <p className="text-gray-500 text-sm">@{data.profile?.username || username}</p>
             {data.profile?.bio && <p className="text-sm mt-1">{data.profile.bio}</p>}
             {data.profile?.department && (
               <p className="text-sm text-gray-500"><i className="fas fa-building mr-1" />{data.profile.department}</p>
