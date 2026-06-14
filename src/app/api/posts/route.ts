@@ -165,10 +165,13 @@ async function updateStreakBonus(supabase: any, userId: string, minutes: number)
     points += minutes;
   }
 
+  const exchangePoints = (profile.exchange_points || 0) + (isNewStreak ? bonusPoints : 0);
+
   await supabase
     .from("profiles")
     .update({
       points,
+      exchange_points: exchangePoints,
       consecutive_post_days: streak,
       last_post_date: today,
     })

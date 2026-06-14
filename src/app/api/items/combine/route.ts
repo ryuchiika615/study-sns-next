@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   const left = order === "reverse" ? itemB.name : itemA.name;
   const right = order === "reverse" ? itemA.name : itemB.name;
   const baseName = `${left}${right}`;
-  const fullTitle = `邊ｾ骭ｬ:${baseName.slice(0, 95)}`;
+  const fullTitle = `精錬:${baseName.slice(0, 95)}`;
 
   const maxRarityVal = Math.max(
     RARITY_ORDER[itemA.rarity] || 1,

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     itemsToDelete = (allItems || []).filter((ui: any) => {
       const rarityVal = RARITY_ORDER[ui.item?.rarity] || 0;
-      return rarityVal <= maxVal && !protectedNames.has(ui.item?.id) && !ui.item?.name.startsWith("邊ｾ骭ｬ:");
+      return rarityVal <= maxVal && !protectedNames.has(ui.item?.id) && !ui.item?.name.startsWith("精錬:") && !ui.item?.name.startsWith("邊ｾ骭ｬ:");
     });
 
     totalPoints = itemsToDelete.reduce((sum: number, ui: any) => {
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       .in("item_id", itemIds);
 
     itemsToDelete = (selectedItems || []).filter((ui: any) => {
-      return ui.item?.name !== profile.current_title && ui.item?.name !== profile.current_avatar;
+      return ui.item?.id !== profile.current_title_id && ui.item?.id !== profile.current_avatar_id && !ui.item?.name.startsWith("精錬:") && !ui.item?.name.startsWith("邊ｾ骭ｬ:");
     });
 
     totalPoints = itemsToDelete.reduce((sum: number, ui: any) => {

@@ -40,14 +40,14 @@ export async function POST(request: NextRequest) {
   let { data: newItem } = await supabase
     .from("gacha_items")
     .select("*")
-    .eq("name", `邊ｾ骭ｬ:${fullTitle.slice(0, 47)}`)
+    .eq("name", `精錬:${fullTitle.slice(0, 47)}`)
     .maybeSingle();
 
   if (!newItem) {
     const { data: created } = await supabase
       .from("gacha_items")
       .insert({
-        name: `邊ｾ骭ｬ:${fullTitle.slice(0, 47)}`,
+        name: `精錬:${fullTitle.slice(0, 47)}`,
         rarity: RARITY_BY_VALUE[rarityValue],
         category: "title",
       })

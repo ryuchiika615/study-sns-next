@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
+import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isIconItem, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
+
+const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -18,6 +21,7 @@ export default function EditProfilePage() {
   const [targetMinutes, setTargetMinutes] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [message, setMessage] = useState("");
+  const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
   const router = useRouter();
   const supabase = createClient();
 
@@ -90,7 +94,102 @@ export default function EditProfilePage() {
     loadData();
   };
 
+  const handleBuy = async (rarity: string, itemType: string, itemName: string) => {
+    const res = await fetch("/api/items/buy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rarity, itemType, itemName }),
+    });
+    if (res.ok) {
+      setMessage(`${itemName} を交換しました！`);
+      loadData();
+    } else {
+      const err = await res.json();
+      setMessage(err.error || "交換に失敗しました");
+    }
+  };
+
+  const handleSell = async (itemIds: string[]) => {
+    const res = await fetch("/api/items/sell", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemIds }),
+    });
+    if (res.ok) {
+      setMessage("売却しました！");
+      setSelectedSell(new Set());
+      loadData();
+    }
+  };
+
+  const handleBulkSell = async (maxRarity: string) => {
+    const res = await fetch("/api/items/sell", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ maxRarity }),
+    });
+    if (res.ok) {
+      setMessage("売却しました！");
+      loadData();
+    }
+  };
+
+  const handleCombine = async (itemIdA: string, itemIdB: string, order: string) => {
+    const res = await fetch("/api/items/combine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemIdA, itemIdB, order }),
+    });
+    if (res.ok) {
+      setMessage("精錬しました！");
+      loadData();
+    } else {
+      const err = await res.json();
+      setMessage(err.error || "精錬に失敗しました");
+    }
+  };
+
+  const handleRefineParts = async (word: string, noun: string, namePart: string, order: string) => {
+    const res = await fetch("/api/items/refine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ word, noun, namePart, order }),
+    });
+    if (res.ok) {
+      setMessage("精錬しました！");
+      loadData();
+    } else {
+      const err = await res.json();
+      setMessage(err.error || "精錬に失敗しました");
+    }
+  };
+
+  const toggleSellItem = (id: string) => {
+    setSelectedSell((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   if (!profile) return null;
+
+  const canSell = (item: any) => {
+    if (isRefinedItem(item)) return false;
+    if (item.id === profile.current_title_id) return false;
+    if (item.id === profile.current_avatar_id) return false;
+    return true;
+  };
+
+  const ownedParts = () => {
+    const displayNames = titles.map((t: any) => itemDisplayName(t));
+    const words = [...new Set(displayNames.filter((n: string) => WORDS_LIST.includes(n)))];
+    const nouns = [...new Set(displayNames.filter((n: string) => NOUNS_LIST.includes(n)))];
+    const names = [...new Set(displayNames.filter((n: string) => NAMES_LIST.includes(n)))];
+    return { words, nouns, names };
+  };
+  const parts = ownedParts();
 
   return (
     <AppShell unreadCount={unreadCount}>
@@ -151,45 +250,290 @@ export default function EditProfilePage() {
         </form>
 
         {/* ポイント表示 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-          <p className="text-3xl font-bold text-primary">{profile.points}</p>
-          <p className="text-xs text-gray-500">ポイント</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+            <p className="text-3xl font-bold text-primary">{profile.points}</p>
+            <p className="text-xs text-gray-500">勉強ポイント</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+            <p className="text-3xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
+            <p className="text-xs text-gray-500">交換ポイント</p>
+          </div>
+        </div>
+
+        {/* 交換ショップ */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-bold mb-1">交換ショップ</h2>
+          <p className="text-xs text-gray-500 mb-3">売却で得た交換ptで称号やアイコンフレームを購入できます</p>
+          {RARITIES.map((rarity) => (
+            <div key={rarity} className="mb-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0 last:mb-0">
+              <div className="flex items-center justify-between mb-2">
+                <span className={`title-badge ${rarity}`}>{rarity}</span>
+                <span className="text-sm text-gray-500">購入 {BUY_COSTS[rarity]}pt / 売却 {SELL_VALUES[rarity]}pt</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <select id={`shop-title-${rarity}`} className="w-full rounded-lg border-gray-300 text-xs p-1.5">
+                    {SHOP_CATALOG.title[rarity].map((name: string) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      const select = document.getElementById(`shop-title-${rarity}`) as HTMLSelectElement;
+                      handleBuy(rarity, "title", select.value);
+                    }}
+                    disabled={(profile.exchange_points || 0) < BUY_COSTS[rarity]}
+                    className="w-full mt-1 text-xs bg-primary text-white rounded-full py-1.5 disabled:opacity-40"
+                  >
+                    称号を交換
+                  </button>
+                </div>
+                <div>
+                  <select id={`shop-icon-${rarity}`} className="w-full rounded-lg border-gray-300 text-xs p-1.5">
+                    {SHOP_CATALOG.icon[rarity].map((name: string) => (
+                      <option key={name} value={name}>{name.replace("【アイコン】", "")}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      const select = document.getElementById(`shop-icon-${rarity}`) as HTMLSelectElement;
+                      handleBuy(rarity, "icon", select.value);
+                    }}
+                    disabled={(profile.exchange_points || 0) < BUY_COSTS[rarity]}
+                    className="w-full mt-1 text-xs bg-orange-500 text-white rounded-full py-1.5 disabled:opacity-40"
+                  >
+                    アイコンを交換
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 称号を精錬（合成） */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-bold mb-3">称号を精錬（合成）</h2>
+          <p className="text-xs text-gray-500 mb-3">所持している称号を組み合わせて新しい称号を作ります</p>
+          <CombineTitles titles={titles} onCombine={handleCombine} />
+        </div>
+
+        {/* 称号を精錬（部位組み合わせ） */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-bold mb-3">称号を精錬（部位組み合わせ）</h2>
+          <p className="text-xs text-gray-500 mb-3">フレーズ・名詞・人物名を組み合わせて精錬します</p>
+          <RefineParts parts={parts} onRefine={handleRefineParts} />
+        </div>
+
+        {/* 一括売却 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-bold mb-3">一括売却</h2>
+          <p className="text-xs text-gray-500 mb-3">装備中と精錬称号は売却されません</p>
+          <div className="flex gap-2">
+            {["N", "R", "SR"].map((rarity) => (
+              <button key={rarity} onClick={() => handleBulkSell(rarity)}
+                className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-xs font-medium hover:bg-red-100">
+                {rarity}以下を売却
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 称号一覧 */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-lg font-bold mb-3">所持称号</h2>
           <div className="grid grid-cols-2 gap-2">
-            {titles.map((item: any) => (
-              <div key={item.id} className={`p-2 rounded-lg border text-sm ${profile.current_title_id === item.id ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
-                <span className="ml-1">{item.name.replace("精錬:", "")}</span>
-                <button onClick={() => handleEquip(item.id, "current_title_id")}
-                  className="block mt-1 text-xs text-primary hover:underline">
-                  装備する
-                </button>
-              </div>
-            ))}
+            {titles.map((item: any) => {
+              const isEquipped = profile.current_title_id === item.id;
+              const sellable = canSell(item);
+              return (
+                <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
+                    {isRefinedItem(item) && <span className="text-xs text-gray-400">精錬品</span>}
+                  </div>
+                  <span className="ml-1 text-sm">{itemDisplayName(item)}</span>
+                  <div className="flex gap-1 mt-1">
+                    <button onClick={() => handleEquip(item.id, "current_title_id")}
+                      className="flex-1 text-xs text-primary hover:underline py-0.5">
+                      {isEquipped ? "装備中" : "装備"}
+                    </button>
+                    {sellable && (
+                      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                        <input type="checkbox" checked={selectedSell.has(item.id)}
+                          onChange={() => toggleSellItem(item.id)} />
+                        売却
+                      </label>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
+          {selectedSell.size > 0 && (
+            <button onClick={() => handleSell(Array.from(selectedSell))}
+              className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
+              選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
+                const item = items.find((i: any) => i.id === id);
+                return sum + (SELL_VALUES[item?.rarity] || 0);
+              }, 0)}pt)
+            </button>
+          )}
         </div>
 
         {/* アバター一覧 */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-lg font-bold mb-3">所持アバター</h2>
           <div className="grid grid-cols-2 gap-2">
-            {icons.map((item: any) => (
-              <div key={item.id} className={`p-2 rounded-lg border text-sm ${profile.current_avatar_id === item.id ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
-                <span className="ml-1">{item.name.replace("【アイコン】", "")}</span>
-                <button onClick={() => handleEquip(item.id, "current_avatar_id")}
-                  className="block mt-1 text-xs text-primary hover:underline">
-                  装備する
-                </button>
-              </div>
-            ))}
+            {icons.map((item: any) => {
+              const isEquipped = profile.current_avatar_id === item.id;
+              const sellable = canSell(item);
+              return (
+                <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
+                  <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
+                  <span className="ml-1">{itemDisplayName(item).replace("【アイコン】", "")}</span>
+                  <div className="flex gap-1 mt-1">
+                    <button onClick={() => handleEquip(item.id, "current_avatar_id")}
+                      className="flex-1 text-xs text-primary hover:underline py-0.5">
+                      {isEquipped ? "装備中" : "装備"}
+                    </button>
+                    {sellable && (
+                      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                        <input type="checkbox" checked={selectedSell.has(item.id)}
+                          onChange={() => toggleSellItem(item.id)} />
+                        売却
+                      </label>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
     </AppShell>
   );
 }
+
+function CombineTitles({ titles, onCombine }: { titles: any[]; onCombine: (a: string, b: string, order: string) => void }) {
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+  const [order, setOrder] = useState("normal");
+  const normalTitles = titles.filter((t: any) => !t.name.startsWith("精錬:") && !t.name.startsWith("邊ｾ骭ｬ:"));
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <select value={a} onChange={(e) => setA(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">称号1を選択</option>
+          {normalTitles.map((t: any) => (
+            <option key={t.id} value={t.id}>{itemDisplayName(t)} ({t.rarity})</option>
+          ))}
+        </select>
+        <select value={b} onChange={(e) => setB(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">称号2を選択</option>
+          {normalTitles.map((t: any) => (
+            <option key={t.id} value={t.id}>{itemDisplayName(t)} ({t.rarity})</option>
+          ))}
+        </select>
+      </div>
+      <select value={order} onChange={(e) => setOrder(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5 w-full">
+        <option value="normal">称号1 + 称号2</option>
+        <option value="reverse">称号2 + 称号1</option>
+      </select>
+      <button onClick={() => a && b && onCombine(a, b, order)}
+        disabled={!a || !b}
+        className="w-full bg-gray-800 text-white rounded-full py-2 text-xs disabled:opacity-40">
+        精錬する
+      </button>
+    </div>
+  );
+}
+
+function RefineParts({ parts, onRefine }: { parts: { words: string[]; nouns: string[]; names: string[] }; onRefine: (w: string, n: string, name: string, order: string) => void }) {
+  const [word, setWord] = useState("");
+  const [noun, setNoun] = useState("");
+  const [namePart, setNamePart] = useState("");
+  const [order, setOrder] = useState("word_first");
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2">
+        <select value={word} onChange={(e) => setWord(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">フレーズなし</option>
+          {parts.words.map((w: string) => <option key={w} value={w}>{w}</option>)}
+        </select>
+        <select value={noun} onChange={(e) => setNoun(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">名詞なし</option>
+          {parts.nouns.map((n: string) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <select value={namePart} onChange={(e) => setNamePart(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">人物名なし</option>
+          {parts.names.map((n: string) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+      <select value={order} onChange={(e) => setOrder(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5 w-full">
+        <option value="word_first">フレーズ + 名詞 + 人物名</option>
+        <option value="name_first">人物名 + フレーズ + 名詞</option>
+        <option value="noun_first">名詞 + フレーズ + 人物名</option>
+      </select>
+      <button onClick={() => onRefine(word, noun, namePart, order)}
+        disabled={!word && !noun && !namePart}
+        className="w-full bg-gray-800 text-white rounded-full py-2 text-xs disabled:opacity-40">
+        精錬する
+      </button>
+    </div>
+  );
+}
+
+const WORDS_LIST = [
+  "レポート未提出の", "単位を落とせし", "再履修のプロ", "課題に追われる",
+  "電機大の良心", "北千住の支配者", "数学で詰んだ", "過去問を渇望する",
+  "試験前日に徹夜する", "フル単の奇跡", "出席日数ギリギリの", "教授に目をつけられし",
+  "研究室に引きこもる", "学食のカレーを愛する", "3号館で迷子になった",
+  "線形代数で爆死した", "プログラミング課題を丸写しする", "意識だけは高い留年候補",
+  "通学路がほぼ旅", "プレデターになれない", "万年ブロンズの", "クソエイムを極めし",
+  "ウルトを無駄打ちする", "スプラで煽られる", "常にデスしている", "キャリーされ待ちの",
+  "味方にブチギレる", "ガチホコを逆走する", "マイクラで全ロスした", "マリオメーカーで沼る",
+  "回線落ちの帝王", "伝説の戦犯", "プレイヤースキル最底辺の", "ワンオペで崩壊する",
+  "労働の奴隷", "残業代が出ない", "バイトリーダーを気取る", "レジ締めが合わない",
+  "クレーマーを引き寄せる", "給料日前に干からびる", "貯金残高3桁の", "100円ローソン通いの",
+  "もやし生活の", "奢られ待ちの天才", "財布を家に忘れる",
+  "常に金ないが口癖の", "借金まみれの", "経済力皆無の", "Twitterに生息する",
+  "ネット弁慶の", "匿名でしかイキれない", "いいねを渇望する", "炎上寸前の",
+  "リプ欄でレスバする", "黒歴史を量産せし", "厨二病を拗らせた", "右手が疼く",
+  "邪気眼の使い手", "闇の組織に追われる", "限界オタクの", "推しに全財産を貢ぐ",
+  "液晶画面に恋する", "1日20時間画面を見る", "自称インフルエンサーの", "バズる幻覚を見る",
+  "存在が放送事故の", "息をするだけで面白い", "絶望的に服のセンスがない", "常に寝不足の",
+  "偏食の極み", "エナジードリンク中毒の", "三日坊主のエース", "言い訳の達人",
+  "責任転嫁のプロ", "プライドだけはエベレストな",
+  "口だけは達者な", "行動力を失いし", "部屋がゴミ屋敷の", "忘れ物の神様",
+  "信頼残高マイナスの", "陽キャのフリをした", "LINEの返信が遅すぎる", "既読無視の常習犯",
+  "嫉妬の化身", "すぐ病む", "メンヘラの極み", "恋愛初心者以下の", "独占欲の塊",
+  "記念日を忘れる", "愛が重すぎる", "朝起きられない", "布団から出られない",
+  "2度寝のファンタジスタ", "遅刻の常連", "時間を守る気がない", "常にギリギリを生きる",
+  "奇跡待ちの", "就活を現実逃避する", "面接で頭が真っ白になる", "お祈りメールのコレクター",
+  "自己分析で絶望する", "実家でイキる", "家族のパシリ", "親の脛を齧り尽くす",
+  "ペーパードライバーの", "常に裏コードを入力している", "魔導書を枕にする",
+  "混沌のオーラを纏う", "封印されし左手が暴れる", "黙示録の予言者", "終末を告げるもの",
+  "神の加護を失いし", "令和の怪物", "世紀の大悪党", "希代の詐欺師", "期待の新人（仮）",
+  "自称・天才エンジニア", "世界を救いそうにない勇者", "魔王のパシリ", "ただの一般人A",
+  "西村店長に怒られし", "チームラボで迷子になった", "息をするようにスベる", "深夜テンションの",
+  "松戸市代表", "カリフォルニア帰りの", "3浪の", "1留の", "留年確定の", "バ畜戦士",
+  "月給24万", "金欠の", "課金沼に沈みし", "花菜を奪いし者", "令和の奇行種",
+  "脳内お花畑の", "意識高い系", "圧倒的モブ", "メンヘラ製造機", "前世がティッシュ",
+  "夢はマイクワゾウスキー", "みかんから生まれし", "桃から生まれし", "韓国のり顔の",
+];
+
+const NOUNS_LIST = [
+  "支配者", "プロ", "帝王", "奇跡", "良心", "戦士", "候補", "常習犯", "コレクター", "使い手",
+  "観測者", "勇者", "パシリ", "一般人A", "天才", "怪物", "大悪党", "詐欺師",
+  "落ちこぼれ", "ファンタジスタ", "エース", "達人", "神様", "化身", "塊", "奴隷",
+  "リーダー", "モブ", "奇行種", "放送事故", "留年候補", "戦犯", "ブロンズ", "インフルエンサー",
+];
+
+const NAMES_LIST = [
+  "ゆいちゃん", "たいき", "あつき", "みおちゃん", "すばる",
+  "ゆっきー", "さよちゃん", "しゅり", "りゅう", "みな",
+  "そら", "はる", "れん", "あお", "なぎ",
+];

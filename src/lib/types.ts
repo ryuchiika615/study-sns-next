@@ -9,6 +9,7 @@ export interface Profile {
   target_date: string | null;
   target_minutes: number;
   points: number;
+  exchange_points: number;
   consecutive_post_days: number;
   last_post_date: string | null;
   current_title_id: string | null;
