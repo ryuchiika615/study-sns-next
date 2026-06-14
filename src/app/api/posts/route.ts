@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1");
   const search = searchParams.get("search") || "";
+  const userId = searchParams.get("user_id") || "";
   const limit = 10;
   const offset = (page - 1) * limit;
 
@@ -28,6 +29,10 @@ export async function GET(request: NextRequest) {
 
   if (search) {
     query = query.ilike("content", `%${search}%`);
+  }
+
+  if (userId) {
+    query = query.eq("user_id", userId);
   }
 
   const { data: posts, count, error } = await query;

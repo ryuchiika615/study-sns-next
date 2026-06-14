@@ -8,56 +8,51 @@ export async function GET(request: NextRequest, { params }: { params: { username
 
   const { username } = params;
 
-  // usersテーブルからusernameで検索 (Supabase Authはemailベースなのでprofilesにusernameカラムはない)
-  // 代わりにauth.usersのemailをusernameとして使う
-  const { data: { users } } = await supabase.auth.admin.listUsers();
-
-  const targetAuthUser = users?.find((u: any) => u.email?.split("@")[0] === username);
-  if (!targetAuthUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
+  // profilesテーブルをusernameで直接検索（高速）
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("*, current_title:current_title_id(*), current_avatar:current_avatar_id(*)")
-    .eq("id", targetAuthUser.id)
-    .single();
+    .eq("username", username)
+    .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!profile) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   // フォロー状態
   const { data: follow } = await supabase
     .from("follows")
     .select("*")
     .eq("follower_id", currentUser.id)
-    .eq("following_id", targetAuthUser.id)
+    .eq("following_id", profile.id)
     .maybeSingle();
 
   // フォロワー・フォロー数
   const { count: followersCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
-    .eq("following_id", targetAuthUser.id);
+    .eq("following_id", profile.id);
 
   const { count: followingCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
-    .eq("follower_id", targetAuthUser.id);
+    .eq("follower_id", profile.id);
 
   // 投稿数
   const { count: postCount } = await supabase
     .from("posts")
     .select("*", { count: "exact", head: true })
-    .eq("user_id", targetAuthUser.id);
+    .eq("user_id", profile.id);
 
   // 勉強統計
   const { data: stats } = await supabase
     .from("posts")
-    .select("study_minutes, subject")
-    .eq("user_id", targetAuthUser.id)
+    .select("study_minutes, subject, created_at")
+    .eq("user_id", profile.id)
     .gt("study_minutes", 0);
 
   const totalMinutes = (stats || []).reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
-  const monthStart = new Date();
-  monthStart.setDate(1);
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthMinutes = (stats || [])
     .filter((p: any) => new Date(p.created_at) >= monthStart)
     .reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
@@ -79,7 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: { username
     month_study_display: formatStudyTime(monthMinutes),
     subject_labels: JSON.stringify([...subjectMap.keys()]),
     subject_data: JSON.stringify([...subjectMap.values()]),
-    username: targetAuthUser.email?.split("@")[0] || username,
+    username: profile.username || username,
   });
 }
 

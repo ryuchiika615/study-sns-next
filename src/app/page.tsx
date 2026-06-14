@@ -23,6 +23,7 @@ export default function HomePage() {
   const [weeklyData, setWeeklyData] = useState<any>(null);
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [lastNotifId, setLastNotifId] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const addToast = useToast();
   const notifTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
@@ -105,6 +106,8 @@ export default function HomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append("content", content);
     formData.append("subject", subject || "その他");
@@ -119,6 +122,7 @@ export default function HomePage() {
     }
 
     const res = await fetch("/api/posts", { method: "POST", body: formData });
+    setIsSubmitting(false);
     if (res.ok) {
       const data = await res.json();
       if (data.streak) {
@@ -222,7 +226,7 @@ export default function HomePage() {
           <input type="file" name="image" accept="image/*" className="mt-2.5 text-sm" />
 
           <div className="text-right mt-2.5">
-            <button type="submit" className="bg-primary text-white font-bold rounded-full px-5 py-2 border-none cursor-pointer text-base">
+            <button type="submit" disabled={isSubmitting} className="bg-primary text-white font-bold rounded-full px-5 py-2 border-none cursor-pointer text-base disabled:opacity-50">
               リュイートする
             </button>
           </div>

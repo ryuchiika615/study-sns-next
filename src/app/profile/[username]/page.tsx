@@ -34,13 +34,16 @@ export default function UserProfilePage() {
       const d = await res.json();
       setData(d);
       setIsFollowing(d.is_following);
-    }
 
-    // ユーザーの投稿
-    const postsRes = await fetch(`/api/posts?page=${page}`);
-    if (postsRes.ok) {
-      const d = await postsRes.json();
-      setPosts(d.posts.filter((p: any) => p.user_id === data?.profile?.id));
+      // ユーザーの投稿（profile.id確定後に取得）
+      const profileId = d.profile?.id;
+      if (profileId) {
+        const postsRes = await fetch(`/api/posts?user_id=${profileId}&page=${page}`);
+        if (postsRes.ok) {
+          const pd = await postsRes.json();
+          setPosts(pd.posts || []);
+        }
+      }
     }
   };
 
