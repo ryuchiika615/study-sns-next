@@ -31,6 +31,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [totalMinutes] = useState(initialTotal);
   const [lastNotifId, setLastNotifId] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasNewPosts, setHasNewPosts] = useState(false);
+  const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
   const notifTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -38,6 +40,10 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     const result = await fetchAndEnrichPosts(supabase, user.id, { page: p, search: q });
     setPosts(result.posts);
     setTotalPages(result.totalPages);
+    if (result.posts.length > 0) {
+      latestCreatedAt.current = result.posts[0].created_at;
+    }
+    setHasNewPosts(false);
   };
 
   const pollNotifications = async () => {
@@ -64,6 +70,25 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       }
     }
     setUnreadCount(unread);
+
+    if (latestCreatedAt.current && page === 1 && !search) {
+      const { data: followedUsers } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id);
+      const followedIds = (followedUsers || []).map((f: any) => f.following_id);
+      if (followedIds.length > 0) {
+        const { data: newPosts } = await supabase
+          .from("posts")
+          .select("id")
+          .in("user_id", followedIds)
+          .gt("created_at", latestCreatedAt.current)
+          .limit(1);
+        if (newPosts && newPosts.length > 0) {
+          setHasNewPosts(true);
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -229,6 +254,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           </div>
         </form>
       </div>
+
+      {hasNewPosts && (
+        <button onClick={() => { fetchPosts(1, search); }}
+          className="w-full py-2 bg-blue-50 text-blue-600 text-sm font-bold border-b border-blue-100 hover:bg-blue-100 cursor-pointer">
+          新しい投稿があります
+        </button>
+      )}
 
       {posts.map((post: any) => (
         <PostCard key={post.id} post={post} currentUserId={user.id} onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))} />
