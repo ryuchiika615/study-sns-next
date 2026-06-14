@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
 
@@ -71,7 +72,7 @@ export default function PostCard({
   return (
     <div className="post-card">
       <div className="flex px-4 pt-1">
-        <a href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="no-underline">
+        <Link href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
             {post.user?.icon_url ? (
               <img src={post.user.icon_url} className="w-12 h-12 rounded-full object-cover border-2 border-white" />
@@ -79,20 +80,20 @@ export default function PostCard({
               <i className="fas fa-user-circle text-4xl text-gray-300" />
             )}
           </div>
-        </a>
+        </Link>
 
         <div className="ml-3 flex-1 min-w-0">
           {post.current_title && (
             <span className={`title-badge ${rarity}`}>
-              {post.current_title.rarity} {post.current_title.name.replace("精錬:", "")}
+              {post.current_title.rarity} {post.current_title.name.replace("精錬:", "").replace("邊ｾ骭ｬ:", "")}
             </span>
           )}
 
           <div className="flex items-baseline gap-1 flex-wrap">
             <strong className="text-[15px]">
-              <a href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="text-gray-900 no-underline hover:underline">
+              <Link href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="text-gray-900 no-underline hover:underline">
                 {post.user?.display_name || "ユーザー"}
-              </a>
+              </Link>
             </strong>
             <span className="text-gray-500 text-sm">@{post.user?.username || post.user?.display_name || post.user_id?.slice(0, 8)}</span>
             <span className="text-gray-500 text-sm">·</span>

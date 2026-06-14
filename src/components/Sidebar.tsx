@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
 export function Sidebar() {
@@ -17,6 +18,12 @@ export function Sidebar() {
       }
     });
   }, []);
+
+  const closeSidebar = () => {
+    document.getElementById("sidebar")!.style.width = "0";
+    document.getElementById("overlay")!.style.display = "none";
+  };
+
   return (
     <>
       <button
@@ -32,37 +39,33 @@ export function Sidebar() {
 
       <div id="sidebar" className="fixed top-0 left-0 h-full w-0 z-[10000] bg-dark overflow-hidden transition-all duration-300 pt-16 shadow-lg">
         <a href="javascript:void(0)" className="closebtn absolute top-0 right-4 text-4xl text-white no-underline p-2.5"
-          onClick={() => {
-            document.getElementById("sidebar")!.style.width = "0";
-            document.getElementById("overlay")!.style.display = "none";
-          }}>
+          onClick={closeSidebar}>
           &times;
         </a>
-        <a href="/" className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+        <Link href="/" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-home w-6 text-center mr-3" /> ホーム
-        </a>
-        <a href="/rankings" className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+        </Link>
+        <Link href="/rankings" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-trophy w-6 text-center mr-3" /> ランキング
-        </a>
-        <a href="/analytics" className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+        </Link>
+        <Link href="/analytics" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-chart-pie w-6 text-center mr-3" /> 分析
-        </a>
-        <a href="/gacha" className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+        </Link>
+        <Link href="/gacha" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="far fa-calendar-check w-6 text-center mr-3" style={{ color: "#4ade80" }} /> ログインボーナス
-        </a>
-        <a href="/profile/edit" className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+        </Link>
+        <Link href="/profile/edit" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-user-gear w-6 text-center mr-3" /> 設定
-        </a>
+        </Link>
         {isAdmin && (
           <>
             <hr className="border-gray-700 my-5 mx-6" />
-            <a href="/admin" className="block text-lg text-yellow-400 no-underline py-4 px-6 hover:bg-gray-800 font-bold">
+            <Link href="/admin" onClick={closeSidebar} className="block text-lg text-yellow-400 no-underline py-4 px-6 hover:bg-gray-800 font-bold">
               <i className="fas fa-shield-alt w-6 text-center mr-3" /> 管理者画面
-            </a>
+            </Link>
           </>
         )}
         <hr className="border-gray-700 my-5 mx-6" />
-        <form action="/auth/logout" method="POST" id="logout-form" className="hidden" />
         <a href="javascript:void(0)" className="block text-lg text-red-400 no-underline py-4 px-6 hover:bg-gray-800 font-bold"
           onClick={() => {
             fetch("/auth/logout", { method: "POST" }).then(() => { window.location.href = "/auth/login"; });
@@ -72,10 +75,7 @@ export function Sidebar() {
       </div>
 
       <div id="overlay" className="fixed inset-0 bg-black/60 z-[9999] hidden"
-        onClick={() => {
-          document.getElementById("sidebar")!.style.width = "0";
-          document.getElementById("overlay")!.style.display = "none";
-        }} />
+        onClick={closeSidebar} />
     </>
   );
 }
