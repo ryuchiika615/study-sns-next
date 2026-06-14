@@ -7,6 +7,7 @@ import PostCard from "@/components/PostCard";
 import AppShell from "@/components/AppShell";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
+import { getCached, setCache, clearCache } from "@/lib/api-cache";
 
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -32,9 +33,13 @@ export default function HomePage() {
   const fetchPosts = async (p: number, q: string) => {
     const params = new URLSearchParams({ page: String(p) });
     if (q) params.set("search", q);
-    const res = await fetch(`/api/posts?${params}`);
+    const cacheKey = `/api/posts?${params}`;
+    const cached = getCached(cacheKey);
+    if (cached) { setPosts(cached.posts); setTotalPages(cached.totalPages); return; }
+    const res = await fetch(cacheKey);
     if (res.ok) {
       const data = await res.json();
+      setCache(cacheKey, data);
       setPosts(data.posts);
       setTotalPages(data.totalPages);
     }
@@ -45,9 +50,22 @@ export default function HomePage() {
       if (!data.user) { router.push("/auth/login"); return; }
       setUser(data.user);
 
+      const cachedHome = getCached("/api/home");
+      if (cachedHome) {
+        if (cachedHome.profile) setProfile(cachedHome.profile);
+        setUnreadCount(cachedHome.unread_count || 0);
+        if (cachedHome.weekly_labels) {
+          setWeeklyData({
+            labels: JSON.parse(cachedHome.weekly_labels),
+            datasets: JSON.parse(cachedHome.weekly_datasets),
+          });
+          setTotalMinutes(cachedHome.total_minutes || 0);
+        }
+      }
       fetch("/api/home").then(async (r) => {
         if (!r.ok) return;
         const d = await r.json();
+        setCache("/api/home", d);
         if (d?.profile) setProfile(d.profile);
         if (d) setUnreadCount(d.unread_count);
         if (d?.weekly_labels) {
@@ -117,6 +135,8 @@ export default function HomePage() {
     setIsSubmitting(false);
     if (res.ok) {
       const data = await res.json();
+      clearCache("/api/posts");
+      clearCache("/api/home");
       if (data.streak) {
         addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
       }

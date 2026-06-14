@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
 import { PieChart } from "@/components/Charts";
+import { getCached, setCache, clearCache } from "@/lib/api-cache";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -29,21 +30,34 @@ export default function UserProfilePage() {
   }, [username]);
 
   const loadData = async () => {
-    const res = await fetch(`/api/users/${username}`);
+    const userCacheKey = `/api/users/${username}`;
+    const cached = getCached(userCacheKey);
+    if (cached) {
+      setData(cached);
+      setIsFollowing(cached.is_following);
+      loadPosts(cached.profile?.id);
+      return;
+    }
+    const res = await fetch(userCacheKey);
     if (res.ok) {
       const d = await res.json();
+      setCache(userCacheKey, d);
       setData(d);
       setIsFollowing(d.is_following);
+      loadPosts(d.profile?.id);
+    }
+  };
 
-      // ユーザーの投稿（profile.id確定後に取得）
-      const profileId = d.profile?.id;
-      if (profileId) {
-        const postsRes = await fetch(`/api/posts?user_id=${profileId}&page=${page}`);
-        if (postsRes.ok) {
-          const pd = await postsRes.json();
-          setPosts(pd.posts || []);
-        }
-      }
+  const loadPosts = async (profileId: string) => {
+    if (!profileId) return;
+    const postsCacheKey = `/api/posts?user_id=${profileId}&page=${page}`;
+    const cached = getCached(postsCacheKey);
+    if (cached) { setPosts(cached.posts || []); return; }
+    const postsRes = await fetch(postsCacheKey);
+    if (postsRes.ok) {
+      const pd = await postsRes.json();
+      setCache(postsCacheKey, pd);
+      setPosts(pd.posts || []);
     }
   };
 
@@ -52,6 +66,7 @@ export default function UserProfilePage() {
     if (res.ok) {
       const d = await res.json();
       setIsFollowing(d.following);
+      clearCache(`/api/users/${username}`);
     }
   };
 
@@ -60,7 +75,6 @@ export default function UserProfilePage() {
   return (
     <AppShell>
       <div className="p-4">
-        {/* プロフィールヘッダー */}
         <div className="flex items-start gap-4 mb-6">
           <div className="avatar-frame">
             {data.profile?.icon_url ? (
@@ -110,7 +124,6 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        {/* 科目内訳 */}
         {data.subject_labels && JSON.parse(data.subject_labels).length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
             <h3 className="font-bold mb-2">科目内訳</h3>
@@ -122,7 +135,6 @@ export default function UserProfilePage() {
           </div>
         )}
 
-        {/* タブ */}
         <div className="flex border-b border-gray-200 mb-4">
           {["posts", "likes", "followers", "following"].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -134,7 +146,6 @@ export default function UserProfilePage() {
           ))}
         </div>
 
-        {/* 投稿一覧 */}
         {activeTab === "posts" && posts.map((post: any) => (
           <PostCard key={post.id} post={post} currentUserId={user?.id || ""} />
         ))}
