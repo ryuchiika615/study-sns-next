@@ -117,7 +117,7 @@ export default function UserProfilePage() {
             <PieChart
               labels={data.subject_labels}
               data={data.subject_data}
-              colors="[]"
+              colors={data.subject_colors || "[]"}
             />
           </div>
         )}

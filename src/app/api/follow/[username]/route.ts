@@ -7,17 +7,20 @@ export async function POST(request: NextRequest, { params }: { params: { usernam
   if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { username } = params;
-  const { data: { users } } = await supabase.auth.admin.listUsers();
-  const targetUser = users?.find((u: any) => u.email?.split("@")[0] === username);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
 
-  if (!targetUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-  if (targetUser.id === currentUser.id) return NextResponse.json({ error: "Cannot follow self" }, { status: 400 });
+  if (!profile) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (profile.id === currentUser.id) return NextResponse.json({ error: "Cannot follow self" }, { status: 400 });
 
   const { data: existing } = await supabase
     .from("follows")
     .select("*")
     .eq("follower_id", currentUser.id)
-    .eq("following_id", targetUser.id)
+    .eq("following_id", profile.id)
     .maybeSingle();
 
   if (existing) {
@@ -25,17 +28,17 @@ export async function POST(request: NextRequest, { params }: { params: { usernam
       .from("follows")
       .delete()
       .eq("follower_id", currentUser.id)
-      .eq("following_id", targetUser.id);
+      .eq("following_id", profile.id);
 
     return NextResponse.json({ following: false });
   } else {
     await supabase
       .from("follows")
-      .insert({ follower_id: currentUser.id, following_id: targetUser.id });
+      .insert({ follower_id: currentUser.id, following_id: profile.id });
 
     // 通知
     await supabase.from("notifications").insert({
-      recipient_id: targetUser.id,
+      recipient_id: profile.id,
       sender_id: currentUser.id,
       notification_type: "follow",
     });

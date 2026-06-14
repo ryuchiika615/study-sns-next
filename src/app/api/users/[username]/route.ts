@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
+import { subjectColor } from "@/lib/utils";
 
 export async function GET(request: NextRequest, { params }: { params: { username: string } }) {
   const supabase = createServerSupabase();
@@ -74,6 +75,7 @@ export async function GET(request: NextRequest, { params }: { params: { username
     month_study_display: formatStudyTime(monthMinutes),
     subject_labels: JSON.stringify([...subjectMap.keys()]),
     subject_data: JSON.stringify([...subjectMap.values()]),
+    subject_colors: JSON.stringify([...subjectMap.keys()].map((s) => subjectColor(s))),
     username: profile.username || username,
   });
 }
