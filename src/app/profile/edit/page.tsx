@@ -280,6 +280,69 @@ export default function EditProfilePage() {
           <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">{message}</div>
         )}
 
+        {/* 現在のアバター & フォロワー情報 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+          <h2 className="text-lg font-bold">プロフィール情報</h2>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+              {profile.icon_url ? (
+                <img src={profile.icon_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
+                  {(profile.display_name || "?")[0]}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{followingCount}</p>
+                <p className="text-xs text-gray-500">フォロー</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{followersCount}</p>
+                <p className="text-xs text-gray-500">フォロワー</p>
+              </div>
+            </div>
+          </div>
+          {/* 現在装備中の称号 */}
+          {profile.current_title_id && (() => {
+            const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
+            return equippedTitle ? (
+              <div className="text-sm text-gray-600">
+                称号: <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
+              </div>
+            ) : null;
+          })()}
+        </div>
+
+        {/* 自分の投稿 / いいねした投稿 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+          <div className="flex gap-2 border-b border-gray-200 pb-2">
+            <button onClick={() => setProfileTab("posts")}
+              className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "posts" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
+              自分の投稿 ({myPosts.length})
+            </button>
+            <button onClick={() => setProfileTab("likes")}
+              className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "likes" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
+              いいねした投稿 ({likedPosts.length})
+            </button>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {(profileTab === "posts" ? myPosts : likedPosts).length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-4">
+                {profileTab === "posts" ? "まだ投稿がありません" : "いいねした投稿はありません"}
+              </p>
+            )}
+            {(profileTab === "posts" ? myPosts : likedPosts).slice(0, 20).map((post: any) => (
+              <div key={post.id} className="border border-gray-100 rounded-lg p-3 text-sm hover:bg-gray-50 cursor-pointer"
+                onClick={() => router.push(`/post/${post.id}`)}>
+                <p className="line-clamp-2">{post.content}</p>
+                <p className="text-xs text-gray-400 mt-1">{new Date(post.created_at).toLocaleDateString("ja-JP")}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* プロフィール編集 */}
         <form onSubmit={handleUpdateProfile} className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
           <h2 className="text-lg font-bold">プロフィール設定</h2>
@@ -359,69 +422,6 @@ export default function EditProfilePage() {
           <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
             <p className="text-3xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
             <p className="text-xs text-gray-500">交換ポイント</p>
-          </div>
-        </div>
-
-        {/* 現在のアバター & フォロワー情報 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-          <h2 className="text-lg font-bold">プロフィール情報</h2>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-              {profile.icon_url ? (
-                <img src={profile.icon_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
-                  {(profile.display_name || "?")[0]}
-                </div>
-              )}
-            </div>
-            <div className="flex gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{followingCount}</p>
-                <p className="text-xs text-gray-500">フォロー</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{followersCount}</p>
-                <p className="text-xs text-gray-500">フォロワー</p>
-              </div>
-            </div>
-          </div>
-          {/* 現在装備中の称号 */}
-          {profile.current_title_id && (() => {
-            const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
-            return equippedTitle ? (
-              <div className="text-sm text-gray-600">
-                称号: <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
-              </div>
-            ) : null;
-          })()}
-        </div>
-
-        {/* 自分の投稿 / いいねした投稿 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-          <div className="flex gap-2 border-b border-gray-200 pb-2">
-            <button onClick={() => setProfileTab("posts")}
-              className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "posts" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
-              自分の投稿 ({myPosts.length})
-            </button>
-            <button onClick={() => setProfileTab("likes")}
-              className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "likes" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
-              いいねした投稿 ({likedPosts.length})
-            </button>
-          </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(profileTab === "posts" ? myPosts : likedPosts).length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-4">
-                {profileTab === "posts" ? "まだ投稿がありません" : "いいねした投稿はありません"}
-              </p>
-            )}
-            {(profileTab === "posts" ? myPosts : likedPosts).slice(0, 20).map((post: any) => (
-              <div key={post.id} className="border border-gray-100 rounded-lg p-3 text-sm hover:bg-gray-50 cursor-pointer"
-                onClick={() => router.push(`/post/${post.id}`)}>
-                <p className="line-clamp-2">{post.content}</p>
-                <p className="text-xs text-gray-400 mt-1">{new Date(post.created_at).toLocaleDateString("ja-JP")}</p>
-              </div>
-            ))}
           </div>
         </div>
 
