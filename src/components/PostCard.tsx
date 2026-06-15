@@ -93,7 +93,7 @@ export default function PostCard({
   return (
     <div className="post-card">
       <div className="flex px-4 pt-1">
-        <Link href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="no-underline">
+        <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
             {post.user?.icon_url ? (
               <img src={post.user.icon_url} className="w-12 h-12 rounded-full object-cover border-2 border-white" />
@@ -112,7 +112,7 @@ export default function PostCard({
 
           <div className="flex items-baseline gap-1 flex-wrap">
             <strong className="text-[15px]">
-              <Link href={`/profile/${post.user?.username || post.user?.display_name || post.user_id}`} className="text-gray-900 no-underline hover:underline">
+              <Link href={`/profile/${post.user?.id || post.user_id}`} className="text-gray-900 no-underline hover:underline">
                 {post.user?.display_name || "ユーザー"}
               </Link>
             </strong>
