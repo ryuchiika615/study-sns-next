@@ -87,7 +87,7 @@ export default function EditProfilePage() {
       if (postIds.length > 0) {
         const { data: posts } = await supabase
           .from("posts")
-          .select("*, profiles!inner(*)")
+          .select("*, user:user_id(id, display_name, username, icon_url)")
           .in("id", postIds)
           .order("created_at", { ascending: false });
         setLikedPosts(posts ?? []);
@@ -98,7 +98,7 @@ export default function EditProfilePage() {
 
     const { data: myPostsData } = await supabase
       .from("posts")
-      .select("*, profiles!inner(*)")
+      .select("*, user:user_id(id, display_name, username, icon_url)")
       .eq("user_id", uid)
       .order("created_at", { ascending: false });
     setMyPosts(myPostsData ?? []);
