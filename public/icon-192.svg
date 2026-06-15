@@ -1,4 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#1e3a5f"/>
-  <text x="96" y="120" font-size="80" font-family="serif" fill="#eab308" text-anchor="middle" font-weight="bold">R</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="book" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#f0f0ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="38" fill="url(#bg)"/>
+  <g transform="translate(96,18)">
+    <ellipse cx="0" cy="120" rx="30" ry="8" fill="rgba(0,0,0,0.08)"/>
+    <g transform="translate(-38,52)">
+      <path d="M0,0 C0,-15 12,-26 26,-26 L26,0 Z" fill="#f97316" opacity="0.9"/>
+      <circle cx="13" cy="-13" r="3" fill="#fff" opacity="0.3"/>
+    </g>
+    <g transform="translate(12,52)">
+      <path d="M0,0 C0,-15 12,-26 26,-26 L26,0 Z" fill="#f97316" opacity="0.9"/>
+      <circle cx="13" cy="-13" r="3" fill="#fff" opacity="0.3"/>
+    </g>
+    <rect x="-38" y="52" width="76" height="50" rx="5" fill="url(#book)"/>
+    <rect x="-38" y="52" width="36" height="50" rx="5" fill="#fff"/>
+    <rect x="2" y="52" width="36" height="50" rx="5" fill="#fafafa"/>
+    <line x1="0" y1="52" x2="0" y2="102" stroke="#ddd" stroke-width="1"/>
+    <line x1="-30" y1="67" x2="-8" y2="67" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="-30" y1="75" x2="-13" y2="75" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="-30" y1="83" x2="-19" y2="83" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="10" y1="67" x2="30" y2="67" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="10" y1="75" x2="25" y2="75" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="10" y1="83" x2="19" y2="83" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="96" cy="45" r="6" fill="#facc15"/>
+  <path d="M96,41 L97,44 L100,44 L98,46 L99,49 L96,47 L93,49 L94,46 L92,44 L95,44 Z" fill="#fff"/>
 </svg>

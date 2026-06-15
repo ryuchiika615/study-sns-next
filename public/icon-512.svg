@@ -1,4 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="64" fill="#1e3a5f"/>
-  <text x="256" y="310" font-size="200" font-family="serif" fill="#eab308" text-anchor="middle" font-weight="bold">R</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="book" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#f0f0ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <g transform="translate(256,50)">
+    <ellipse cx="0" cy="320" rx="80" ry="20" fill="rgba(0,0,0,0.08)"/>
+    <g transform="translate(-100,140)">
+      <path d="M0,0 C0,-40 30,-70 70,-70 L70,0 Z" fill="#f97316" opacity="0.9"/>
+      <circle cx="35" cy="-35" r="8" fill="#fff" opacity="0.3"/>
+    </g>
+    <g transform="translate(30,140)">
+      <path d="M0,0 C0,-40 30,-70 70,-70 L70,0 Z" fill="#f97316" opacity="0.9"/>
+      <circle cx="35" cy="-35" r="8" fill="#fff" opacity="0.3"/>
+    </g>
+    <rect x="-100" y="140" width="200" height="130" rx="12" fill="url(#book)"/>
+    <rect x="-100" y="140" width="95" height="130" rx="12" fill="#fff"/>
+    <rect x="5" y="140" width="95" height="130" rx="12" fill="#fafafa"/>
+    <line x1="0" y1="140" x2="0" y2="270" stroke="#ddd" stroke-width="2"/>
+    <line x1="-80" y1="180" x2="-20" y2="180" stroke="#e0e0e0" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-80" y1="200" x2="-35" y2="200" stroke="#e0e0e0" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-80" y1="220" x2="-50" y2="220" stroke="#e0e0e0" stroke-width="3" stroke-linecap="round"/>
+    <line x1="25" y1="180" x2="80" y2="180" stroke="#e0e0e0" stroke-width="3" stroke-linecap="round"/>
+    <line x1="25" y1="200" x2="65" y2="200" stroke="#e0e0e0" stroke-width="3" stroke-linecap="round"/>
+    <line x1="25" y1="220" x2="50" y2="220" stroke="#e0e0e0" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <circle cx="256" cy="120" r="14" fill="#facc15"/>
+  <path d="M256,110 L258,117 L265,117 L260,122 L262,129 L256,124 L250,129 L252,122 L247,117 L254,117 Z" fill="#fff"/>
 </svg>
