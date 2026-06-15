@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   icons: {
-    apple: "/icon-192.svg",
+    apple: "/icon-192.png",
   },
 };
 
@@ -26,7 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         />
       </head>
-      <body><ToastProvider>{children}</ToastProvider></body>
+      <body>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }
