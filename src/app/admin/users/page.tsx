@@ -56,6 +56,9 @@ export default function AdminUsersPage() {
     else if (action === "set_points") body.value = inputValue;
     else if (action === "ban") body.value = inputValue || "管理者判断";
     else if (action === "toggle_admin") {}
+    else if (action === "delete_user") {
+      if (inputValue !== "削除") { setMessage("確認のため「削除」と入力してください"); setLoading(false); return; }
+    }
 
     const res = await fetch("/api/admin/users", {
       method: "PUT",
@@ -106,6 +109,8 @@ export default function AdminUsersPage() {
         return { title: "ポイント設定", placeholder: `新しいポイント数 (現在: ${user.points})`, input: true };
       case "ban":
         return { title: "BANする", placeholder: "BAN理由（任意）", input: true };
+      case "delete_user":
+        return { title: "ユーザーを削除", placeholder: "確認のため '削除' と入力してください", input: true };
       default:
         return null;
     }
@@ -227,7 +232,7 @@ export default function AdminUsersPage() {
                 <th className="px-3 py-2 text-left whitespace-nowrap">ユーザー</th>
                 <th className="px-3 py-2 text-left whitespace-nowrap">状態</th>
                 <th className="px-3 py-2 text-right whitespace-nowrap">Pts</th>
-                <th className="px-3 py-2 text-center whitespace-nowrap" colSpan={5}>操作</th>
+                <th className="px-3 py-2 text-center whitespace-nowrap" colSpan={6}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -280,6 +285,12 @@ export default function AdminUsersPage() {
                     <button onClick={() => setGiftUser(u)}
                       className="text-xs px-2 py-1 rounded bg-pink-50 text-pink-600 hover:bg-pink-100 cursor-pointer whitespace-nowrap">
                       プレゼント
+                    </button>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <button onClick={() => openModal(u, "delete_user")}
+                      className="text-xs px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer whitespace-nowrap">
+                      削除
                     </button>
                   </td>
                 </tr>

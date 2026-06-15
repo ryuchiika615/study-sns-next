@@ -104,6 +104,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: true, message: "BANを解除しました" });
     }
 
+    case "delete_user": {
+      await admin.auth.admin.deleteUser(userId);
+      return NextResponse.json({ success: true, message: "ユーザーを削除しました" });
+    }
+
     default:
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
