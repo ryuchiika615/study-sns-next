@@ -35,8 +35,8 @@ begin
       body := jsonb_build_object(
         'type', 'INSERT',
         'table', 'notifications',
-        'record', row_to_json(new)
-      )::text
+        'record', row_to_json(new)::jsonb
+      )
     );
   end if;
 
