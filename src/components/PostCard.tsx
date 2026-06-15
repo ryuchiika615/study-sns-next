@@ -53,6 +53,13 @@ export default function PostCard({
         .from("likes")
         .insert({ user_id: currentUserId, post_id: post.id });
       if (error) { setLiked(false); setLikeCount(likeCount); }
+      else if (post.user_id !== currentUserId) {
+        fetch("/api/push/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "like", recipient_id: post.user_id, post_id: post.id }),
+        }).catch(() => {});
+      }
     }
   };
 
@@ -81,6 +88,13 @@ export default function PostCard({
     if (!error && data) {
       setComments([...comments, data]);
       setCommentText("");
+      if (post.user_id !== currentUserId) {
+        fetch("/api/push/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "reply", recipient_id: post.user_id, post_id: post.id }),
+        }).catch(() => {});
+      }
     }
   };
 

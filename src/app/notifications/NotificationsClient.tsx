@@ -53,6 +53,11 @@ export default function NotificationsClient({ notifications: initial }: { notifi
           n.sender?.id === senderId ? { ...n, followed_back: true } : n
         )
       );
+      fetch("/api/push/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "follow", recipient_id: senderId }),
+      }).catch(() => {});
     }
   };
 

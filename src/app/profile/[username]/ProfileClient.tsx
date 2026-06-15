@@ -54,6 +54,13 @@ export default function ProfileClient({
         .from("follows")
         .insert({ follower_id: user.id, following_id: profile.id });
       if (error) setIsFollowing(false);
+      else {
+        fetch("/api/push/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "follow", recipient_id: profile.id }),
+        }).catch(() => {});
+      }
     }
   };
 
