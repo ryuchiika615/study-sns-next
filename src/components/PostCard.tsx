@@ -169,6 +169,7 @@ export default function PostCard({
               <div className="flex-1 min-w-0">
                 <strong>{c.user?.display_name || "ユーザー"}</strong>
                 <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
+                <span className="text-gray-400 text-xs ml-1">· {formatRelativeTime(c.created_at)}</span>
                 <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
               </div>
               {c.user_id === currentUserId && (
