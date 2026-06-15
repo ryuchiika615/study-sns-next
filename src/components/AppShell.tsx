@@ -23,19 +23,21 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
 
+    const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
+    const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+
     navigator.serviceWorker.register("/sw.js").then((reg) => {
-      reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg",
-      }).then((sub) => {
-        const json = sub.toJSON();
-        fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
-        });
-      }).catch(() => {});
-    }).catch(() => {});
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+    }).then((sub) => {
+      const json = sub.toJSON();
+      fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+      });
+    }).catch((e) => {
+      console.warn("Push subscribe error:", e);
+    });
   }, []);
 
   return (
