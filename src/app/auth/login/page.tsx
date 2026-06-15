@@ -46,7 +46,7 @@ export default function LoginPage() {
         return;
       }
 
-      fetch("/api/auth/track-session", { method: "POST", keepalive: true }).catch(() => {});
+      fetch("/api/auth/track-session", { method: "POST", keepalive: true }).catch((e) => console.error("track-session error:", e));
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
