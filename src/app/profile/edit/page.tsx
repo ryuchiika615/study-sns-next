@@ -70,7 +70,6 @@ export default function EditProfilePage() {
 
     setUnreadCount(notifResult.count || 0);
 
-    const uid = userData.id;
     const [{ count: followers }, { count: following }] = await Promise.all([
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", uid),
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", uid),
