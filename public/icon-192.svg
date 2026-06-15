@@ -1,36 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
-    </linearGradient>
-    <linearGradient id="book" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff"/>
-      <stop offset="100%" stop-color="#f0f0ff"/>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#2e1065"/>
     </linearGradient>
   </defs>
-  <rect width="192" height="192" rx="38" fill="url(#bg)"/>
-  <g transform="translate(96,18)">
-    <ellipse cx="0" cy="120" rx="30" ry="8" fill="rgba(0,0,0,0.08)"/>
-    <g transform="translate(-38,52)">
-      <path d="M0,0 C0,-15 12,-26 26,-26 L26,0 Z" fill="#f97316" opacity="0.9"/>
-      <circle cx="13" cy="-13" r="3" fill="#fff" opacity="0.3"/>
-    </g>
-    <g transform="translate(12,52)">
-      <path d="M0,0 C0,-15 12,-26 26,-26 L26,0 Z" fill="#f97316" opacity="0.9"/>
-      <circle cx="13" cy="-13" r="3" fill="#fff" opacity="0.3"/>
-    </g>
-    <rect x="-38" y="52" width="76" height="50" rx="5" fill="url(#book)"/>
-    <rect x="-38" y="52" width="36" height="50" rx="5" fill="#fff"/>
-    <rect x="2" y="52" width="36" height="50" rx="5" fill="#fafafa"/>
-    <line x1="0" y1="52" x2="0" y2="102" stroke="#ddd" stroke-width="1"/>
-    <line x1="-30" y1="67" x2="-8" y2="67" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="-30" y1="75" x2="-13" y2="75" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="-30" y1="83" x2="-19" y2="83" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="10" y1="67" x2="30" y2="67" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="10" y1="75" x2="25" y2="75" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="10" y1="83" x2="19" y2="83" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/>
+  <rect width="192" height="192" rx="38" fill="url(#sky)"/>
+  <circle cx="150" cy="29" r="7" fill="#fff" opacity="0.15"/>
+  <circle cx="23" cy="67" r="4" fill="#fff" opacity="0.2"/>
+  <circle cx="38" cy="19" r="3" fill="#fff" opacity="0.15"/>
+  <circle cx="94" cy="15" r="2" fill="#fff" opacity="0.2"/>
+  <circle cx="17" cy="105" r="3" fill="#fff" opacity="0.15"/>
+  <circle cx="143" cy="98" r="3" fill="#fff" opacity="0.15"/>
+  <circle cx="128" cy="11" r="2" fill="#fff" opacity="0.2"/>
+  <circle cx="170" cy="30" r="9" fill="#fffddb"/>
+  <circle cx="173" cy="28" r="9" fill="#0f172a"/>
+  <g transform="translate(96,109)">
+    <rect x="-27" y="-2" width="54" height="23" rx="2" fill="#f8f8ff"/>
+    <rect x="-27" y="-2" width="26" height="23" rx="2" fill="#fff"/>
+    <rect x="1" y="-2" width="26" height="23" rx="2" fill="#f8f8ff"/>
+    <line x1="0" y1="-2" x2="0" y2="21" stroke="#ddd" stroke-width="1"/>
+    <line x1="-21" y1="4" x2="-6" y2="4" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="-21" y1="8" x2="-10" y2="8" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="-21" y1="13" x2="-13" y2="13" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="7" y1="4" x2="21" y2="4" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="7" y1="8" x2="17" y2="8" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="7" y1="13" x2="13" y2="13" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
   </g>
-  <circle cx="96" cy="45" r="6" fill="#facc15"/>
-  <path d="M96,41 L97,44 L100,44 L98,46 L99,49 L96,47 L93,49 L94,46 L92,44 L95,44 Z" fill="#fff"/>
+  <circle cx="96" cy="73" r="9" fill="#facc15"/>
+  <path d="M96,64 L97,70 L103,70 L98,74 L100,80 L96,76 L92,80 L94,74 L89,70 L95,70 Z" fill="#fff"/>
 </svg>
