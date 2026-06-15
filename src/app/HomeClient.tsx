@@ -31,8 +31,9 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [studyDate, setStudyDate] = useState("");
   const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [totalMinutes] = useState(initialTotal);
-  const [lastNotifSeen, setLastNotifSeen] = useState<string | null>(null);
-  const seenNotifs = useRef<Set<string>>(new Set());
+  const seenNotifs = useRef<Set<string>>(new Set(
+    JSON.parse(localStorage.getItem("seen_notifs") || "[]")
+  ));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const latestCreatedAt = useRef<string | null>(null);
@@ -62,6 +63,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     const lastNotif = notifications?.[0];
     if (lastNotif && !seenNotifs.current.has(lastNotif.id)) {
       seenNotifs.current.add(lastNotif.id);
+      localStorage.setItem("seen_notifs", JSON.stringify([...seenNotifs.current]));
       const sender = (lastNotif as any).sender?.display_name || "誰か";
       const href = lastNotif.notification_type === "follow"
         ? `/profile/${(lastNotif as any).sender?.id}`
