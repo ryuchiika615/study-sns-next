@@ -21,12 +21,13 @@ as $$
 declare
   v_webhook_url text;
   v_secret text;
+  v_req_id bigint;
 begin
   select value into v_webhook_url from app_settings where key = 'push_webhook_url';
   select value into v_secret from app_settings where key = 'webhook_secret';
 
   if v_webhook_url is not null and v_secret is not null then
-    perform net.http_post(
+    v_req_id := net.http_post(
       url := v_webhook_url,
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
@@ -36,7 +37,8 @@ begin
         'type', 'INSERT',
         'table', 'notifications',
         'record', row_to_json(new)::jsonb
-      )
+      ),
+      timeout_milliseconds := 5000
     );
   end if;
 
