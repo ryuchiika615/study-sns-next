@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
+import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
 
 type ProfileClientProps = {
@@ -21,6 +22,7 @@ type ProfileClientProps = {
   monthStudyDisplay: string;
   totalStudyMinutes: number;
   unreadCount: number;
+  calendarData?: { date: string; minutes: number }[];
 };
 
 export default function ProfileClient({
@@ -28,7 +30,7 @@ export default function ProfileClient({
   subjectLabels, subjectData, subjectColors,
   followersCount, followingCount, postCount,
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
-  unreadCount,
+  unreadCount, calendarData,
 }: ProfileClientProps) {
   const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
@@ -118,6 +120,13 @@ export default function ProfileClient({
           }
           return null;
         })()}
+
+        {calendarData && calendarData.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+            <h3 className="font-bold mb-2">{new Date().getFullYear()}年の勉強</h3>
+            <StudyCalendar data={calendarData} />
+          </div>
+        )}
 
         <div className="flex border-b border-gray-200 mb-4">
           {["posts", "likes"].map((tab) => (

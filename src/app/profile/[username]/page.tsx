@@ -31,7 +31,8 @@ export default async function UserProfilePage({ params }: { params: { username: 
 
   if (error || !profile) notFound();
 
-  const [followResult, followersResult, followingResult, postCountResult, statsResult, unreadResult, postsData] = await Promise.all([
+  const yearStart = `${new Date().getFullYear()}-01-01`;
+  const [followResult, followersResult, followingResult, postCountResult, statsResult, unreadResult, postsData, calendarResult] = await Promise.all([
     supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", profile.id).maybeSingle(),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
@@ -39,6 +40,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
     supabase.from("posts").select("study_minutes, subject, created_at").eq("user_id", profile.id).gt("study_minutes", 0),
     supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", user.id).eq("is_read", false),
     fetchAndEnrichPosts(supabase, user.id, { userId: profile.id }),
+    supabase.from("posts").select("created_at, study_minutes").eq("user_id", profile.id).gte("created_at", yearStart).gt("study_minutes", 0),
   ]);
 
   const totalMinutes = (statsResult.data || []).reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
@@ -61,6 +63,11 @@ export default async function UserProfilePage({ params }: { params: { username: 
     return `${rest}分`;
   };
 
+  const calendarData = (calendarResult.data || []).map((p: any) => ({
+    date: new Date(p.created_at).toISOString().split("T")[0],
+    minutes: p.study_minutes || 0,
+  }));
+
   return (
     <ProfileClient
       user={{ id: user.id }}
@@ -77,6 +84,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
       monthStudyDisplay={fmtStudyTime(monthMinutes)}
       totalStudyMinutes={totalMinutes}
       unreadCount={unreadResult.count || 0}
+      calendarData={calendarData}
     />
   );
 }

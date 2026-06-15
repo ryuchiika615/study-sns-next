@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import PostCard from "@/components/PostCard";
+import StudyTimer from "@/components/StudyTimer";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
@@ -194,6 +195,10 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           backgroundColor: d.backgroundColor,
         }))} />
       )}
+
+      <div className="px-4 py-3">
+        <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} />
+      </div>
 
       <div className="border-b border-gray-100 px-4 py-4">
         <form onSubmit={handleSearch} className="mb-4">
