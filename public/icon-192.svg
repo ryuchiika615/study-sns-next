@@ -6,27 +6,22 @@
     </linearGradient>
   </defs>
   <rect width="192" height="192" rx="38" fill="url(#sky)"/>
-  <circle cx="150" cy="29" r="7" fill="#fff" opacity="0.15"/>
-  <circle cx="23" cy="67" r="4" fill="#fff" opacity="0.2"/>
-  <circle cx="38" cy="19" r="3" fill="#fff" opacity="0.15"/>
-  <circle cx="94" cy="15" r="2" fill="#fff" opacity="0.2"/>
-  <circle cx="17" cy="105" r="3" fill="#fff" opacity="0.15"/>
-  <circle cx="143" cy="98" r="3" fill="#fff" opacity="0.15"/>
-  <circle cx="128" cy="11" r="2" fill="#fff" opacity="0.2"/>
-  <circle cx="170" cy="30" r="9" fill="#fffddb"/>
-  <circle cx="173" cy="28" r="9" fill="#0f172a"/>
+  <circle cx="145" cy="28" r="9" fill="#fffddb"/>
+  <circle cx="148" cy="26" r="9" fill="#0f172a"/>
   <g transform="translate(96,109)">
     <rect x="-27" y="-2" width="54" height="23" rx="2" fill="#f8f8ff"/>
     <rect x="-27" y="-2" width="26" height="23" rx="2" fill="#fff"/>
     <rect x="1" y="-2" width="26" height="23" rx="2" fill="#f8f8ff"/>
     <line x1="0" y1="-2" x2="0" y2="21" stroke="#ddd" stroke-width="1"/>
     <line x1="-21" y1="4" x2="-6" y2="4" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
-    <line x1="-21" y1="8" x2="-10" y2="8" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
-    <line x1="-21" y1="13" x2="-13" y2="13" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="-21" y1="9" x2="-10" y2="9" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="-21" y1="14" x2="-13" y2="14" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
     <line x1="7" y1="4" x2="21" y2="4" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
-    <line x1="7" y1="8" x2="17" y2="8" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
-    <line x1="7" y1="13" x2="13" y2="13" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="7" y1="9" x2="17" y2="9" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="7" y1="14" x2="13" y2="14" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
   </g>
-  <circle cx="96" cy="73" r="9" fill="#facc15"/>
-  <path d="M96,64 L97,70 L103,70 L98,74 L100,80 L96,76 L92,80 L94,74 L89,70 L95,70 Z" fill="#fff"/>
+  <circle cx="96" cy="73" r="15" fill="#ffd700" opacity="0.1"/>
+  <g transform="translate(96,73)">
+    <polygon points="0,-12 4,-5 12,-5 6,1 8,10 0,6 -8,10 -6,1 -12,-5 -4,-5" fill="#facc15" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
 </svg>
