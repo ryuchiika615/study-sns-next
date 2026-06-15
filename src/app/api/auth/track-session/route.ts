@@ -20,18 +20,6 @@ export async function POST(request: NextRequest) {
     || request.headers.get("x-real-ip")
     || "unknown";
 
-  let location: string | null = null;
-  try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=city,regionName,country,isp`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.city) {
-        location = `${data.city}, ${data.regionName}, ${data.country}`;
-        if (data.isp) location += ` (${data.isp})`;
-      }
-    }
-  } catch {}
-
   const userAgent = request.headers.get("user-agent") || null;
 
   try {
@@ -42,8 +30,19 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     }).select("id").single();
 
-    if (location && sessionData?.id) {
-      await admin.from("login_sessions").update({ location }).eq("id", sessionData.id);
+    if (sessionData?.id) {
+      fetch(`http://ip-api.com/json/${ip}?fields=city,regionName,country,isp`).then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json();
+        let location = "";
+        if (data.city) {
+          location = `${data.city}, ${data.regionName}, ${data.country}`;
+          if (data.isp) location += ` (${data.isp})`;
+        }
+        if (location) {
+          await admin.from("login_sessions").update({ location }).eq("id", sessionData.id);
+        }
+      }).catch(() => {});
     }
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
