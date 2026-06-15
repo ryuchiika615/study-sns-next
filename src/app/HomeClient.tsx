@@ -31,6 +31,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [totalMinutes] = useState(initialTotal);
   const [lastNotifSeen, setLastNotifSeen] = useState<string | null>(null);
+  const seenNotifs = useRef<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const latestCreatedAt = useRef<string | null>(null);
@@ -50,7 +51,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const pollNotifications = async () => {
     const { data: notifications, count } = await supabase
       .from("notifications")
-      .select("id, notification_type, sender_id, created_at, sender:sender_id(id, display_name, username)", { count: "estimated", head: false })
+      .select("id, notification_type, sender_id, post_id, created_at, sender:sender_id(id, display_name, username)", { count: "estimated", head: false })
       .eq("recipient_id", user.id)
       .eq("is_read", false)
       .order("created_at", { ascending: false })
@@ -58,16 +59,20 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
     const unread = count || 0;
     const lastNotif = notifications?.[0];
-    if (lastNotif && lastNotif.id !== lastNotifSeen) {
-      setLastNotifSeen(lastNotif.id);
+    if (lastNotif && !seenNotifs.current.has(lastNotif.id)) {
+      seenNotifs.current.add(lastNotif.id);
+      const sender = (lastNotif as any).sender?.display_name || "誰か";
+      const href = lastNotif.notification_type === "follow"
+        ? `/profile/${(lastNotif as any).sender?.id}`
+        : lastNotif.post_id ? `/notifications` : undefined;
       if (lastNotif.notification_type === "like") {
-        addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}がいいねしました`, type: "like" });
+        addToast({ message: `${sender}がいいねしました`, type: "like", href });
       } else if (lastNotif.notification_type === "reply") {
-        addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}が返信しました`, type: "reply" });
+        addToast({ message: `${sender}が返信しました`, type: "reply", href });
       } else if (lastNotif.notification_type === "follow") {
-        addToast({ message: `${(lastNotif as any).sender?.display_name || "誰か"}がフォローしました`, type: "follow" });
+        addToast({ message: `${sender}がフォローしました`, type: "follow", href });
       } else if (lastNotif.notification_type === "gift") {
-        addToast({ message: `おプレゼントが届きました！！`, type: "gift" });
+        addToast({ message: `おプレゼントが届きました！！`, type: "gift", href: "/gacha" });
       }
     }
     setUnreadCount(unread);

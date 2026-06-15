@@ -15,7 +15,7 @@ export default async function NotificationsPage() {
     `)
     .eq("recipient_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(10);
 
   return <NotificationsClient notifications={notifications || []} />;
 }

@@ -8,6 +8,7 @@ type Toast = {
   type: "streak" | "info" | "like" | "reply" | "follow" | "gift" | "error";
   streak?: number;
   bonus?: number;
+  href?: string;
 };
 
 const ToastContext = createContext<(toast: Omit<Toast, "id">) => void>(() => {});
@@ -35,7 +36,10 @@ export function ToastProvider({ children, unreadCount = 0 }: { children: React.R
         {toasts.map((toast) => (
           <div
             key={toast.id}
+            onClick={() => { if (toast.href) window.location.href = toast.href; }}
             className={`pointer-events-auto animate-slideDown px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-bold max-w-sm text-center ${
+              toast.href ? "cursor-pointer" : ""
+            } ${
               toast.type === "streak"
                 ? "bg-gradient-to-r from-yellow-500 to-orange-500"
                 :               toast.type === "like"
