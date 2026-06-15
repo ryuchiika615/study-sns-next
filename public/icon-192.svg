@@ -4,10 +4,40 @@
       <stop offset="0%" stop-color="#0f172a"/>
       <stop offset="100%" stop-color="#2e1065"/>
     </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0%" stop-color="#c8dcff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#c8dcff" stop-opacity="0"/>
+    </radialGradient>
   </defs>
   <rect width="192" height="192" rx="38" fill="url(#sky)"/>
-  <circle cx="145" cy="28" r="9" fill="#fffddb"/>
-  <circle cx="148" cy="26" r="9" fill="#0f172a"/>
+  <circle cx="35" cy="43" r="1.5" fill="#fff" opacity="0.2"/>
+  <circle cx="150" cy="29" r="1" fill="#fff" opacity="0.25"/>
+  <circle cx="86" cy="15" r="1" fill="#fff" opacity="0.25"/>
+  <circle cx="127" cy="11" r="1" fill="#fff" opacity="0.2"/>
+  <circle cx="169" cy="68" r="1" fill="#fff" opacity="0.25"/>
+  <circle cx="49" cy="135" r="1" fill="#fff" opacity="0.2"/>
+  <circle cx="143" cy="98" r="1" fill="#fff" opacity="0.2"/>
+  <circle cx="113" cy="54" r="1" fill="#fff" opacity="0.15"/>
+  <circle cx="64" cy="34" r="1" fill="#fff" opacity="0.15"/>
+  <circle cx="35" cy="96" r="4" fill="url(#glow)"/>
+  <circle cx="35" cy="96" r="1.5" fill="#fff"/>
+  <circle cx="158" cy="54" r="4" fill="url(#glow)"/>
+  <circle cx="158" cy="54" r="1.5" fill="#fff"/>
+  <circle cx="48" cy="106" r="3.5" fill="url(#glow)"/>
+  <circle cx="48" cy="106" r="1.5" fill="#fff"/>
+  <circle cx="134" cy="19" r="3.5" fill="url(#glow)"/>
+  <circle cx="134" cy="19" r="1.5" fill="#fff"/>
+  <circle cx="173" cy="86" r="3.5" fill="url(#glow)"/>
+  <circle cx="173" cy="86" r="1.5" fill="#fff"/>
+  <circle cx="27" cy="92" r="6" fill="#d2b48c"/>
+  <ellipse cx="27" cy="92" rx="10" ry="1.5" fill="#c8b090" opacity="0.6"/>
+  <circle cx="154" cy="15" r="8" fill="#fffddb"/>
+  <circle cx="156" cy="14" r="8" fill="#0f172a"/>
+  <circle cx="96" cy="73" r="15" fill="#ffd700" opacity="0.07"/>
+  <circle cx="96" cy="73" r="10" fill="#ffd700" opacity="0.12"/>
+  <g transform="translate(96,73)">
+    <polygon points="0,-12 4,-5 12,-5 6,1 8,10 0,6 -8,10 -6,1 -12,-5 -4,-5" fill="#facc15" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
   <g transform="translate(96,109)">
     <rect x="-27" y="-2" width="54" height="23" rx="2" fill="#f8f8ff"/>
     <rect x="-27" y="-2" width="26" height="23" rx="2" fill="#fff"/>
@@ -19,9 +49,5 @@
     <line x1="7" y1="4" x2="21" y2="4" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
     <line x1="7" y1="9" x2="17" y2="9" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
     <line x1="7" y1="14" x2="13" y2="14" stroke="#d0d0e0" stroke-width="1" stroke-linecap="round"/>
-  </g>
-  <circle cx="96" cy="73" r="15" fill="#ffd700" opacity="0.1"/>
-  <g transform="translate(96,73)">
-    <polygon points="0,-12 4,-5 12,-5 6,1 8,10 0,6 -8,10 -6,1 -12,-5 -4,-5" fill="#facc15" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round"/>
   </g>
 </svg>
