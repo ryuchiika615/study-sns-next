@@ -64,7 +64,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       const sender = (lastNotif as any).sender?.display_name || "誰か";
       const href = lastNotif.notification_type === "follow"
         ? `/profile/${(lastNotif as any).sender?.id}`
-        : lastNotif.post_id ? `/` : undefined;
+        : lastNotif.post_id ? `/post/${lastNotif.post_id}` : undefined;
       if (lastNotif.notification_type === "like") {
         addToast({ message: `${sender}がいいねしました`, type: "like", href });
       } else if (lastNotif.notification_type === "reply") {

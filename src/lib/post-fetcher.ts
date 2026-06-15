@@ -1,4 +1,54 @@
 import { formatRelativeTime, formatStudyTime, subjectColor } from "./utils";
+import type { PostWithDetails } from "./types";
+
+export async function fetchPostById(
+  supabase: any,
+  postId: string,
+  currentUserId: string
+): Promise<PostWithDetails | null> {
+  const { data: post } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
+      likes_count:likes(count),
+      comments_count:comments(count)
+    `)
+    .eq("id", postId)
+    .single();
+
+  if (!post) return null;
+
+  const { data: likes } = await supabase
+    .from("likes")
+    .select("post_id")
+    .eq("post_id", post.id)
+    .eq("user_id", currentUserId);
+
+  const likedPostIds = new Set((likes || []).map((l: any) => l.post_id));
+
+  const allItemIds: string[] = [];
+  if (post.user?.current_title_id) allItemIds.push(post.user.current_title_id);
+  if (post.user?.current_avatar_id) allItemIds.push(post.user.current_avatar_id);
+
+  const { data: items } = allItemIds.length > 0
+    ? await supabase.from("gacha_items").select("*").in("id", allItemIds)
+    : { data: [] };
+
+  const itemMap = new Map((items || []).map((i: any) => [i.id, i]));
+
+  return {
+    ...post,
+    is_liked: likedPostIds.has(post.id),
+    likes_count: post.likes_count?.[0]?.count ?? 0,
+    comments_count: post.comments_count?.[0]?.count ?? 0,
+    display_study_time: formatStudyTime(post.study_minutes),
+    subject_color: subjectColor(post.subject),
+    formatted_time: formatRelativeTime(post.created_at),
+    current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,
+    current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
+  };
+}
 
 export async function fetchAndEnrichPosts(
   supabase: any,

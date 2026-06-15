@@ -11,18 +11,22 @@ export default function PostCard({
   post,
   currentUserId,
   onDelete,
+  defaultShowComments,
+  initialComments,
 }: {
   post: PostWithDetails;
   currentUserId: string;
   onDelete?: (id: string) => void;
+  defaultShowComments?: boolean;
+  initialComments?: any[];
 }) {
   const supabase = createClient();
   const [liked, setLiked] = useState(post.is_liked);
   const [likeCount, setLikeCount] = useState(post.likes_count);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(defaultShowComments ?? false);
   const [commentText, setCommentText] = useState("");
-  const [comments, setComments] = useState<any[]>([]);
-  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [comments, setComments] = useState<any[]>(initialComments ?? []);
+  const [commentsLoaded, setCommentsLoaded] = useState(!!initialComments);
   const router = useRouter();
 
   const handleLike = async () => {

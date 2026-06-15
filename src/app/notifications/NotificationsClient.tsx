@@ -33,7 +33,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
     if (notif.notification_type === "follow") {
       router.push(`/profile/${notif.sender?.id}`);
     } else if (notif.post_id) {
-      router.push(`/`);
+      router.push(`/post/${notif.post_id}`);
     }
   };
 
