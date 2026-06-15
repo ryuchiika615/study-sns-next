@@ -46,8 +46,6 @@ export default function LoginPage() {
         return;
       }
 
-      navigator.sendBeacon("/api/auth/track-session", JSON.stringify({}));
-
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
         const { data: profile } = await supabase

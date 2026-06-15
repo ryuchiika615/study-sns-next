@@ -1,9 +1,25 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 
 export default function AppShell({ children, unreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
+  const pinged = useRef(false);
+
+  useEffect(() => {
+    if (pinged.current) return;
+    pinged.current = true;
+
+    const doPing = () => {
+      navigator.sendBeacon("/api/auth/ping", JSON.stringify({}));
+    };
+
+    doPing();
+    const interval = setInterval(doPing, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       <div className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-4 shadow-lg mb-4">
