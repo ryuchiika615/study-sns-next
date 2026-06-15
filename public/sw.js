@@ -1,3 +1,11 @@
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(clients.claim());
+});
+
 self.addEventListener("push", (event) => {
   const data = event.data?.json() || {};
   const { title, body, icon, url } = data;
@@ -5,8 +13,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title || "リュッター", {
       body: body || "",
-      icon: icon || "/icon.png",
-      badge: "/icon.png",
+      icon: icon || "/icon-192.svg",
+      badge: "/icon-192.svg",
       data: { url: url || "/" },
     })
   );

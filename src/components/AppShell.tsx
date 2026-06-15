@@ -26,23 +26,33 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
     const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
-    navigator.serviceWorker.register("/sw.js").then((reg) => {
-      console.log("SW registered");
-      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
-    }).then((sub) => {
-      console.log("Push subscribed");
-      const json = sub.toJSON();
-      fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
-      }).then((r) => {
-        if (!r.ok) console.warn("Push subscribe API status:", r.status);
-        else console.log("Push subscription saved");
-      }).catch((e) => console.warn("Push subscribe API error:", e));
-    }).catch((e) => {
-      console.warn("Push subscribe error:", e);
-    });
+    const subscribe = async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          const json = existing.toJSON();
+          fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+          }).catch(() => {});
+          return;
+        }
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+        const json = sub.toJSON();
+        fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+        }).catch(() => {});
+      } catch (_) {}
+    };
+    if (Notification.permission === "granted") {
+      subscribe();
+    } else if (Notification.permission === "default") {
+      subscribe();
+    }
   }, []);
 
   return (

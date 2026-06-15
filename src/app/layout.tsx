@@ -5,6 +5,15 @@ import { ToastProvider } from "@/components/ToastProvider";
 export const metadata: Metadata = {
   title: "リュッター - 勉強SNS",
   description: "勉強記録を共有するSNS",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "リュッター",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: "/icon-192.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
