@@ -5,11 +5,11 @@ import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 
 export default function AppShell({ children, unreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
-  const pinged = useRef(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (pinged.current) return;
-    pinged.current = true;
+    if (initialized.current) return;
+    initialized.current = true;
 
     const doPing = () => {
       navigator.sendBeacon("/api/auth/ping", JSON.stringify({}));
@@ -18,6 +18,24 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     doPing();
     const interval = setInterval(doPing, 5 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+    navigator.serviceWorker.register("/sw.js").then((reg) => {
+      reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg",
+      }).then((sub) => {
+        const json = sub.toJSON();
+        fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+        });
+      }).catch(() => {});
+    }).catch(() => {});
   }, []);
 
   return (
