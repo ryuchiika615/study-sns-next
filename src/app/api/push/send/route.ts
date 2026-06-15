@@ -5,16 +5,19 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 
-const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const vapidPrivate = process.env.VAPID_PRIVATE_KEY!;
-
-webpush.setVapidDetails(
-  "mailto:admin@ryutter.app",
-  vapidPublic,
-  vapidPrivate
-);
+function ensureVapid() {
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) return false;
+  webpush.setVapidDetails("mailto:admin@ryutter.app", publicKey, privateKey);
+  return true;
+}
 
 export async function POST(request: NextRequest) {
+  if (!ensureVapid()) {
+    return NextResponse.json({ error: "VAPID not configured" }, { status: 500 });
+  }
+
   const auth = request.headers.get("authorization");
   if (auth !== `Bearer ${process.env.WEBHOOK_SECRET}`) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
