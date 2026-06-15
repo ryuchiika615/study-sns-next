@@ -19,7 +19,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
 
   const handleStop = () => {
     setRunning(false);
-    const minutes = Math.max(1, Math.round(elapsed / 60));
+    const minutes = Math.floor(elapsed / 60);
     onStop(minutes);
     setElapsed(0);
   };

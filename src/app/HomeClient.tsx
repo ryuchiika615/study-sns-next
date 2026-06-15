@@ -7,6 +7,7 @@ import StudyTimer from "@/components/StudyTimer";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
+import { formatStudyTime } from "@/lib/utils";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
@@ -273,7 +274,9 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       )}
 
       {posts.map((post: any) => (
-        <PostCard key={post.id} post={post} currentUserId={user.id} onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))} />
+        <PostCard key={post.id} post={post} currentUserId={user.id}
+          onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
       ))}
 
       {posts.length === 0 && (

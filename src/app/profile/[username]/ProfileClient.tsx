@@ -6,6 +6,7 @@ import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
 import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
+import { formatStudyTime } from "@/lib/utils";
 
 type ProfileClientProps = {
   user: { id: string };
@@ -140,10 +141,12 @@ export default function ProfileClient({
         </div>
 
         {activeTab === "posts" && posts.map((post: any) => (
-          <PostCard key={post.id} post={post} currentUserId={user.id} onDelete={(id) => {
-            const idx = posts.findIndex((p: any) => p.id === id);
-            if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
-          }} />
+          <PostCard key={post.id} post={post} currentUserId={user.id}
+            onDelete={(id) => {
+              const idx = posts.findIndex((p: any) => p.id === id);
+              if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
+            }}
+            onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
         ))}
       </div>
     </AppShell>

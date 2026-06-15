@@ -11,12 +11,14 @@ export default function PostCard({
   post,
   currentUserId,
   onDelete,
+  onUpdate,
   defaultShowComments,
   initialComments,
 }: {
   post: PostWithDetails;
   currentUserId: string;
   onDelete?: (id: string) => void;
+  onUpdate?: (id: string, data: { content?: string; study_minutes?: number }) => void;
   defaultShowComments?: boolean;
   initialComments?: any[];
 }) {
@@ -27,6 +29,11 @@ export default function PostCard({
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<any[]>(initialComments ?? []);
   const [commentsLoaded, setCommentsLoaded] = useState(!!initialComments);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [editMinutes, setEditMinutes] = useState(String(post.study_minutes));
+  const [editCommentId, setEditCommentId] = useState<string | null>(null);
+  const [editCommentText, setEditCommentText] = useState("");
   const router = useRouter();
 
   const handleLike = async () => {
@@ -84,12 +91,54 @@ export default function PostCard({
     }
   };
 
+  const startEditComment = (c: any) => {
+    setEditCommentId(c.id);
+    setEditCommentText(c.text);
+  };
+
+  const saveEditComment = async () => {
+    if (!editCommentText.trim()) return;
+    const { error } = await supabase
+      .from("comments")
+      .update({ text: editCommentText.trim(), updated_at: new Date().toISOString() })
+      .eq("id", editCommentId)
+      .eq("user_id", currentUserId);
+    if (!error) {
+      setComments(comments.map((c: any) => c.id === editCommentId ? { ...c, text: editCommentText.trim() } : c));
+      setEditCommentId(null);
+    }
+  };
+
+  const cancelEditComment = () => {
+    setEditCommentId(null);
+  };
+
   const handleDelete = async () => {
     if (!confirm("削除しますか？")) return;
     const { error } = await supabase.from("posts").delete().eq("id", post.id).eq("user_id", currentUserId);
     if (!error) {
       onDelete?.(post.id);
     }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editContent.trim()) return;
+    const minutes = parseInt(editMinutes) || 0;
+    const { error } = await supabase
+      .from("posts")
+      .update({ content: editContent.trim(), study_minutes: minutes, updated_at: new Date().toISOString() })
+      .eq("id", post.id)
+      .eq("user_id", currentUserId);
+    if (!error) {
+      onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes });
+      setEditing(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditContent(post.content);
+    setEditMinutes(String(post.study_minutes));
+    setEditing(false);
   };
 
   const rarity = rarityClass(post.current_title?.rarity);
@@ -127,28 +176,63 @@ export default function PostCard({
         </div>
 
         {post.user_id === currentUserId && (
-          <button onClick={handleDelete} className="text-gray-500 hover:text-danger bg-none border-none cursor-pointer">
-            <i className="fas fa-ellipsis-h" />
-          </button>
+          <div className="flex gap-1">
+            {!editing && (
+              <button onClick={() => setEditing(true)} className="text-gray-500 hover:text-blue-500 bg-none border-none cursor-pointer text-sm p-1">
+                <i className="fas fa-pen" />
+              </button>
+            )}
+            <button onClick={handleDelete} className="text-gray-500 hover:text-danger bg-none border-none cursor-pointer">
+              <i className="fas fa-trash" />
+            </button>
+          </div>
         )}
       </div>
 
       <div className="px-4 py-1 text-[15px] leading-relaxed break-words">
-        <p className="whitespace-pre-wrap">{post.content}</p>
+        {editing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-2 text-sm resize-none h-20"
+            />
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-gray-500">勉強時間（分）:</span>
+              <input
+                type="number"
+                value={editMinutes}
+                onChange={(e) => setEditMinutes(e.target.value)}
+                min={0}
+                className="w-20 border border-gray-300 rounded-lg p-1 text-sm"
+              />
+              <button onClick={handleSaveEdit} className="bg-primary text-white rounded-full px-4 py-1 text-sm font-bold border-none cursor-pointer">
+                保存
+              </button>
+              <button onClick={handleCancelEdit} className="text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-gray-700">
+                キャンセル
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="whitespace-pre-wrap">{post.content}</p>
 
-        <div className="mt-3 flex items-center gap-2 flex-wrap">
-          <span className="subject-chip" style={{ backgroundColor: post.subject_color }}>
-            {post.subject}
-          </span>
-          {post.study_minutes > 0 && (
-            <span className="text-primary font-bold text-sm">
-              <i className="fas fa-book-open" /> {post.display_study_time}
-            </span>
-          )}
-        </div>
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <span className="subject-chip" style={{ backgroundColor: post.subject_color }}>
+                {post.subject}
+              </span>
+              {post.study_minutes > 0 && (
+                <span className="text-primary font-bold text-sm">
+                  <i className="fas fa-book-open" /> {post.display_study_time}
+                </span>
+              )}
+            </div>
 
-        {post.image_url && (
-          <img src={post.image_url} className="mt-3 rounded-2xl border border-gray-200 max-w-full" />
+            {post.image_url && (
+              <img src={post.image_url} className="mt-3 rounded-2xl border border-gray-200 max-w-full" />
+            )}
+          </>
         )}
       </div>
 
@@ -170,13 +254,37 @@ export default function PostCard({
                 <strong>{c.user?.display_name || "ユーザー"}</strong>
                 <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
                 <span className="text-gray-400 text-xs ml-1">· {formatRelativeTime(c.created_at)}</span>
-                <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
+                {editCommentId === c.id ? (
+                  <div className="mt-1 flex gap-1">
+                    <input
+                      type="text"
+                      value={editCommentText}
+                      onChange={(e) => setEditCommentText(e.target.value)}
+                      className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
+                      autoFocus
+                    />
+                    <button onClick={saveEditComment} className="bg-primary text-white rounded-full px-3 py-1 text-xs font-bold border-none cursor-pointer">
+                      保存
+                    </button>
+                    <button onClick={cancelEditComment} className="text-gray-500 text-xs bg-none border-none cursor-pointer">
+                      取消
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
+                )}
               </div>
               {c.user_id === currentUserId && (
-                <button onClick={() => deleteComment(c.id)}
-                  className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
-                  <i className="fas fa-times" />
-                </button>
+                <div className="flex gap-1">
+                  <button onClick={() => startEditComment(c)}
+                    className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1">
+                    <i className="fas fa-pen" />
+                  </button>
+                  <button onClick={() => deleteComment(c.id)}
+                    className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
+                    <i className="fas fa-times" />
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -185,7 +293,7 @@ export default function PostCard({
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-               placeholder="返信をリュイート"
+              placeholder="返信をリュイート"
               className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm bg-gray-100 focus:bg-white focus:border-primary outline-none"
               onKeyDown={(e) => e.key === "Enter" && addComment()}
             />
