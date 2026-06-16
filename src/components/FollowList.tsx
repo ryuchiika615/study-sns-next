@@ -91,7 +91,7 @@ export default function FollowList({
               <Link href={`/profile/${u.username || u.id}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   {u.icon_url ? (
-                    <img src={u.icon_url} className="w-full h-full object-cover" />
+                    <img src={u.icon_url} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
                       <i className="fas fa-user" />

@@ -75,7 +75,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
             >
               <div className="avatar-frame w-10 h-10 flex-shrink-0">
                 {notif.sender?.icon_url ? (
-                  <img src={notif.sender.icon_url} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={notif.sender.icon_url} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                 ) : (
                   <i className="fas fa-user-circle text-2xl text-gray-300" />
                 )}
