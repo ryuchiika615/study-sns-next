@@ -8,15 +8,18 @@ export default function FollowList({
   userId,
   type,
   onClose,
+  currentUserId,
 }: {
   userId: string;
   type: "followers" | "following";
   onClose: () => void;
+  currentUserId?: string;
 }) {
   const [users, setUsers] = useState<any[]>([]);
   const [settings, setSettings] = useState<Record<string, { notify_posts: boolean }>>({});
   const [openSettingsFor, setOpenSettingsFor] = useState<string | null>(null);
   const supabase = createClient();
+  const isOwner = currentUserId === userId;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -103,31 +106,48 @@ export default function FollowList({
                   <p className="text-xs text-gray-500">@{u.username}</p>
                 </div>
               </Link>
-              {type === "following" && (
-                <div className="relative flex-shrink-0">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setOpenSettingsFor(openSettingsFor === u.id ? null : u.id); }}
-                    className={`text-lg cursor-pointer p-1 rounded-full transition ${settings[u.id]?.notify_posts ? "text-blue-500" : "text-gray-300"}`}
-                    title="通知設定"
-                  >
-                    <i className="fas fa-bell" />
+              {type === "following" && isOwner && (
+                <div className="flex items-center gap-1">
+                  <button onClick={async (e) => {
+                    e.stopPropagation();
+                    await supabase.from("follows").delete().eq("follower_id", currentUserId).eq("following_id", u.id);
+                    setUsers(prev => prev.filter(x => x.id !== u.id));
+                  }} className="text-xs text-red-500 cursor-pointer px-2 py-1 rounded hover:bg-red-50">
+                    解除
                   </button>
-                  {openSettingsFor === u.id && (
-                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52 z-10">
-                      <p className="text-xs font-bold text-gray-600 mb-2">{u.display_name || u.username} の通知</p>
-                      <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-                        <span>投稿</span>
-                        <input
-                          type="checkbox"
-                          checked={settings[u.id]?.notify_posts ?? true}
-                          onChange={(e) => toggleSetting(u.id, "notify_posts", e.target.checked)}
-                          className="cursor-pointer"
-                        />
-                      </label>
-
-                    </div>
-                  )}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setOpenSettingsFor(openSettingsFor === u.id ? null : u.id); }}
+                      className={`text-lg cursor-pointer p-1 rounded-full transition ${settings[u.id]?.notify_posts ? "text-blue-500" : "text-gray-300"}`}
+                      title="通知設定"
+                    >
+                      <i className="fas fa-bell" />
+                    </button>
+                    {openSettingsFor === u.id && (
+                      <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52 z-10">
+                        <p className="text-xs font-bold text-gray-600 mb-2">{u.display_name || u.username} の通知</p>
+                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                          <span>投稿</span>
+                          <input
+                            type="checkbox"
+                            checked={settings[u.id]?.notify_posts ?? true}
+                            onChange={(e) => toggleSetting(u.id, "notify_posts", e.target.checked)}
+                            className="cursor-pointer"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              )}
+              {type === "followers" && isOwner && (
+                <button onClick={async (e) => {
+                  e.stopPropagation();
+                  await supabase.from("follows").delete().eq("follower_id", u.id).eq("following_id", currentUserId);
+                  setUsers(prev => prev.filter(x => x.id !== u.id));
+                }} className="text-xs text-red-500 cursor-pointer px-2 py-1 rounded hover:bg-red-50 flex-shrink-0">
+                  削除
+                </button>
               )}
             </div>
           ))}

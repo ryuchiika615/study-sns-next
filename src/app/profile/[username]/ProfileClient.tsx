@@ -308,7 +308,7 @@ export default function ProfileClient({
         )}
 
         {followListType && (
-          <FollowList userId={profile.id} type={followListType} onClose={() => setFollowListType(null)} />
+          <FollowList userId={profile.id} type={followListType} onClose={() => setFollowListType(null)} currentUserId={user.id} />
         )}
       </div>
     </AppShell>

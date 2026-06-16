@@ -604,7 +604,7 @@ export default function EditProfilePage() {
          </div>
 
         {followListType && (
-          <FollowList userId={userIdRef.current || ""} type={followListType} onClose={() => setFollowListType(null)} />
+          <FollowList userId={userIdRef.current || ""} type={followListType} onClose={() => setFollowListType(null)} currentUserId={userIdRef.current || ""} />
         )}
       </div>
     </AppShell>
