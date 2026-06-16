@@ -8,6 +8,7 @@ import { Sidebar } from "./Sidebar";
 export default function AppShell({ children, unreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
   const initialized = useRef(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState<any[]>([]);
+  const [pendingGifts, setPendingGifts] = useState<any[]>([]);
   const [showAnnouncement, setShowAnnouncement] = useState<any>(null);
 
   useEffect(() => {
@@ -25,27 +26,38 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
   useEffect(() => {
     const supabase = createClient();
-    const fetchAnnouncements = async () => {
+    const fetchAnnouncementsAndGifts = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
       const { data: reads } = await supabase
         .from("announcement_reads")
         .select("announcement_id")
         .eq("user_id", user.id);
       const readIds = reads?.map(r => r.announcement_id) || [];
-      const { data } = await supabase
+      const { data: announcements } = await supabase
         .from("admin_announcements")
         .select("id, content, created_at")
         .order("created_at", { ascending: false });
-      if (data) {
+      if (announcements) {
         setUnreadAnnouncements(readIds.length > 0
-          ? data.filter(a => !readIds.includes(a.id))
-          : data
+          ? announcements.filter(a => !readIds.includes(a.id))
+          : announcements
         );
       }
+
+      const { data: gifts } = await supabase
+        .from("pending_gifts")
+        .select("id, item_id, created_at, gacha_items!inner(name, rarity, category)")
+        .is("claimed_at", null)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (gifts) {
+        setPendingGifts(gifts);
+      }
     };
-    fetchAnnouncements();
-    const timer = setInterval(fetchAnnouncements, 15000);
+    fetchAnnouncementsAndGifts();
+    const timer = setInterval(fetchAnnouncementsAndGifts, 15000);
     return () => clearInterval(timer);
   }, []);
 
@@ -57,6 +69,17 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     });
     setUnreadAnnouncements((prev) => prev.filter((a: any) => a.id !== id));
     setShowAnnouncement(null);
+  };
+
+  const claimGift = async (giftId: string) => {
+    const res = await fetch("/api/gifts/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ giftId }),
+    });
+    if (res.ok) {
+      setPendingGifts((prev) => prev.filter((g: any) => g.id !== giftId));
+    }
   };
 
   useEffect(() => {
@@ -94,6 +117,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     }
   }, []);
 
+  const totalUnread = unreadAnnouncements.length + pendingGifts.length;
   const currentAnnouncement = showAnnouncement && showAnnouncement !== "list"
     ? showAnnouncement
     : unreadAnnouncements.length > 0 ? unreadAnnouncements[0] : null;
@@ -110,9 +134,9 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
         <button onClick={() => setShowAnnouncement("list")}
           className="absolute top-4 right-4 text-xl bg-white/20 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
           <i className="far fa-envelope text-yellow-600" />
-          {unreadAnnouncements.length > 0 && (
+          {totalUnread > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
+              {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           )}
         </button>
@@ -134,19 +158,46 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
               </button>
             </div>
             <div className="overflow-y-auto flex-1 p-4 space-y-3">
-              {unreadAnnouncements.length === 0 && (
+              {totalUnread === 0 && (
                 <p className="text-center text-gray-400 py-8 text-sm">新しいお知らせはありません</p>
               )}
-              {unreadAnnouncements.map((a: any) => (
-                <div key={a.id} className="border border-gray-200 rounded-lg p-3">
-                  <p className="text-sm whitespace-pre-wrap mb-2">{a.content}</p>
-                  <p className="text-xs text-gray-400 mb-2">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
-                  <button onClick={() => markAnnouncementRead(a.id)}
-                    className="text-xs text-primary font-bold cursor-pointer">
-                    既読にする
-                  </button>
+
+              {pendingGifts.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-bold text-purple-600 mb-2">🎁 受け取れるプレゼント</h4>
+                  {pendingGifts.map((g: any) => (
+                    <div key={g.id} className="border border-purple-200 rounded-lg p-3 bg-purple-50 mb-2">
+                      <p className="text-sm font-bold mb-1">{g.gacha_items?.name}</p>
+                      {g.gacha_items?.rarity && (
+                        <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full">
+                          {g.gacha_items.rarity}
+                        </span>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">{new Date(g.created_at).toLocaleString("ja-JP")}</p>
+                      <button onClick={() => claimGift(g.id)}
+                        className="mt-2 w-full text-sm bg-purple-600 text-white rounded-lg py-2 font-bold cursor-pointer hover:bg-purple-700 transition">
+                        受け取る
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {unreadAnnouncements.length > 0 && (
+                <div>
+                  {pendingGifts.length > 0 && <h4 className="text-sm font-bold text-gray-600 mb-2">📢 お知らせ</h4>}
+                  {unreadAnnouncements.map((a: any) => (
+                    <div key={a.id} className="border border-gray-200 rounded-lg p-3">
+                      <p className="text-sm whitespace-pre-wrap mb-2">{a.content}</p>
+                      <p className="text-xs text-gray-400 mb-2">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
+                      <button onClick={() => markAnnouncementRead(a.id)}
+                        className="text-xs text-primary font-bold cursor-pointer">
+                        既読にする
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

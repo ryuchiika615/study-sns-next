@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
 
   if (!item) return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
 
-  // ユーザーに付与
-  await admin.from("user_items").insert({ user_id: userId, item_id: item.id });
+  // pending_gifts に追加（ユーザーが受け取り操作をするまで未付与）
+  await admin.from("pending_gifts").insert({ user_id: userId, item_id: item.id });
 
   // 通知を作成
   await admin.from("notifications").insert({
