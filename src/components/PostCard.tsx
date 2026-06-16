@@ -268,39 +268,38 @@ export default function PostCard({
         )}
       </div>
 
-      <div className="flex gap-6 px-4 pb-3 max-w-[300px]">
+      <div className="flex items-center gap-3 px-4 pb-3 flex-wrap">
         <button onClick={toggleComments} className="flex items-center gap-1.5 text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-primary">
           <i className="far fa-comment" /> <span>{post.comments_count}</span>
         </button>
-      </div>
-
-      <div className="px-4 pb-1 flex items-center gap-1 flex-wrap min-h-[28px]">
-        {reactions.map((r) => (
-          <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
-            className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
-              myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-            }`}>
-            <span>{r.reaction}</span>
-            <span className="text-xs font-medium">{r.count}</span>
-          </button>
-        ))}
-        <div className="relative">
-          <button onClick={() => setShowReactionPicker(!showReactionPicker)}
-            className="text-sm px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100 cursor-pointer transition">
-            <i className="far fa-smile" />
-          </button>
-          {showReactionPicker && (
-            <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-10">
-              {reactionEmojis.map((emoji) => (
-                <button key={emoji} onClick={() => { handleReaction(emoji); setShowReactionPicker(false); }}
-                  className={`text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 cursor-pointer transition ${
-                    myReaction === emoji ? "bg-primary/10" : ""
-                  }`}>
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="flex items-center gap-1 flex-wrap">
+          {reactions.map((r) => (
+            <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
+              className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
+                myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+              }`}>
+              <span>{r.reaction}</span>
+              <span className="text-xs font-medium">{r.count}</span>
+            </button>
+          ))}
+          <div className="relative">
+            <button onClick={() => setShowReactionPicker(!showReactionPicker)}
+              className="text-sm px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100 cursor-pointer transition">
+              <i className="far fa-smile" />
+            </button>
+            {showReactionPicker && (
+              <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-10">
+                {reactionEmojis.map((emoji) => (
+                  <button key={emoji} onClick={() => { handleReaction(emoji); setShowReactionPicker(false); }}
+                    className={`text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 cursor-pointer transition ${
+                      myReaction === emoji ? "bg-primary/10" : ""
+                    }`}>
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
