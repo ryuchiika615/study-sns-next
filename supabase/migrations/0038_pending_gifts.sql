@@ -10,6 +10,7 @@ create table if not exists pending_gifts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references profiles(id) on delete cascade,
   item_id uuid not null references gacha_items(id) on delete cascade,
+  message text,
   created_at timestamptz not null default now(),
   claimed_at timestamptz
 );

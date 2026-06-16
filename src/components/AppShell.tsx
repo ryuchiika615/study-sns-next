@@ -48,7 +48,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
       const { data: gifts } = await supabase
         .from("pending_gifts")
-        .select("id, item_id, created_at")
+        .select("id, item_id, message, created_at")
         .is("claimed_at", null)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -181,6 +181,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
                           {g.gacha_items.rarity}
                         </span>
                       )}
+                      {g.message && <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{g.message}</p>}
                       <p className="text-xs text-gray-400 mt-1">{new Date(g.created_at).toLocaleString("ja-JP")}</p>
                       <button onClick={() => claimGift(g.id)}
                         className="mt-2 w-full text-sm bg-purple-600 text-white rounded-lg py-2 font-bold cursor-pointer hover:bg-purple-700 transition">

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { userId, itemName, rarity, itemType } = await request.json();
+  const { userId, itemName, rarity, itemType, message } = await request.json();
   if (!userId || !itemName) {
     return NextResponse.json({ error: "userId and itemName required" }, { status: 400 });
   }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   if (!item) return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
 
   // pending_gifts に追加（ユーザーが受け取り操作をするまで未付与）
-  await admin.from("pending_gifts").insert({ user_id: userId, item_id: item.id });
+  await admin.from("pending_gifts").insert({ user_id: userId, item_id: item.id, message: message || null });
 
   // 通知を作成
   await admin.from("notifications").insert({

@@ -20,6 +20,7 @@ export default function AdminUsersPage() {
   const [giftRarity, setGiftRarity] = useState("N");
   const [giftType, setGiftType] = useState("title");
   const [giftName, setGiftName] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
   const [giftUser, setGiftUser] = useState<any>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -84,12 +85,13 @@ export default function AdminUsersPage() {
     const res = await fetch("/api/admin/gift", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: giftUser.id, itemName: giftName, rarity: giftRarity, itemType: giftType }),
+      body: JSON.stringify({ userId: giftUser.id, itemName: giftName, rarity: giftRarity, itemType: giftType, message: giftMessage }),
     });
     if (res.ok) {
       setMessage(`${itemDisplayName(giftName)} を ${giftUser.display_name || giftUser.username} に贈りました！`);
       setGiftUser(null);
       setGiftName("");
+      setGiftMessage("");
     } else {
       const data = await res.json();
       setMessage(data.error || "プレゼントに失敗しました");
@@ -209,6 +211,12 @@ export default function AdminUsersPage() {
                       <option key={name} value={name}>{itemDisplayName(name)}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">メッセージ（任意）</label>
+                  <textarea value={giftMessage} onChange={(e) => setGiftMessage(e.target.value)}
+                    placeholder="プレゼントに添えるメッセージ..."
+                    className="w-full rounded-lg border-gray-300 text-sm" rows={3} />
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
