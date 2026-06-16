@@ -229,7 +229,7 @@ export default function EditProfilePage() {
 
   const handleCombine = async (itemIdA: string, itemIdB: string, order: string) => {
     const { data, error } = await supabase.rpc("combine_items", {
-      p_item_id_a: parseInt(itemIdA), p_item_id_b: parseInt(itemIdB), p_order: order,
+      p_item_id_a: itemIdA, p_item_id_b: itemIdB, p_order: order,
     });
     if (!error && data) {
       setMessage("精錬しました！");
