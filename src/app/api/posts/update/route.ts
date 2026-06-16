@@ -13,12 +13,15 @@ export async function PATCH(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { error } = await admin
-    .from("posts")
-    .update({ content: content.trim(), study_minutes: study_minutes || 0 })
-    .eq("id", postId)
-    .eq("user_id", user.id);
+  const updateData: Record<string, any> = { content: content.trim(), study_minutes: study_minutes || 0 };
+  updateData.updated_at = new Date().toISOString();
+  const { error } = await admin.from("posts").update(updateData).eq("id", postId).eq("user_id", user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    delete updateData.updated_at;
+    const { error: error2 } = await admin.from("posts").update(updateData).eq("id", postId).eq("user_id", user.id);
+    if (error2) return NextResponse.json({ error: error2.message }, { status: 500 });
+  }
+
   return NextResponse.json({ success: true });
 }

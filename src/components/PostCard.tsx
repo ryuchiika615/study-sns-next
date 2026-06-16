@@ -235,6 +235,9 @@ export default function PostCard({
         ) : (
           <>
             <p className="whitespace-pre-wrap">{post.content}</p>
+            {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
+              <p className="text-xs text-gray-400 mt-1">（編集済み）</p>
+            )}
 
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="subject-chip" style={{ backgroundColor: post.subject_color }}>
