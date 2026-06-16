@@ -1,6 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
+import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +44,46 @@ export async function PUT(request: NextRequest) {
       .eq("following_id", user.id);
     if (count && count > 0) {
       const admin = createAdminClient();
-      await admin.from("notifications").insert({
-        recipient_id: post.user_id,
-        sender_id: user.id,
-        post_id,
-        notification_type: "like",
-      });
+
+      // 1. Insert notification (triggers DB-level push via pg_net)
+      try {
+        await admin.from("notifications").insert({
+          recipient_id: post.user_id,
+          sender_id: user.id,
+          post_id,
+          notification_type: "like",
+        });
+      } catch (_) {}
+
+      // 2. Direct push fallback (works even if pg_net fails)
+      try {
+        const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        const privateKey = process.env.VAPID_PRIVATE_KEY;
+        if (publicKey && privateKey) {
+          webpush.setVapidDetails("mailto:admin@ryutter.app", publicKey, privateKey);
+          const { data: subscriptions } = await admin
+            .from("push_subscriptions")
+            .select("endpoint, p256dh_key, auth_key")
+            .eq("user_id", post.user_id);
+          const { data: sender } = await admin
+            .from("profiles")
+            .select("display_name, username")
+            .eq("id", user.id)
+            .single();
+          const senderName = sender?.display_name || sender?.username || "誰か";
+          const body = `${senderName}がリアクションしました`;
+          if (subscriptions) {
+            for (const sub of subscriptions) {
+              try {
+                await webpush.sendNotification({
+                  endpoint: sub.endpoint,
+                  keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
+                }, JSON.stringify({ title: "リュッター", body, url: `/post/${post_id}` }));
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (_) {}
     }
   }
 
