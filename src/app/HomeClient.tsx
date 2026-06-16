@@ -38,6 +38,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   ));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
+  const [rankingPopup, setRankingPopup] = useState<{ top3: any[]; daysRemaining: number; month: number } | null>(null);
+  const [dismissedWeek, setDismissedWeek] = useState(() => localStorage.getItem("dismissed_ranking_week") || "");
   const beeryualCanvasRef = useRef<HTMLCanvasElement>(null);
   const beeryualVideoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -319,6 +321,17 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     pollAll();
     fetch("/api/daily-summary").catch(() => {});
     notifTimer.current = setInterval(pollAll, 15000);
+
+    // Weekly ranking popup
+    const now = new Date();
+    const weekNum = `${now.getFullYear()}-W${String(Math.ceil((now.getDate() + (new Date(now.getFullYear(), now.getMonth(), 1).getDay())) / 7)).padStart(2, "0")}-${now.getMonth()}`;
+    if (localStorage.getItem("dismissed_ranking_week") !== weekNum) {
+      fetch("/api/rankings/current-month").then(r => r.ok && r.json()).then(d => {
+        if (d?.top3?.length) setRankingPopup(d);
+      }).catch(() => {});
+    }
+    setDismissedWeek(weekNum);
+
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
     };
@@ -688,6 +701,42 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {rankingPopup && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setRankingPopup(null)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">🏆 {rankingPopup.month}月のランキング</h3>
+              <button onClick={() => { setRankingPopup(null); localStorage.setItem("dismissed_ranking_week", dismissedWeek); }}
+                className="text-gray-500 text-xl cursor-pointer">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">集計日まで残り<span className="font-bold text-primary">{rankingPopup.daysRemaining}</span>日</p>
+            <div className="space-y-2">
+              {rankingPopup.top3.map((entry: any, i: number) => (
+                <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${i === 0 ? "bg-yellow-50 border border-yellow-200" : "bg-gray-50"}`}>
+                  <span className={`text-lg font-bold w-8 text-center ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-400"}`}>
+                    {i === 0 ? "👑" : `#${i + 1}`}
+                  </span>
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                    {entry.user?.icon_url ? <img src={entry.user.icon_url} loading="lazy" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-xs" /></div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{entry.user?.display_name || entry.user?.username || "ユーザー"}</p>
+                    <p className="text-xs text-gray-500">{entry.displayTime}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => { setRankingPopup(null); localStorage.setItem("dismissed_ranking_week", dismissedWeek); }}
+              className="w-full mt-4 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
+              閉じる
+            </button>
           </div>
         </div>
       )}
