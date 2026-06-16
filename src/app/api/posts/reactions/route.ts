@@ -34,15 +34,14 @@ export async function PUT(request: NextRequest) {
 
   await supabase.from("post_reactions").insert({ post_id, user_id: user.id, reaction });
 
-  // Notify post author if they follow the reactor
+  // Notify post author only on FIRST reaction (deduplicate)
   const { data: post } = await supabase.from("posts").select("user_id").eq("id", post_id).single();
   if (post && post.user_id !== user.id) {
-    const { count } = await supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_id", post.user_id)
-      .eq("following_id", user.id);
-    if (count && count > 0) {
+    const [followCount, existingNotif] = await Promise.all([
+      supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", post.user_id).eq("following_id", user.id),
+      supabase.from("notifications").select("id").eq("recipient_id", post.user_id).eq("sender_id", user.id).eq("post_id", post_id).eq("notification_type", "like").maybeSingle(),
+    ]);
+    if ((followCount.count || 0) > 0 && !existingNotif.data) {
       const admin = createAdminClient();
 
       // 1. Insert notification (triggers DB-level push via pg_net)
@@ -61,19 +60,14 @@ export async function PUT(request: NextRequest) {
         const privateKey = process.env.VAPID_PRIVATE_KEY;
         if (publicKey && privateKey) {
           webpush.setVapidDetails("mailto:admin@ryutter.app", publicKey, privateKey);
-          const { data: subscriptions } = await admin
-            .from("push_subscriptions")
-            .select("endpoint, p256dh_key, auth_key")
-            .eq("user_id", post.user_id);
-          const { data: sender } = await admin
-            .from("profiles")
-            .select("display_name, username")
-            .eq("id", user.id)
-            .single();
-          const senderName = sender?.display_name || sender?.username || "誰か";
+          const [subResult, senderResult] = await Promise.all([
+            admin.from("push_subscriptions").select("endpoint, p256dh_key, auth_key").eq("user_id", post.user_id),
+            admin.from("profiles").select("display_name, username").eq("id", user.id).single(),
+          ]);
+          const senderName = senderResult.data?.display_name || senderResult.data?.username || "誰か";
           const body = `${senderName}がリアクションしました`;
-          if (subscriptions) {
-            for (const sub of subscriptions) {
+          if (subResult.data) {
+            for (const sub of subResult.data) {
               try {
                 await webpush.sendNotification({
                   endpoint: sub.endpoint,
