@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
 
 export default function FollowList({
   userId,
@@ -14,6 +14,8 @@ export default function FollowList({
   onClose: () => void;
 }) {
   const [users, setUsers] = useState<any[]>([]);
+  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean }>>({});
+  const [openSettingsFor, setOpenSettingsFor] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -37,10 +39,19 @@ export default function FollowList({
       } else {
         const { data: follows } = await supabase
           .from("follows")
-          .select("following_id")
+          .select("following_id, notify_posts, notify_likes, notify_comments")
           .eq("follower_id", userId)
           .order("created_at", { ascending: false });
         if (follows && follows.length > 0) {
+          const s: Record<string, any> = {};
+          follows.forEach((r: any) => {
+            s[r.following_id] = {
+              notify_posts: r.notify_posts,
+              notify_likes: r.notify_likes,
+              notify_comments: r.notify_comments,
+            };
+          });
+          setSettings(s);
           const ids = follows.map((r: any) => r.following_id);
           const { data: profiles } = await supabase
             .from("profiles")
@@ -54,6 +65,22 @@ export default function FollowList({
     };
     fetchUsers();
   }, [userId, type]);
+
+  const toggleSetting = async (followingId: string, key: string, value: boolean) => {
+    const prev = { ...settings };
+    setSettings((s) => ({
+      ...s,
+      [followingId]: { ...s[followingId], [key]: value },
+    }));
+    const res = await fetch("/api/follow-notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ following_id: followingId, [key]: value }),
+    });
+    if (!res.ok) {
+      setSettings(prev);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -73,22 +100,66 @@ export default function FollowList({
             </p>
           )}
           {users.map((u: any) => (
-            <Link key={u.id} href={`/profile/${u.id}`}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 no-underline text-inherit">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                {u.icon_url ? (
-                  <img src={u.icon_url} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <i className="fas fa-user" />
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm truncate">{u.display_name || u.username}</p>
-                <p className="text-xs text-gray-500">@{u.username}</p>
-              </div>
-            </Link>
+            <div key={u.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
+              <Link href={`/profile/${u.username || u.id}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                  {u.icon_url ? (
+                    <img src={u.icon_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <i className="fas fa-user" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{u.display_name || u.username}</p>
+                  <p className="text-xs text-gray-500">@{u.username}</p>
+                </div>
+              </Link>
+              {type === "following" && (
+                <div className="relative flex-shrink-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setOpenSettingsFor(openSettingsFor === u.id ? null : u.id); }}
+                    className={`text-lg cursor-pointer p-1 rounded-full transition ${settings[u.id]?.notify_posts || settings[u.id]?.notify_likes || settings[u.id]?.notify_comments ? "text-blue-500" : "text-gray-300"}`}
+                    title="通知設定"
+                  >
+                    <i className="fas fa-bell" />
+                  </button>
+                  {openSettingsFor === u.id && (
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52 z-10">
+                      <p className="text-xs font-bold text-gray-600 mb-2">{u.display_name || u.username} の通知</p>
+                      <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                        <span>投稿</span>
+                        <input
+                          type="checkbox"
+                          checked={settings[u.id]?.notify_posts ?? true}
+                          onChange={(e) => toggleSetting(u.id, "notify_posts", e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                        <span>いいね</span>
+                        <input
+                          type="checkbox"
+                          checked={settings[u.id]?.notify_likes ?? true}
+                          onChange={(e) => toggleSetting(u.id, "notify_likes", e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                        <span>コメント</span>
+                        <input
+                          type="checkbox"
+                          checked={settings[u.id]?.notify_comments ?? true}
+                          onChange={(e) => toggleSetting(u.id, "notify_comments", e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
