@@ -6,6 +6,8 @@ import PostCard from "@/components/PostCard";
 import StudyTimer from "@/components/StudyTimer";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
+import PullToRefresh from "@/components/PullToRefresh";
+import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
 import { formatStudyTime } from "@/lib/utils";
 
@@ -220,11 +222,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     smallImg.src = smallKey === 'front' ? front! : back!;
   };
   const [hasNewPosts, setHasNewPosts] = useState(false);
+  const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
   const notifTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchPosts = async (p: number, q: string) => {
+    setLoading(true);
     const result = await fetchAndEnrichPosts(supabase, user.id, { page: p, search: q });
     setPosts(result.posts);
     setTotalPages(result.totalPages);
@@ -232,6 +236,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       latestCreatedAt.current = result.posts[0].created_at;
     }
     setHasNewPosts(false);
+    setLoading(false);
   };
 
   const pollNotifications = async () => {
@@ -387,6 +392,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
   return (
     <>
+      <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
       {/* ===== 統計セクション ===== */}
       <div className="mx-4 mb-3 space-y-3">
         {totalMinutes > 0 && (
@@ -592,6 +598,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       </div>
 
       {/* ===== 投稿一覧 ===== */}
+      {loading && posts.length === 0 ? (
+        <>
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+        </>
+      ) : null}
       {hasNewPosts && (
         <button onClick={() => { fetchPosts(1, search); }}
           className="w-[calc(100%-2rem)] mx-4 py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl border border-blue-100 hover:bg-blue-100 cursor-pointer shadow-sm mb-3">
@@ -627,6 +640,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           </button>
         )}
       </div>
+      </PullToRefresh>
 
       {rankingPopup && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setRankingPopup(null)}>

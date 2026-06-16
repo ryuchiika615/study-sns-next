@@ -6,6 +6,9 @@ body {
   padding-bottom: 75px;
   background: #f2f2f6;
   color: #0f1419;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 称号バッジ */
