@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
   const messages: Record<string, string> = {
     like: `${senderName}がリアクションしました`,
-    reply: `${senderName}が返信しました`,
+    reply: `${senderName}からコメントが来ました`,
     follow: `${senderName}がフォローしました`,
     follow_post: `${senderName}がリュイートしました`,
     gift: "おプレゼントが届きました！！",

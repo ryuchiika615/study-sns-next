@@ -23,7 +23,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
   const getNotificationText = (notif: any) => {
     switch (notif.notification_type) {
       case "like": return "があなたの投稿にリアクションしました";
-      case "reply": return "があなたの投稿に返信しました";
+      case "reply": return "からコメントが来ました";
       case "follow": return "があなたをフォローしました";
       case "follow_post": return "が投稿しました";
       default: return "";
