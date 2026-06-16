@@ -37,6 +37,74 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     JSON.parse(localStorage.getItem("seen_notifs") || "[]")
   ));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
+  const beeryualBackRef = useRef<HTMLInputElement>(null);
+  const beeryualFrontRef = useRef<HTMLInputElement>(null);
+  const beeryualCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [beeryualBack, setBeeryualBack] = useState<string | null>(null);
+  const [beeryualFront, setBeeryualFront] = useState<string | null>(null);
+
+  const handleBeeryual = () => {
+    setBeeryualBack(null);
+    setBeeryualFront(null);
+    setBeeryualResult(null);
+    beeryualBackRef.current?.click();
+  };
+
+  const compositeBeeryual = () => {
+    const canvas = beeryualCanvasRef.current;
+    if (!canvas || !beeryualBack || !beeryualFront) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const backImg = new Image();
+    const frontImg = new Image();
+    let loaded = 0;
+    backImg.onload = frontImg.onload = () => {
+      loaded++;
+      if (loaded < 2) return;
+      const w = Math.max(backImg.naturalWidth, 800);
+      const h = Math.max(backImg.naturalHeight, 600);
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(backImg, 0, 0, w, h);
+      const overlaySize = Math.min(w, h) * 0.25;
+      const ox = w - overlaySize - 16;
+      const oy = h - overlaySize - 16;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ox + overlaySize / 2, oy + overlaySize / 2, overlaySize / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(frontImg, ox, oy, overlaySize, overlaySize);
+      ctx.restore();
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(ox + overlaySize / 2, oy + overlaySize / 2, overlaySize / 2, 0, Math.PI * 2);
+      ctx.stroke();
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `beeryual-${Date.now()}.jpg`, { type: "image/jpeg" });
+        const fileExt = "jpg";
+        const fileName = `${user.id}/${Date.now()}-beeryual.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("post-images")
+          .upload(fileName, file);
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from("post-images")
+            .getPublicUrl(fileName);
+          if (urlData?.publicUrl) {
+            setBeeryualResult(urlData.publicUrl);
+            setBeeryualBack(null);
+            setBeeryualFront(null);
+          }
+        }
+      }, "image/jpeg", 0.9);
+    };
+    backImg.src = beeryualBack;
+    frontImg.src = beeryualFront;
+  };
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
@@ -138,12 +206,14 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    let imageUrl: string | null = null;
     const imageInput = document.querySelector<HTMLInputElement>('input[name="image"]');
-    if (imageInput?.files?.[0]) {
-      const file = imageInput.files[0];
+    const files = imageInput?.files ? Array.from(imageInput.files) : [];
+    const imageUrls: string[] = [];
+    if (beeryualResult) imageUrls.push(beeryualResult);
+
+    for (const file of files) {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("post-images")
         .upload(fileName, file);
@@ -151,7 +221,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         const { data: urlData } = supabase.storage
           .from("post-images")
           .getPublicUrl(fileName);
-        imageUrl = urlData?.publicUrl || null;
+        if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl);
       }
     }
 
@@ -163,7 +233,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       p_content: content,
       p_subject: subject || "その他",
       p_study_minutes: parseInt(studyMinutes || "0"),
-      p_image_url: imageUrl,
+      p_image_url: imageUrls[0] || null,
+      p_image_urls: imageUrls.length > 0 ? imageUrls : null,
       p_study_date: studyDateVal,
     });
 
@@ -182,6 +253,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     setContent("");
     setSubject("");
     setStudyMinutes("");
+    setBeeryualResult(null);
     fetchPosts(1, search);
     setPage(1);
   };
@@ -279,7 +351,48 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
             />
           </div>
 
-          <input type="file" name="image" accept="image/*" className="mt-2.5 text-sm" />
+          <input type="file" name="image" accept="image/*" multiple className="mt-2.5 text-sm" />
+
+          <div className="flex items-center gap-2 mt-2.5">
+            <button type="button" onClick={handleBeeryual}
+              className="text-xs bg-purple-100 text-purple-700 rounded-full px-3 py-1.5 border border-purple-200 cursor-pointer hover:bg-purple-200">
+              ビーリュアル
+            </button>
+            {beeryualResult && (
+              <span className="text-xs text-green-600">✓ ビーリュアル合成済み</span>
+            )}
+            {!beeryualResult && (beeryualBack || beeryualFront) && (
+              <span className="text-xs text-gray-400">写真を選択中...</span>
+            )}
+          </div>
+
+          <input ref={beeryualBackRef} type="file" accept="image/*" capture="environment"
+            className="hidden" onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                const url = URL.createObjectURL(f);
+                setBeeryualBack(url);
+                beeryualFrontRef.current?.click();
+              }
+            }} />
+          <input ref={beeryualFrontRef} type="file" accept="image/*" capture="user"
+            className="hidden" onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                const url = URL.createObjectURL(f);
+                setBeeryualFront(url);
+              }
+            }} />
+
+          {beeryualBack && beeryualFront && !beeryualResult && (
+            <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+              <canvas ref={beeryualCanvasRef} className="w-full rounded-lg" />
+              <button type="button" onClick={compositeBeeryual}
+                className="mt-2 w-full bg-purple-500 text-white rounded-full py-1.5 text-xs font-bold cursor-pointer hover:bg-purple-600">
+                合成して確定
+              </button>
+            </div>
+          )}
 
           <div className="text-right mt-2.5">
             <button type="submit" disabled={isSubmitting} className="bg-primary text-white font-bold rounded-full px-5 py-2 border-none cursor-pointer text-base disabled:opacity-50">

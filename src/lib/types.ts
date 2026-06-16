@@ -33,6 +33,7 @@ export interface PostWithDetails {
   user_id: string;
   content: string;
   image_url: string | null;
+  image_urls: string[] | null;
   subject: string;
   study_minutes: number;
   reply_to_id: string | null;
