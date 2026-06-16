@@ -52,6 +52,8 @@ async function sendSummaryForUser(supabase: any, admin: any, userId: string, dat
     total_points: totalPoints,
   });
 
+  await supabase.from("profiles").update({ exchange_points: totalPoints }).eq("id", userId);
+
   const { data: subscriptions } = await admin
     .from("push_subscriptions")
     .select("endpoint, p256dh_key, auth_key")

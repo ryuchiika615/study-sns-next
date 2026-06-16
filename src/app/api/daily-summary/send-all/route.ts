@@ -52,6 +52,8 @@ async function sendSummaryForUser(admin: any, userId: string, date: string) {
   });
   if (insertError) return null;
 
+  await admin.from("profiles").update({ exchange_points: totalPoints }).eq("id", userId);
+
   const { data: subscriptions } = await admin
     .from("push_subscriptions")
     .select("endpoint, p256dh_key, auth_key")
