@@ -112,15 +112,11 @@ export default function PostCard({
 
   const saveEditComment = async () => {
     if (!editCommentText.trim()) return;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("comments")
-      .update({ text: editCommentText.trim(), updated_at: new Date().toISOString() })
-      .eq("id", editCommentId)
-      .eq("user_id", currentUserId)
-      .select();
-    if (error || !data || data.length === 0) {
-      return;
-    }
+      .update({ text: editCommentText.trim() })
+      .eq("id", editCommentId);
+    if (error) return;
     setComments(comments.map((c: any) => c.id === editCommentId ? { ...c, text: editCommentText.trim() } : c));
     setEditCommentId(null);
   };
@@ -140,13 +136,11 @@ export default function PostCard({
   const handleSaveEdit = async () => {
     if (!editContent.trim()) return;
     const minutes = parseInt(editMinutes) || 0;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("posts")
-      .update({ content: editContent.trim(), study_minutes: minutes, updated_at: new Date().toISOString() })
-      .eq("id", post.id)
-      .eq("user_id", currentUserId)
-      .select();
-    if (error || !data || data.length === 0) {
+      .update({ content: editContent.trim(), study_minutes: minutes })
+      .eq("id", post.id);
+    if (error) {
       alert("保存に失敗しました。もう一度お試しください。");
       return;
     }
