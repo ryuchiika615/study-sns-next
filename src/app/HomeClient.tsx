@@ -154,9 +154,22 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     largeImg.onload = smallImg.onload = () => {
       loaded++;
       if (loaded < 2) return;
-      canvas.width = largeImg.naturalWidth;
-      canvas.height = largeImg.naturalHeight;
-      ctx.drawImage(largeImg, 0, 0);
+      const devW = window.innerWidth;
+      const devH = window.innerHeight;
+      const devRatio = devW / devH;
+      const imgW = largeImg.naturalWidth;
+      const imgH = largeImg.naturalHeight;
+      canvas.width = Math.max(800, imgW);
+      canvas.height = canvas.width / devRatio;
+      let sx = 0, sy = 0, sw = imgW, sh = imgH;
+      if (imgW / imgH > devRatio) {
+        sw = imgH * devRatio;
+        sx = (imgW - sw) / 2;
+      } else {
+        sh = imgW / devRatio;
+        sy = (imgH - sh) / 2;
+      }
+      ctx.drawImage(largeImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
       if (beeryualShowSmall) {
         const rh = canvas.height * 0.28;
         const rw = rh * 0.7;
@@ -167,7 +180,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           ox = (beeryualOverlayPos.x / cr.width) * canvas.width;
           oy = (beeryualOverlayPos.y / cr.height) * canvas.height;
         } else {
-          ox = canvas.width - rw - 16;
+          ox = 16;
           oy = 16;
         }
         ctx.save();
@@ -515,7 +528,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                   const smallUrl = beeryualPhotos[smallKey];
                   return (
                     <>
-                      <img src={largeUrl!} className="w-full h-full object-contain cursor-pointer" onClick={() => { if (beeryualShowSmall) setBeeryualSwapped(!beeryualSwapped); else setBeeryualShowSmall(true); }} onContextMenu={(e) => e.preventDefault()}
+                      <img src={largeUrl!} className="w-full h-full object-cover cursor-pointer" onClick={() => { if (beeryualShowSmall) setBeeryualSwapped(!beeryualSwapped); else setBeeryualShowSmall(true); }} onContextMenu={(e) => e.preventDefault()}
                         onPointerDown={(e) => {
                           const timer = setTimeout(() => { setBeeryualShowSmall(false); }, 600);
                           const onUp = () => { clearTimeout(timer); document.removeEventListener('pointerup', onUp); };
