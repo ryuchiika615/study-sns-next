@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { formatStudyTime } from "@/lib/utils";
 
@@ -12,9 +13,11 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
 }) {
   const [ranking, setRanking] = useState(initialRanking);
   const [days, setDays] = useState(initialDays);
+  const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
   const fetchRankings = async (d: number) => {
+    setLoading(true);
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - d);
 
@@ -52,54 +55,85 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
       display_time: formatStudyTime(data.total),
     })));
     setDays(d);
+    setLoading(false);
   };
 
-  const getRankStyle = (rank: number) => {
-    if (rank === 1) return "text-yellow-500";
-    if (rank === 2) return "text-gray-400";
-    if (rank === 3) return "text-amber-700";
-    return "text-gray-500";
+  const getMedal = (rank: number) => {
+    if (rank === 1) return { emoji: "🥇", bg: "bg-yellow-50 border-yellow-300", rankBg: "bg-yellow-100 text-yellow-700" };
+    if (rank === 2) return { emoji: "🥈", bg: "bg-gray-50 border-gray-300", rankBg: "bg-gray-200 text-gray-600" };
+    if (rank === 3) return { emoji: "🥉", bg: "bg-amber-50 border-amber-300", rankBg: "bg-amber-100 text-amber-700" };
+    return { emoji: `#${rank}`, bg: "bg-white border-gray-100", rankBg: "bg-gray-100 text-gray-500" };
   };
 
   return (
     <AppShell unreadCount={unreadCount}>
-      <div className="p-4">
-        <div className="flex justify-center gap-2 mb-4">
+      <div className="mx-4 my-4 space-y-3">
+        {/* 期間選択 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">
           {[7, 30, 90, 365].map((d) => (
             <button key={d} onClick={() => fetchRankings(d)}
-              className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer ${
-                days === d ? "bg-primary text-white" : "bg-gray-100 text-gray-700"
+              className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
+                days === d ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}>
               {d === 7 ? "週間" : d === 30 ? "月間" : d === 90 ? "3ヶ月" : "年間"}
             </button>
           ))}
         </div>
 
+        {/* ランキングリスト */}
         <div className="space-y-2">
-          {ranking.map((entry: any) => (
-            <div key={entry.rank} className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-3">
-              <span className={`text-xl font-bold w-8 text-center ${getRankStyle(entry.rank)}`}>
-                {entry.rank}
-              </span>
-              <div className="avatar-frame">
-                {entry.user?.icon_url ? (
-                  <img src={entry.user.icon_url} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
-                ) : (
-                  <i className="fas fa-user-circle text-3xl text-gray-300" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-sm">{entry.user?.display_name || "ユーザー"}</p>
-                <p className="text-xs text-gray-500">{entry.display_time} · {entry.post_count}回</p>
-              </div>
-              <span className="text-primary font-bold">{entry.display_time}</span>
+          {loading ? (
+            <>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3 animate-pulse">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full" />
+                  <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3.5 bg-gray-200 rounded w-24" />
+                    <div className="h-3 bg-gray-200 rounded w-16" />
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-16" />
+                </div>
+              ))}
+            </>
+          ) : ranking.length > 0 ? (
+            ranking.map((entry: any) => {
+              const medal = getMedal(entry.rank);
+              const isPodium = entry.rank <= 3;
+              return (
+                <Link key={entry.rank} href={`/profile/${entry.user?.id}`}
+                  className={`block rounded-xl border p-4 transition hover:shadow-md active:scale-[0.98] ${medal.bg}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${medal.rankBg}`}>
+                      {isPodium ? <span className="text-lg">{medal.emoji}</span> : medal.emoji}
+                    </div>
+                    <div className="avatar-frame">
+                      {entry.user?.icon_url ? (
+                        <img src={entry.user.icon_url} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <i className="fas fa-user-circle text-3xl text-gray-300" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate">{entry.user?.display_name || "ユーザー"}</p>
+                      <p className="text-xs text-gray-500">{entry.post_count}回の勉強 · {entry.display_time}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className={`font-bold ${isPodium ? "text-lg" : "text-sm"} ${entry.rank === 1 ? "text-yellow-600" : entry.rank === 2 ? "text-gray-500" : entry.rank === 3 ? "text-amber-700" : "text-primary"}`}>
+                        {entry.display_time}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-12 text-center">
+              <p className="text-gray-400 text-3xl mb-2">🏆</p>
+              <p className="text-gray-500 text-sm">ランキングデータがありません</p>
             </div>
-          ))}
+          )}
         </div>
-
-        {ranking.length === 0 && (
-          <p className="text-center text-gray-500 py-10">ランキングデータがありません</p>
-        )}
       </div>
     </AppShell>
   );

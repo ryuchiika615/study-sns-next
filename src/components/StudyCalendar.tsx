@@ -10,7 +10,7 @@ export default function StudyCalendar({ data, year }: { data: DayData[]; year?: 
 
   const dayMap = new Map<string, number>();
   for (const d of data) {
-    dayMap.set(d.date, dayMap.get(d.date)! + d.minutes || d.minutes);
+    dayMap.set(d.date, (dayMap.get(d.date) || 0) + d.minutes);
   }
 
   const days: { date: string; level: number }[] = [];
@@ -28,28 +28,27 @@ export default function StudyCalendar({ data, year }: { data: DayData[]; year?: 
   const weeks: typeof days[] = [];
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
 
-  const colors = ["bg-gray-100", "bg-green-200", "bg-green-400", "bg-green-600", "bg-green-800"];
-  const dayLabels = ["", "月", "", "水", "", "金", ""];
+  const colors = ["bg-gray-100", "bg-blue-200", "bg-blue-400", "bg-blue-600", "bg-blue-800"];
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex gap-0.5" style={{ minWidth: weeks.length * 14 }}>
+    <div>
+      <div className="flex gap-[2px]" style={{ minWidth: weeks.length * 14 }}>
         {weeks.map((week, wi) => (
-          <div key={wi} className="flex flex-col gap-0.5">
+          <div key={wi} className="flex flex-col gap-[2px]">
             {week.map((day, di) => (
               <div
                 key={day.date}
-                className={`w-3 h-3 rounded-sm ${colors[day.level]} ${day.level === 0 ? "" : ""}`}
+                className={`w-3.5 h-3.5 rounded-[3px] ${colors[day.level]}`}
                 title={`${day.date}: ${dayMap.get(day.date) || 0}分`}
               />
             ))}
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+      <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-400">
         <span>少</span>
         {colors.map((c, i) => (
-          <div key={i} className={`w-3 h-3 rounded-sm ${c}`} />
+          <div key={i} className={`w-3.5 h-3.5 rounded-[3px] ${c}`} />
         ))}
         <span>多</span>
       </div>

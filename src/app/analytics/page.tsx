@@ -113,60 +113,58 @@ export default function AnalyticsPage() {
     fetchData(start, end);
   };
 
-  if (!data) return <AppShell><div className="p-4 text-center text-gray-500">読み込み中...</div></AppShell>;
+  if (!data) return <AppShell><div className="p-4 text-center text-gray-500 py-12">読み込み中...</div></AppShell>;
 
   return (
     <AppShell unreadCount={unreadCount}>
-      <div className="p-4 space-y-4">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-primary">{data.total_all_time_display}</p>
-          <p className="text-sm text-gray-500">期間合計</p>
+      <div className="mx-4 my-4 space-y-3">
+        {/* 合計時間 */}
+        <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-xl shadow-sm p-5 text-center text-white">
+          <p className="text-sm text-blue-200">期間合計</p>
+          <p className="text-3xl font-bold mt-1">{data.total_all_time_display}</p>
         </div>
 
-        <form onSubmit={handleDateSearch} className="flex gap-2 items-center">
-          <input type="date" value={start} onChange={(e) => setStart(e.target.value)}
-            className="flex-1 rounded-lg border-gray-300 text-sm" />
-          <span className="text-gray-500">~</span>
-          <input type="date" value={end} onChange={(e) => setEnd(e.target.value)}
-            className="flex-1 rounded-lg border-gray-300 text-sm" />
-          <button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer">
-            表示
-          </button>
+        {/* 日付範囲 */}
+        <form onSubmit={handleDateSearch}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex items-center gap-2">
+            <input type="date" value={start} onChange={(e) => setStart(e.target.value)}
+              className="flex-1 rounded-lg border-gray-200 text-sm bg-gray-50 px-3 py-2" />
+            <span className="text-gray-400 text-sm">〜</span>
+            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)}
+              className="flex-1 rounded-lg border-gray-200 text-sm bg-gray-50 px-3 py-2" />
+            <button type="submit"
+              className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-600 active:scale-95 transition">
+              表示
+            </button>
+          </div>
         </form>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold mb-3">科目別内訳</h3>
+        {/* 科目別内訳 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <h3 className="font-bold text-sm text-gray-500 mb-4"><i className="fas fa-chart-pie mr-1.5" />科目別内訳</h3>
           <PieChart labels={data.pie_labels} data={data.pie_data} colors={data.pie_colors} />
-          <div className="mt-3 space-y-1">
+          <div className="mt-4 space-y-2">
             {data.subject_list?.map((s: any) => (
-              <div key={s.subject} className="flex justify-between text-sm">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: s.color }} />
-                  {s.subject}
+              <div key={s.subject} className="flex items-center justify-between text-sm py-1 border-b border-gray-50 last:border-0">
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: s.color }} />
+                  <span className="text-gray-700">{s.subject}</span>
                 </span>
-                <span className="font-bold">{s.display_time}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400">{s.count}回</span>
+                  <span className="font-bold text-primary">{s.display_time}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold mb-3">日別勉強時間</h3>
+        {/* 日別勉強時間 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <h3 className="font-bold text-sm text-gray-500 mb-4"><i className="fas fa-chart-bar mr-1.5" />日別勉強時間</h3>
           <BarChart labels={data.bar_labels} data={data.bar_data} />
         </div>
-
-        {/* ランキング（自分基準） */}
-        {data.ranking?.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-bold mb-3">期間ランキング TOP5</h3>
-            {data.ranking.slice(0, 5).map((entry: any) => (
-              <div key={entry.rank} className="flex justify-between text-sm py-1">
-                <span>#{entry.rank} {entry.label}</span>
-                <span className="font-bold">{entry.display_time}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </AppShell>
   );
