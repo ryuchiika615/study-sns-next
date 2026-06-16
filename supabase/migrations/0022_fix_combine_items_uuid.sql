@@ -1,5 +1,6 @@
--- Fix combine_items RPC: change parameter types from integer to uuid
--- The gacha_items.id column is uuid, not integer
+-- Drop old versions, then recreate with dedup check
+drop function if exists combine_items(integer, integer, text);
+drop function if exists combine_items(p_item_id_a integer, p_item_id_b integer, p_order text);
 
 create or replace function combine_items(
   p_item_id_a uuid,
@@ -19,6 +20,7 @@ declare
   v_right text;
   v_full_title text;
   v_new_item record;
+  v_existing uuid;
 begin
   v_user_id := auth.uid();
   if v_user_id is null then
@@ -66,7 +68,16 @@ begin
     returning * into v_new_item;
   end if;
 
-  insert into user_items (user_id, item_id) values (v_user_id, v_new_item.id);
+  -- Check if user already owns this combined item
+  select id into v_existing from user_items
+    where user_id = v_user_id and item_id = v_new_item.id
+    limit 1;
+
+  if v_existing is null then
+    insert into user_items (id, user_id, item_id)
+    values (gen_random_uuid(), v_user_id, v_new_item.id);
+  end if;
+
   update profiles set current_title_id = v_new_item.id where id = v_user_id;
 
   return json_build_object('item', row_to_json(v_new_item));
