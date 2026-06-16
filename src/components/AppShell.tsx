@@ -150,7 +150,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
         </button>
       </div>
 
-      <div className="container mx-auto max-w-2xl px-0">
+      <div className="container mx-auto max-w-2xl px-0 page-enter">
         {children}
       </div>
 

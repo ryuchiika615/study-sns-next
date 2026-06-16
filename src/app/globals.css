@@ -80,11 +80,52 @@ body {
 
 /* 固定ボトムナビ */
 .bottom-nav {
-  @apply fixed bottom-0 left-0 w-full bg-dark flex justify-around items-center py-3 pb-5 border-t border-gray-700 z-50;
+  @apply fixed bottom-0 left-0 w-full bg-dark flex justify-around items-start pt-2 pb-6 border-t border-gray-700 z-50;
+  backdrop-filter: blur(12px);
+  background: rgba(17, 17, 17, 0.92);
 }
 .bottom-nav a {
-  @apply text-white text-2xl no-underline;
+  @apply text-gray-500 no-underline flex flex-col items-center gap-0.5 transition-all duration-200 active:scale-90;
+  min-width: 48px;
 }
-.bottom-nav a.active {
+.bottom-nav a i {
+  @apply text-xl transition-all duration-200;
+}
+.bottom-nav a .nav-label {
+  @apply text-[10px] font-medium transition-all duration-200;
+}
+.bottom-nav a.active i {
+  @apply text-primary scale-110;
+}
+.bottom-nav a.active .nav-label {
   @apply text-primary;
+}
+.bottom-nav a:not(.active):hover i {
+  @apply text-gray-300;
+}
+.bottom-nav a:not(.active):hover .nav-label {
+  @apply text-gray-400;
+}
+
+/* ページフェードイン */
+.page-enter {
+  animation: pageFadeIn 0.3s ease-out;
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* タップフィードバック */
+.tap {
+  @apply transition-transform duration-100 active:scale-95;
+}
+.tap-sm {
+  @apply transition-transform duration-75 active:scale-90;
+}
+button:not(:disabled) {
+  @apply transition-transform duration-75;
+}
+button:not(:disabled):active {
+  transform: scale(0.96);
 }
