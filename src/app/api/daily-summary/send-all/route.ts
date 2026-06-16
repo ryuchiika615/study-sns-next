@@ -1,21 +1,20 @@
-import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
-async function sendSummaryForUser(supabase: any, admin: any, userId: string, date: string) {
+async function sendSummaryForUser(admin: any, userId: string, date: string) {
   const dayStart = `${date}T00:00:00Z`;
   const dayEnd = `${date}T23:59:59Z`;
 
-  const { data: userPosts } = await supabase
+  const { data: userPosts } = await admin
     .from("posts").select("id").eq("user_id", userId);
 
   const postIds = (userPosts || []).map((p: any) => p.id);
   let reactionsCount = 0;
   if (postIds.length > 0) {
-    const { count } = await supabase
+    const { count } = await admin
       .from("post_reactions")
       .select("*", { count: "exact", head: true })
       .in("post_id", postIds)
@@ -23,18 +22,18 @@ async function sendSummaryForUser(supabase: any, admin: any, userId: string, dat
     reactionsCount = count || 0;
   }
 
-  const { count: followersCount } = await supabase
+  const { count: followersCount } = await admin
     .from("follows").select("*", { count: "exact", head: true })
     .eq("following_id", userId);
 
-  const { data: dayPosts } = await supabase
+  const { data: dayPosts } = await admin
     .from("posts").select("study_minutes")
     .eq("user_id", userId)
     .gte("created_at", dayStart).lte("created_at", dayEnd);
 
   const studyMinutes = (dayPosts || []).reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from("profiles").select("exchange_points").eq("id", userId).single();
 
   const currentPoints = profile?.exchange_points || 0;
@@ -43,7 +42,7 @@ async function sendSummaryForUser(supabase: any, admin: any, userId: string, dat
   const pointsEarned = loginBonus + (reactionsCount * 10) + Math.floor(studyMinutes * followerMultiplier);
   const totalPoints = currentPoints + pointsEarned;
 
-  await supabase.from("daily_summaries").insert({
+  const { error: insertError } = await admin.from("daily_summaries").insert({
     user_id: userId, date,
     reactions_count: reactionsCount,
     followers_count: followersCount || 0,
@@ -51,6 +50,7 @@ async function sendSummaryForUser(supabase: any, admin: any, userId: string, dat
     points_earned: pointsEarned,
     total_points: totalPoints,
   });
+  if (insertError) return null;
 
   const { data: subscriptions } = await admin
     .from("push_subscriptions")
@@ -78,38 +78,31 @@ async function sendSummaryForUser(supabase: any, admin: any, userId: string, dat
   return { reactionsCount, pointsEarned, totalPoints };
 }
 
-export async function GET() {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const now = new Date();
-  const jstOffset = 9 * 60;
-  const jst = new Date(now.getTime() + jstOffset * 60 * 1000);
-  const currentHourJST = jst.getUTCHours();
-  const currentMinuteJST = jst.getUTCMinutes();
-
-  if (currentHourJST < 23) {
-    return NextResponse.json({ ok: true, message: "23時以降に送信されます", currentHour: currentHourJST });
+export async function POST(request: NextRequest) {
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.WEBHOOK_SECRET}`) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const admin = createAdminClient();
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   const date = jst.toISOString().split("T")[0];
 
-  const { data: existing } = await supabase
-    .from("daily_summaries").select("id")
-    .eq("user_id", user.id).eq("date", date)
-    .maybeSingle();
+  const { data: allUsers } = await admin.from("notification_settings").select("user_id").eq("daily_summary", true);
+  if (!allUsers?.length) return NextResponse.json({ ok: true, sent: 0 });
 
-  if (existing) return NextResponse.json({ ok: true, alreadySent: true });
+  let sent = 0;
+  for (const u of allUsers) {
+    const { data: existing } = await admin
+      .from("daily_summaries").select("id")
+      .eq("user_id", u.user_id).eq("date", date)
+      .maybeSingle();
+    if (existing) continue;
 
-  const { data: settings } = await supabase
-    .from("notification_settings").select("daily_summary")
-    .eq("user_id", user.id).maybeSingle();
+    const result = await sendSummaryForUser(admin, u.user_id, date);
+    if (result) sent++;
+  }
 
-  if (settings?.daily_summary === false) return NextResponse.json({ ok: true, disabled: true });
-
-  const admin = createAdminClient();
-  const result = await sendSummaryForUser(supabase, admin, user.id, date);
-
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, sent });
 }
