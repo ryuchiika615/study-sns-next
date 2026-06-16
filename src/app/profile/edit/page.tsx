@@ -132,8 +132,6 @@ export default function EditProfilePage() {
     const updateData: Record<string, any> = {
       display_name: displayName,
       bio,
-      department,
-      theme_color: themeColor,
       target_date: targetDate || null,
       target_minutes: parseInt(targetMinutes) || 0,
     };
@@ -401,18 +399,6 @@ export default function EditProfilePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">自己紹介</label>
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={300}
               className="w-full rounded-lg border-gray-300 text-sm" rows={3} />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">部署</label>
-            <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">テーマカラー</label>
-            <input type="text" value={themeColor} onChange={(e) => setThemeColor(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
