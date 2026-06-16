@@ -48,12 +48,20 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
       const { data: gifts } = await supabase
         .from("pending_gifts")
-        .select("id, item_id, created_at, gacha_items!inner(name, rarity, category)")
+        .select("id, item_id, created_at")
         .is("claimed_at", null)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (gifts) {
-        setPendingGifts(gifts);
+      if (gifts && gifts.length > 0) {
+        const itemIds = gifts.map(g => g.item_id);
+        const { data: items } = await supabase
+          .from("gacha_items")
+          .select("id, name, rarity, category")
+          .in("id", itemIds);
+        const itemMap = new Map(items?.map(i => [i.id, i]) || []);
+        setPendingGifts(gifts.map(g => ({ ...g, gacha_items: itemMap.get(g.item_id) || null })));
+      } else {
+        setPendingGifts([]);
       }
     };
     fetchAnnouncementsAndGifts();
