@@ -65,12 +65,6 @@ export default function ProfileClient({
     }
   }, [isFollowing, user.id, profile.id]);
 
-  useEffect(() => {
-    if (activeTab === "likes") {
-      loadLikedIds();
-    }
-  }, [activeTab]);
-
   const handleFollow = async () => {
     const wasFollowing = isFollowing;
     setIsFollowing(!wasFollowing);
@@ -113,11 +107,13 @@ export default function ProfileClient({
     setLikedLoading(true);
     setLikedError("");
     setLikedDebug(`profile.id=${profile.id}\n`);
+    console.log("[likes] start", { profileId: profile.id, userId: user.id });
     const { data, error } = await supabase
       .from("likes")
       .select("post_id")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
+    console.log("[likes] query result", { data, error: error?.message });
     setLikedDebug((prev) => prev + `likes query done, data=${JSON.stringify(data)}, error=${error?.message}\n`);
     if (error) {
       setLikedError(error.message);
@@ -125,6 +121,7 @@ export default function ProfileClient({
       return;
     }
     const ids = (data || []).map((l: any) => l.post_id);
+    console.log("[likes] post ids", ids);
     setLikedDebug((prev) => prev + `ids=${JSON.stringify(ids)}\n`);
     setLikedIds(ids);
     setLikedPage(1);
@@ -282,7 +279,7 @@ export default function ProfileClient({
 
         <div className="flex border-b border-gray-200 mb-4">
           {["posts", "likes"].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
+            <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "likes") loadLikedIds(); }}
               className={`flex-1 py-2 text-sm font-bold text-center cursor-pointer ${
                 activeTab === tab ? "text-primary border-b-2 border-primary" : "text-gray-500"
               }`}>
