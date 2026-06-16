@@ -36,7 +36,7 @@ export async function GET() {
       is_admin: p?.is_admin || false,
       is_banned: p?.is_banned || false,
       ban_reason: p?.ban_reason || null,
-      points: p?.points || 0,
+      points: p?.exchange_points || p?.points || 0,
       last_sign_in: au.last_sign_in_at,
       created_at: au.created_at,
     };
@@ -74,16 +74,16 @@ export async function PUT(request: NextRequest) {
     case "adjust_points": {
       const pts = parseInt(value);
       if (isNaN(pts)) return NextResponse.json({ error: "invalid points" }, { status: 400 });
-      const { data: profile } = await supabase.from("profiles").select("points").eq("id", userId).single();
-      const newPoints = Math.max(0, (profile?.points || 0) + pts);
-      await supabase.from("profiles").update({ points: newPoints }).eq("id", userId);
+      const { data: profile } = await supabase.from("profiles").select("exchange_points").eq("id", userId).single();
+      const newPoints = Math.max(0, (profile?.exchange_points || 0) + pts);
+      await supabase.from("profiles").update({ exchange_points: newPoints }).eq("id", userId);
       return NextResponse.json({ success: true, points: newPoints });
     }
 
     case "set_points": {
       const pts = parseInt(value);
       if (isNaN(pts) || pts < 0) return NextResponse.json({ error: "invalid points" }, { status: 400 });
-      await admin.from("profiles").update({ points: pts }).eq("id", userId);
+      await admin.from("profiles").update({ exchange_points: pts }).eq("id", userId);
       return NextResponse.json({ success: true, points: pts });
     }
 

@@ -438,15 +438,9 @@ export default function EditProfilePage() {
         </form>
 
         {/* ポイント表示 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-3xl font-bold text-primary">{profile.points}</p>
-            <p className="text-xs text-gray-500">勉強ポイント</p>
-          </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-3xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
-            <p className="text-xs text-gray-500">交換ポイント</p>
-          </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-3xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
+          <p className="text-xs text-gray-500">ポイント</p>
         </div>
 
         {/* 交換ショップ */}

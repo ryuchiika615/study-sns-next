@@ -8,6 +8,7 @@ export interface Profile {
   icon_url: string | null;
   target_date: string | null;
   target_minutes: number;
+  /** @deprecated 合併により exchange_points を使用 */
   points: number;
   exchange_points: number;
   consecutive_post_days: number;
