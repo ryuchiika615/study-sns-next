@@ -34,12 +34,21 @@ async function sendSummaryForUser(admin: any, userId: string, date: string) {
   const studyMinutes = (dayPosts || []).reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
 
   const { data: profile } = await admin
-    .from("profiles").select("exchange_points").eq("id", userId).single();
+    .from("profiles").select("exchange_points, consecutive_post_days, last_post_date").eq("id", userId).single();
 
   const currentPoints = profile?.exchange_points || 0;
-  const loginBonus = 10;
   const followerMultiplier = 1 + ((followersCount || 0) * 0.1);
-  const pointsEarned = loginBonus + (reactionsCount * 10) + Math.floor(studyMinutes * followerMultiplier);
+
+  // Calculate actual streak bonus earned (already awarded when user posted)
+  let streakBonus = 0;
+  const consecutiveDays = profile?.consecutive_post_days || 0;
+  const lastPostDate = profile?.last_post_date;
+  if (lastPostDate === date) {
+    streakBonus = consecutiveDays <= 7 ? Math.pow(2, consecutiveDays - 1) : 100;
+  }
+  streakBonus = Math.floor(streakBonus);
+
+  const pointsEarned = (reactionsCount * 10) + Math.floor(studyMinutes * followerMultiplier);
   const totalPoints = currentPoints + pointsEarned;
 
   const { error: insertError } = await admin.from("daily_summaries").insert({
@@ -60,7 +69,7 @@ async function sendSummaryForUser(admin: any, userId: string, date: string) {
     .eq("user_id", userId);
 
   if (subscriptions?.length) {
-    const body = `${date} のまとめ📊\nログインボーナス: +${loginBonus}\nリアクション: ${reactionsCount}件 (+${reactionsCount * 10})\n勉強時間: ${Math.floor(studyMinutes / 60)}h${studyMinutes % 60}m ×${followerMultiplier.toFixed(1)} = +${Math.floor(studyMinutes * followerMultiplier)}\n獲得ポイント: +${pointsEarned}\n合計ポイント: ${totalPoints}`;
+    const body = `${date} のまとめ📊\n連続ボーナス: +${streakBonus}\nリアクション: ${reactionsCount}件 (+${reactionsCount * 10})\n勉強時間: ${Math.floor(studyMinutes / 60)}h${studyMinutes % 60}m ×${followerMultiplier.toFixed(1)} = +${Math.floor(studyMinutes * followerMultiplier)}\n獲得ポイント: +${pointsEarned}\n合計ポイント: ${totalPoints}`;
 
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const privateKey = process.env.VAPID_PRIVATE_KEY;
