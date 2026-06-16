@@ -10,8 +10,8 @@ create table if not exists like_rewards (
 );
 
 -- 3. Drop old notify_on_like trigger & function
-drop trigger if exists notify_on_like_trigger on likes;
-drop function if exists notify_on_like();
+drop trigger if exists trg_notify_on_like on likes;
+drop function if exists notify_on_like() cascade;
 
 -- 4. New unified like processor: award 10pt + notify (once per liker per post)
 create or replace function process_like()
