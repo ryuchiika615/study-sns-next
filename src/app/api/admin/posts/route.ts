@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,8 @@ export async function DELETE(request: NextRequest) {
   const { postIds } = await request.json();
   if (!postIds?.length) return NextResponse.json({ error: "postIds required" }, { status: 400 });
 
-  const { error } = await supabase.from("posts").delete().in("id", postIds);
+  const adminSupabase = createAdminClient();
+  const { error } = await adminSupabase.from("posts").delete().in("id", postIds);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ success: true, deleted: postIds.length });
