@@ -32,6 +32,8 @@ export default function AdminAnnouncementsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setMessage("");
     if (!content.trim()) return;
     const res = await fetch("/api/admin/announcements", {
       method: "POST",
@@ -42,11 +44,16 @@ export default function AdminAnnouncementsPage() {
       setMessage("お知らせを送信しました！");
       setContent("");
       fetchAnnouncements();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `送信失敗 (${res.status})`);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("削除しますか？")) return;
+    setError("");
+    setMessage("");
     const res = await fetch("/api/admin/announcements", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -54,6 +61,9 @@ export default function AdminAnnouncementsPage() {
     });
     if (res.ok) {
       fetchAnnouncements();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `削除失敗 (${res.status})`);
     }
   };
 
