@@ -48,6 +48,7 @@ export default function ProfileClient({
   const [likedPage, setLikedPage] = useState(1);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState("");
+  const [likedDebug, setLikedDebug] = useState("");
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
@@ -111,17 +112,20 @@ export default function ProfileClient({
   const loadLikedIds = async () => {
     setLikedLoading(true);
     setLikedError("");
+    setLikedDebug(`profile.id=${profile.id}\n`);
     const { data, error } = await supabase
       .from("likes")
       .select("post_id")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
+    setLikedDebug((prev) => prev + `likes query done, data=${JSON.stringify(data)}, error=${error?.message}\n`);
     if (error) {
       setLikedError(error.message);
       setLikedLoading(false);
       return;
     }
     const ids = (data || []).map((l: any) => l.post_id);
+    setLikedDebug((prev) => prev + `ids=${JSON.stringify(ids)}\n`);
     setLikedIds(ids);
     setLikedPage(1);
     setLikedPosts([]);
@@ -135,16 +139,19 @@ export default function ProfileClient({
     const start = 0;
     const end = page * PER_PAGE;
     const pageIds = ids.slice(start, end);
+    setLikedDebug((prev) => prev + `fetching posts: pageIds=${JSON.stringify(pageIds)}\n`);
     const { data, error } = await supabase
       .from("posts")
       .select("*, user:user_id(id, display_name, username, icon_url)")
       .in("id", pageIds)
       .order("created_at", { ascending: false });
+    setLikedDebug((prev) => prev + `posts query: found=${data?.length}, error=${error?.message}\n`);
     if (error) {
       setLikedError(error.message);
       return;
     }
     const ordered = pageIds.map((id) => data?.find((p) => p.id === id)).filter(Boolean);
+    setLikedDebug((prev) => prev + `ordered posts: ${ordered.length}\n`);
     setLikedPosts(ordered);
   };
 
@@ -306,6 +313,7 @@ export default function ProfileClient({
         {activeTab === "likes" && (
           <>
             {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
+            {likedDebug && <div className="bg-gray-50 text-gray-500 p-2 rounded text-xs font-mono whitespace-pre-wrap mb-2">{likedDebug}</div>}
             {likedLoading && <p className="text-center text-gray-400 py-4 text-sm">読み込み中...</p>}
             {!likedLoading && likedPosts.length === 0 && !likedError && (
               <p className="text-center text-gray-400 py-8 text-sm">いいねしたリュイートはありません</p>
