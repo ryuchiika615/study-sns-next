@@ -126,6 +126,11 @@ export default function PostCard({
   };
 
   const handleDelete = async () => {
+    const daysOld = (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysOld > 7) {
+      alert("1週間以上経過した投稿は削除できません。管理者にお問い合わせください。");
+      return;
+    }
     if (!confirm("削除しますか？")) return;
     const res = await fetch("/api/posts/delete", {
       method: "DELETE",

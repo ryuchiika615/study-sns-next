@@ -10,13 +10,16 @@ export async function DELETE(request: NextRequest) {
   const { postId } = await request.json();
   if (!postId) return NextResponse.json({ error: "postId required" }, { status: 400 });
 
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("posts")
-    .delete()
-    .eq("id", postId)
-    .eq("user_id", user.id);
+  let delError;
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.from("posts").delete().eq("id", postId).eq("user_id", user.id);
+    delError = error;
+  } catch {
+    const { error } = await supabase.from("posts").delete().eq("id", postId).eq("user_id", user.id);
+    delError = error;
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (delError) return NextResponse.json({ error: delError.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
