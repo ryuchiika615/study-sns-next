@@ -164,6 +164,12 @@ export default function EditProfilePage() {
       setMessage("保存しました！");
       loadData(user.id);
     }
+
+    await fetch("/api/notification-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
+    });
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -185,21 +191,6 @@ export default function EditProfilePage() {
       setMessage("パスワードを変更しました！");
       setNewPassword("");
       setNewPasswordConfirm("");
-    }
-  };
-
-  const handleSaveNotificationSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await fetch("/api/notification-settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
-    });
-    if (res.ok) {
-      setMessage("通知設定を保存しました");
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setMessage(data.error || "保存に失敗しました");
     }
   };
 
@@ -437,6 +428,28 @@ export default function EditProfilePage() {
             </div>
           </div>
 
+          <div className="border-t border-gray-100 pt-3">
+            <p className="text-sm font-medium text-gray-700 mb-2">通知設定</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">静音開始時間</label>
+                <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
+                  className="w-full rounded-lg border-gray-300 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">静音終了時間</label>
+                <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
+                  className="w-full rounded-lg border-gray-300 text-sm" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">設定した時間帯はプッシュ通知が送信されなくなります</p>
+            <label className="flex items-center justify-between py-2 text-sm cursor-pointer">
+              <span>デイリーまとめ通知</span>
+              <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
+                className="cursor-pointer" />
+            </label>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">アイコン画像</label>
             <input type="file" name="icon" accept="image/*" className="text-sm" />
@@ -463,33 +476,6 @@ export default function EditProfilePage() {
           <button type="submit" disabled={passwordChanging}
             className="bg-gray-800 text-white font-bold rounded-full px-6 py-2 text-sm disabled:opacity-50">
             パスワードを変更
-          </button>
-        </form>
-
-        {/* 通知設定 */}
-        <form onSubmit={handleSaveNotificationSettings} className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-          <h2 className="text-lg font-bold">通知設定</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">静音開始時間</label>
-              <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
-                className="w-full rounded-lg border-gray-300 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">静音終了時間</label>
-              <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
-                className="w-full rounded-lg border-gray-300 text-sm" />
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">設定した時間帯はプッシュ通知が送信されなくなります</p>
-          <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-            <span>デイリーまとめ通知</span>
-            <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
-              className="cursor-pointer" />
-          </label>
-          <p className="text-xs text-gray-500">毎日その日の獲得リアクション数・ポイントのまとめを通知します</p>
-          <button type="submit" className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm">
-            保存
           </button>
         </form>
 
