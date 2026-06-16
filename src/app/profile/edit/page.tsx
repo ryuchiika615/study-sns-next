@@ -454,50 +454,58 @@ export default function EditProfilePage() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-lg font-bold mb-1">交換ショップ</h2>
           <p className="text-xs text-gray-500 mb-3">売却で得た交換ptで称号やアイコンフレームを購入できます</p>
-          {RARITIES.map((rarity) => (
-            <div key={rarity} className="mb-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0 last:mb-0">
-              <div className="flex items-center justify-between mb-2">
-                <span className={`title-badge ${rarity}`}>{rarity}</span>
-                <span className="text-sm text-gray-500">購入 {BUY_COSTS[rarity]}pt / 売却 {SELL_VALUES[rarity]}pt</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <select id={`shop-title-${rarity}`} className="w-full rounded-lg border-gray-300 text-xs p-1.5">
-                    {SHOP_CATALOG.title[rarity].map((name: string) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => {
-                      const select = document.getElementById(`shop-title-${rarity}`) as HTMLSelectElement;
-                      handleBuy(rarity, "title", select.value);
-                    }}
-                    disabled={(profile.exchange_points || 0) < BUY_COSTS[rarity]}
-                    className="w-full mt-1 text-xs bg-primary text-white rounded-full py-1.5 disabled:opacity-40"
-                  >
-                    称号を交換
-                  </button>
+          {(() => {
+            const ownedTitles = new Set(titles.map((t: any) => t.name));
+            const ownedIcons = new Set(icons.map((i: any) => i.name));
+            return RARITIES.map((rarity) => (
+              <div key={rarity} className="mb-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0 last:mb-0">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`title-badge ${rarity}`}>{rarity}</span>
+                  <span className="text-sm text-gray-500">購入 {BUY_COSTS[rarity]}pt / 売却 {SELL_VALUES[rarity]}pt</span>
                 </div>
-                <div>
-                  <select id={`shop-icon-${rarity}`} className="w-full rounded-lg border-gray-300 text-xs p-1.5">
-                    {SHOP_CATALOG.icon[rarity].map((name: string) => (
-                      <option key={name} value={name}>{name.replace("【アイコン】", "")}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => {
-                      const select = document.getElementById(`shop-icon-${rarity}`) as HTMLSelectElement;
-                      handleBuy(rarity, "icon", select.value);
-                    }}
-                    disabled={(profile.exchange_points || 0) < BUY_COSTS[rarity]}
-                    className="w-full mt-1 text-xs bg-orange-500 text-white rounded-full py-1.5 disabled:opacity-40"
-                  >
-                    アイコンを交換
-                  </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <select id={`shop-title-${rarity}`} className="w-full rounded-lg border-gray-300 text-xs p-1.5">
+                      {SHOP_CATALOG.title[rarity].map((name: string) => (
+                        <option key={name} value={name} disabled={ownedTitles.has(name)}>
+                          {name}{ownedTitles.has(name) ? " （取得済み）" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        const select = document.getElementById(`shop-title-${rarity}`) as HTMLSelectElement;
+                        handleBuy(rarity, "title", select.value);
+                      }}
+                      disabled={(profile.exchange_points || 0) < BUY_COSTS[rarity]}
+                      className="w-full mt-1 text-xs bg-primary text-white rounded-full py-1.5 disabled:opacity-40"
+                    >
+                      称号を交換
+                    </button>
+                  </div>
+                  <div>
+                    <select id={`shop-icon-${rarity}`} className="w-full rounded-lg border-gray-300 text-xs p-1.5">
+                      {SHOP_CATALOG.icon[rarity].map((name: string) => (
+                        <option key={name} value={name} disabled={ownedIcons.has(name)}>
+                          {name.replace("【アイコン】", "")}{ownedIcons.has(name) ? " （取得済み）" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        const select = document.getElementById(`shop-icon-${rarity}`) as HTMLSelectElement;
+                        handleBuy(rarity, "icon", select.value);
+                      }}
+                      disabled={(profile.exchange_points || 0) < BUY_COSTS[rarity]}
+                      className="w-full mt-1 text-xs bg-orange-500 text-white rounded-full py-1.5 disabled:opacity-40"
+                    >
+                      アイコンを交換
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
 
         {/* 称号を精錬（合成） */}
