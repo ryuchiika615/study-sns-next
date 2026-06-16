@@ -23,7 +23,7 @@ begin
   insert into public.profiles (id, display_name, username, email)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'display_name', new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
     coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
     new.email
   );

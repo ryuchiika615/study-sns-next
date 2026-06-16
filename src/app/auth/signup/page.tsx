@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function SignupPage() {
+  const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -23,6 +25,11 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
+    if (password !== passwordConfirm) {
+      setError("パスワードが一致しません。");
+      setLoading(false);
+      return;
+    }
 
     const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "_")}@study-sns.local`;
 
@@ -30,7 +37,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { username },
+        data: { username, display_name: displayName },
       },
     });
 
@@ -58,6 +65,18 @@ export default function SignupPage() {
           )}
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">表示名</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+              className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
+              placeholder="表示名"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">ユーザーID</label>
             <input
               type="text"
@@ -75,6 +94,18 @@ export default function SignupPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">パスワード（確認）</label>
+            <input
+              type="password"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
               required
               minLength={6}
               className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"

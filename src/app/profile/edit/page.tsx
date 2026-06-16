@@ -4,6 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
+import PostCard from "@/components/PostCard";
+import FollowList from "@/components/FollowList";
+import { formatStudyTime } from "@/lib/utils";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isIconItem, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 
 const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
@@ -30,6 +33,7 @@ export default function EditProfilePage() {
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [profileTab, setProfileTab] = useState<"posts" | "likes">("posts");
+  const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -294,14 +298,16 @@ export default function EditProfilePage() {
               )}
             </div>
             <div className="flex gap-6">
-              <div className="text-center">
+              <button onClick={() => setFollowListType("following")}
+                className="text-center cursor-pointer hover:opacity-70">
                 <p className="text-2xl font-bold">{followingCount}</p>
                 <p className="text-xs text-gray-500">フォロー</p>
-              </div>
-              <div className="text-center">
+              </button>
+              <button onClick={() => setFollowListType("followers")}
+                className="text-center cursor-pointer hover:opacity-70">
                 <p className="text-2xl font-bold">{followersCount}</p>
                 <p className="text-xs text-gray-500">フォロワー</p>
-              </div>
+              </button>
             </div>
           </div>
           {/* 現在装備中の称号 */}
@@ -334,11 +340,17 @@ export default function EditProfilePage() {
               </p>
             )}
             {(profileTab === "posts" ? myPosts : likedPosts).slice(0, 20).map((post: any) => (
-              <div key={post.id} className="border border-gray-100 rounded-lg p-3 text-sm hover:bg-gray-50 cursor-pointer"
-                onClick={() => router.push(`/post/${post.id}`)}>
-                <p className="line-clamp-2">{post.content}</p>
-                <p className="text-xs text-gray-400 mt-1">{new Date(post.created_at).toLocaleDateString("ja-JP")}</p>
-              </div>
+              <PostCard key={post.id} post={post} currentUserId={userIdRef.current || ""}
+                onDelete={(id) => {
+                  setMyPosts((prev) => prev.filter((p: any) => p.id !== id));
+                  setLikedPosts((prev) => prev.filter((p: any) => p.id !== id));
+                }}
+                onUpdate={(id, data) => {
+                  setMyPosts((prev: any[]) => prev.map((p: any) =>
+                    p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p));
+                  setLikedPosts((prev: any[]) => prev.map((p: any) =>
+                    p.id === id ? { ...p, ...data } : p));
+                }} />
             ))}
           </div>
         </div>
@@ -574,6 +586,10 @@ export default function EditProfilePage() {
             })}
           </div>
         </div>
+
+        {followListType && (
+          <FollowList userId={userIdRef.current || ""} type={followListType} onClose={() => setFollowListType(null)} />
+        )}
       </div>
     </AppShell>
   );

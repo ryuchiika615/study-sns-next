@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
+import FollowList from "@/components/FollowList";
 import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
 import { formatStudyTime } from "@/lib/utils";
@@ -37,6 +38,7 @@ export default function ProfileClient({
   const [isFollowing, setIsFollowing] = useState(initialFollow);
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState(initialPosts);
+  const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
 
   const handleFollow = async () => {
     const wasFollowing = isFollowing;
@@ -85,8 +87,14 @@ export default function ProfileClient({
 
             <div className="flex gap-4 mt-2 text-sm">
               <span><strong>{postCount}</strong> リュイート</span>
-              <span><strong>{followersCount}</strong> フォロワー</span>
-              <span><strong>{followingCount}</strong> フォロー中</span>
+              <button onClick={() => setFollowListType("followers")}
+                className="hover:underline cursor-pointer">
+                <strong>{followersCount}</strong> フォロワー
+              </button>
+              <button onClick={() => setFollowListType("following")}
+                className="hover:underline cursor-pointer">
+                <strong>{followingCount}</strong> フォロー中
+              </button>
             </div>
 
             <div className="flex gap-4 mt-2 text-sm">
@@ -155,6 +163,10 @@ export default function ProfileClient({
             }}
             onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
         ))}
+
+        {followListType && (
+          <FollowList userId={profile.id} type={followListType} onClose={() => setFollowListType(null)} />
+        )}
       </div>
     </AppShell>
   );
