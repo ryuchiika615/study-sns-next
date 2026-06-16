@@ -262,7 +262,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       } else if (lastNotif.notification_type === "follow_post") {
         addToast({ message: `${sender}が投稿しました`, type: "follow_post", href });
       } else if (lastNotif.notification_type === "gift") {
-        addToast({ message: `おプレゼントが届きました！！`, type: "gift", href: "/gacha" });
+        addToast({ message: `🎁 ${sender}からプレゼントが届きました。`, type: "gift", href: "/gacha" });
       }
     }
     setUnreadCount(unread);

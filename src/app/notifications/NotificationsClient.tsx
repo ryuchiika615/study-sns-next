@@ -26,6 +26,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "reply": return "からコメントが来ました";
       case "follow": return "があなたをフォローしました";
       case "follow_post": return "が投稿しました";
+      case "gift": return "からプレゼントが届きました。";
       default: return "";
     }
   };
@@ -100,7 +101,10 @@ export default function NotificationsClient({ notifications: initial }: { notifi
                   </button>
                 )
               ) : (
-                <i className={`fas flex-shrink-0 ${notif.notification_type === "like" ? "fa-smile text-yellow-500" : "fa-reply text-primary"}`} />
+                <i className={`fas flex-shrink-0 ${
+                  notif.notification_type === "like" ? "fa-smile text-yellow-500" :
+                  notif.notification_type === "gift" ? "fa-gift text-purple-500" : "fa-reply text-primary"
+                }`} />
               )}
             </div>
           ))}
