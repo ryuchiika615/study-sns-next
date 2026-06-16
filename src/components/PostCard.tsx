@@ -23,8 +23,6 @@ export default function PostCard({
   initialComments?: any[];
 }) {
   const supabase = createClient();
-  const [liked, setLiked] = useState(post.is_liked);
-  const [likeCount, setLikeCount] = useState(post.likes_count);
   const [reactions, setReactions] = useState(post.reactions_count || []);
   const [myReaction, setMyReaction] = useState(post.my_reaction || null);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -39,26 +37,6 @@ export default function PostCard({
   const [editCommentText, setEditCommentText] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const router = useRouter();
-
-  const handleLike = async () => {
-    const wasLiked = liked;
-    setLiked(!wasLiked);
-    setLikeCount(wasLiked ? likeCount - 1 : likeCount + 1);
-
-    if (wasLiked) {
-      const { error } = await supabase
-        .from("likes")
-        .delete()
-        .eq("user_id", currentUserId)
-        .eq("post_id", post.id);
-      if (error) { setLiked(true); setLikeCount(likeCount); }
-    } else {
-      const { error } = await supabase
-        .from("likes")
-        .insert({ user_id: currentUserId, post_id: post.id });
-      if (error) { setLiked(false); setLikeCount(likeCount); }
-    }
-  };
 
   const handleReaction = async (emoji: string) => {
     const prev = { myReaction, reactions };
@@ -293,10 +271,6 @@ export default function PostCard({
       <div className="flex gap-6 px-4 pb-3 max-w-[300px]">
         <button onClick={toggleComments} className="flex items-center gap-1.5 text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-primary">
           <i className="far fa-comment" /> <span>{post.comments_count}</span>
-        </button>
-        <button onClick={handleLike} className="flex items-center gap-1.5 text-sm bg-none border-none cursor-pointer"
-          style={{ color: liked ? "#f91880" : "#536471" }}>
-          <i className={`${liked ? "fas" : "far"} fa-heart`} /> <span>{likeCount}</span>
         </button>
       </div>
 

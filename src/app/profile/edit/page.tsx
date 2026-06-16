@@ -38,6 +38,7 @@ export default function EditProfilePage() {
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
+  const [dailySummary, setDailySummary] = useState(true);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -112,12 +113,13 @@ export default function EditProfilePage() {
 
     const { data: notifSettings } = await supabase
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end")
+      .select("quiet_hours_start, quiet_hours_end, daily_summary")
       .eq("user_id", uid)
       .maybeSingle();
     if (notifSettings) {
       setQuietHoursStart(notifSettings.quiet_hours_start || "");
       setQuietHoursEnd(notifSettings.quiet_hours_end || "");
+      setDailySummary(notifSettings.daily_summary ?? true);
     }
   };
 
@@ -191,7 +193,7 @@ export default function EditProfilePage() {
     const res = await fetch("/api/notification-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null }),
+      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
     });
     if (res.ok) {
       setMessage("通知設定を保存しました");
@@ -480,6 +482,12 @@ export default function EditProfilePage() {
             </div>
           </div>
           <p className="text-xs text-gray-500">設定した時間帯はプッシュ通知が送信されなくなります</p>
+          <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+            <span>デイリーまとめ通知</span>
+            <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
+              className="cursor-pointer" />
+          </label>
+          <p className="text-xs text-gray-500">毎日その日の獲得リアクション数・ポイントのまとめを通知します</p>
           <button type="submit" className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm">
             保存
           </button>

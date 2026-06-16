@@ -55,6 +55,7 @@ export interface PostWithDetails {
 export interface NotificationSettings {
   quiet_hours_start: string | null;
   quiet_hours_end: string | null;
+  daily_summary: boolean;
 }
 
 export interface MutedUser {

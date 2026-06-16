@@ -317,6 +317,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
   useEffect(() => {
     pollAll();
+    fetch("/api/daily-summary").catch(() => {});
     notifTimer.current = setInterval(pollAll, 15000);
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
