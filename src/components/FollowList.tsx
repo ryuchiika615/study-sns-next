@@ -110,7 +110,11 @@ export default function FollowList({
                 <div className="flex items-center gap-1">
                   <button onClick={async (e) => {
                     e.stopPropagation();
-                    await supabase.from("follows").delete().eq("follower_id", currentUserId).eq("following_id", u.id);
+                    const { error } = await supabase.from("follows").delete().eq("follower_id", currentUserId).eq("following_id", u.id);
+                    if (error) {
+                      console.error("unfollow error:", error);
+                      return;
+                    }
                     setUsers(prev => prev.filter(x => x.id !== u.id));
                   }} className="text-xs text-red-500 cursor-pointer px-2 py-1 rounded hover:bg-red-50">
                     解除
@@ -143,7 +147,11 @@ export default function FollowList({
               {type === "followers" && isOwner && (
                 <button onClick={async (e) => {
                   e.stopPropagation();
-                  await supabase.from("follows").delete().eq("follower_id", u.id).eq("following_id", currentUserId);
+                  const { error } = await supabase.from("follows").delete().eq("follower_id", u.id).eq("following_id", currentUserId);
+                  if (error) {
+                    console.error("remove follower error:", error);
+                    return;
+                  }
                   setUsers(prev => prev.filter(x => x.id !== u.id));
                 }} className="text-xs text-red-500 cursor-pointer px-2 py-1 rounded hover:bg-red-50 flex-shrink-0">
                   削除
