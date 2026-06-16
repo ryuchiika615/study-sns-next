@@ -6,16 +6,19 @@ drop function if exists notify_followers_on_like() cascade;
 drop trigger if exists trg_notify_followers_on_comment on public.comments;
 drop function if exists notify_followers_on_comment() cascade;
 
--- 3. Update notification_type check constraint (remove follow_like, follow_comment)
+-- 3. Remove legacy notification rows before updating constraint
+delete from notifications where notification_type in ('follow_like', 'follow_comment');
+
+-- 4. Update notification_type check constraint (remove follow_like, follow_comment)
 alter table notifications drop constraint if exists notifications_notification_type_check;
 alter table notifications add constraint notifications_notification_type_check
   check (notification_type in ('like','reply','follow','follow_post'));
 
--- 4. Remove unused columns from follows
+-- 5. Remove unused columns from follows
 alter table follows drop column if exists notify_comments;
 alter table follows drop column if exists notify_likes;
 
--- 5. Fix process_like: notify post author when the AUTHOR follows the LIKER (not vice versa)
+-- 6. Fix process_like: notify post author when the AUTHOR follows the LIKER (not vice versa)
 --    The old logic had follower_id/liking_id backwards for the follow check.
 create or replace function process_like()
 returns trigger language plpgsql security definer set search_path = public as $$

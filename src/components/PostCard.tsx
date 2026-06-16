@@ -34,6 +34,7 @@ export default function PostCard({
   const [editMinutes, setEditMinutes] = useState(String(post.study_minutes));
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const router = useRouter();
 
   const handleLike = async () => {
@@ -251,7 +252,7 @@ export default function PostCard({
             {((post.image_urls?.length ?? 0) > 0 || post.image_url) && (
               <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min((post.image_urls || [post.image_url]).filter(Boolean).length, 2)}, 1fr)` }}>
                 {(post.image_urls?.length ? post.image_urls : [post.image_url]).filter((u): u is string => !!u).map((url, i) => (
-                  <img key={i} src={url} className="rounded-2xl border border-gray-200 w-full h-48 object-cover" />
+                  <img key={i} src={url} className="rounded-2xl border border-gray-200 w-full h-48 object-cover cursor-pointer" onClick={() => setViewingImage(url)} />
                 ))}
               </div>
             )}
@@ -325,6 +326,12 @@ export default function PostCard({
               返信
             </button>
           </div>
+        </div>
+      )}
+
+      {viewingImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center" onClick={() => setViewingImage(null)}>
+          <img src={viewingImage} className="max-w-full max-h-full object-contain p-4" />
         </div>
       )}
     </div>
