@@ -168,8 +168,10 @@ export default function PostCard({
 
   const rarity = rarityClass(post.current_title?.rarity);
 
+  const isOwn = post.user_id === currentUserId;
+
   return (
-    <div className="post-card">
+    <div className={`post-card ${isOwn ? "border-l-4 border-l-primary" : ""}`}>
       <div className="flex px-4 pt-1">
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>

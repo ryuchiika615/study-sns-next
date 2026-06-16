@@ -387,44 +387,52 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
   return (
     <>
-      {totalMinutes > 0 && (
-        <div className="mx-4 mb-4 p-4 rounded-lg bg-gradient-to-r from-blue-900 to-blue-700 text-white border border-blue-400 text-center">
-          <p className="text-sm text-blue-200">総勉強時間</p>
-          <p className="text-2xl font-bold">{formatRemaining(totalMinutes)}</p>
+      {/* ===== 統計セクション ===== */}
+      <div className="mx-4 mb-3 space-y-3">
+        {totalMinutes > 0 && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-blue-900 to-blue-700 text-white border border-blue-400 text-center shadow-sm">
+            <p className="text-sm text-blue-200">総勉強時間</p>
+            <p className="text-2xl font-bold">{formatRemaining(totalMinutes)}</p>
+          </div>
+        )}
+
+        {profile?.target_date && profile?.target_minutes > 0 && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-gray-900 to-gray-800 text-white border border-yellow-600 text-center shadow-sm">
+            <h4 className="text-yellow-500 m-0 mb-2"><i className="fas fa-bullseye" /> {profile.target_date} までの目標</h4>
+            <p className="text-sm text-gray-400">目標合計 {Math.floor(profile.target_minutes / 60)}時間{profile.target_minutes % 60}分</p>
+            <p className="text-lg text-yellow-400 font-bold mt-1">あと {formatRemaining(profile.target_minutes - totalMinutes)}</p>
+          </div>
+        )}
+
+        {weeklyLabels.length > 0 && (
+          <WeeklyChart labels={weeklyLabels} datasets={weeklyDatasets.map(d => ({
+            ...d,
+            backgroundColor: d.backgroundColor,
+          }))} />
+        )}
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} />
         </div>
-      )}
-
-      {profile?.target_date && profile?.target_minutes > 0 && (
-        <div className="mx-4 mb-4 p-4 rounded-lg bg-gradient-to-r from-gray-900 to-gray-800 text-white border border-yellow-600 text-center">
-          <h4 className="text-yellow-500 m-0 mb-2"><i className="fas fa-bullseye" /> {profile.target_date} までの目標</h4>
-          <p className="text-sm text-gray-400">目標合計 {Math.floor(profile.target_minutes / 60)}時間{profile.target_minutes % 60}分</p>
-          <p className="text-lg text-yellow-400 font-bold mt-1">あと {formatRemaining(profile.target_minutes - totalMinutes)}</p>
-        </div>
-      )}
-
-      {weeklyLabels.length > 0 && (
-        <WeeklyChart labels={weeklyLabels} datasets={weeklyDatasets.map(d => ({
-          ...d,
-          backgroundColor: d.backgroundColor,
-        }))} />
-      )}
-
-      <div className="px-4 py-3">
-        <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} />
       </div>
 
-      <div className="border-b border-gray-100 px-4 py-4">
-        <form onSubmit={handleSearch} className="mb-4">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="リュイートを検索"
-            className="w-full rounded-full border border-gray-200 bg-gray-100 px-4 py-2.5 text-sm"
-          />
-        </form>
+      {/* ===== 投稿フォーム ===== */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 mb-4 overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-500"><i className="far fa-edit mr-1.5" />新規リュイート</h3>
+        </div>
+        <div className="px-4 py-3">
+          <form onSubmit={handleSearch} className="mb-3">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="リュイートを検索"
+              className="w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm"
+            />
+          </form>
 
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -581,11 +589,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           </div>
         </form>
       </div>
+      </div>
 
+      {/* ===== 投稿一覧 ===== */}
       {hasNewPosts && (
         <button onClick={() => { fetchPosts(1, search); }}
-          className="w-full py-2 bg-blue-50 text-blue-600 text-sm font-bold border-b border-blue-100 hover:bg-blue-100 cursor-pointer">
-          新しい投稿があります
+          className="w-[calc(100%-2rem)] mx-4 py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl border border-blue-100 hover:bg-blue-100 cursor-pointer shadow-sm mb-3">
+          <i className="fas fa-arrow-up mr-1" /> 新しい投稿があります
         </button>
       )}
 
@@ -596,10 +606,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       ))}
 
       {posts.length === 0 && (
-        <p className="text-center text-gray-500 py-10">まだポストがありません。</p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 py-12 text-center">
+          <p className="text-gray-400"><i className="far fa-frown text-3xl mb-2 block" /></p>
+          <p className="text-gray-500">まだポストがありません</p>
+        </div>
       )}
 
-      <div className="flex justify-center gap-2.5 my-5">
+      <div className="flex items-center justify-center gap-3 mx-4 my-5 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
         {page > 1 && (
           <button onClick={() => setPage(page - 1)}
             className="px-4 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50">

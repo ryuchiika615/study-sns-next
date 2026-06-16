@@ -29,7 +29,7 @@ export function WeeklyChart({ labels, datasets }: { labels: string[]; datasets: 
   }, [labels, datasets]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4 mx-4 mb-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
       <div className="flex justify-between items-center mb-2">
         <strong>直近7日 科目別</strong>
         <span className="text-primary text-sm font-bold">合計 {datasets.reduce((sum, d) => sum + d.data.reduce((a: number, b: number) => a + b, 0), 0)}分</span>
