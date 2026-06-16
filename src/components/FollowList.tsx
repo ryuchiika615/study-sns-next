@@ -39,25 +39,33 @@ export default function FollowList({
       } else {
         const { data: follows } = await supabase
           .from("follows")
-          .select("following_id, notify_posts, notify_likes, notify_comments")
+          .select("following_id")
           .eq("follower_id", userId)
           .order("created_at", { ascending: false });
         if (follows && follows.length > 0) {
-          const s: Record<string, any> = {};
-          follows.forEach((r: any) => {
-            s[r.following_id] = {
-              notify_posts: r.notify_posts,
-              notify_likes: r.notify_likes,
-              notify_comments: r.notify_comments,
-            };
-          });
-          setSettings(s);
           const ids = follows.map((r: any) => r.following_id);
           const { data: profiles } = await supabase
             .from("profiles")
             .select("id, display_name, username, icon_url")
             .in("id", ids);
           setUsers(profiles || []);
+
+          const { data: s } = await supabase
+            .from("follows")
+            .select("following_id, notify_posts, notify_likes, notify_comments")
+            .eq("follower_id", userId)
+            .in("following_id", ids);
+          if (s && s.length > 0) {
+            const m: Record<string, any> = {};
+            s.forEach((r: any) => {
+              m[r.following_id] = {
+                notify_posts: r.notify_posts ?? true,
+                notify_likes: r.notify_likes ?? true,
+                notify_comments: r.notify_comments ?? true,
+              };
+            });
+            setSettings(m);
+          }
         } else {
           setUsers([]);
         }
