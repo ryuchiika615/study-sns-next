@@ -127,8 +127,12 @@ export default function PostCard({
 
   const handleDelete = async () => {
     if (!confirm("削除しますか？")) return;
-    const { error } = await supabase.from("posts").delete().eq("id", post.id).eq("user_id", currentUserId);
-    if (!error) {
+    const res = await fetch("/api/posts/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId: post.id }),
+    });
+    if (res.ok) {
       onDelete?.(post.id);
     }
   };
@@ -136,11 +140,12 @@ export default function PostCard({
   const handleSaveEdit = async () => {
     if (!editContent.trim()) return;
     const minutes = parseInt(editMinutes) || 0;
-    const { error } = await supabase
-      .from("posts")
-      .update({ content: editContent.trim(), study_minutes: minutes })
-      .eq("id", post.id);
-    if (error) {
+    const res = await fetch("/api/posts/update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId: post.id, content: editContent.trim(), study_minutes: minutes }),
+    });
+    if (!res.ok) {
       alert("保存に失敗しました。もう一度お試しください。");
       return;
     }
