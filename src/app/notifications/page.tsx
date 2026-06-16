@@ -14,6 +14,7 @@ export default async function NotificationsPage() {
       sender:sender_id(id, display_name, username, icon_url)
     `)
     .eq("recipient_id", user.id)
+    .neq("notification_type", "follow_post")
     .order("created_at", { ascending: false })
     .limit(10);
 

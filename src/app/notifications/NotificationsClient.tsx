@@ -22,7 +22,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
 
   const getNotificationText = (notif: any) => {
     switch (notif.notification_type) {
-      case "like": return "があなたの投稿にいいねしました";
+      case "like": return "があなたの投稿にリアクションしました";
       case "reply": return "があなたの投稿に返信しました";
       case "follow": return "があなたをフォローしました";
       case "follow_post": return "が投稿しました";
@@ -100,7 +100,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
                   </button>
                 )
               ) : (
-                <i className={`fas flex-shrink-0 ${notif.notification_type === "like" ? "fa-heart text-danger" : "fa-reply text-primary"}`} />
+                <i className={`fas flex-shrink-0 ${notif.notification_type === "like" ? "fa-smile text-yellow-500" : "fa-reply text-primary"}`} />
               )}
             </div>
           ))}

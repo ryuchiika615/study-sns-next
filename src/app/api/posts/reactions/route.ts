@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -41,14 +42,13 @@ export async function PUT(request: NextRequest) {
       .eq("follower_id", post.user_id)
       .eq("following_id", user.id);
     if (count && count > 0) {
-      try {
-        await supabase.from("notifications").insert({
-          recipient_id: post.user_id,
-          sender_id: user.id,
-          post_id,
-          notification_type: "like",
-        });
-      } catch (_) {}
+      const admin = createAdminClient();
+      await admin.from("notifications").insert({
+        recipient_id: post.user_id,
+        sender_id: user.id,
+        post_id,
+        notification_type: "like",
+      });
     }
   }
 

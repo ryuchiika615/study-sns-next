@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   const senderName = sender?.display_name || sender?.username || "誰か";
 
   const messages: Record<string, string> = {
-    like: `${senderName}がいいねしました`,
+    like: `${senderName}がリアクションしました`,
     reply: `${senderName}が返信しました`,
     follow: `${senderName}がフォローしました`,
     follow_post: `${senderName}がリュイートしました`,
