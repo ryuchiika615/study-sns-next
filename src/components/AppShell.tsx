@@ -95,17 +95,15 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
         </h1>
         <p className="text-sm text-yellow-600 tracking-widest mt-1">リュッター</p>
 
-        {unreadAnnouncements.length > 0 && (
-          <button onClick={() => setShowAnnouncement("list")}
-            className="absolute top-4 right-4 text-xl bg-white/20 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
-            <i className="far fa-envelope text-yellow-600" />
-            {unreadAnnouncements.length > 1 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
-              </span>
-            )}
-          </button>
-        )}
+        <button onClick={() => setShowAnnouncement("list")}
+          className="absolute top-4 right-4 text-xl bg-white/20 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
+          <i className="far fa-envelope text-yellow-600" />
+          {unreadAnnouncements.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
+            </span>
+          )}
+        </button>
       </div>
 
       <div className="container mx-auto max-w-2xl px-0">
