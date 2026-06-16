@@ -288,10 +288,16 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   };
 
   const fetchAnnouncements = async () => {
-    const res = await fetch("/api/announcements");
-    if (res.ok) {
-      const data = await res.json();
-      setUnreadAnnouncements(data.announcements || []);
+    try {
+      const res = await fetch("/api/announcements");
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadAnnouncements(data.announcements || []);
+      } else {
+        console.error("fetchAnnouncements error:", res.status);
+      }
+    } catch (e) {
+      console.error("fetchAnnouncements error:", e);
     }
   };
 
@@ -623,23 +629,62 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         )}
       </div>
 
-      {unreadAnnouncements.length > 0 && (
-        <button onClick={() => setShowAnnouncement(unreadAnnouncements[0])}
-          className="fixed top-4 right-4 z-50 text-2xl bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-          ✉
-        </button>
-      )}
+      <button onClick={() => setShowAnnouncement(unreadAnnouncements.length > 0 ? unreadAnnouncements[0] : "list")}
+        className="fixed top-4 right-4 z-50 text-xl bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-50 relative">
+        <i className="far fa-envelope" />
+        {unreadAnnouncements.length > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
+          </span>
+        )}
+      </button>
 
-      {showAnnouncement && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
+      {showAnnouncement && showAnnouncement !== "list" && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAnnouncement(null)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-bold text-lg mb-3">📨 管理者からのお知らせ</h3>
             <p className="text-sm whitespace-pre-wrap mb-4">{showAnnouncement.content}</p>
             <p className="text-xs text-gray-400 mb-4">{new Date(showAnnouncement.created_at).toLocaleString("ja-JP")}</p>
-            <button onClick={() => markAnnouncementRead(showAnnouncement.id)}
-              className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
-              既読にする
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => markAnnouncementRead(showAnnouncement.id)}
+                className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
+                既読にする
+              </button>
+              {unreadAnnouncements.length > 1 && (
+                <button onClick={() => setShowAnnouncement("list")}
+                  className="bg-gray-100 text-gray-700 font-bold rounded-full py-2 text-sm cursor-pointer px-4">
+                  一覧
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAnnouncement === "list" && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAnnouncement(null)}>
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[70vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="font-bold text-lg">📨 お知らせ一覧</h3>
+              <button onClick={() => setShowAnnouncement(null)} className="text-gray-500 text-xl cursor-pointer">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4 space-y-3">
+              {unreadAnnouncements.length === 0 && (
+                <p className="text-center text-gray-400 py-8 text-sm">新しいお知らせはありません</p>
+              )}
+              {unreadAnnouncements.map((a: any) => (
+                <div key={a.id} className="border border-gray-200 rounded-lg p-3">
+                  <p className="text-sm whitespace-pre-wrap mb-2">{a.content}</p>
+                  <p className="text-xs text-gray-400 mb-2">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
+                  <button onClick={() => markAnnouncementRead(a.id)}
+                    className="text-xs text-primary font-bold cursor-pointer">
+                    既読にする
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
