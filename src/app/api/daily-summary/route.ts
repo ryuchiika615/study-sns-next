@@ -10,14 +10,16 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const date = yesterday.toISOString().split("T")[0];
 
-  // Check if already sent today
+  // Check if already sent for this date
   const { data: existing } = await supabase
     .from("daily_summaries")
     .select("id")
     .eq("user_id", user.id)
-    .eq("date", today)
+    .eq("date", date)
     .maybeSingle();
 
   if (existing) return NextResponse.json({ ok: true, alreadySent: true });
@@ -31,11 +33,11 @@ export async function GET() {
 
   if (settings?.daily_summary === false) return NextResponse.json({ ok: true, disabled: true });
 
-  // Calculate today's stats
-  const todayStart = `${today}T00:00:00Z`;
-  const todayEnd = `${today}T23:59:59Z`;
+  // Calculate stats for the date
+  const dayStart = `${date}T00:00:00Z`;
+  const dayEnd = `${date}T23:59:59Z`;
 
-  // Reactions received today on user's posts
+  // Reactions received that day on user's posts
   const { data: userPosts } = await supabase
     .from("posts")
     .select("id")
@@ -48,26 +50,26 @@ export async function GET() {
       .from("post_reactions")
       .select("*", { count: "exact", head: true })
       .in("post_id", postIds)
-      .gte("created_at", todayStart)
-      .lte("created_at", todayEnd);
+      .gte("created_at", dayStart)
+      .lte("created_at", dayEnd);
     reactionsCount = count || 0;
   }
 
-  // Follower count
+  // Follower count (current)
   const { count: followersCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
     .eq("following_id", user.id);
 
-  // Study minutes today
-  const { data: todayPosts } = await supabase
+  // Study minutes that day
+  const { data: dayPosts } = await supabase
     .from("posts")
     .select("study_minutes")
     .eq("user_id", user.id)
-    .gte("created_at", todayStart)
-    .lte("created_at", todayEnd);
+    .gte("created_at", dayStart)
+    .lte("created_at", dayEnd);
 
-  const studyMinutes = (todayPosts || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0);
+  const studyMinutes = (dayPosts || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0);
 
   // Get current total points (exchange_points)
   const { data: profile } = await supabase
@@ -88,7 +90,7 @@ export async function GET() {
     .from("daily_summaries")
     .insert({
       user_id: user.id,
-      date: today,
+      date,
       reactions_count: reactionsCount,
       followers_count: followersCount || 0,
       study_minutes: studyMinutes,
@@ -106,7 +108,7 @@ export async function GET() {
     .eq("user_id", user.id);
 
   if (subscriptions?.length) {
-    const body = `📊 今日のまとめ\nリアクション: ${reactionsCount}件\nフォロワーボーナス: ×${followerMultiplier.toFixed(1)}\n勉強時間: ${Math.floor(studyMinutes / 60)}h${studyMinutes % 60}m\n獲得ポイント: +${pointsEarned}\n合計ポイント: ${totalPoints}`;
+    const body = `${date} のまとめ📊\nリアクション: ${reactionsCount}件\nフォロワーボーナス: ×${followerMultiplier.toFixed(1)}\n勉強時間: ${Math.floor(studyMinutes / 60)}h${studyMinutes % 60}m\n獲得ポイント: +${pointsEarned}\n合計ポイント: ${totalPoints}`;
 
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const privateKey = process.env.VAPID_PRIVATE_KEY;
