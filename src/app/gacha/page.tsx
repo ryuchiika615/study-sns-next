@@ -19,7 +19,7 @@ export default function GachaPage() {
       supabase.from("profiles").select("*").eq("id", data.user.id).single().then(({ data: profile }) => {
         if (profile) setProfile(profile);
       });
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", data.user.id).eq("is_read", false).then(({ count }) => {
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", data.user.id).eq("is_read", false).neq("notification_type", "follow_post").then(({ count }) => {
         setUnreadCount(count || 0);
       });
     });

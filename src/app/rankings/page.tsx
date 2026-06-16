@@ -15,7 +15,8 @@ export default async function RankingsPage() {
       .from("notifications")
       .select("*", { count: "exact", head: true })
       .eq("recipient_id", user.id)
-      .eq("is_read", false),
+      .eq("is_read", false)
+      .neq("notification_type", "follow_post"),
   ]);
 
   return (

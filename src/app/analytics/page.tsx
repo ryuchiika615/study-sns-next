@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
     supabase.auth.getUser().then(({ data: authData }) => {
       if (!authData.user) { router.push("/auth/login"); return; }
       setUser(authData.user);
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", authData.user.id).eq("is_read", false).then(({ count }) => {
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", authData.user.id).eq("is_read", false).neq("notification_type", "follow_post").then(({ count }) => {
         setUnreadCount(count || 0);
       });
     });

@@ -25,7 +25,8 @@ export default async function HomePage() {
       .from("notifications")
       .select("*", { count: "exact", head: true })
       .eq("recipient_id", user.id)
-      .eq("is_read", false),
+      .eq("is_read", false)
+      .neq("notification_type", "follow_post"),
     supabase
       .from("posts")
       .select("created_at, study_minutes, subject")

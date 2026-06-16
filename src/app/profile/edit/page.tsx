@@ -54,7 +54,7 @@ export default function EditProfilePage() {
     const [profileResult, userItemsResult, notifResult] = await Promise.all([
       supabase.from("profiles").select("id, display_name, bio, department, icon_url, theme_color, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", uid).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", uid),
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", uid).eq("is_read", false),
+      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", uid).eq("is_read", false).neq("notification_type", "follow_post"),
     ]);
 
     if (profileResult.data) {

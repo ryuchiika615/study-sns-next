@@ -38,7 +38,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
     supabase.from("posts").select("study_minutes, subject, created_at").eq("user_id", profile.id).gt("study_minutes", 0),
-    supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", user.id).eq("is_read", false),
+    supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", user.id).eq("is_read", false).neq("notification_type", "follow_post"),
     fetchAndEnrichPosts(supabase, user.id, { userId: profile.id }),
     supabase.from("posts").select("created_at, study_minutes").eq("user_id", profile.id).gte("created_at", yearStart).gt("study_minutes", 0),
   ]);

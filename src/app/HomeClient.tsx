@@ -240,6 +240,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       .select("id, notification_type, sender_id, post_id, created_at, sender:sender_id(id, display_name, username)", { count: "estimated", head: false })
       .eq("recipient_id", user.id)
       .eq("is_read", false)
+      .neq("notification_type", "follow_post")
       .order("created_at", { ascending: false })
       .limit(1);
 
