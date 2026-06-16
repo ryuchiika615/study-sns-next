@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(request: NextRequest) {
@@ -9,7 +10,8 @@ export async function DELETE(request: NextRequest) {
   const { postId } = await request.json();
   if (!postId) return NextResponse.json({ error: "postId required" }, { status: 400 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("posts")
     .delete()
     .eq("id", postId)

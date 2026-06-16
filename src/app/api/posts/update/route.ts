@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest) {
@@ -11,7 +12,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "postId and content required" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("posts")
     .update({ content: content.trim(), study_minutes: study_minutes || 0 })
     .eq("id", postId)
