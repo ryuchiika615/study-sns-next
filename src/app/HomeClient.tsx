@@ -50,6 +50,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [beeryualSwapped, setBeeryualSwapped] = useState(false);
   const [beeryualShowSmall, setBeeryualShowSmall] = useState(true);
   const [beeryualOverlayPos, setBeeryualOverlayPos] = useState<{ x: number; y: number }>({ x: 16, y: 16 });
+  const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopStream = () => {
@@ -161,17 +162,19 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         const overlaySize = Math.min(w, h) * 0.25;
         const ox = beeryualOverlayPos.x || (w - overlaySize - 16);
         const oy = beeryualOverlayPos.y || 16;
+        const rw = overlaySize * 0.7;
+        const rh = overlaySize;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(ox + overlaySize / 2, oy + overlaySize / 2, overlaySize / 2, 0, Math.PI * 2);
+        ctx.roundRect(ox, oy, rw, rh, 12);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(smallImg, ox, oy, overlaySize, overlaySize);
+        ctx.drawImage(smallImg, ox, oy, rw, rh);
         ctx.restore();
         ctx.strokeStyle = "white";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(ox + overlaySize / 2, oy + overlaySize / 2, overlaySize / 2, 0, Math.PI * 2);
+        ctx.roundRect(ox, oy, rw, rh, 12);
         ctx.stroke();
       }
       canvas.toBlob(async (blob) => {
@@ -456,7 +459,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           </div>
 
           {beeryualStep === 'camera' && (
-            <div className="fixed inset-0 z-50 bg-black flex flex-col">
+            <div className="fixed inset-0 z-[100] bg-black flex flex-col">
               <div className="relative flex-1 flex items-center justify-center">
                 <video ref={beeryualVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
                 {beeryualCapturedFirst && beeryualCountdown !== null && (
@@ -494,7 +497,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           )}
 
             {beeryualStep === 'preview' && (
-            <div className="fixed inset-0 z-50 bg-black flex flex-col">
+            <div className="fixed inset-0 z-[100] bg-black flex flex-col">
               <canvas ref={beeryualCanvasRef} className="hidden" />
               <div className="relative flex-1 flex items-center justify-center overflow-hidden">
                 {(() => {
@@ -511,30 +514,27 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                           document.addEventListener('pointerup', onUp);
                         }} />
                       {smallUrl && beeryualShowSmall && (
-                        <img src={smallUrl}
-                          className="absolute w-24 h-24 rounded-full border-2 border-white object-cover shadow-lg cursor-grab"
+                        <img ref={smallOverlayRef} src={smallUrl}
+                          className="absolute h-[14dvh] w-[10dvh] rounded-xl border-2 border-white object-cover shadow-lg cursor-grab"
                           style={{ top: beeryualOverlayPos.y || 16, left: beeryualOverlayPos.x || 16 }}
                           onPointerDown={(e) => {
                             const el = e.currentTarget;
                             const startX = e.clientX;
                             const startY = e.clientY;
-                            const startLeft = el.offsetLeft;
-                            const startTop = el.offsetTop;
-                            let longPressTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-                              longPressTimer = null;
-                            }, 500);
+                            const parent = el.parentElement!;
+                            const parentRect = parent.getBoundingClientRect();
+                            const elRect = el.getBoundingClientRect();
+                            const startLeft = elRect.left - parentRect.left;
+                            const startTop = elRect.top - parentRect.top;
                             const onMove = (ev: PointerEvent) => {
                               ev.preventDefault();
-                              if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-                              const parent = el.parentElement;
-                              if (!parent) return;
-                              const rect = parent.getBoundingClientRect();
-                              const x = Math.max(0, Math.min(rect.width - el.offsetWidth, startLeft + ev.clientX - startX));
-                              const y = Math.max(0, Math.min(rect.height - el.offsetHeight, startTop + ev.clientY - startY));
-                              setBeeryualOverlayPos({ x, y });
+                              const x = Math.max(0, Math.min(parentRect.width - elRect.width, startLeft + ev.clientX - startX));
+                              const y = Math.max(0, Math.min(parentRect.height - elRect.height, startTop + ev.clientY - startY));
+                              el.style.left = x + "px";
+                              el.style.top = y + "px";
                             };
                             const onUp = () => {
-                              if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                              setBeeryualOverlayPos({ x: parseFloat(el.style.left || "16"), y: parseFloat(el.style.top || "16") });
                               document.removeEventListener('pointermove', onMove);
                               document.removeEventListener('pointerup', onUp);
                             };
