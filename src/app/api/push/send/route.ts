@@ -48,8 +48,6 @@ export async function POST(request: NextRequest) {
     reply: `${senderName}が返信しました`,
     follow: `${senderName}がフォローしました`,
     follow_post: `${senderName}がリュイートしました`,
-    follow_like: `${senderName}がいいねしました`,
-    follow_comment: `${senderName}がコメントしました`,
     gift: "おプレゼントが届きました！！",
   };
 

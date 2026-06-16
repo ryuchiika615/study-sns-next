@@ -38,7 +38,7 @@ export default function ProfileClient({
 }: ProfileClientProps) {
   const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
-  const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
+  const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean } | null>(null);
   const [showNotifyPopover, setShowNotifyPopover] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState(initialPosts);
@@ -54,7 +54,7 @@ export default function ProfileClient({
     if (isFollowing && user.id !== profile.id) {
       supabase
         .from("follows")
-        .select("notify_posts, notify_likes, notify_comments")
+        .select("notify_posts")
         .eq("follower_id", user.id)
         .eq("following_id", profile.id)
         .single()
@@ -210,7 +210,7 @@ export default function ProfileClient({
                   <div className="relative">
                     <button onClick={() => setShowNotifyPopover(!showNotifyPopover)}
                       className={`text-lg cursor-pointer p-1.5 rounded-full transition ${
-                        notifySettings?.notify_posts || notifySettings?.notify_likes || notifySettings?.notify_comments
+                        notifySettings?.notify_posts
                           ? "text-blue-500" : "text-gray-300"
                       }`}
                       title="通知設定">
@@ -225,18 +225,7 @@ export default function ProfileClient({
                             onChange={(e) => toggleNotifySetting("notify_posts", e.target.checked)}
                             className="cursor-pointer" />
                         </label>
-                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-                          <span>いいね</span>
-                          <input type="checkbox" checked={notifySettings?.notify_likes ?? true}
-                            onChange={(e) => toggleNotifySetting("notify_likes", e.target.checked)}
-                            className="cursor-pointer" />
-                        </label>
-                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-                          <span>コメント</span>
-                          <input type="checkbox" checked={notifySettings?.notify_comments ?? true}
-                            onChange={(e) => toggleNotifySetting("notify_comments", e.target.checked)}
-                            className="cursor-pointer" />
-                        </label>
+
                       </div>
                     )}
                   </div>

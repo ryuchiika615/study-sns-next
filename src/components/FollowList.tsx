@@ -14,7 +14,7 @@ export default function FollowList({
   onClose: () => void;
 }) {
   const [users, setUsers] = useState<any[]>([]);
-  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean }>>({});
+  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean }>>({});
   const [openSettingsFor, setOpenSettingsFor] = useState<string | null>(null);
   const supabase = createClient();
 
@@ -107,7 +107,7 @@ export default function FollowList({
                 <div className="relative flex-shrink-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); setOpenSettingsFor(openSettingsFor === u.id ? null : u.id); }}
-                    className={`text-lg cursor-pointer p-1 rounded-full transition ${settings[u.id]?.notify_posts || settings[u.id]?.notify_likes || settings[u.id]?.notify_comments ? "text-blue-500" : "text-gray-300"}`}
+                    className={`text-lg cursor-pointer p-1 rounded-full transition ${settings[u.id]?.notify_posts ? "text-blue-500" : "text-gray-300"}`}
                     title="通知設定"
                   >
                     <i className="fas fa-bell" />
@@ -124,24 +124,7 @@ export default function FollowList({
                           className="cursor-pointer"
                         />
                       </label>
-                      <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-                        <span>いいね</span>
-                        <input
-                          type="checkbox"
-                          checked={settings[u.id]?.notify_likes ?? true}
-                          onChange={(e) => toggleSetting(u.id, "notify_likes", e.target.checked)}
-                          className="cursor-pointer"
-                        />
-                      </label>
-                      <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-                        <span>コメント</span>
-                        <input
-                          type="checkbox"
-                          checked={settings[u.id]?.notify_comments ?? true}
-                          onChange={(e) => toggleSetting(u.id, "notify_comments", e.target.checked)}
-                          className="cursor-pointer"
-                        />
-                      </label>
+
                     </div>
                   )}
                 </div>
