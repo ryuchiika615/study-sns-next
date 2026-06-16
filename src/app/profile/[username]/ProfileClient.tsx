@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
@@ -36,9 +36,25 @@ export default function ProfileClient({
 }: ProfileClientProps) {
   const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
+  const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
+  const [showNotifyPopover, setShowNotifyPopover] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState(initialPosts);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
+
+  useEffect(() => {
+    if (isFollowing && user.id !== profile.id) {
+      supabase
+        .from("follows")
+        .select("notify_posts, notify_likes, notify_comments")
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id)
+        .single()
+        .then(({ data }) => {
+          if (data) setNotifySettings(data);
+        });
+    }
+  }, [isFollowing, user.id, profile.id]);
 
   const handleFollow = async () => {
     const wasFollowing = isFollowing;
@@ -51,6 +67,7 @@ export default function ProfileClient({
         .eq("follower_id", user.id)
         .eq("following_id", profile.id);
       if (error) setIsFollowing(true);
+      else setNotifySettings(null);
     } else {
       const { error } = await supabase
         .from("follows")
@@ -64,6 +81,17 @@ export default function ProfileClient({
         }).catch(() => {});
       }
     }
+  };
+
+  const toggleNotifySetting = async (key: string, value: boolean) => {
+    const prev = { ...notifySettings };
+    setNotifySettings((s) => s ? { ...s, [key]: value } : s);
+    const res = await fetch("/api/follow-notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ following_id: profile.id, [key]: value }),
+    });
+    if (!res.ok) setNotifySettings(prev as any);
   };
 
   return (
@@ -114,12 +142,49 @@ export default function ProfileClient({
             )}
 
             {user.id !== profile?.id && (
-              <button onClick={handleFollow}
-                className={`mt-2 px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer ${
-                  isFollowing ? "bg-gray-200 text-gray-700" : "bg-primary text-white"
-                }`}>
-                {isFollowing ? "フォロー中" : "フォローする"}
-              </button>
+              <div className="flex items-center gap-2 mt-2">
+                <button onClick={handleFollow}
+                  className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer ${
+                    isFollowing ? "bg-gray-200 text-gray-700" : "bg-primary text-white"
+                  }`}>
+                  {isFollowing ? "フォロー中" : "フォローする"}
+                </button>
+                {isFollowing && (
+                  <div className="relative">
+                    <button onClick={() => setShowNotifyPopover(!showNotifyPopover)}
+                      className={`text-lg cursor-pointer p-1.5 rounded-full transition ${
+                        notifySettings?.notify_posts || notifySettings?.notify_likes || notifySettings?.notify_comments
+                          ? "text-blue-500" : "text-gray-300"
+                      }`}
+                      title="通知設定">
+                      <i className="fas fa-bell" />
+                    </button>
+                    {showNotifyPopover && (
+                      <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52 z-10">
+                        <p className="text-xs font-bold text-gray-600 mb-2">{profile.display_name || profile.username} の通知</p>
+                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                          <span>投稿</span>
+                          <input type="checkbox" checked={notifySettings?.notify_posts ?? true}
+                            onChange={(e) => toggleNotifySetting("notify_posts", e.target.checked)}
+                            className="cursor-pointer" />
+                        </label>
+                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                          <span>いいね</span>
+                          <input type="checkbox" checked={notifySettings?.notify_likes ?? true}
+                            onChange={(e) => toggleNotifySetting("notify_likes", e.target.checked)}
+                            className="cursor-pointer" />
+                        </label>
+                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                          <span>コメント</span>
+                          <input type="checkbox" checked={notifySettings?.notify_comments ?? true}
+                            onChange={(e) => toggleNotifySetting("notify_comments", e.target.checked)}
+                            className="cursor-pointer" />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
