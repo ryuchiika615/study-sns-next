@@ -86,8 +86,7 @@ export default function EditProfilePage() {
     const { data: likesData } = await supabase
       .from("likes")
       .select("post_id")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
+      .eq("user_id", uid);
     if (likesData) {
       const postIds = likesData.map((l) => l.post_id);
       if (postIds.length > 0) {

@@ -48,7 +48,6 @@ export default function ProfileClient({
   const [likedPage, setLikedPage] = useState(1);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState("");
-  const [likedDebug, setLikedDebug] = useState<string[]>([]);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
@@ -106,25 +105,16 @@ export default function ProfileClient({
   const loadLikedIds = async () => {
     setLikedLoading(true);
     setLikedError("");
-    const d: string[] = [];
-    d.push(`profile.id=${profile.id}`);
-    d.push(`user.id=${user.id}`);
-    setLikedDebug(d);
     const { data, error } = await supabase
       .from("likes")
       .select("post_id")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: false });
-    d.push(`likes data=${JSON.stringify(data)} error=${error?.message}`);
-    setLikedDebug([...d]);
+      .eq("user_id", profile.id);
     if (error) {
       setLikedError(error.message);
       setLikedLoading(false);
       return;
     }
     const ids = (data || []).map((l: any) => l.post_id);
-    d.push(`ids=${JSON.stringify(ids)}`);
-    setLikedDebug([...d]);
     setLikedIds(ids);
     setLikedPage(1);
     setLikedPosts([]);
@@ -308,15 +298,6 @@ export default function ProfileClient({
 
         {activeTab === "likes" && (
           <>
-            <div className="bg-red-100 text-red-800 p-2 rounded text-xs font-mono mb-2 whitespace-pre-wrap">
-              profile.id={profile.id}{'\n'}
-              user.id={user.id}{'\n'}
-              likedPosts.length={likedPosts.length}{'\n'}
-              likedLoading={String(likedLoading)}{'\n'}
-              likedIds={JSON.stringify(likedIds)}{'\n'}
-              likedError={likedError || "(なし)"}{'\n'}
-              likedDebug={JSON.stringify(likedDebug)}
-            </div>
             {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
             {likedLoading && <p className="text-center text-gray-400 py-4 text-sm">読み込み中...</p>}
             {!likedLoading && likedPosts.length === 0 && !likedError && (
