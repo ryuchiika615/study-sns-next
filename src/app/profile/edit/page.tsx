@@ -263,7 +263,6 @@ export default function EditProfilePage() {
   if (!profile) return null;
 
   const canSell = (item: any) => {
-    if (isRefinedItem(item)) return false;
     if (item.id === profile.current_title_id) return false;
     if (item.id === profile.current_avatar_id) return false;
     return true;
@@ -525,7 +524,7 @@ export default function EditProfilePage() {
         {/* 一括売却 */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-lg font-bold mb-3">一括売却</h2>
-          <p className="text-xs text-gray-500 mb-3">装備中と精錬称号は売却されません</p>
+          <p className="text-xs text-gray-500 mb-3">装備中は売却できません（精錬品は0ptで捨てられます）</p>
           <div className="flex gap-2">
             {["N", "R", "SR"].map((rarity) => (
               <button key={rarity} onClick={() => handleBulkSell(rarity)}
@@ -555,58 +554,60 @@ export default function EditProfilePage() {
                       className="flex-1 text-xs text-primary hover:underline py-0.5">
                       {isEquipped ? "装備中" : "装備"}
                     </button>
-                    {sellable && (
-                      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                        <input type="checkbox" checked={selectedSell.has(item.id)}
-                          onChange={() => toggleSellItem(item.id)} />
-                        売却
-                      </label>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {selectedSell.size > 0 && (
-            <button onClick={() => handleSell(Array.from(selectedSell))}
-              className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
-              選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
-                const item = items.find((i: any) => i.id === id);
-                return sum + (SELL_VALUES[item?.rarity] || 0);
-              }, 0)}pt)
-            </button>
-          )}
-        </div>
+                     {sellable && (
+                       <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                         <input type="checkbox" checked={selectedSell.has(item.id)}
+                           onChange={() => toggleSellItem(item.id)} />
+                         {isRefinedItem(item) ? "捨てる" : "売却"}
+                       </label>
+                     )}
+                   </div>
+                 </div>
+               );
+             })}
+           </div>
+           {selectedSell.size > 0 && (
+             <button onClick={() => handleSell(Array.from(selectedSell))}
+               className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
+               選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
+                 const item = items.find((i: any) => i.id === id);
+                 if (!item) return sum;
+                 if (isRefinedItem(item)) return sum;
+                 return sum + (SELL_VALUES[item?.rarity] || 0);
+               }, 0)}pt)
+             </button>
+           )}
+         </div>
 
-        {/* アバター一覧 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">所持アバター</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {icons.map((item: any) => {
-              const isEquipped = profile.current_avatar_id === item.id;
-              const sellable = canSell(item);
-              return (
-                <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                  <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
-                  <span className="ml-1">{itemDisplayName(item).replace("【アイコン】", "")}</span>
-                  <div className="flex gap-1 mt-1">
-                    <button onClick={() => handleEquip(item.id, "current_avatar_id")}
-                      className="flex-1 text-xs text-primary hover:underline py-0.5">
-                      {isEquipped ? "装備中" : "装備"}
-                    </button>
-                    {sellable && (
-                      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                        <input type="checkbox" checked={selectedSell.has(item.id)}
-                          onChange={() => toggleSellItem(item.id)} />
-                        売却
-                      </label>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+         {/* アバター一覧 */}
+         <div className="bg-white rounded-lg border border-gray-200 p-4">
+           <h2 className="text-lg font-bold mb-3">所持アバター</h2>
+           <div className="grid grid-cols-2 gap-2">
+             {icons.map((item: any) => {
+               const isEquipped = profile.current_avatar_id === item.id;
+               const sellable = canSell(item);
+               return (
+                 <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
+                   <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
+                   <span className="ml-1">{itemDisplayName(item).replace("【アイコン】", "")}</span>
+                   <div className="flex gap-1 mt-1">
+                     <button onClick={() => handleEquip(item.id, "current_avatar_id")}
+                       className="flex-1 text-xs text-primary hover:underline py-0.5">
+                       {isEquipped ? "装備中" : "装備"}
+                     </button>
+                     {sellable && (
+                       <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                         <input type="checkbox" checked={selectedSell.has(item.id)}
+                           onChange={() => toggleSellItem(item.id)} />
+                         売却
+                       </label>
+                     )}
+                   </div>
+                 </div>
+               );
+             })}
+           </div>
+         </div>
 
         {followListType && (
           <FollowList userId={userIdRef.current || ""} type={followListType} onClose={() => setFollowListType(null)} />
