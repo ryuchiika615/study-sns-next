@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 
@@ -23,14 +24,25 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
   }, []);
 
   useEffect(() => {
+    const supabase = createClient();
     const fetchAnnouncements = async () => {
-      try {
-        const res = await fetch("/api/announcements");
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadAnnouncements(data.announcements || []);
-        }
-      } catch (_) {}
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: reads } = await supabase
+        .from("announcement_reads")
+        .select("announcement_id")
+        .eq("user_id", user.id);
+      const readIds = reads?.map(r => r.announcement_id) || [];
+      const { data } = await supabase
+        .from("admin_announcements")
+        .select("id, content, created_at")
+        .order("created_at", { ascending: false });
+      if (data) {
+        setUnreadAnnouncements(readIds.length > 0
+          ? data.filter(a => !readIds.includes(a.id))
+          : data
+        );
+      }
     };
     fetchAnnouncements();
     const timer = setInterval(fetchAnnouncements, 15000);
