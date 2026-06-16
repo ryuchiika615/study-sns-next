@@ -16,61 +16,40 @@ export default function FollowList({
   const [users, setUsers] = useState<any[]>([]);
   const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean }>>({});
   const [openSettingsFor, setOpenSettingsFor] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [debug, setDebug] = useState("");
   const supabase = createClient();
 
   useEffect(() => {
     const fetchUsers = async () => {
-      setError("");
-      setDebug("");
-      try {
-        if (type === "followers") {
-          setDebug(prev => prev + `userId: ${userId}\n`);
-          const { data: follows, error: err } = await supabase
-            .from("follows")
-            .select("follower_id")
-            .eq("following_id", userId);
-          if (err) { setError(err.message); setDebug(prev => prev + `follows query error: ${err.message}\n`); return; }
-          setDebug(prev => prev + `follows found: ${follows?.length ?? 0}\n`);
-          if (follows && follows.length > 0) {
-            const ids = follows.map((r: any) => r.follower_id);
-            setDebug(prev => prev + `ids: ${JSON.stringify(ids)}\n`);
-            const { data: profiles, error: err2 } = await supabase
-              .from("profiles")
-              .select("id, display_name, username, icon_url")
-              .in("id", ids);
-            if (err2) { setError(err2.message); setDebug(prev => prev + `profiles query error: ${err2.message}\n`); return; }
-            setDebug(prev => prev + `profiles found: ${profiles?.length ?? 0}\n`);
-            setUsers(profiles || []);
-          } else {
-            setUsers([]);
-          }
+      if (type === "followers") {
+        const { data: follows } = await supabase
+          .from("follows")
+          .select("follower_id")
+          .eq("following_id", userId);
+        if (follows && follows.length > 0) {
+          const ids = follows.map((r: any) => r.follower_id);
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, display_name, username, icon_url")
+            .in("id", ids);
+          setUsers(profiles || []);
         } else {
-          setDebug(prev => prev + `userId: ${userId}\n`);
-          const { data: follows, error: err } = await supabase
-            .from("follows")
-            .select("following_id")
-            .eq("follower_id", userId);
-          if (err) { setError(err.message); setDebug(prev => prev + `follows query error: ${err.message}\n`); return; }
-          setDebug(prev => prev + `follows found: ${follows?.length ?? 0}\n`);
-          if (follows && follows.length > 0) {
-            const ids = follows.map((r: any) => r.following_id);
-            setDebug(prev => prev + `ids: ${JSON.stringify(ids)}\n`);
-            const { data: profiles, error: err2 } = await supabase
-              .from("profiles")
-              .select("id, display_name, username, icon_url")
-              .in("id", ids);
-            if (err2) { setError(err2.message); setDebug(prev => prev + `profiles query error: ${err2.message}\n`); return; }
-            setDebug(prev => prev + `profiles found: ${profiles?.length ?? 0}\n`);
-            setUsers(profiles || []);
-          } else {
-            setUsers([]);
-          }
+          setUsers([]);
         }
-      } catch (e: any) {
-        setError(e?.message || "不明なエラー");
-        setDebug(prev => prev + `catch: ${e?.message}\n`);
+      } else {
+        const { data: follows } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", userId);
+        if (follows && follows.length > 0) {
+          const ids = follows.map((r: any) => r.following_id);
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, display_name, username, icon_url")
+            .in("id", ids);
+          setUsers(profiles || []);
+        } else {
+          setUsers([]);
+        }
       }
     };
     fetchUsers();
@@ -87,9 +66,7 @@ export default function FollowList({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ following_id: followingId, [key]: value }),
     });
-    if (!res.ok) {
-      setSettings(prev);
-    }
+    if (!res.ok) setSettings(prev);
   };
 
   return (
@@ -103,10 +80,8 @@ export default function FollowList({
             <i className="fas fa-times" />
           </button>
         </div>
-        {error && <div className="mx-4 mt-2 bg-red-50 text-red-600 p-2 rounded text-xs whitespace-pre-wrap">{error}</div>}
-        {debug && <div className="mx-4 mt-1 bg-gray-50 text-gray-500 p-2 rounded text-xs whitespace-pre-wrap font-mono max-h-24 overflow-auto">{debug}</div>}
         <div className="overflow-y-auto flex-1 p-2">
-          {users.length === 0 && !error && (
+          {users.length === 0 && (
             <p className="text-center text-gray-400 py-8 text-sm">
               {type === "followers" ? "フォロワーはいません" : "フォローしていません"}
             </p>
