@@ -25,6 +25,9 @@ export default function PostCard({
   const supabase = createClient();
   const [liked, setLiked] = useState(post.is_liked);
   const [likeCount, setLikeCount] = useState(post.likes_count);
+  const [reactions, setReactions] = useState(post.reactions_count || []);
+  const [myReaction, setMyReaction] = useState(post.my_reaction || null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [showComments, setShowComments] = useState(defaultShowComments ?? false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<any[]>(initialComments ?? []);
@@ -56,6 +59,33 @@ export default function PostCard({
       if (error) { setLiked(false); setLikeCount(likeCount); }
     }
   };
+
+  const handleReaction = async (emoji: string) => {
+    const prev = { myReaction, reactions };
+    const wasSame = myReaction === emoji;
+    setMyReaction(wasSame ? null : emoji);
+    if (wasSame) {
+      setReactions(prev => prev.map(r => r.reaction === emoji ? { ...r, count: r.count - 1 } : r).filter(r => r.count > 0));
+    } else {
+      setReactions(prev => {
+        if (myReaction) prev = prev.map(r => r.reaction === myReaction ? { ...r, count: r.count - 1 } : r).filter(r => r.count > 0);
+        const existing = prev.find(r => r.reaction === emoji);
+        if (existing) return prev.map(r => r.reaction === emoji ? { ...r, count: r.count + 1 } : r);
+        return [...prev, { reaction: emoji, count: 1 }];
+      });
+    }
+    const res = await fetch("/api/posts/reactions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ post_id: post.id, reaction: emoji }),
+    });
+    if (!res.ok) {
+      setMyReaction(prev.myReaction);
+      setReactions(prev.reactions);
+    }
+  };
+
+  const reactionEmojis = ["👍", "🔥", "💯", "🎉", "❤️", "😢"];
 
   const toggleComments = async () => {
     if (!showComments && !commentsLoaded) {
@@ -268,6 +298,36 @@ export default function PostCard({
           style={{ color: liked ? "#f91880" : "#536471" }}>
           <i className={`${liked ? "fas" : "far"} fa-heart`} /> <span>{likeCount}</span>
         </button>
+      </div>
+
+      <div className="px-4 pb-1 flex items-center gap-1 flex-wrap min-h-[28px]">
+        {reactions.map((r) => (
+          <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
+            className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
+              myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+            }`}>
+            <span>{r.reaction}</span>
+            <span className="text-xs font-medium">{r.count}</span>
+          </button>
+        ))}
+        <div className="relative">
+          <button onClick={() => setShowReactionPicker(!showReactionPicker)}
+            className="text-sm px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100 cursor-pointer transition">
+            <i className="far fa-smile" />
+          </button>
+          {showReactionPicker && (
+            <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-10">
+              {reactionEmojis.map((emoji) => (
+                <button key={emoji} onClick={() => { handleReaction(emoji); setShowReactionPicker(false); }}
+                  className={`text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 cursor-pointer transition ${
+                    myReaction === emoji ? "bg-primary/10" : ""
+                  }`}>
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {showComments && (

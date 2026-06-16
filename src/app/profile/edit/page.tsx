@@ -36,6 +36,8 @@ export default function EditProfilePage() {
   const [postPage, setPostPage] = useState(1);
   const [likedPage, setLikedPage] = useState(1);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
+  const [quietHoursStart, setQuietHoursStart] = useState("");
+  const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -107,6 +109,16 @@ export default function EditProfilePage() {
       .eq("user_id", uid)
       .order("created_at", { ascending: false });
     setMyPosts(myPostsData ?? []);
+
+    const { data: notifSettings } = await supabase
+      .from("notification_settings")
+      .select("quiet_hours_start, quiet_hours_end")
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (notifSettings) {
+      setQuietHoursStart(notifSettings.quiet_hours_start || "");
+      setQuietHoursEnd(notifSettings.quiet_hours_end || "");
+    }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -171,6 +183,21 @@ export default function EditProfilePage() {
       setMessage("パスワードを変更しました！");
       setNewPassword("");
       setNewPasswordConfirm("");
+    }
+  };
+
+  const handleSaveNotificationSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch("/api/notification-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null }),
+    });
+    if (res.ok) {
+      setMessage("通知設定を保存しました");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setMessage(data.error || "保存に失敗しました");
     }
   };
 
@@ -434,6 +461,27 @@ export default function EditProfilePage() {
           <button type="submit" disabled={passwordChanging}
             className="bg-gray-800 text-white font-bold rounded-full px-6 py-2 text-sm disabled:opacity-50">
             パスワードを変更
+          </button>
+        </form>
+
+        {/* 通知設定 */}
+        <form onSubmit={handleSaveNotificationSettings} className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+          <h2 className="text-lg font-bold">通知設定</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">静音開始時間</label>
+              <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">静音終了時間</label>
+              <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">設定した時間帯はプッシュ通知が送信されなくなります</p>
+          <button type="submit" className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm">
+            保存
           </button>
         </form>
 

@@ -45,9 +45,21 @@ export interface PostWithDetails {
   likes_count: number;
   is_liked: boolean;
   comments_count: number;
+  reactions_count: { reaction: string; count: number }[];
+  my_reaction: string | null;
   display_study_time: string;
   subject_color: string;
   formatted_time: string;
+}
+
+export interface NotificationSettings {
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+}
+
+export interface MutedUser {
+  muted_user_id: string;
+  created_at: string;
 }
 
 export interface CommentWithUser {
@@ -64,7 +76,7 @@ export interface NotificationWithSender {
   recipient_id: string;
   sender_id: string;
   post_id: string | null;
-  notification_type: "like" | "reply" | "follow";
+  notification_type: "like" | "reply" | "follow" | "follow_post";
   is_read: boolean;
   created_at: string;
   sender: Profile;

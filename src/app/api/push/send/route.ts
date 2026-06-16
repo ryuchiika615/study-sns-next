@@ -28,6 +28,31 @@ export async function POST(request: NextRequest) {
   if (!record?.recipient_id) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
   const admin = createAdminClient();
+
+  // Check quiet hours
+  const { data: notifSettings } = await admin
+    .from("notification_settings")
+    .select("quiet_hours_start, quiet_hours_end")
+    .eq("user_id", record.recipient_id)
+    .maybeSingle();
+
+  if (notifSettings?.quiet_hours_start && notifSettings?.quiet_hours_end) {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const startParts = notifSettings.quiet_hours_start.split(":").map(Number);
+    const endParts = notifSettings.quiet_hours_end.split(":").map(Number);
+    const startMinutes = startParts[0] * 60 + (startParts[1] || 0);
+    const endMinutes = endParts[0] * 60 + (endParts[1] || 0);
+
+    let isQuiet = false;
+    if (startMinutes <= endMinutes) {
+      isQuiet = currentMinutes >= startMinutes && currentMinutes < endMinutes;
+    } else {
+      isQuiet = currentMinutes >= startMinutes || currentMinutes < endMinutes;
+    }
+    if (isQuiet) return NextResponse.json({ ok: true, skipped: "quiet_hours", sent: 0 });
+  }
+
   const { data: subscriptions } = await admin
     .from("push_subscriptions")
     .select("endpoint, p256dh_key, auth_key")
