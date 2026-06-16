@@ -18,8 +18,6 @@ export default function EditProfilePage() {
   const [icons, setIcons] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [department, setDepartment] = useState("");
-  const [themeColor, setThemeColor] = useState("dark");
   const [targetDate, setTargetDate] = useState("");
   const [targetMinutes, setTargetMinutes] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
@@ -55,7 +53,7 @@ export default function EditProfilePage() {
     const uid = userId || userIdRef.current;
     if (!uid) return;
     const [profileResult, userItemsResult, notifResult] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, bio, department, icon_url, theme_color, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", uid).single(),
+      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", uid).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", uid),
       supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", uid).eq("is_read", false).neq("notification_type", "follow_post"),
     ]);
@@ -64,8 +62,6 @@ export default function EditProfilePage() {
       setProfile(profileResult.data);
       setDisplayName(profileResult.data.display_name || "");
       setBio(profileResult.data.bio || "");
-      setDepartment(profileResult.data.department || "");
-      setThemeColor(profileResult.data.theme_color || "dark");
       setTargetDate(profileResult.data.target_date || "");
       setTargetMinutes(String(profileResult.data.target_minutes || 0));
     }
@@ -297,63 +293,65 @@ export default function EditProfilePage() {
 
   return (
     <AppShell unreadCount={unreadCount}>
-      <div className="p-4 max-w-2xl mx-auto space-y-6">
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
         {message && (
           <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">{message}</div>
         )}
 
-        {/* 現在のアバター & フォロワー情報 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-          <h2 className="text-lg font-bold">プロフィール情報</h2>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+        {/* プロフィール情報 */}
+        <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
               {profile.icon_url ? (
                 <img src={profile.icon_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">
                   {(profile.display_name || "?")[0]}
                 </div>
               )}
             </div>
-            <div className="flex gap-6">
-              <button onClick={() => setFollowListType("following")}
-                className="text-center cursor-pointer hover:opacity-70">
-                <p className="text-2xl font-bold">{followingCount}</p>
-                <p className="text-xs text-gray-500">フォロー</p>
-              </button>
-              <button onClick={() => setFollowListType("followers")}
-                className="text-center cursor-pointer hover:opacity-70">
-                <p className="text-2xl font-bold">{followersCount}</p>
-                <p className="text-xs text-gray-500">フォロワー</p>
-              </button>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm truncate">{profile.display_name || "ユーザー"}</span>
+                <span className="text-xs text-gray-400 truncate">@{profile.username || "unknown"}</span>
+              </div>
+              <div className="flex gap-3 mt-0.5">
+                <button onClick={() => setFollowListType("following")}
+                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer bg-none border-none">
+                  <strong className="text-gray-800">{followingCount}</strong> フォロー
+                </button>
+                <button onClick={() => setFollowListType("followers")}
+                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer bg-none border-none">
+                  <strong className="text-gray-800">{followersCount}</strong> フォロワー
+                </button>
+              </div>
             </div>
           </div>
-          {/* 現在装備中の称号 */}
           {profile.current_title_id && (() => {
             const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
             return equippedTitle ? (
-              <div className="text-sm text-gray-600">
-                称号: <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
+              <div className="text-xs text-gray-600 ml-0.5">
+                <span className="text-gray-400">称号:</span> <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
               </div>
             ) : null;
           })()}
         </div>
 
         {/* 自分の投稿 / いいねした投稿 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-          <div className="flex gap-2 border-b border-gray-200 pb-2">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-2">
+          <div className="flex gap-1 border-b border-gray-100 pb-2">
             <button onClick={() => { setProfileTab("posts"); setPostPage(1); }}
-              className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "posts" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
+              className={`text-xs font-medium px-3 py-1 rounded-full cursor-pointer transition ${profileTab === "posts" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
               自分の投稿 ({myPosts.length})
             </button>
             <button onClick={() => { setProfileTab("likes"); setLikedPage(1); }}
-              className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "likes" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
+              className={`text-xs font-medium px-3 py-1 rounded-full cursor-pointer transition ${profileTab === "likes" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
               いいねした投稿 ({likedPosts.length})
             </button>
           </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="space-y-1.5 max-h-96 overflow-y-auto">
             {(profileTab === "posts" ? myPosts : likedPosts).length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-4">
+              <p className="text-xs text-gray-400 text-center py-3">
                 {profileTab === "posts" ? "まだ投稿がありません" : "いいねした投稿はありません"}
               </p>
             )}
@@ -372,64 +370,64 @@ export default function EditProfilePage() {
             ))}
             {profileTab === "posts" && myPosts.length > postPage * 10 && (
               <button onClick={() => setPostPage((p) => p + 1)}
-                className="w-full py-2 text-sm text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
                 もっと見る
               </button>
             )}
             {profileTab === "likes" && likedPosts.length > likedPage * 10 && (
               <button onClick={() => setLikedPage((p) => p + 1)}
-                className="w-full py-2 text-sm text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
                 もっと見る
               </button>
             )}
           </div>
         </div>
 
-        {/* プロフィール編集 */}
-        <form onSubmit={handleUpdateProfile} className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-          <h2 className="text-lg font-bold">プロフィール設定</h2>
+        {/* プロフィール設定 */}
+        <form onSubmit={handleUpdateProfile} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2.5">
+          <h2 className="text-sm font-bold">プロフィール設定</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">表示名</label>
+            <label className="block text-xs font-medium text-gray-700">表示名</label>
             <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm" />
+              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">自己紹介</label>
+            <label className="block text-xs font-medium text-gray-700">自己紹介</label>
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={300}
-              className="w-full rounded-lg border-gray-300 text-sm" rows={3} />
+              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" rows={2} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">目標日</label>
+              <label className="block text-xs font-medium text-gray-700">目標日</label>
               <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)}
-                className="w-full rounded-lg border-gray-300 text-sm" />
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">目標時間(分)</label>
+              <label className="block text-xs font-medium text-gray-700">目標時間(分)</label>
               <input type="number" value={targetMinutes} onChange={(e) => setTargetMinutes(e.target.value)}
-                className="w-full rounded-lg border-gray-300 text-sm" min={0} />
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={0} />
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-3">
-            <p className="text-sm font-medium text-gray-700 mb-2">通知設定</p>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="border-t border-gray-100 pt-2 space-y-2">
+            <p className="text-xs font-medium text-gray-700">通知設定</p>
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">静音開始時間</label>
+                <label className="block text-xs text-gray-500">静音開始</label>
                 <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 text-sm" />
+                  className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">静音終了時間</label>
+                <label className="block text-xs text-gray-500">静音終了</label>
                 <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 text-sm" />
+                  className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-1">設定した時間帯はプッシュ通知が送信されなくなります</p>
-            <label className="flex items-center justify-between py-2 text-sm cursor-pointer">
+            <p className="text-[10px] text-gray-400">設定した時間帯はプッシュ通知が送信されなくなります</p>
+            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>デイリーまとめ通知</span>
               <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
                 className="cursor-pointer" />
@@ -437,44 +435,44 @@ export default function EditProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">アイコン画像</label>
-            <input type="file" name="icon" accept="image/*" className="text-sm" />
+            <label className="block text-xs font-medium text-gray-700">アイコン画像</label>
+            <input type="file" name="icon" accept="image/*" className="text-xs mt-0.5" />
           </div>
 
-          <button type="submit" className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm">
+          <button type="submit" className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
             保存
           </button>
         </form>
 
         {/* パスワード変更 */}
-        <form onSubmit={handleChangePassword} className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-          <h2 className="text-lg font-bold">パスワード変更</h2>
+        <form onSubmit={handleChangePassword} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2.5">
+          <h2 className="text-sm font-bold">パスワード変更</h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード</label>
+            <label className="block text-xs font-medium text-gray-700">新しいパスワード</label>
             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm" minLength={6} required />
+              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード（確認）</label>
+            <label className="block text-xs font-medium text-gray-700">新しいパスワード（確認）</label>
             <input type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm" minLength={6} required />
+              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
           </div>
           <button type="submit" disabled={passwordChanging}
-            className="bg-gray-800 text-white font-bold rounded-full px-6 py-2 text-sm disabled:opacity-50">
+            className="w-full bg-gray-800 text-white font-bold rounded-full py-1.5 text-sm disabled:opacity-50 cursor-pointer">
             パスワードを変更
           </button>
         </form>
 
         {/* ポイント表示 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-          <p className="text-3xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
-          <p className="text-xs text-gray-500">ポイント</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 text-center">
+          <p className="text-2xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
+          <p className="text-[10px] text-gray-500">ポイント</p>
         </div>
 
         {/* 交換ショップ */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-1">交換ショップ</h2>
-          <p className="text-xs text-gray-500 mb-3">売却で得た交換ptで称号やアイコンフレームを購入できます</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-1">交換ショップ</h2>
+          <p className="text-[10px] text-gray-500 mb-2">売却で得た交換ptで称号やアイコンフレームを購入できます</p>
           {(() => {
             const ownedTitles = new Set(titles.map((t: any) => t.name));
             const ownedIcons = new Set(icons.map((i: any) => i.name));
@@ -530,23 +528,23 @@ export default function EditProfilePage() {
         </div>
 
         {/* 称号を精錬（合成） */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">称号を精錬（合成）</h2>
-          <p className="text-xs text-gray-500 mb-3">所持している称号を組み合わせて新しい称号を作ります</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-2">称号を精錬（合成）</h2>
+          <p className="text-[10px] text-gray-500 mb-2">所持している称号を組み合わせて新しい称号を作ります</p>
           <CombineTitles titles={titles} onCombine={handleCombine} />
         </div>
 
         {/* 称号を精錬（部位組み合わせ） */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">称号を精錬（部位組み合わせ）</h2>
-          <p className="text-xs text-gray-500 mb-3">フレーズ・名詞・人物名を組み合わせて精錬します</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-2">称号を精錬（部位組み合わせ）</h2>
+          <p className="text-[10px] text-gray-500 mb-2">フレーズ・名詞・人物名を組み合わせて精錬します</p>
           <RefineParts parts={parts} onRefine={handleRefineParts} />
         </div>
 
         {/* 一括売却 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">一括売却</h2>
-          <p className="text-xs text-gray-500 mb-3">装備中は売却できません（精錬品は0ptで捨てられます）</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-2">一括売却</h2>
+          <p className="text-[10px] text-gray-500 mb-2">装備中は売却できません（精錬品は0ptで捨てられます）</p>
           <div className="flex gap-2">
             {["N", "R", "SR"].map((rarity) => (
               <button key={rarity} onClick={() => handleBulkSell(rarity)}
@@ -558,8 +556,8 @@ export default function EditProfilePage() {
         </div>
 
         {/* 称号一覧 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-lg font-bold mb-3">所持称号</h2>
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-2">所持称号</h2>
           <div className="grid grid-cols-2 gap-2">
             {titles.map((item: any) => {
               const isEquipped = profile.current_title_id === item.id;
@@ -601,9 +599,9 @@ export default function EditProfilePage() {
            )}
          </div>
 
-         {/* アバター一覧 */}
-         <div className="bg-white rounded-lg border border-gray-200 p-4">
-           <h2 className="text-lg font-bold mb-3">所持アバター</h2>
+          {/* アバター一覧 */}
+          <div className="bg-white rounded-xl border border-gray-200 p-3">
+            <h2 className="text-sm font-bold mb-2">所持アバター</h2>
            <div className="grid grid-cols-2 gap-2">
              {icons.map((item: any) => {
                const isEquipped = profile.current_avatar_id === item.id;
