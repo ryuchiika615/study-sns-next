@@ -48,7 +48,7 @@ export default function ProfileClient({
   const [likedPage, setLikedPage] = useState(1);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState("");
-  const [likedDebug, setLikedDebug] = useState("");
+  const [likedDebug, setLikedDebug] = useState<string[]>([]);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
@@ -106,23 +106,25 @@ export default function ProfileClient({
   const loadLikedIds = async () => {
     setLikedLoading(true);
     setLikedError("");
-    setLikedDebug(`profile.id=${profile.id}\n`);
-    console.log("[likes] start", { profileId: profile.id, userId: user.id });
+    const d: string[] = [];
+    d.push(`profile.id=${profile.id}`);
+    d.push(`user.id=${user.id}`);
+    setLikedDebug(d);
     const { data, error } = await supabase
       .from("likes")
       .select("post_id")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
-    console.log("[likes] query result", { data, error: error?.message });
-    setLikedDebug((prev) => prev + `likes query done, data=${JSON.stringify(data)}, error=${error?.message}\n`);
+    d.push(`likes data=${JSON.stringify(data)} error=${error?.message}`);
+    setLikedDebug([...d]);
     if (error) {
       setLikedError(error.message);
       setLikedLoading(false);
       return;
     }
     const ids = (data || []).map((l: any) => l.post_id);
-    console.log("[likes] post ids", ids);
-    setLikedDebug((prev) => prev + `ids=${JSON.stringify(ids)}\n`);
+    d.push(`ids=${JSON.stringify(ids)}`);
+    setLikedDebug([...d]);
     setLikedIds(ids);
     setLikedPage(1);
     setLikedPosts([]);
@@ -136,19 +138,16 @@ export default function ProfileClient({
     const start = 0;
     const end = page * PER_PAGE;
     const pageIds = ids.slice(start, end);
-    setLikedDebug((prev) => prev + `fetching posts: pageIds=${JSON.stringify(pageIds)}\n`);
     const { data, error } = await supabase
       .from("posts")
       .select("*, user:user_id(id, display_name, username, icon_url)")
       .in("id", pageIds)
       .order("created_at", { ascending: false });
-    setLikedDebug((prev) => prev + `posts query: found=${data?.length}, error=${error?.message}\n`);
     if (error) {
       setLikedError(error.message);
       return;
     }
     const ordered = pageIds.map((id) => data?.find((p) => p.id === id)).filter(Boolean);
-    setLikedDebug((prev) => prev + `ordered posts: ${ordered.length}\n`);
     setLikedPosts(ordered);
   };
 
@@ -309,8 +308,16 @@ export default function ProfileClient({
 
         {activeTab === "likes" && (
           <>
+            <div className="bg-red-100 text-red-800 p-2 rounded text-xs font-mono mb-2 whitespace-pre-wrap">
+              profile.id={profile.id}{'\n'}
+              user.id={user.id}{'\n'}
+              likedPosts.length={likedPosts.length}{'\n'}
+              likedLoading={String(likedLoading)}{'\n'}
+              likedIds={JSON.stringify(likedIds)}{'\n'}
+              likedError={likedError || "(なし)"}{'\n'}
+              likedDebug={JSON.stringify(likedDebug)}
+            </div>
             {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
-            {likedDebug && <div className="bg-gray-50 text-gray-500 p-2 rounded text-xs font-mono whitespace-pre-wrap mb-2">{likedDebug}</div>}
             {likedLoading && <p className="text-center text-gray-400 py-4 text-sm">読み込み中...</p>}
             {!likedLoading && likedPosts.length === 0 && !likedError && (
               <p className="text-center text-gray-400 py-8 text-sm">いいねしたリュイートはありません</p>
