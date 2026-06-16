@@ -112,15 +112,17 @@ export default function PostCard({
 
   const saveEditComment = async () => {
     if (!editCommentText.trim()) return;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("comments")
       .update({ text: editCommentText.trim(), updated_at: new Date().toISOString() })
       .eq("id", editCommentId)
-      .eq("user_id", currentUserId);
-    if (!error) {
-      setComments(comments.map((c: any) => c.id === editCommentId ? { ...c, text: editCommentText.trim() } : c));
-      setEditCommentId(null);
+      .eq("user_id", currentUserId)
+      .select();
+    if (error || !data || data.length === 0) {
+      return;
     }
+    setComments(comments.map((c: any) => c.id === editCommentId ? { ...c, text: editCommentText.trim() } : c));
+    setEditCommentId(null);
   };
 
   const cancelEditComment = () => {
@@ -138,15 +140,18 @@ export default function PostCard({
   const handleSaveEdit = async () => {
     if (!editContent.trim()) return;
     const minutes = parseInt(editMinutes) || 0;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("posts")
       .update({ content: editContent.trim(), study_minutes: minutes, updated_at: new Date().toISOString() })
       .eq("id", post.id)
-      .eq("user_id", currentUserId);
-    if (!error) {
-      onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes });
-      setEditing(false);
+      .eq("user_id", currentUserId)
+      .select();
+    if (error || !data || data.length === 0) {
+      alert("保存に失敗しました。もう一度お試しください。");
+      return;
     }
+    onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes });
+    setEditing(false);
   };
 
   const handleCancelEdit = () => {
