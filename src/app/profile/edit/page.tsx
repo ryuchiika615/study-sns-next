@@ -208,7 +208,7 @@ export default function EditProfilePage() {
 
   const handleSell = async (itemIds: string[]) => {
     const { data, error } = await supabase.rpc("sell_items", {
-      p_item_ids: itemIds.map(Number),
+      p_item_ids: itemIds,
     });
     if (!error && data) {
       setMessage("売却しました！");
