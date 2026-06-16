@@ -299,7 +299,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     const weekNum = `${now.getFullYear()}-W${String(Math.ceil((now.getDate() + (new Date(now.getFullYear(), now.getMonth(), 1).getDay())) / 7)).padStart(2, "0")}-${now.getMonth()}`;
     if (localStorage.getItem("dismissed_ranking_week") !== weekNum) {
       fetch("/api/rankings/current-month").then(r => r.ok && r.json()).then(d => {
-        if (d?.top3?.length) setRankingPopup(d);
+        if (d) setRankingPopup(d);
       }).catch(() => {});
     }
     setDismissedWeek(weekNum);
