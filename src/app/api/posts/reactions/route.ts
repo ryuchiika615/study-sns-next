@@ -31,5 +31,26 @@ export async function PUT(request: NextRequest) {
   }
 
   await supabase.from("post_reactions").insert({ post_id, user_id: user.id, reaction });
+
+  // Notify post author if they follow the reactor
+  const { data: post } = await supabase.from("posts").select("user_id").eq("id", post_id).single();
+  if (post && post.user_id !== user.id) {
+    const { count } = await supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("follower_id", post.user_id)
+      .eq("following_id", user.id);
+    if (count && count > 0) {
+      try {
+        await supabase.from("notifications").insert({
+          recipient_id: post.user_id,
+          sender_id: user.id,
+          post_id,
+          notification_type: "like",
+        });
+      } catch (_) {}
+    }
+  }
+
   return NextResponse.json({ action: "added" });
 }
