@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 type Toast = {
   id: number;
   message: string;
-  type: "streak" | "info" | "like" | "reply" | "follow" | "gift" | "error";
+  type: "streak" | "info" | "like" | "reply" | "follow" | "follow_post" | "gift" | "error";
   streak?: number;
   bonus?: number;
   href?: string;
@@ -50,6 +50,8 @@ export function ToastProvider({ children, unreadCount = 0 }: { children: React.R
                 ? "bg-gradient-to-r from-purple-500 to-pink-500"
                 : toast.type === "follow"
                 ? "bg-gradient-to-r from-green-500 to-teal-500"
+                : toast.type === "follow_post"
+                ? "bg-gradient-to-r from-yellow-500 to-orange-500"
                 : "bg-gradient-to-r from-gray-800 to-gray-700"
             }`}
           >

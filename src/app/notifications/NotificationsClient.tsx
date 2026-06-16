@@ -25,6 +25,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "like": return "があなたの投稿にいいねしました";
       case "reply": return "があなたの投稿に返信しました";
       case "follow": return "があなたをフォローしました";
+      case "follow_post": return "が投稿しました";
       default: return "";
     }
   };

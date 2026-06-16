@@ -245,6 +245,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `${sender}が返信しました`, type: "reply", href });
       } else if (lastNotif.notification_type === "follow") {
         addToast({ message: `${sender}がフォローしました`, type: "follow", href });
+      } else if (lastNotif.notification_type === "follow_post") {
+        addToast({ message: `${sender}が投稿しました`, type: "follow_post", href });
       } else if (lastNotif.notification_type === "gift") {
         addToast({ message: `おプレゼントが届きました！！`, type: "gift", href: "/gacha" });
       }
