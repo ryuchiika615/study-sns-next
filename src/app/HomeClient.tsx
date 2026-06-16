@@ -50,6 +50,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [beeryualSwapped, setBeeryualSwapped] = useState(false);
   const [beeryualShowSmall, setBeeryualShowSmall] = useState(true);
   const [beeryualOverlayPos, setBeeryualOverlayPos] = useState<{ x: number; y: number }>({ x: 16, y: 16 });
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -153,17 +154,23 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     largeImg.onload = smallImg.onload = () => {
       loaded++;
       if (loaded < 2) return;
-      const w = Math.max(largeImg.naturalWidth, 800);
-      const h = Math.max(largeImg.naturalHeight, 600);
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(largeImg, 0, 0, w, h);
+      canvas.width = largeImg.naturalWidth;
+      canvas.height = largeImg.naturalHeight;
+      ctx.drawImage(largeImg, 0, 0);
       if (beeryualShowSmall) {
-        const overlaySize = Math.min(w, h) * 0.25;
-        const ox = beeryualOverlayPos.x || (w - overlaySize - 16);
-        const oy = beeryualOverlayPos.y || 16;
+        const overlaySize = Math.min(canvas.width, canvas.height) * 0.25;
         const rw = overlaySize * 0.7;
         const rh = overlaySize;
+        const container = previewContainerRef.current;
+        let ox: number, oy: number;
+        if (container && beeryualOverlayPos.x) {
+          const cr = container.getBoundingClientRect();
+          ox = (beeryualOverlayPos.x / cr.width) * canvas.width;
+          oy = (beeryualOverlayPos.y / cr.height) * canvas.height;
+        } else {
+          ox = canvas.width - overlaySize - 16;
+          oy = 16;
+        }
         ctx.save();
         ctx.beginPath();
         ctx.roundRect(ox, oy, rw, rh, 12);
@@ -499,7 +506,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
             {beeryualStep === 'preview' && (
             <div className="fixed inset-0 z-[100] bg-black flex flex-col">
               <canvas ref={beeryualCanvasRef} className="hidden" />
-              <div className="relative flex-1 flex items-center justify-center overflow-hidden">
+              <div ref={previewContainerRef} className="relative flex-1 flex items-center justify-center overflow-hidden">
                 {(() => {
                   const largeKey = beeryualSwapped ? 'front' : 'back';
                   const smallKey = beeryualSwapped ? 'back' : 'front';
@@ -515,7 +522,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                         }} />
                       {smallUrl && beeryualShowSmall && (
                         <img ref={smallOverlayRef} src={smallUrl}
-                          className="absolute h-[14dvh] w-[10dvh] rounded-xl border-2 border-white object-cover shadow-lg cursor-grab"
+                          className="absolute h-[28dvh] w-[20dvh] rounded-xl border-2 border-white object-cover shadow-lg cursor-grab"
                           style={{ top: beeryualOverlayPos.y || 16, left: beeryualOverlayPos.x || 16 }}
                           onPointerDown={(e) => {
                             const el = e.currentTarget;
