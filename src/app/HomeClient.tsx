@@ -629,15 +629,17 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         )}
       </div>
 
-      <button onClick={() => setShowAnnouncement(unreadAnnouncements.length > 0 ? unreadAnnouncements[0] : "list")}
-        className="fixed top-4 right-4 z-50 text-xl bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-50 relative">
-        <i className="far fa-envelope" />
-        {unreadAnnouncements.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-            {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
-          </span>
-        )}
-      </button>
+      {unreadAnnouncements.length > 0 && (
+        <button onClick={() => setShowAnnouncement(unreadAnnouncements.length > 0 ? unreadAnnouncements[0] : "list")}
+          className="fixed top-4 right-4 z-50 text-xl bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
+          <i className="far fa-envelope" />
+          {unreadAnnouncements.length > 1 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
+            </span>
+          )}
+        </button>
+      )}
 
       {showAnnouncement && showAnnouncement !== "list" && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAnnouncement(null)}>
