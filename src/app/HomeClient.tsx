@@ -158,9 +158,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       canvas.height = largeImg.naturalHeight;
       ctx.drawImage(largeImg, 0, 0);
       if (beeryualShowSmall) {
-        const overlaySize = Math.min(canvas.width, canvas.height) * 0.25;
-        const rw = overlaySize * 0.7;
-        const rh = overlaySize;
+        const rh = canvas.height * 0.28;
+        const rw = rh * 0.7;
         const container = previewContainerRef.current;
         let ox: number, oy: number;
         if (container && beeryualOverlayPos.x) {
@@ -168,7 +167,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           ox = (beeryualOverlayPos.x / cr.width) * canvas.width;
           oy = (beeryualOverlayPos.y / cr.height) * canvas.height;
         } else {
-          ox = canvas.width - overlaySize - 16;
+          ox = canvas.width - rw - 16;
           oy = 16;
         }
         ctx.save();
@@ -523,7 +522,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                       {smallUrl && beeryualShowSmall && (
                         <img ref={smallOverlayRef} src={smallUrl}
                           className="absolute h-[28dvh] w-[20dvh] rounded-xl border-2 border-white object-cover shadow-lg cursor-grab"
-                          style={{ top: beeryualOverlayPos.y || 16, left: beeryualOverlayPos.x || 16 }}
+                          style={{ top: beeryualOverlayPos.y || 16, left: beeryualOverlayPos.x || 16, touchAction: "none" }}
                           onPointerDown={(e) => {
                             const el = e.currentTarget;
                             const startX = e.clientX;
