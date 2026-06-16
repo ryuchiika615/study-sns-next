@@ -257,7 +257,7 @@ export default function PostCard({
 
             {((post.image_urls?.length ?? 0) > 0 || post.image_url) && (
               <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min((post.image_urls || [post.image_url]).filter(Boolean).length, 2)}, 1fr)` }}>
-                {(post.image_urls?.length ? post.image_urls : [post.image_url]).filter(Boolean).map((url: string, i: number) => (
+                {(post.image_urls?.length ? post.image_urls : [post.image_url]).filter((u): u is string => !!u).map((url, i) => (
                   <img key={i} src={url} className="rounded-2xl border border-gray-200 w-full h-48 object-cover" />
                 ))}
               </div>
