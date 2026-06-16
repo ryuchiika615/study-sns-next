@@ -100,11 +100,11 @@ export default function AdminDashboard() {
             <div className="text-xs text-gray-500 mt-1">システム全体のデータ</div>
           </Link>
 
-          <div className="bg-white rounded-2xl shadow p-5 text-center opacity-60">
-            <div className="text-2xl mb-1">⚙️</div>
-            <div className="font-bold text-sm">設定</div>
-            <div className="text-xs text-gray-500 mt-1">準備中</div>
-          </div>
+          <Link href="/admin/announcements" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">📨</div>
+            <div className="font-bold text-sm">お知らせ</div>
+            <div className="text-xs text-gray-500 mt-1">全ユーザーへのお知らせ</div>
+          </Link>
         </div>
       </div>
     </div>

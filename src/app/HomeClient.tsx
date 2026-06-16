@@ -31,6 +31,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [studyDate, setStudyDate] = useState("");
   const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [totalMinutes] = useState(initialTotal);
+  const [unreadAnnouncements, setUnreadAnnouncements] = useState<any[]>([]);
+  const [showAnnouncement, setShowAnnouncement] = useState<any>(null);
   const seenNotifs = useRef<Set<string>>(new Set(
     JSON.parse(localStorage.getItem("seen_notifs") || "[]")
   ));
@@ -100,8 +102,27 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     }
   };
 
+  const fetchAnnouncements = async () => {
+    const res = await fetch("/api/announcements");
+    if (res.ok) {
+      const data = await res.json();
+      setUnreadAnnouncements(data.announcements || []);
+    }
+  };
+
+  const markAnnouncementRead = async (id: string) => {
+    await fetch("/api/announcements/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ announcementId: id }),
+    });
+    setUnreadAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    setShowAnnouncement(null);
+  };
+
   useEffect(() => {
     pollNotifications();
+    fetchAnnouncements();
     notifTimer.current = setInterval(pollNotifications, 15000);
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
@@ -300,6 +321,27 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           </button>
         )}
       </div>
+
+      {unreadAnnouncements.length > 0 && (
+        <button onClick={() => setShowAnnouncement(unreadAnnouncements[0])}
+          className="fixed top-4 right-4 z-50 text-2xl bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
+          ✉
+        </button>
+      )}
+
+      {showAnnouncement && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
+            <h3 className="font-bold text-lg mb-3">📨 管理者からのお知らせ</h3>
+            <p className="text-sm whitespace-pre-wrap mb-4">{showAnnouncement.content}</p>
+            <p className="text-xs text-gray-400 mb-4">{new Date(showAnnouncement.created_at).toLocaleString("ja-JP")}</p>
+            <button onClick={() => markAnnouncementRead(showAnnouncement.id)}
+              className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
+              既読にする
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
