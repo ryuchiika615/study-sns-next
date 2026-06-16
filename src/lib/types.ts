@@ -36,6 +36,7 @@ export interface PostWithDetails {
   study_minutes: number;
   reply_to_id: string | null;
   created_at: string;
+  updated_at: string | null;
   user: Profile;
   current_title: GachaItem | null;
   current_avatar: GachaItem | null;
