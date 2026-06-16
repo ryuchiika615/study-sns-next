@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import { Chart } from "@/lib/chart-registry";
 
 export function WeeklyChart({ labels, datasets }: { labels: string[]; datasets: any[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

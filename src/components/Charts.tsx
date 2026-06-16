@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import { useEffect, useRef } from "react";
+import { Chart } from "@/lib/chart-registry";
 
 export function PieChart({ labels, data, colors }: { labels: string; data: string; colors: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
