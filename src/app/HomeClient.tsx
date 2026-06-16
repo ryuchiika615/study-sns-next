@@ -305,10 +305,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     setShowAnnouncement(null);
   };
 
+  const pollAll = async () => {
+    await Promise.all([pollNotifications(), fetchAnnouncements()]);
+  };
+
   useEffect(() => {
-    pollNotifications();
-    fetchAnnouncements();
-    notifTimer.current = setInterval(pollNotifications, 15000);
+    pollAll();
+    notifTimer.current = setInterval(pollAll, 15000);
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
     };
