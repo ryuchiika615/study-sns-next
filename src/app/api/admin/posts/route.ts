@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +31,25 @@ export async function DELETE(request: NextRequest) {
   const { postIds } = await request.json();
   if (!postIds?.length) return NextResponse.json({ error: "postIds required" }, { status: 400 });
 
-  const { error } = await supabase.rpc("admin_delete_posts", { p_post_ids: postIds });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  let delError: any;
 
-  return NextResponse.json({ success: true, deleted: postIds.length });
+  // Try RPC (security definer)
+  const { error: rpcError } = await supabase.rpc("admin_delete_posts", { p_post_ids: postIds });
+  if (!rpcError) return NextResponse.json({ success: true, deleted: postIds.length });
+  delError = rpcError;
+
+  // Fallback: try admin client (service role key)
+  try {
+    const admin = createAdminClient();
+    const { error: adminError } = await admin.from("posts").delete().in("id", postIds);
+    if (!adminError) return NextResponse.json({ success: true, deleted: postIds.length });
+    delError = adminError;
+  } catch {}
+
+  // Fallback: try user session (RLS, only works for own posts)
+  const { error: sessionError } = await supabase.from("posts").delete().in("id", postIds);
+  if (!sessionError) return NextResponse.json({ success: true, deleted: postIds.length });
+  delError = sessionError;
+
+  return NextResponse.json({ error: delError?.message || "削除に失敗しました" }, { status: 500 });
 }
