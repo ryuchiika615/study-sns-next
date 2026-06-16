@@ -28,15 +28,27 @@ export async function DELETE(request: NextRequest) {
   const { data: p } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
   if (!p?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { postIds } = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 });
+  }
+  const { postIds } = body;
   if (!postIds?.length) return NextResponse.json({ error: "postIds required" }, { status: 400 });
 
-  const admin = createAdminClient();
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch (e: any) {
+    return NextResponse.json({ error: `admin client error: ${e.message}` }, { status: 500 });
+  }
+
   const { error, count } = await admin
     .from("posts")
     .delete({ count: "exact" })
     .in("id", postIds);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: `delete error: ${error.message}` }, { status: 500 });
   return NextResponse.json({ success: true, deleted: count });
 }

@@ -54,6 +54,9 @@ export default function AdminPostsPage() {
       setSelected(new Set());
       setSelectAll(false);
       fetchPosts();
+    } else {
+      const err = await res.json().catch(() => ({ error: "不明なエラー" }));
+      setError(err.error || "削除に失敗しました");
     }
   };
 
