@@ -81,8 +81,9 @@ export async function GET() {
   const currentPoints = profile?.exchange_points || 0;
 
   // Calculate points
+  const loginBonus = 10;
   const followerMultiplier = 1 + ((followersCount || 0) * 0.1);
-  const pointsEarned = Math.floor(reactionsCount * 10 * followerMultiplier);
+  const pointsEarned = loginBonus + reactionsCount + Math.floor(studyMinutes * followerMultiplier);
   const totalPoints = currentPoints + pointsEarned;
 
   // Save summary
@@ -108,7 +109,7 @@ export async function GET() {
     .eq("user_id", user.id);
 
   if (subscriptions?.length) {
-    const body = `${date} のまとめ📊\nリアクション: ${reactionsCount}件\nフォロワーボーナス: ×${followerMultiplier.toFixed(1)}\n勉強時間: ${Math.floor(studyMinutes / 60)}h${studyMinutes % 60}m\n獲得ポイント: +${pointsEarned}\n合計ポイント: ${totalPoints}`;
+    const body = `${date} のまとめ📊\nログインボーナス: +${loginBonus}\nリアクション: ${reactionsCount}件\n勉強時間: ${Math.floor(studyMinutes / 60)}h${studyMinutes % 60}m ×${followerMultiplier.toFixed(1)}\n獲得ポイント: +${pointsEarned}\n合計ポイント: ${totalPoints}`;
 
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const privateKey = process.env.VAPID_PRIVATE_KEY;
