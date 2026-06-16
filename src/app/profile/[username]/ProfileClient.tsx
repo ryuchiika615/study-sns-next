@@ -9,6 +9,8 @@ import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
 import { formatStudyTime } from "@/lib/utils";
 
+const PER_PAGE = 10;
+
 type ProfileClientProps = {
   user: { id: string };
   profile: any;
@@ -40,6 +42,12 @@ export default function ProfileClient({
   const [showNotifyPopover, setShowNotifyPopover] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState(initialPosts);
+  const [postPage, setPostPage] = useState(1);
+  const [likedPosts, setLikedPosts] = useState<any[]>([]);
+  const [likedIds, setLikedIds] = useState<string[]>([]);
+  const [likedPage, setLikedPage] = useState(1);
+  const [likedLoading, setLikedLoading] = useState(false);
+  const [likedError, setLikedError] = useState("");
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
@@ -55,6 +63,12 @@ export default function ProfileClient({
         });
     }
   }, [isFollowing, user.id, profile.id]);
+
+  useEffect(() => {
+    if (activeTab === "likes") {
+      loadLikedIds();
+    }
+  }, [activeTab]);
 
   const handleFollow = async () => {
     const wasFollowing = isFollowing;
@@ -93,6 +107,56 @@ export default function ProfileClient({
     });
     if (!res.ok) setNotifySettings(prev as any);
   };
+
+  const loadLikedIds = async () => {
+    setLikedLoading(true);
+    setLikedError("");
+    const { data, error } = await supabase
+      .from("likes")
+      .select("post_id")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+    if (error) {
+      setLikedError(error.message);
+      setLikedLoading(false);
+      return;
+    }
+    const ids = (data || []).map((l: any) => l.post_id);
+    setLikedIds(ids);
+    setLikedPage(1);
+    setLikedPosts([]);
+    if (ids.length > 0) {
+      await loadLikedPosts(ids, 1);
+    }
+    setLikedLoading(false);
+  };
+
+  const loadLikedPosts = async (ids: string[], page: number) => {
+    const start = 0;
+    const end = page * PER_PAGE;
+    const pageIds = ids.slice(start, end);
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*, user:user_id(id, display_name, username, icon_url)")
+      .in("id", pageIds)
+      .order("created_at", { ascending: false });
+    if (error) {
+      setLikedError(error.message);
+      return;
+    }
+    const ordered = pageIds.map((id) => data?.find((p) => p.id === id)).filter(Boolean);
+    setLikedPosts(ordered);
+  };
+
+  const loadMoreLiked = async () => {
+    const next = likedPage + 1;
+    setLikedPage(next);
+    await loadLikedPosts(likedIds, next);
+  };
+
+  const visiblePosts = posts.slice(0, postPage * PER_PAGE);
+  const hasMorePosts = visiblePosts.length < posts.length;
+  const hasMoreLiked = likedPosts.length < likedIds.length;
 
   return (
     <AppShell unreadCount={unreadCount}>
@@ -220,14 +284,46 @@ export default function ProfileClient({
           ))}
         </div>
 
-        {activeTab === "posts" && posts.map((post: any) => (
-          <PostCard key={post.id} post={post} currentUserId={user.id}
-            onDelete={(id) => {
-              const idx = posts.findIndex((p: any) => p.id === id);
-              if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
-            }}
-            onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
-        ))}
+        {activeTab === "posts" && (
+          <>
+            {visiblePosts.map((post: any) => (
+              <PostCard key={post.id} post={post} currentUserId={user.id}
+                onDelete={(id) => {
+                  const idx = posts.findIndex((p: any) => p.id === id);
+                  if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
+                }}
+                onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+            ))}
+            {hasMorePosts && (
+              <button onClick={() => setPostPage((p) => p + 1)}
+                className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                もっと見る
+              </button>
+            )}
+          </>
+        )}
+
+        {activeTab === "likes" && (
+          <>
+            {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
+            {likedLoading && <p className="text-center text-gray-400 py-4 text-sm">読み込み中...</p>}
+            {!likedLoading && likedPosts.length === 0 && !likedError && (
+              <p className="text-center text-gray-400 py-8 text-sm">いいねしたリュイートはありません</p>
+            )}
+            {likedPosts.map((post: any) => (
+              <PostCard key={post.id} post={post} currentUserId={user.id}
+                onDelete={() => {}}
+                onUpdate={() => {}} />
+            ))}
+            {hasMoreLiked && (
+              <button onClick={loadMoreLiked}
+                className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg"
+                disabled={likedLoading}>
+                もっと見る
+              </button>
+            )}
+          </>
+        )}
 
         {followListType && (
           <FollowList userId={profile.id} type={followListType} onClose={() => setFollowListType(null)} />

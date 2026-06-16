@@ -33,6 +33,8 @@ export default function EditProfilePage() {
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [profileTab, setProfileTab] = useState<"posts" | "likes">("posts");
+  const [postPage, setPostPage] = useState(1);
+  const [likedPage, setLikedPage] = useState(1);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -324,11 +326,11 @@ export default function EditProfilePage() {
         {/* 自分の投稿 / いいねした投稿 */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
           <div className="flex gap-2 border-b border-gray-200 pb-2">
-            <button onClick={() => setProfileTab("posts")}
+            <button onClick={() => { setProfileTab("posts"); setPostPage(1); }}
               className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "posts" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
               自分の投稿 ({myPosts.length})
             </button>
-            <button onClick={() => setProfileTab("likes")}
+            <button onClick={() => { setProfileTab("likes"); setLikedPage(1); }}
               className={`text-sm font-medium px-3 py-1 rounded-full ${profileTab === "likes" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
               いいねした投稿 ({likedPosts.length})
             </button>
@@ -339,7 +341,7 @@ export default function EditProfilePage() {
                 {profileTab === "posts" ? "まだ投稿がありません" : "いいねした投稿はありません"}
               </p>
             )}
-            {(profileTab === "posts" ? myPosts : likedPosts).slice(0, 20).map((post: any) => (
+            {(profileTab === "posts" ? myPosts : likedPosts).slice(0, (profileTab === "posts" ? postPage : likedPage) * 10).map((post: any) => (
               <PostCard key={post.id} post={post} currentUserId={userIdRef.current || ""}
                 onDelete={(id) => {
                   setMyPosts((prev) => prev.filter((p: any) => p.id !== id));
@@ -352,6 +354,18 @@ export default function EditProfilePage() {
                     p.id === id ? { ...p, ...data } : p));
                 }} />
             ))}
+            {profileTab === "posts" && myPosts.length > postPage * 10 && (
+              <button onClick={() => setPostPage((p) => p + 1)}
+                className="w-full py-2 text-sm text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                もっと見る
+              </button>
+            )}
+            {profileTab === "likes" && likedPosts.length > likedPage * 10 && (
+              <button onClick={() => setLikedPage((p) => p + 1)}
+                className="w-full py-2 text-sm text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                もっと見る
+              </button>
+            )}
           </div>
         </div>
 
