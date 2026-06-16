@@ -30,8 +30,7 @@ export default function FollowList({
           const { data: follows, error: err } = await supabase
             .from("follows")
             .select("follower_id")
-            .eq("following_id", userId)
-            .order("created_at", { ascending: false });
+            .eq("following_id", userId);
           if (err) { setError(err.message); setDebug(prev => prev + `follows query error: ${err.message}\n`); return; }
           setDebug(prev => prev + `follows found: ${follows?.length ?? 0}\n`);
           if (follows && follows.length > 0) {
@@ -52,8 +51,7 @@ export default function FollowList({
           const { data: follows, error: err } = await supabase
             .from("follows")
             .select("following_id")
-            .eq("follower_id", userId)
-            .order("created_at", { ascending: false });
+            .eq("follower_id", userId);
           if (err) { setError(err.message); setDebug(prev => prev + `follows query error: ${err.message}\n`); return; }
           setDebug(prev => prev + `follows found: ${follows?.length ?? 0}\n`);
           if (follows && follows.length > 0) {
