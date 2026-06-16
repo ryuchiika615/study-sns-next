@@ -19,19 +19,37 @@ export default function FollowList({
   useEffect(() => {
     const fetchUsers = async () => {
       if (type === "followers") {
-        const { data } = await supabase
+        const { data: follows } = await supabase
           .from("follows")
-          .select("follower:follower_id(id, display_name, username, icon_url)")
+          .select("follower_id")
           .eq("following_id", userId)
           .order("created_at", { ascending: false });
-        if (data) setUsers(data.map((r: any) => r.follower));
+        if (follows && follows.length > 0) {
+          const ids = follows.map((r: any) => r.follower_id);
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, display_name, username, icon_url")
+            .in("id", ids);
+          setUsers(profiles || []);
+        } else {
+          setUsers([]);
+        }
       } else {
-        const { data } = await supabase
+        const { data: follows } = await supabase
           .from("follows")
-          .select("following:following_id(id, display_name, username, icon_url)")
+          .select("following_id")
           .eq("follower_id", userId)
           .order("created_at", { ascending: false });
-        if (data) setUsers(data.map((r: any) => r.following));
+        if (follows && follows.length > 0) {
+          const ids = follows.map((r: any) => r.following_id);
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, display_name, username, icon_url")
+            .in("id", ids);
+          setUsers(profiles || []);
+        } else {
+          setUsers([]);
+        }
       }
     };
     fetchUsers();
