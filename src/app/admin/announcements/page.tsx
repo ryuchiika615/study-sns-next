@@ -35,18 +35,22 @@ export default function AdminAnnouncementsPage() {
     setError("");
     setMessage("");
     if (!content.trim()) return;
-    const res = await fetch("/api/admin/announcements", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: content.trim() }),
-    });
-    if (res.ok) {
-      setMessage("お知らせを送信しました！");
-      setContent("");
-      fetchAnnouncements();
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || `送信失敗 (${res.status})`);
+    try {
+      const res = await fetch("/api/admin/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: content.trim() }),
+      });
+      if (res.ok) {
+        setMessage("お知らせを送信しました！");
+        setContent("");
+        fetchAnnouncements();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `送信失敗 (${res.status})`);
+      }
+    } catch (e: any) {
+      setError(e.message || "ネットワークエラー");
     }
   };
 
@@ -54,16 +58,20 @@ export default function AdminAnnouncementsPage() {
     if (!confirm("削除しますか？")) return;
     setError("");
     setMessage("");
-    const res = await fetch("/api/admin/announcements", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    if (res.ok) {
-      fetchAnnouncements();
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || `削除失敗 (${res.status})`);
+    try {
+      const res = await fetch("/api/admin/announcements", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        fetchAnnouncements();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `削除失敗 (${res.status})`);
+      }
+    } catch (e: any) {
+      setError(e.message || "ネットワークエラー");
     }
   };
 
