@@ -10,7 +10,7 @@ export function BottomNav({ unreadCount = 0 }: { unreadCount?: number }) {
     { href: "/", icon: "fa-home", label: "ホーム" },
     { href: "/rankings", icon: "fa-trophy", label: "ランキング" },
     { href: "/analytics", icon: "fa-chart-pie", label: "分析" },
-    { href: "/gacha", icon: "fa-calendar-check", label: "ガチャ", customColor: "#4ade80" },
+    { href: "/gacha", icon: "fa-calendar-check", label: "ログイン", customColor: "#4ade80" },
     { href: "/notifications", icon: "fa-bell", label: "通知", badge: unreadCount },
     { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール" },
   ];
