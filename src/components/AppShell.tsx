@@ -134,8 +134,8 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
   return (
     <>
-      <div className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-3 shadow-lg mb-4 sticky top-0 z-40 backdrop-blur-md bg-opacity-90">
-        <Sidebar />
+      <Sidebar />
+      <div className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-3 shadow-lg mb-4">
         <h1 className="text-2xl text-yellow-600 font-serif tracking-wider m-0" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
           RYUTTER
         </h1>
