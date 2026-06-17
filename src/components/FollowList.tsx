@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import BottomSheet from "./BottomSheet";
 
 export default function FollowList({
   userId,
@@ -76,17 +77,8 @@ export default function FollowList({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] flex flex-col shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 className="font-bold text-lg">
-            {type === "followers" ? "フォロワー" : "フォロー中"}
-          </h3>
-          <button onClick={onClose} className="text-gray-500 text-xl cursor-pointer">
-            <i className="fas fa-times" />
-          </button>
-        </div>
-        <div className="overflow-y-auto flex-1 p-2">
+    <BottomSheet open={true} onClose={onClose} title={type === "followers" ? "フォロワー" : "フォロー中"}>
+      <div className="p-2">
           {users.length === 0 && (
             <p className="text-center text-gray-400 py-8 text-sm">
               {type === "followers" ? "フォロワーはいません" : "フォローしていません"}
@@ -171,8 +163,7 @@ export default function FollowList({
               )}
             </div>
           ))}
-        </div>
       </div>
-    </div>
+    </BottomSheet>
   );
 }

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
+import SwipeBack from "./SwipeBack";
+import InstallBanner from "./InstallBanner";
 
 export default function AppShell({ children, unreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
   const initialized = useRef(false);
@@ -132,15 +134,15 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
   return (
     <>
-      <div className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-4 shadow-lg mb-4 relative">
+      <div className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-3 shadow-lg mb-4 sticky top-0 z-40 backdrop-blur-md bg-opacity-90">
         <Sidebar />
-        <h1 className="text-3xl text-yellow-600 font-serif tracking-wider m-0" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
+        <h1 className="text-2xl text-yellow-600 font-serif tracking-wider m-0" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
           RYUTTER
         </h1>
-        <p className="text-sm text-yellow-600 tracking-widest mt-1">リュッター</p>
+        <p className="text-xs text-yellow-600 tracking-widest">リュッター</p>
 
         <button onClick={() => setShowAnnouncement("list")}
-          className="absolute top-4 right-4 text-xl bg-white/20 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
+          className="absolute top-3 right-3 text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
           <i className="far fa-envelope text-yellow-600" />
           {totalUnread > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
@@ -150,11 +152,14 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
         </button>
       </div>
 
-      <div className="container mx-auto max-w-2xl px-0 page-enter">
-        {children}
-      </div>
+      <SwipeBack>
+        <div className="container mx-auto max-w-2xl px-0 page-enter">
+          {children}
+        </div>
+      </SwipeBack>
 
       <BottomNav unreadCount={unreadCount} />
+      <InstallBanner />
 
       {showAnnouncement === "list" && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAnnouncement(null)}>

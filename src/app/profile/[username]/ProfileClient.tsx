@@ -298,38 +298,35 @@ export default function ProfileClient({
           </div>
 
           <div className="p-3">
-            {activeTab === "posts" && (
-              <>
-                {visiblePosts.map((post: any) => (
-                  <PostCard key={post.id} post={post} currentUserId={user.id}
-                    onDelete={(id) => {
-                      const idx = posts.findIndex((p: any) => p.id === id);
-                      if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
-                    }}
-                    onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
-                ))}
-                {visiblePosts.length > 0 && hasMorePosts && (
-                  <button onClick={() => setPostPage((p) => p + 1)}
-                    className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
-                    もっと見る
-                  </button>
-                )}
-                {visiblePosts.length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">リュイートがありません</div>
-                )}
-              </>
-            )}
+            <div className={`transition-opacity duration-200 ${activeTab === "posts" ? "opacity-100" : "hidden"}`}>
+              {visiblePosts.map((post: any) => (
+                <PostCard key={post.id} post={post} currentUserId={user.id}
+                  onDelete={(id) => {
+                    const idx = posts.findIndex((p: any) => p.id === id);
+                    if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
+                  }}
+                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+              ))}
+              {visiblePosts.length > 0 && hasMorePosts && (
+                <button onClick={() => setPostPage((p) => p + 1)}
+                  className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
+                  もっと見る
+                </button>
+              )}
+              {visiblePosts.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm">リュイートがありません</div>
+              )}
+            </div>
 
-            {activeTab === "likes" && (
-              <>
-                {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
-                {likedLoading && (
-                  <div className="text-center py-8">
-                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                    <p className="text-gray-400 text-sm mt-2">読み込み中...</p>
-                  </div>
-                )}
-                {!likedLoading && likedPosts.length === 0 && !likedError && (
+            <div className={`transition-opacity duration-200 ${activeTab === "likes" ? "opacity-100" : "hidden"}`}>
+              {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
+              {likedLoading && (
+                <div className="text-center py-8">
+                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                  <p className="text-gray-400 text-sm mt-2">読み込み中...</p>
+                </div>
+              )}
+              {!likedLoading && likedPosts.length === 0 && !likedError && (
                   <div className="text-center py-8 text-gray-400 text-sm">いいねしたリュイートはありません</div>
                 )}
                 {likedPosts.map((post: any) => (
@@ -344,7 +341,6 @@ export default function ProfileClient({
                     もっと見る
                   </button>
                 )}
-              </>
             )}
           </div>
         </div>
