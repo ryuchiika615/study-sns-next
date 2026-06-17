@@ -16,7 +16,7 @@ export default function FollowList({
   currentUserId?: string;
 }) {
   const [users, setUsers] = useState<any[]>([]);
-  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean }>>({});
+  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean }>>({});
   const [openSettingsFor, setOpenSettingsFor] = useState<string | null>(null);
   const supabase = createClient();
   const isOwner = currentUserId === userId;
@@ -41,7 +41,7 @@ export default function FollowList({
       } else {
         const { data: follows } = await supabase
           .from("follows")
-          .select("following_id")
+          .select("following_id, notify_posts, notify_likes, notify_comments")
           .eq("follower_id", userId);
         if (follows && follows.length > 0) {
           const ids = follows.map((r: any) => r.following_id);
@@ -50,6 +50,9 @@ export default function FollowList({
             .select("id, display_name, username, icon_url")
             .in("id", ids);
           setUsers(profiles || []);
+          const s: Record<string, any> = {};
+          follows.forEach((f: any) => { s[f.following_id] = { notify_posts: f.notify_posts, notify_likes: f.notify_likes, notify_comments: f.notify_comments }; });
+          setSettings(s);
         } else {
           setUsers([]);
         }
@@ -122,7 +125,7 @@ export default function FollowList({
                   <div className="relative flex-shrink-0">
                     <button
                       onClick={(e) => { e.stopPropagation(); setOpenSettingsFor(openSettingsFor === u.id ? null : u.id); }}
-                      className={`text-lg cursor-pointer p-1 rounded-full transition ${settings[u.id]?.notify_posts ? "text-blue-500" : "text-gray-300"}`}
+                      className={`text-lg cursor-pointer p-1 rounded-full transition ${(settings[u.id]?.notify_posts || settings[u.id]?.notify_likes || settings[u.id]?.notify_comments) ? "text-blue-500" : "text-gray-300"}`}
                       title="通知設定"
                     >
                       <i className="fas fa-bell" />
@@ -132,12 +135,21 @@ export default function FollowList({
                         <p className="text-xs font-bold text-gray-600 mb-2">{u.display_name || u.username} の通知</p>
                         <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
                           <span>投稿</span>
-                          <input
-                            type="checkbox"
-                            checked={settings[u.id]?.notify_posts ?? true}
+                          <input type="checkbox" checked={settings[u.id]?.notify_posts ?? true}
                             onChange={(e) => toggleSetting(u.id, "notify_posts", e.target.checked)}
-                            className="cursor-pointer"
-                          />
+                            className="cursor-pointer" />
+                        </label>
+                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
+                          <span>いいね</span>
+                          <input type="checkbox" checked={settings[u.id]?.notify_likes ?? true}
+                            onChange={(e) => toggleSetting(u.id, "notify_likes", e.target.checked)}
+                            className="cursor-pointer" />
+                        </label>
+                        <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
+                          <span>返信</span>
+                          <input type="checkbox" checked={settings[u.id]?.notify_comments ?? true}
+                            onChange={(e) => toggleSetting(u.id, "notify_comments", e.target.checked)}
+                            className="cursor-pointer" />
                         </label>
                       </div>
                     )}

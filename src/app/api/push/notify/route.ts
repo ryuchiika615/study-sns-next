@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     like: `${senderName}がリアクションしました`,
     reply: `${senderName}からコメントが来ました`,
     follow: `${senderName}がフォローしました`,
+    follow_post: `${senderName}がリュイートしました`,
     gift: `${senderName}からプレゼントが届きました。`,
     mention: `${senderName}からメンションが来ました`,
   };

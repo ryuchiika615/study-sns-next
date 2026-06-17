@@ -9,11 +9,13 @@ export async function PUT(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { following_id, notify_posts } = await request.json();
+  const { following_id, notify_posts, notify_likes, notify_comments } = await request.json();
   if (!following_id) return NextResponse.json({ error: "following_id required" }, { status: 400 });
 
   const payload: Record<string, boolean> = {};
   if (typeof notify_posts === "boolean") payload.notify_posts = notify_posts;
+  if (typeof notify_likes === "boolean") payload.notify_likes = notify_likes;
+  if (typeof notify_comments === "boolean") payload.notify_comments = notify_comments;
 
   const admin = createAdminClient();
   const { error } = await admin
