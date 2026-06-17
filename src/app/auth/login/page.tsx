@@ -69,16 +69,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#f2f2f6] px-4">
       <div className="max-w-sm w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">リュッター</h1>
-          <p className="text-gray-500 mt-1">勉強SNSにログイン</p>
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-2xl text-yellow-500 font-bold">R</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">リュッター</h1>
+          <p className="text-gray-500 text-sm mt-1">勉強SNSにログイン</p>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow p-6 space-y-4">
+        <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">{error}</div>
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100">{error}</div>
           )}
 
           <div>
@@ -88,7 +91,7 @@ export default function LoginPage() {
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
               required
-              className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
+              className="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-primary focus:ring-primary"
               placeholder="ユーザーID"
             />
           </div>
@@ -100,21 +103,21 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
+              className="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-primary focus:ring-primary"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white font-bold py-2.5 rounded-full hover:bg-blue-600 transition disabled:opacity-50"
+            className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
           >
             {loading ? "ログイン中..." : "ログイン"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
             アカウントがない方は{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
+            <Link href="/auth/signup" className="text-primary font-bold hover:underline">
               新規登録
             </Link>
           </p>

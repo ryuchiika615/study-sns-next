@@ -44,9 +44,9 @@ export function ToastProvider({ children }: { children: React.ReactNode; unreadC
         {toasts.map((toast, i) => (
           <div
             key={toast.id}
-            onClick={() => { if (toast.href) window.location.href = toast.href; removeToast(toast.id); }}
+            onClick={() => { const target = toast.href || (["like","reply","follow","gift","follow_post"].includes(toast.type) ? "/notifications" : undefined); if (target) window.location.href = target; removeToast(toast.id); }}
             className={`pointer-events-auto px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-bold max-w-xs text-center ${
-              toast.href ? "cursor-pointer" : ""
+              (toast.href || ["like","reply","follow","gift","follow_post"].includes(toast.type)) ? "cursor-pointer" : ""
             } ${
               toast.exiting ? "animate-toast-exit" : "animate-toast-enter"
             } ${

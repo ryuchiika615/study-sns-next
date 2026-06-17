@@ -15,7 +15,7 @@ export default function PostDetailClient({
 }) {
   return (
     <AppShell>
-      <div className="max-w-xl mx-auto p-4">
+      <div className="mx-4 my-4">
         <PostCard
           post={post}
           currentUserId={currentUserId}

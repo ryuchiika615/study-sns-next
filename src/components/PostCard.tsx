@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
@@ -36,6 +36,9 @@ export default function PostCard({
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const swipeStartY = useRef(0);
+  const swipeDist = useRef(0);
+  const [swipeTranslate, setSwipeTranslate] = useState(0);
   const router = useRouter();
 
   const handleReaction = async (emoji: string) => {
@@ -365,8 +368,17 @@ export default function PostCard({
       )}
 
       {viewingImage && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center" onClick={() => setViewingImage(null)}>
-          <img src={viewingImage} className="max-w-full max-h-full object-contain p-4" />
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center select-none"
+          onClick={() => setViewingImage(null)}
+          onTouchStart={(e) => { swipeStartY.current = e.touches[0].clientY; swipeDist.current = 0; setSwipeTranslate(0); }}
+          onTouchMove={(e) => { const d = e.touches[0].clientY - swipeStartY.current; if (d > 0) { swipeDist.current = d; setSwipeTranslate(d); } }}
+          onTouchEnd={() => { if (swipeDist.current > 80) setViewingImage(null); swipeDist.current = 0; setSwipeTranslate(0); }}
+          style={{}}
+        >
+          <div style={{ transform: swipeTranslate > 0 ? `translateY(${swipeTranslate}px)` : undefined, transition: swipeTranslate > 0 ? "none" : "transform 0.3s" }}>
+            <img src={viewingImage} className="max-w-full max-h-full object-contain p-4 select-none" draggable={false} />
+          </div>
         </div>
       )}
     </div>
