@@ -241,6 +241,9 @@ export default function PostCard({
             <span className="text-gray-500 text-sm">@{post.user?.username || post.user?.display_name || post.user_id?.slice(0, 8)}</span>
             <span className="text-gray-500 text-sm">·</span>
             <span className="text-gray-500 text-sm">{post.formatted_time}</span>
+            {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
+              <span className="text-[10px] text-gray-400 ml-0.5">編集済み</span>
+            )}
           </div>
         </div>
 
@@ -286,9 +289,6 @@ export default function PostCard({
         ) : (
           <>
             <p className="whitespace-pre-wrap">{post.content}</p>
-            {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
-              <p className="text-xs text-gray-400 mt-1">（編集済み）</p>
-            )}
 
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="subject-chip" style={{ backgroundColor: post.subject_color }}>
