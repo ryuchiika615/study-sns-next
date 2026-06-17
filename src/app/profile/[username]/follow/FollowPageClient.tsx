@@ -104,7 +104,7 @@ export default function FollowPageClient({
             )}
             {users.map((u: any) => (
               <div key={u.id} className="flex items-center gap-3 p-3 border-b border-gray-50 last:border-0">
-                <Link href={`/profile/${encodeURIComponent(u.username || u.id)}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
+                <Link href={`/profile/${u.id}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                     {u.icon_url ? (
                       <img src={u.icon_url} loading="lazy" className="w-full h-full object-cover" />
