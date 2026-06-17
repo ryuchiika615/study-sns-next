@@ -109,7 +109,7 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
                     </div>
                     <div className="avatar-frame">
                       {entry.user?.icon_url ? (
-                        <img src={getOptimizedIconUrl(entry.user.icon_url, 40)} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
+                        <img src={getOptimizedIconUrl(entry.user.icon_url, 120)} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
                         <i className="fas fa-user-circle text-3xl text-gray-300" />
                       )}

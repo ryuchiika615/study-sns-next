@@ -306,7 +306,7 @@ export default function EditProfilePage() {
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
               {profile.icon_url ? (
-                <img src={getOptimizedIconUrl(profile.icon_url, 64)} alt="" className="w-full h-full object-cover" />
+                <img src={getOptimizedIconUrl(profile.icon_url, 168)} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">
                   {(profile.display_name || "?")[0]}

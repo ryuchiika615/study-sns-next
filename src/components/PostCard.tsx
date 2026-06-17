@@ -207,7 +207,7 @@ export default function PostCard({
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
             {post.user?.icon_url ? (
-              <img src={getOptimizedIconUrl(post.user.icon_url, 48)} loading="lazy" className="w-12 h-12 rounded-full object-cover border-2 border-white" />
+              <img src={getOptimizedIconUrl(post.user.icon_url, 144)} loading="lazy" className="w-12 h-12 rounded-full object-cover border-2 border-white" />
             ) : (
               <i className="fas fa-user-circle text-4xl text-gray-300" />
             )}

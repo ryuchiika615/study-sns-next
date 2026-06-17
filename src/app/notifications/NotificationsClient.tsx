@@ -94,7 +94,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
           >
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
               {notif.sender?.icon_url ? (
-                <img src={getOptimizedIconUrl(notif.sender.icon_url, 40)} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
+                <img src={getOptimizedIconUrl(notif.sender.icon_url, 120)} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
               ) : (
                 <i className={`fas ${getIcon(notif.notification_type)} text-lg`} />
               )}
