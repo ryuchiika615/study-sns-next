@@ -8,7 +8,7 @@ import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass } from "
 import type { PostWithDetails } from "@/lib/types";
 
 function highlightMentions(text: string) {
-  const parts = text.split(/(@\w+)/g);
+  const parts = text.split(/(@[\w-]+)/g);
   return parts.map((part, i) =>
     part.startsWith("@")
       ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
@@ -118,7 +118,7 @@ export default function PostCard({
           body: JSON.stringify({ type: "reply", recipient_id: post.user_id, post_id: post.id }),
         }).catch(() => {});
       }
-      const mentionMatches = text.match(/@(\w+)/g);
+      const mentionMatches = text.match(/@([\w-]+)/g);
       if (mentionMatches) {
         const mentionedUsernames = [...new Set(mentionMatches.map(m => m.slice(1)))];
         supabase.from("profiles").select("id, username").in("username", mentionedUsernames).then(({ data: mentionedUsers }) => {

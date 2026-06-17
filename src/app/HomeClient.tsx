@@ -268,6 +268,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `${sender}が投稿しました`, type: "follow_post", href });
       } else if (lastNotif.notification_type === "gift") {
         addToast({ message: `🎁 ${sender}からプレゼントが届きました。`, type: "gift", href: "/gacha" });
+      } else if (lastNotif.notification_type === "mention") {
+        addToast({ message: `${sender}からメンションが来ました`, type: "info", href });
       }
     }
     setUnreadCount(unread);
