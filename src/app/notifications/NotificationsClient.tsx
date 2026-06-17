@@ -27,6 +27,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "follow": return "がフォローしました";
       case "follow_post": return "が投稿しました";
       case "gift": return "からプレゼントが届きました。";
+      case "mention": return "からメンションが来ました";
       default: return "";
     }
   };
@@ -38,6 +39,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "follow": return "fa-user-plus text-green-500";
       case "follow_post": return "fa-retweet text-blue-400";
       case "gift": return "fa-gift text-purple-500";
+      case "mention": return "fa-at text-purple-500";
       default: return "fa-bell text-gray-400";
     }
   };

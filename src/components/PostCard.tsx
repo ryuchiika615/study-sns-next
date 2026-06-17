@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
+
+function highlightMentions(text: string) {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    part.startsWith("@")
+      ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
+      : part
+  );
+}
 
 export default function PostCard({
   post,
@@ -36,10 +45,17 @@ export default function PostCard({
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const swipeStartY = useRef(0);
   const swipeDist = useRef(0);
   const [swipeTranslate, setSwipeTranslate] = useState(0);
   const router = useRouter();
+
+  const handleReply = useCallback((username: string) => {
+    setCommentText(`@${username} `);
+    setShowComments(true);
+    setTimeout(() => commentInputRef.current?.focus(), 100);
+  }, []);
 
   const handleReaction = async (emoji: string) => {
     const prev = { myReaction, reactions };
@@ -85,9 +101,10 @@ export default function PostCard({
 
   const addComment = async () => {
     if (!commentText.trim()) return;
+    const text = commentText.trim();
     const { data, error } = await supabase
       .from("comments")
-      .insert({ post_id: post.id, user_id: currentUserId, text: commentText.trim() })
+      .insert({ post_id: post.id, user_id: currentUserId, text })
       .select("*, user:user_id(*)")
       .single();
     if (!error && data) {
@@ -99,6 +116,28 @@ export default function PostCard({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: "reply", recipient_id: post.user_id, post_id: post.id }),
         }).catch(() => {});
+      }
+      const mentionMatches = text.match(/@(\w+)/g);
+      if (mentionMatches) {
+        const mentionedUsernames = [...new Set(mentionMatches.map(m => m.slice(1)))];
+        supabase.from("profiles").select("id, username").in("username", mentionedUsernames).then(({ data: mentionedUsers }) => {
+          if (!mentionedUsers) return;
+          mentionedUsers.forEach((mentioned: any) => {
+            if (mentioned.id === currentUserId) return;
+            supabase.from("notifications").insert({
+              recipient_id: mentioned.id,
+              sender_id: currentUserId,
+              post_id: post.id,
+              notification_type: "mention",
+            }).then(() => {
+              fetch("/api/push/notify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "mention", recipient_id: mentioned.id, post_id: post.id }),
+              }).catch(() => {});
+            });
+          });
+        });
       }
     }
   };
@@ -333,25 +372,33 @@ export default function PostCard({
                     </button>
                   </div>
                 ) : (
-                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{c.text}</p>
+                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{highlightMentions(c.text)}</p>
                 )}
               </div>
-              {c.user_id === currentUserId && (
-                <div className="flex gap-1">
-                  <button onClick={() => startEditComment(c)}
-                    className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1">
-                    <i className="fas fa-pen" />
-                  </button>
-                  <button onClick={() => deleteComment(c.id)}
-                    className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
-                    <i className="fas fa-times" />
-                  </button>
-                </div>
-              )}
+              <div className="flex gap-1 items-center">
+                <button onClick={() => handleReply(c.user?.username || c.user_id?.slice(0, 8))}
+                  className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1"
+                  title="返信">
+                  <i className="fas fa-reply" />
+                </button>
+                {c.user_id === currentUserId && (
+                  <>
+                    <button onClick={() => startEditComment(c)}
+                      className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1">
+                      <i className="fas fa-pen" />
+                    </button>
+                    <button onClick={() => deleteComment(c.id)}
+                      className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
+                      <i className="fas fa-times" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
           <div className="flex gap-2 mt-2">
             <input
+              ref={commentInputRef}
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}

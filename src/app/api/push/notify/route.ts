@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     reply: `${senderName}からコメントが来ました`,
     follow: `${senderName}がフォローしました`,
     gift: `${senderName}からプレゼントが届きました。`,
+    mention: `${senderName}からメンションが来ました`,
   };
 
   const bodyText = messages[type] || "新しい通知があります";

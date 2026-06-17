@@ -77,7 +77,7 @@ export interface NotificationWithSender {
   recipient_id: string;
   sender_id: string;
   post_id: string | null;
-  notification_type: "like" | "reply" | "follow" | "follow_post";
+  notification_type: "like" | "reply" | "follow" | "follow_post" | "gift" | "mention";
   is_read: boolean;
   created_at: string;
   sender: Profile;

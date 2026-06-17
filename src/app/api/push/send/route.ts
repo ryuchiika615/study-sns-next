@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     follow: `${senderName}がフォローしました`,
     follow_post: `${senderName}がリュイートしました`,
     gift: `${senderName}からプレゼントが届きました。`,
+    mention: `${senderName}からメンションが来ました`,
   };
 
   const bodyText = messages[record.notification_type] || "新しい通知があります";
