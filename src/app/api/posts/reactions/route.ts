@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest) {
     const admin = createAdminClient();
     const [followCount, existingNotif] = await Promise.all([
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", post.user_id).eq("following_id", user.id),
-      admin.from("notifications").select("id").eq("recipient_id", post.user_id).eq("sender_id", user.id).eq("post_id", post_id).eq("notification_type", "like").maybeSingle(),
+      admin.from("notifications").select("id").eq("recipient_id", post.user_id).eq("sender_id", user.id).eq("post_id", post_id).eq("notification_type", "like").limit(1).maybeSingle(),
     ]);
     if ((followCount.count || 0) > 0 && !existingNotif.data) {
       // 1. Insert notification (triggers DB-level push via pg_net)
