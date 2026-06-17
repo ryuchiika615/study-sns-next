@@ -319,15 +319,6 @@ export default function PostCard({
           <i className="far fa-comment" /> <span>{post.comments_count}</span>
         </button>
         <div className="flex items-center gap-1 flex-wrap">
-          {reactions.map((r) => (
-            <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
-              className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
-                myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-              }`}>
-              <span>{r.reaction}</span>
-              <span className="text-xs font-medium">{r.count}</span>
-            </button>
-          ))}
           <div className="relative">
             <button onClick={() => setShowReactionPicker(!showReactionPicker)}
               className="text-sm px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100 cursor-pointer transition">
@@ -346,6 +337,15 @@ export default function PostCard({
               </div>
             )}
           </div>
+          {reactions.map((r) => (
+            <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
+              className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
+                myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+              }`}>
+              <span>{r.reaction}</span>
+              <span className="text-xs font-medium">{r.count}</span>
+            </button>
+          ))}
         </div>
       </div>
 
