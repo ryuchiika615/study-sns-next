@@ -240,17 +240,22 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   };
 
   const pollNotifications = async () => {
-    const { data: notifications, count } = await supabase
-      .from("notifications")
-      .select("id, notification_type, sender_id, post_id, created_at, sender:sender_id(id, display_name, username)", { count: "estimated", head: false })
-      .eq("recipient_id", user.id)
-      .eq("is_read", false)
-      .neq("notification_type", "follow_post")
-      .order("created_at", { ascending: false })
-      .limit(1);
+    const [notifResult, countResult] = await Promise.all([
+      supabase.from("notifications")
+        .select("id, notification_type, sender_id, post_id, created_at, sender:sender_id(id, display_name, username)")
+        .eq("recipient_id", user.id)
+        .eq("is_read", false)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase.from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .eq("is_read", false)
+        .neq("notification_type", "follow_post"),
+    ]);
 
-    const unread = count || 0;
-    const lastNotif = notifications?.[0];
+    const unread = countResult.count || 0;
+    const lastNotif = notifResult.data?.[0];
     if (lastNotif && !seenNotifs.current.has(lastNotif.id)) {
       seenNotifs.current.add(lastNotif.id);
       localStorage.setItem("seen_notifs", JSON.stringify([...seenNotifs.current]));
@@ -266,6 +271,11 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `${sender}がフォローしました`, type: "follow", href });
       } else if (lastNotif.notification_type === "follow_post") {
         addToast({ message: `${sender}が投稿しました`, type: "follow_post", href });
+        fetch("/api/push/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "follow_post", recipient_id: user.id, sender_id: (lastNotif as any).sender?.id || (lastNotif as any).sender_id, post_id: (lastNotif as any).post_id }),
+        }).catch(() => {});
       } else if (lastNotif.notification_type === "gift") {
         addToast({ message: `🎁 ${sender}からプレゼントが届きました。`, type: "gift", href: "/gacha" });
       } else if (lastNotif.notification_type === "mention") {

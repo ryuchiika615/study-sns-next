@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { type, recipient_id, post_id } = await request.json();
+  const { type, recipient_id, post_id, sender_id } = await request.json();
   if (!type || !recipient_id) {
     return NextResponse.json({ error: "Missing type or recipient_id" }, { status: 400 });
   }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   const { data: sender } = await admin
     .from("profiles")
     .select("display_name, username")
-    .eq("id", user.id)
+    .eq("id", sender_id || user.id)
     .single();
 
   const senderName = sender?.display_name || sender?.username || "誰か";
