@@ -341,7 +341,7 @@ export default function ProfileClient({
                     もっと見る
                   </button>
                 )}
-            )}
+            </div>
           </div>
         </div>
 
