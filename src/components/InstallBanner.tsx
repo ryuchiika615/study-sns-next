@@ -1,20 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [show, setShow] = useState(false);
+  const timerDone = useRef(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches) return;
+    if (localStorage.getItem("install_banner_dismissed")) return;
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShow(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    const timer = setTimeout(() => {
+      timerDone.current = true;
+      setShow(true);
+    }, 3000);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      clearTimeout(timer);
+    };
   }, []);
+
+  const dismiss = () => {
+    setShow(false);
+    localStorage.setItem("install_banner_dismissed", "1");
+  };
 
   if (!show) return null;
 
@@ -29,14 +48,19 @@ export default function InstallBanner() {
           <p className="text-xs text-gray-500">ホーム画面に追加してすぐ使える</p>
         </div>
         <button onClick={async () => {
-          deferredPrompt?.prompt();
-          const result = await deferredPrompt?.userChoice;
-          if (result?.outcome === "accepted") setShow(false);
-          setDeferredPrompt(null);
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const result = await deferredPrompt.userChoice;
+            if (result?.outcome === "accepted") setShow(false);
+            setDeferredPrompt(null);
+          } else {
+            alert("Safariの場合:「共有」→「ホーム画面に追加」");
+          }
+          dismiss();
         }} className="bg-primary text-white text-sm font-bold px-4 py-2 rounded-lg cursor-pointer active:scale-95 transition shrink-0">
           追加
         </button>
-        <button onClick={() => setShow(false)} className="text-gray-400 text-lg cursor-pointer shrink-0">
+        <button onClick={dismiss} className="text-gray-400 text-lg cursor-pointer shrink-0">
           <i className="fas fa-times" />
         </button>
       </div>
