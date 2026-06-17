@@ -7,7 +7,7 @@ import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
-import { formatStudyTime } from "@/lib/utils";
+import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 
 const PER_PAGE = 10;
 
@@ -161,7 +161,7 @@ export default function ProfileClient({
             <div className="flex items-end -mt-10 mb-3">
               <div className="avatar-frame w-20 h-20 border-4 border-white rounded-full shadow-md bg-white">
                 {profile?.icon_url ? (
-                  <img src={profile.icon_url} className="w-full h-full rounded-full object-cover" />
+                  <img src={getOptimizedIconUrl(profile.icon_url, 128)} className="w-full h-full rounded-full object-cover" />
                 ) : (
                   <i className="fas fa-user-circle text-5xl text-gray-300" />
                 )}

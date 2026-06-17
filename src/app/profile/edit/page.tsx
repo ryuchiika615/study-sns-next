@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
 import Link from "next/link";
-import { formatStudyTime } from "@/lib/utils";
+import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isIconItem, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 
 const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
@@ -295,7 +295,7 @@ export default function EditProfilePage() {
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
               {profile.icon_url ? (
-                <img src={profile.icon_url} alt="" className="w-full h-full object-cover" />
+                <img src={getOptimizedIconUrl(profile.icon_url, 64)} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">
                   {(profile.display_name || "?")[0]}

@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass } from "@/lib/utils";
+import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
 
 function highlightMentions(text: string) {
@@ -207,7 +207,7 @@ export default function PostCard({
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
             {post.user?.icon_url ? (
-              <img src={post.user.icon_url} loading="lazy" className="w-12 h-12 rounded-full object-cover border-2 border-white" />
+              <img src={getOptimizedIconUrl(post.user.icon_url, 48)} loading="lazy" className="w-12 h-12 rounded-full object-cover border-2 border-white" />
             ) : (
               <i className="fas fa-user-circle text-4xl text-gray-300" />
             )}

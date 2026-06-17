@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { formatStudyTime } from "@/lib/utils";
+import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 
 export default function RankingsClient({ initialRanking, initialDays, unreadCount }: {
   initialRanking: any[];
@@ -109,7 +109,7 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
                     </div>
                     <div className="avatar-frame">
                       {entry.user?.icon_url ? (
-                        <img src={entry.user.icon_url} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
+                        <img src={getOptimizedIconUrl(entry.user.icon_url, 40)} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
                         <i className="fas fa-user-circle text-3xl text-gray-300" />
                       )}

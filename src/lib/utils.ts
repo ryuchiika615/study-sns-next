@@ -76,3 +76,14 @@ export function isIconItem(itemName: string): boolean {
 export function itemDisplayName(name: string): string {
   return name.replace("精錬:", "").replace("邊ｾ骭ｬ:", "");
 }
+
+const SUPABASE_STORAGE_RE = /^https:\/\/([^.]+)\.supabase\.co\/storage\/v1\/object\/public\/(.+)$/;
+
+export function getOptimizedIconUrl(url: string | null | undefined, size = 96): string {
+  if (!url) return "";
+  const m = url.match(SUPABASE_STORAGE_RE);
+  if (m) {
+    return `https://${m[1]}.supabase.co/storage/v1/render/image/public/${m[2]}?width=${size}&height=${size}&resize=cover`;
+  }
+  return url;
+}
