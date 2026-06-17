@@ -67,7 +67,11 @@ export async function PUT(request: NextRequest) {
 
     case "change_username": {
       if (!value) return NextResponse.json({ error: "username required" }, { status: 400 });
-      await supabase.from("profiles").update({ username: value }).eq("id", userId);
+      if (!/^[a-zA-Z0-9_-]+$/.test(value)) return NextResponse.json({ error: "ユーザーIDは英数字と_-のみです" }, { status: 400 });
+      const { error: usernameErr } = await admin.from("profiles").update({ username: value }).eq("id", userId);
+      if (usernameErr?.message?.includes("unique") || usernameErr?.message?.includes("duplicate")) {
+        return NextResponse.json({ error: "このユーザーIDは既に使われています" }, { status: 400 });
+      }
       return NextResponse.json({ success: true, message: "ユーザーIDを変更しました" });
     }
 

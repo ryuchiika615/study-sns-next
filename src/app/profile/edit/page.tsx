@@ -16,6 +16,7 @@ export default function EditProfilePage() {
   const [items, setItems] = useState<any[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
   const [icons, setIcons] = useState<any[]>([]);
+  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [targetDate, setTargetDate] = useState("");
@@ -60,6 +61,7 @@ export default function EditProfilePage() {
 
     if (profileResult.data) {
       setProfile(profileResult.data);
+      setUsername(profileResult.data.username || "");
       setDisplayName(profileResult.data.display_name || "");
       setBio(profileResult.data.bio || "");
       setTargetDate(profileResult.data.target_date || "");
@@ -125,7 +127,12 @@ export default function EditProfilePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    if (username && !/^[a-zA-Z0-9_-]+$/.test(username)) {
+      setMessage("ユーザーIDは英数字と_-のみ使用できます");
+      return;
+    }
     const updateData: Record<string, any> = {
+      username: username || undefined,
       display_name: displayName,
       bio,
       target_date: targetDate || null,
@@ -157,6 +164,10 @@ export default function EditProfilePage() {
     if (!error) {
       setMessage("保存しました！");
       loadData(user.id);
+    } else if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
+      setMessage("このユーザーIDは既に使われています");
+    } else {
+      setMessage(error.message || "保存に失敗しました");
     }
 
     await fetch("/api/notification-settings", {
@@ -378,6 +389,13 @@ export default function EditProfilePage() {
         {/* プロフィール設定 */}
         <form onSubmit={handleUpdateProfile} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2.5">
           <h2 className="text-sm font-bold">プロフィール設定</h2>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700">ユーザーID (@...)</label>
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
+            <p className="text-[10px] text-gray-400 mt-0.5">英数字と_-のみ使用可能。変更するとURLも変わります。</p>
+          </div>
 
           <div>
             <label className="block text-xs font-medium text-gray-700">表示名</label>
