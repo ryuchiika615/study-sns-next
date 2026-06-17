@@ -121,24 +121,11 @@ export default function PostCard({
       const mentionMatches = text.match(/@([\w-]+)/g);
       if (mentionMatches) {
         const mentionedUsernames = [...new Set(mentionMatches.map(m => m.slice(1)))];
-        supabase.from("profiles").select("id, username").in("username", mentionedUsernames).then(({ data: mentionedUsers }) => {
-          if (!mentionedUsers) return;
-          mentionedUsers.forEach((mentioned: any) => {
-            if (mentioned.id === currentUserId) return;
-            supabase.from("notifications").insert({
-              recipient_id: mentioned.id,
-              sender_id: currentUserId,
-              post_id: post.id,
-              notification_type: "mention",
-            }).then(() => {
-              fetch("/api/push/notify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "mention", recipient_id: mentioned.id, post_id: post.id }),
-              }).catch(() => {});
-            });
-          });
-        });
+        fetch("/api/mentions/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: post.id, mentioned_usernames: mentionedUsernames }),
+        }).catch(() => {});
       }
     }
   };
