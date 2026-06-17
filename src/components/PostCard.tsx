@@ -40,6 +40,7 @@ export default function PostCard({
   const [comments, setComments] = useState<any[]>(initialComments ?? []);
   const [commentsLoaded, setCommentsLoaded] = useState(!!initialComments);
   const [editing, setEditing] = useState(false);
+  const [editedLocally, setEditedLocally] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [editMinutes, setEditMinutes] = useState(String(post.study_minutes));
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
@@ -198,6 +199,7 @@ export default function PostCard({
       alert("保存に失敗しました。もう一度お試しください。");
       return;
     }
+    setEditedLocally(true);
     onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes });
     setEditing(false);
   };
@@ -241,7 +243,7 @@ export default function PostCard({
             <span className="text-gray-500 text-sm">@{post.user?.username || post.user?.display_name || post.user_id?.slice(0, 8)}</span>
             <span className="text-gray-500 text-sm">·</span>
             <span className="text-gray-500 text-sm">{post.formatted_time}</span>
-            {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
+            {(editedLocally || (post.updated_at && new Date(post.updated_at) > new Date(post.created_at))) && (
               <span className="text-[10px] text-gray-400 ml-0.5">編集済み</span>
             )}
           </div>
