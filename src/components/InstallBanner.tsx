@@ -9,7 +9,7 @@ export default function InstallBanner() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches) return;
+    if ((window.navigator as any).standalone || window.matchMedia("(display-mode: standalone)").matches) return;
     if (localStorage.getItem("install_banner_dismissed")) return;
 
     const handler = (e: Event) => {
