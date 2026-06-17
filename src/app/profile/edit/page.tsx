@@ -241,9 +241,10 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleRefineParts = async (word: string, noun: string, namePart: string, order: string) => {
+  const handleRefineParts = async (word: string, noun: string, namePart: string, order: string, connA?: string, connB?: string) => {
     const { data, error } = await supabase.rpc("refine_parts", {
       p_word: word, p_noun: noun, p_name_part: namePart, p_order: order,
+      p_conn_a: connA || '', p_conn_b: connB || '',
     });
     if (!error && data) {
       setMessage("精錬しました！");
@@ -620,15 +621,41 @@ export default function EditProfilePage() {
   );
 }
 
-function RefineParts({ parts, onRefine }: { parts: string[]; onRefine: (w: string, n: string, name: string, order: string) => void }) {
+const CONNECTORS = ["", "の", "と", "や", "とか", "を", "が", "で", "に", "な", "も", "へ", "から", "より"];
+
+function ConnectorSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)}
+      className="rounded-lg border-gray-300 text-xs p-1.5 w-full text-center">
+      {CONNECTORS.map((c) => (
+        <option key={c} value={c}>{c || "−"}</option>
+      ))}
+    </select>
+  );
+}
+
+function RefineParts({ parts, onRefine }: { parts: string[]; onRefine: (w: string, n: string, name: string, order: string, connA?: string, connB?: string) => void }) {
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [c, setC] = useState("");
+  const [connA, setConnA] = useState("");
+  const [connB, setConnB] = useState("");
   const [order, setOrder] = useState("word_first");
+
+  const label = (o: string) => {
+    switch (o) {
+      case "word_first": return `(1) ${connA || "−"} (2) ${connB || "−"} (3)`;
+      case "word_name_first": return `(1) ${connA || "−"} (3) ${connB || "−"} (2)`;
+      case "noun_first": return `(2) ${connA || "−"} (1) ${connB || "−"} (3)`;
+      case "noun_name_first": return `(2) ${connA || "−"} (3) ${connB || "−"} (1)`;
+      case "name_first": return `(3) ${connA || "−"} (1) ${connB || "−"} (2)`;
+      default: return `(3) ${connA || "−"} (2) ${connB || "−"} (1)`;
+    }
+  };
 
   return (
     <div className="space-y-2">
-      <p className="text-[10px] text-gray-500">所持称号の文字を自由に選んで組み合わせられます。同じパートを複数選んでもOK</p>
+      <p className="text-[10px] text-gray-500">所持称号の文字を自由に選んで組み合わせられます。接続語でつなげることも可能</p>
       <div className="grid grid-cols-3 gap-2">
         <select value={a} onChange={(e) => setA(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
           <option value="">パート1</option>
@@ -643,15 +670,25 @@ function RefineParts({ parts, onRefine }: { parts: string[]; onRefine: (w: strin
           {parts.map((p: string) => <option key={p} value={p}>{p}</option>)}
         </select>
       </div>
+      <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-1 items-center">
+        <span className="text-xs text-center text-gray-500">{a || "(1)"}</span>
+        <ConnectorSelect value={connA} onChange={setConnA} />
+        <span className="text-xs text-center text-gray-500">{b || "(2)"}</span>
+        <ConnectorSelect value={connB} onChange={setConnB} />
+        <span className="text-xs text-center text-gray-500">{c || "(3)"}</span>
+      </div>
       <select value={order} onChange={(e) => setOrder(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5 w-full">
-        <option value="word_first">パート1 + パート2 + パート3</option>
-        <option value="word_name_first">パート1 + パート3 + パート2</option>
-        <option value="noun_first">パート2 + パート1 + パート3</option>
-        <option value="noun_name_first">パート2 + パート3 + パート1</option>
-        <option value="name_first">パート3 + パート1 + パート2</option>
-        <option value="name_noun_first">パート3 + パート2 + パート1</option>
+        <option value="word_first">{label("word_first")}</option>
+        <option value="word_name_first">{label("word_name_first")}</option>
+        <option value="noun_first">{label("noun_first")}</option>
+        <option value="noun_name_first">{label("noun_name_first")}</option>
+        <option value="name_first">{label("name_first")}</option>
+        <option value="name_noun_first">{label("name_noun_first")}</option>
       </select>
-      <button onClick={() => onRefine(a, b, c, order)}
+      <div className="text-[10px] text-gray-400 text-center">
+        並び順: {label(order)}
+      </div>
+      <button onClick={() => onRefine(a, b, c, order, connA, connB)}
         disabled={!a && !b && !c}
         className="w-full bg-gray-800 text-white rounded-full py-2 text-xs disabled:opacity-40">
         精錬する
