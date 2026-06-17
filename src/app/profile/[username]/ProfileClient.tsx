@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
-import FollowList from "@/components/FollowList";
+import Link from "next/link";
 import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
 import { formatStudyTime } from "@/lib/utils";
@@ -48,7 +48,6 @@ export default function ProfileClient({
   const [likedPage, setLikedPage] = useState(1);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState("");
-  const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
     if (isFollowing && user.id !== profile.id) {
@@ -176,14 +175,14 @@ export default function ProfileClient({
 
                 <div className="flex items-center gap-4 mt-3 text-sm">
                   <span><strong className="text-gray-900">{postCount}</strong><span className="text-gray-500 ml-1">リュイート</span></span>
-                  <button onClick={() => setFollowListType("followers")}
+                  <Link href={`/profile/${encodeURIComponent(profile.username || profile.id)}/follow?tab=followers`}
                     className="hover:underline cursor-pointer text-gray-500">
                     <strong className="text-gray-900">{followersCount}</strong><span className="ml-1">フォロワー</span>
-                  </button>
-                  <button onClick={() => setFollowListType("following")}
+                  </Link>
+                  <Link href={`/profile/${encodeURIComponent(profile.username || profile.id)}/follow?tab=following`}
                     className="hover:underline cursor-pointer text-gray-500">
                     <strong className="text-gray-900">{followingCount}</strong><span className="ml-1">フォロー中</span>
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -344,10 +343,6 @@ export default function ProfileClient({
             </div>
           </div>
         </div>
-
-        {followListType && (
-          <FollowList userId={profile.id} type={followListType} onClose={() => setFollowListType(null)} currentUserId={user.id} />
-        )}
       </div>
     </AppShell>
   );

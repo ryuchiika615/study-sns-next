@@ -86,7 +86,7 @@ export default function FollowList({
           )}
           {users.map((u: any) => (
             <div key={u.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
-              <Link href={`/profile/${u.username || u.id}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
+              <Link href={`/profile/${encodeURIComponent(u.username || u.id)}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   {u.icon_url ? (
                     <img src={u.icon_url} loading="lazy" className="w-full h-full object-cover" />

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
-import FollowList from "@/components/FollowList";
+import Link from "next/link";
 import { formatStudyTime } from "@/lib/utils";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isIconItem, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 
@@ -33,7 +33,7 @@ export default function EditProfilePage() {
   const [profileTab, setProfileTab] = useState<"posts" | "likes">("posts");
   const [postPage, setPostPage] = useState(1);
   const [likedPage, setLikedPage] = useState(1);
-  const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
+
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
@@ -308,14 +308,14 @@ export default function EditProfilePage() {
                 <span className="text-xs text-gray-400 truncate">@{profile.username || "unknown"}</span>
               </div>
               <div className="flex gap-3 mt-0.5">
-                <button onClick={() => setFollowListType("following")}
-                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer bg-none border-none">
+                <Link href={`/profile/${encodeURIComponent(profile?.username || userIdRef.current)}/follow?tab=following`}
+                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
                   <strong className="text-gray-800">{followingCount}</strong> フォロー
-                </button>
-                <button onClick={() => setFollowListType("followers")}
-                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer bg-none border-none">
+                </Link>
+                <Link href={`/profile/${encodeURIComponent(profile?.username || userIdRef.current)}/follow?tab=followers`}
+                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
                   <strong className="text-gray-800">{followersCount}</strong> フォロワー
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -613,9 +613,6 @@ export default function EditProfilePage() {
            </div>
          </div>
 
-        {followListType && (
-          <FollowList userId={userIdRef.current || ""} type={followListType} onClose={() => setFollowListType(null)} currentUserId={userIdRef.current || ""} />
-        )}
       </div>
     </AppShell>
   );
