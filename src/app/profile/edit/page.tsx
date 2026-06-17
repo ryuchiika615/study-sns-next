@@ -640,18 +640,6 @@ function RefineParts({ parts, onRefine }: { parts: string[]; onRefine: (w: strin
   const [c, setC] = useState("");
   const [connA, setConnA] = useState("");
   const [connB, setConnB] = useState("");
-  const [order, setOrder] = useState("word_first");
-
-  const label = (o: string) => {
-    switch (o) {
-      case "word_first": return `(1) ${connA || "−"} (2) ${connB || "−"} (3)`;
-      case "word_name_first": return `(1) ${connA || "−"} (3) ${connB || "−"} (2)`;
-      case "noun_first": return `(2) ${connA || "−"} (1) ${connB || "−"} (3)`;
-      case "noun_name_first": return `(2) ${connA || "−"} (3) ${connB || "−"} (1)`;
-      case "name_first": return `(3) ${connA || "−"} (1) ${connB || "−"} (2)`;
-      default: return `(3) ${connA || "−"} (2) ${connB || "−"} (1)`;
-    }
-  };
 
   return (
     <div className="space-y-2">
@@ -670,25 +658,14 @@ function RefineParts({ parts, onRefine }: { parts: string[]; onRefine: (w: strin
           {parts.map((p: string) => <option key={p} value={p}>{p}</option>)}
         </select>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-1 items-center">
-        <span className="text-xs text-center text-gray-500">{a || "(1)"}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-gray-500 min-w-[3rem] text-center truncate">{a || "(1)"}</span>
         <ConnectorSelect value={connA} onChange={setConnA} />
-        <span className="text-xs text-center text-gray-500">{b || "(2)"}</span>
+        <span className="text-xs text-gray-500 min-w-[3rem] text-center truncate">{b || "(2)"}</span>
         <ConnectorSelect value={connB} onChange={setConnB} />
-        <span className="text-xs text-center text-gray-500">{c || "(3)"}</span>
+        <span className="text-xs text-gray-500 min-w-[3rem] text-center truncate">{c || "(3)"}</span>
       </div>
-      <select value={order} onChange={(e) => setOrder(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5 w-full">
-        <option value="word_first">{label("word_first")}</option>
-        <option value="word_name_first">{label("word_name_first")}</option>
-        <option value="noun_first">{label("noun_first")}</option>
-        <option value="noun_name_first">{label("noun_name_first")}</option>
-        <option value="name_first">{label("name_first")}</option>
-        <option value="name_noun_first">{label("name_noun_first")}</option>
-      </select>
-      <div className="text-[10px] text-gray-400 text-center">
-        並び順: {label(order)}
-      </div>
-      <button onClick={() => onRefine(a, b, c, order, connA, connB)}
+      <button onClick={() => onRefine(a, b, c, "word_first", connA, connB)}
         disabled={!a && !b && !c}
         className="w-full bg-gray-800 text-white rounded-full py-2 text-xs disabled:opacity-40">
         精錬する
