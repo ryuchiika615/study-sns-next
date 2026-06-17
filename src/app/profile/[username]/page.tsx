@@ -11,7 +11,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
 
   const { username } = params;
 
-  const fields = "id, username, display_name, bio, department, icon_url, target_date, target_minutes";
+  const fields = "id, username, display_name, bio, icon_url, target_date, target_minutes";
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
 
   let { data: profile, error } = await supabase
