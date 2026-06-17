@@ -15,12 +15,13 @@ async function sendSummaryForUser(supabase: any, admin: any, userId: string, dat
   const postIds = (userPosts || []).map((p: any) => p.id);
   let reactionsCount = 0;
   if (postIds.length > 0) {
-    const { count } = await supabase
+    const { data: reactions } = await supabase
       .from("post_reactions")
-      .select("*", { count: "exact", head: true })
+      .select("post_id, user_id")
       .in("post_id", postIds)
       .gte("created_at", dayStart).lte("created_at", dayEnd);
-    reactionsCount = count || 0;
+    const unique = new Set((reactions || []).map((r: any) => `${r.post_id}-${r.user_id}`));
+    reactionsCount = unique.size;
   }
 
   const { count: followersCount } = await supabase

@@ -37,13 +37,12 @@ export async function PUT(request: NextRequest) {
   // Notify post author only on FIRST reaction (deduplicate)
   const { data: post } = await supabase.from("posts").select("user_id").eq("id", post_id).single();
   if (post && post.user_id !== user.id) {
+    const admin = createAdminClient();
     const [followCount, existingNotif] = await Promise.all([
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", post.user_id).eq("following_id", user.id),
-      supabase.from("notifications").select("id").eq("recipient_id", post.user_id).eq("sender_id", user.id).eq("post_id", post_id).eq("notification_type", "like").maybeSingle(),
+      admin.from("notifications").select("id").eq("recipient_id", post.user_id).eq("sender_id", user.id).eq("post_id", post_id).eq("notification_type", "like").maybeSingle(),
     ]);
     if ((followCount.count || 0) > 0 && !existingNotif.data) {
-      const admin = createAdminClient();
-
       // 1. Insert notification (triggers DB-level push via pg_net)
       try {
         await admin.from("notifications").insert({
