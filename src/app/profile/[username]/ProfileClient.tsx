@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
 import Link from "next/link";
+import Image from "next/image";
 import StudyCalendar from "@/components/StudyCalendar";
 import { PieChart } from "@/components/Charts";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
@@ -48,6 +49,17 @@ export default function ProfileClient({
   const [likedPage, setLikedPage] = useState(1);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState("");
+
+  useEffect(() => {
+    if (profile?.icon_url) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = getOptimizedIconUrl(profile.icon_url, 320);
+      document.head.appendChild(link);
+      return () => { document.head.removeChild(link); };
+    }
+  }, [profile?.icon_url]);
 
   useEffect(() => {
     if (isFollowing && user.id !== profile.id) {
@@ -161,7 +173,7 @@ export default function ProfileClient({
             <div className="flex items-end -mt-10 mb-3">
               <div className="avatar-frame w-20 h-20 border-4 border-white rounded-full shadow-md bg-white">
                 {profile?.icon_url ? (
-                  <img src={getOptimizedIconUrl(profile.icon_url, 320)} className="w-full h-full rounded-full object-cover" />
+                  <Image src={getOptimizedIconUrl(profile.icon_url, 320)} width={80} height={80} className="rounded-full object-cover" alt="" />
                 ) : (
                   <i className="fas fa-user-circle text-5xl text-gray-300" />
                 )}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
+import NextImage from "next/image";
 import PostCard from "@/components/PostCard";
 import StudyTimer from "@/components/StudyTimer";
 import { WeeklyChart } from "@/components/WeeklyChart";
@@ -9,7 +10,7 @@ import { useToast } from "@/components/ToastProvider";
 import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
-import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
+import { formatStudyTime, getOptimizedIconUrl, compressImage } from "@/lib/utils";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
@@ -216,7 +217,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
             setBeeryualPhotos({ back: null, front: null });
           }
         }
-      }, "image/jpeg", 0.9);
+      }, "image/jpeg", 0.8);
     };
     largeImg.src = largeKey === 'back' ? back! : front!;
     smallImg.src = smallKey === 'front' ? front! : back!;
@@ -341,11 +342,12 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     if (beeryualResult) imageUrls.push(beeryualResult);
 
     for (const file of files) {
+      const compressed = file.type.startsWith("image/") ? await compressImage(file).catch(() => file) : file;
       const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("post-images")
-        .upload(fileName, file);
+        .upload(fileName, compressed);
       if (!uploadError) {
         const { data: urlData } = supabase.storage
           .from("post-images")
@@ -680,7 +682,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                     {i === 0 ? "👑" : `#${i + 1}`}
                   </span>
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                    {entry.user?.icon_url ? <img src={getOptimizedIconUrl(entry.user.icon_url, 120)} loading="lazy" className="w-full h-full object-cover" />
+                    {entry.user?.icon_url ? <NextImage src={getOptimizedIconUrl(entry.user.icon_url, 120)} width={32} height={32} className="rounded-full object-cover" alt="" />
                       : <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-xs" /></div>}
                   </div>
                   <div className="flex-1 min-w-0">

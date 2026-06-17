@@ -79,6 +79,27 @@ export function itemDisplayName(name: string): string {
 
 const SUPABASE_STORAGE_RE = /^https:\/\/([^.]+)\.supabase\.co\/storage\/v1\/object\/public\/(.+)$/;
 
+export function compressImage(file: File, quality = 0.8, maxWidth = 1920): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(img.width, maxWidth);
+      const h = (img.height / img.width) * w;
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("compression failed"));
+      }, "image/jpeg", quality);
+    };
+    img.onerror = () => reject(new Error("failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export function getOptimizedIconUrl(url: string | null | undefined, size = 96): string {
   if (!url) return "";
   const m = url.match(SUPABASE_STORAGE_RE);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase";
 import { getOptimizedIconUrl } from "@/lib/utils";
@@ -94,7 +95,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
           >
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
               {notif.sender?.icon_url ? (
-                <img src={getOptimizedIconUrl(notif.sender.icon_url, 120)} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
+                <Image src={getOptimizedIconUrl(notif.sender.icon_url, 120)} width={40} height={40} className="rounded-full object-cover" alt="" />
               ) : (
                 <i className={`fas ${getIcon(notif.notification_type)} text-lg`} />
               )}

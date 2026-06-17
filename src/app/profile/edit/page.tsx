@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
@@ -306,7 +307,7 @@ export default function EditProfilePage() {
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
               {profile.icon_url ? (
-                <img src={getOptimizedIconUrl(profile.icon_url, 168)} alt="" className="w-full h-full object-cover" />
+                <Image src={getOptimizedIconUrl(profile.icon_url, 168)} width={56} height={56} className="rounded-full object-cover" alt="" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">
                   {(profile.display_name || "?")[0]}

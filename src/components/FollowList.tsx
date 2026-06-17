@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import BottomSheet from "./BottomSheet";
 import { getOptimizedIconUrl } from "@/lib/utils";
@@ -90,7 +91,7 @@ export default function FollowList({
               <Link href={`/profile/${u.id}`} className="flex items-center gap-3 flex-1 min-w-0 no-underline text-inherit">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   {u.icon_url ? (
-                    <img src={getOptimizedIconUrl(u.icon_url, 120)} loading="lazy" className="w-full h-full object-cover" />
+                    <Image src={getOptimizedIconUrl(u.icon_url, 120)} width={40} height={40} className="rounded-full object-cover" alt="" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
                       <i className="fas fa-user" />

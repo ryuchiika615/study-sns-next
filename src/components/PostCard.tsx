@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
@@ -207,7 +208,7 @@ export default function PostCard({
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
             {post.user?.icon_url ? (
-              <img src={getOptimizedIconUrl(post.user.icon_url, 144)} loading="lazy" className="w-12 h-12 rounded-full object-cover border-2 border-white" />
+              <Image src={getOptimizedIconUrl(post.user.icon_url, 144)} width={48} height={48} className="rounded-full object-cover border-2 border-white" alt="" />
             ) : (
               <i className="fas fa-user-circle text-4xl text-gray-300" />
             )}
@@ -293,7 +294,9 @@ export default function PostCard({
             {((post.image_urls?.length ?? 0) > 0 || post.image_url) && (
               <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min((post.image_urls || [post.image_url]).filter(Boolean).length, 2)}, 1fr)` }}>
                 {(post.image_urls?.length ? post.image_urls : [post.image_url]).filter((u): u is string => !!u).map((url, i) => (
-                  <img key={i} src={url} loading="lazy" className="rounded-2xl border border-gray-200 w-full h-48 object-cover cursor-pointer" onClick={() => setViewingImage(url)} />
+                  <div key={i} className="relative w-full h-48">
+                    <Image src={url} fill className="rounded-2xl border border-gray-200 object-cover cursor-pointer" onClick={() => setViewingImage(url)} sizes="(max-width: 768px) 100vw, 600px" alt="" />
+                  </div>
                 ))}
               </div>
             )}
@@ -413,8 +416,8 @@ export default function PostCard({
           onTouchEnd={() => { if (swipeDist.current > 80) setViewingImage(null); swipeDist.current = 0; setSwipeTranslate(0); }}
           style={{}}
         >
-          <div style={{ transform: swipeTranslate > 0 ? `translateY(${swipeTranslate}px)` : undefined, transition: swipeTranslate > 0 ? "none" : "transform 0.3s" }}>
-            <img src={viewingImage} className="max-w-full max-h-full object-contain p-4 select-none" draggable={false} />
+          <div className="relative w-full h-full" style={{ transform: swipeTranslate > 0 ? `translateY(${swipeTranslate}px)` : undefined, transition: swipeTranslate > 0 ? "none" : "transform 0.3s" }}>
+            <Image src={viewingImage} fill className="object-contain p-4 select-none" draggable={false} sizes="100vw" alt="" />
           </div>
         </div>
       )}
