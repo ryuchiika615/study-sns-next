@@ -32,7 +32,7 @@ export default function StudyCalendar({ data, year }: { data: DayData[]; year?: 
 
   return (
     <div>
-      <div className="flex gap-[2px]" style={{ minWidth: weeks.length * 14 }}>
+      <div className="flex gap-[2px] overflow-x-auto pb-2" style={{ minWidth: weeks.length * 14 }}>
         {weeks.map((week, wi) => (
           <div key={wi} className="flex flex-col gap-[2px]">
             {week.map((day, di) => (
