@@ -153,7 +153,7 @@ export default function ProfileClient({
 
   return (
     <AppShell unreadCount={unreadCount}>
-      <div className="mx-4 my-4 space-y-3">
+      <div className="mx-auto my-4 max-w-xl space-y-3 px-4">
 
         {/* ===== プロフィールカード ===== */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
