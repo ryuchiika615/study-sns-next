@@ -241,18 +241,6 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleCombine = async (itemIdA: string, itemIdB: string, order: string) => {
-    const { data, error } = await supabase.rpc("combine_items", {
-      p_item_id_a: itemIdA, p_item_id_b: itemIdB, p_order: order,
-    });
-    if (!error && data) {
-      setMessage("精錬しました！");
-      loadData();
-    } else {
-      setMessage(error?.message || "精錬に失敗しました");
-    }
-  };
-
   const handleRefineParts = async (word: string, noun: string, namePart: string, order: string) => {
     const { data, error } = await supabase.rpc("refine_parts", {
       p_word: word, p_noun: noun, p_name_part: namePart, p_order: order,
@@ -530,12 +518,6 @@ export default function EditProfilePage() {
           })()}
         </div>
 
-        {/* 称号を精錬（合成） */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-2">称号を精錬（合成）</h2>
-          <CombineTitles titles={titles} onCombine={handleCombine} />
-        </div>
-
         {/* 称号を精錬（部位組み合わせ） */}
         <div className="bg-white rounded-xl border border-gray-200 p-3">
           <h2 className="text-sm font-bold mb-2">称号を精錬（部位組み合わせ）</h2>
@@ -635,41 +617,6 @@ export default function EditProfilePage() {
         )}
       </div>
     </AppShell>
-  );
-}
-
-function CombineTitles({ titles, onCombine }: { titles: any[]; onCombine: (a: string, b: string, order: string) => void }) {
-  const [a, setA] = useState("");
-  const [b, setB] = useState("");
-  const [order, setOrder] = useState("normal");
-
-  return (
-    <div className="space-y-2">
-      <p className="text-[10px] text-gray-500">2つの称号を1つに合成します。精錬品同士の合成も可能</p>
-      <div className="grid grid-cols-2 gap-2">
-        <select value={a} onChange={(e) => setA(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
-          <option value="">称号1を選択</option>
-          {titles.map((t: any) => (
-            <option key={t.id} value={t.id}>{itemDisplayName(t)} ({t.rarity})</option>
-          ))}
-        </select>
-        <select value={b} onChange={(e) => setB(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
-          <option value="">称号2を選択</option>
-          {titles.map((t: any) => (
-            <option key={t.id} value={t.id}>{itemDisplayName(t)} ({t.rarity})</option>
-          ))}
-        </select>
-      </div>
-      <select value={order} onChange={(e) => setOrder(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5 w-full">
-        <option value="normal">称号1 + 称号2</option>
-        <option value="reverse">称号2 + 称号1</option>
-      </select>
-      <button onClick={() => a && b && onCombine(a, b, order)}
-        disabled={!a || !b}
-        className="w-full bg-gray-800 text-white rounded-full py-2 text-xs disabled:opacity-40">
-        精錬する
-      </button>
-    </div>
   );
 }
 
