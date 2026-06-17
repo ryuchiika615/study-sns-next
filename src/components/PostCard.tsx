@@ -352,39 +352,34 @@ export default function PostCard({
       {showComments && (
         <div className="px-4 pb-4 bg-white">
           {comments.map((c: any) => (
-            <div key={c.id} className="mb-2.5 pb-2.5 border-b border-gray-100 text-sm flex items-start gap-2">
-              <div className="flex-1 min-w-0">
-                <strong>{c.user?.display_name || "ユーザー"}</strong>
-                <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
-                <span className="text-gray-400 text-xs ml-1">· {formatRelativeTime(c.created_at)}</span>
-                {editCommentId === c.id ? (
-                  <div className="mt-1 flex gap-1">
-                    <input
-                      type="text"
-                      value={editCommentText}
-                      onChange={(e) => setEditCommentText(e.target.value)}
-                      className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
-                      autoFocus
-                    />
-                    <button onClick={saveEditComment} className="bg-primary text-white rounded-full px-3 py-1 text-xs font-bold border-none cursor-pointer">
-                      保存
-                    </button>
-                    <button onClick={cancelEditComment} className="text-gray-500 text-xs bg-none border-none cursor-pointer">
-                      取消
-                    </button>
-                  </div>
-                ) : (
-                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{highlightMentions(c.text)}</p>
-                )}
-              </div>
-              <div className="flex gap-1 items-center">
-                <button onClick={() => handleReply(c.user?.username || c.user_id?.slice(0, 8))}
-                  className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1"
-                  title="返信">
-                  <i className="fas fa-reply" />
-                </button>
+            <div key={c.id} className="mb-2.5 pb-2.5 border-b border-gray-100 text-sm">
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <strong>{c.user?.display_name || "ユーザー"}</strong>
+                  <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
+                  <span className="text-gray-400 text-xs ml-1">· {formatRelativeTime(c.created_at)}</span>
+                  {editCommentId === c.id ? (
+                    <div className="mt-1 flex gap-1">
+                      <input
+                        type="text"
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
+                        autoFocus
+                      />
+                      <button onClick={saveEditComment} className="bg-primary text-white rounded-full px-3 py-1 text-xs font-bold border-none cursor-pointer">
+                        保存
+                      </button>
+                      <button onClick={cancelEditComment} className="text-gray-500 text-xs bg-none border-none cursor-pointer">
+                        取消
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-gray-900 whitespace-pre-wrap">{highlightMentions(c.text)}</p>
+                  )}
+                </div>
                 {c.user_id === currentUserId && (
-                  <>
+                  <div className="flex gap-1 items-center shrink-0">
                     <button onClick={() => startEditComment(c)}
                       className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1">
                       <i className="fas fa-pen" />
@@ -393,9 +388,15 @@ export default function PostCard({
                       className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
                       <i className="fas fa-times" />
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
+              {editCommentId !== c.id && (
+                <button onClick={() => handleReply(c.user?.username || c.user_id?.slice(0, 8))}
+                  className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs mt-1 pl-0">
+                  <i className="fas fa-reply mr-1" />返信
+                </button>
+              )}
             </div>
           ))}
           <div className="flex gap-2 mt-2">
