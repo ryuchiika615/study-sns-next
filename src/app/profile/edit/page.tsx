@@ -284,10 +284,13 @@ export default function EditProfilePage() {
 
   const ownedParts = () => {
     const displayNames = titles.map((t: any) => itemDisplayName(t));
-    const words = [...new Set(displayNames.filter((n: string) => WORDS_LIST.includes(n)))];
-    const nouns = [...new Set(displayNames.filter((n: string) => NOUNS_LIST.includes(n)))];
-    const names = [...new Set(displayNames.filter((n: string) => NAMES_LIST.includes(n)))];
-    return { words, nouns, names };
+    const tokens = new Set<string>();
+    for (const name of displayNames) {
+      tokens.add(name);
+      const parts = name.split(/[\s,、。．.（）()「」【】]+/).filter(Boolean);
+      for (const p of parts) tokens.add(p);
+    }
+    return [...tokens].sort();
   };
   const parts = ownedParts();
 
@@ -530,14 +533,12 @@ export default function EditProfilePage() {
         {/* 称号を精錬（合成） */}
         <div className="bg-white rounded-xl border border-gray-200 p-3">
           <h2 className="text-sm font-bold mb-2">称号を精錬（合成）</h2>
-          <p className="text-[10px] text-gray-500 mb-2">所持している称号を組み合わせて新しい称号を作ります</p>
           <CombineTitles titles={titles} onCombine={handleCombine} />
         </div>
 
         {/* 称号を精錬（部位組み合わせ） */}
         <div className="bg-white rounded-xl border border-gray-200 p-3">
           <h2 className="text-sm font-bold mb-2">称号を精錬（部位組み合わせ）</h2>
-          <p className="text-[10px] text-gray-500 mb-2">フレーズ・名詞・人物名を組み合わせて精錬します</p>
           <RefineParts parts={parts} onRefine={handleRefineParts} />
         </div>
 
@@ -641,20 +642,20 @@ function CombineTitles({ titles, onCombine }: { titles: any[]; onCombine: (a: st
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [order, setOrder] = useState("normal");
-  const normalTitles = titles.filter((t: any) => !t.name.startsWith("精錬:") && !t.name.startsWith("邊ｾ骭ｬ:"));
 
   return (
     <div className="space-y-2">
+      <p className="text-[10px] text-gray-500">2つの称号を1つに合成します。精錬品同士の合成も可能</p>
       <div className="grid grid-cols-2 gap-2">
         <select value={a} onChange={(e) => setA(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
           <option value="">称号1を選択</option>
-          {normalTitles.map((t: any) => (
+          {titles.map((t: any) => (
             <option key={t.id} value={t.id}>{itemDisplayName(t)} ({t.rarity})</option>
           ))}
         </select>
         <select value={b} onChange={(e) => setB(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
           <option value="">称号2を選択</option>
-          {normalTitles.map((t: any) => (
+          {titles.map((t: any) => (
             <option key={t.id} value={t.id}>{itemDisplayName(t)} ({t.rarity})</option>
           ))}
         </select>
@@ -672,35 +673,39 @@ function CombineTitles({ titles, onCombine }: { titles: any[]; onCombine: (a: st
   );
 }
 
-function RefineParts({ parts, onRefine }: { parts: { words: string[]; nouns: string[]; names: string[] }; onRefine: (w: string, n: string, name: string, order: string) => void }) {
-  const [word, setWord] = useState("");
-  const [noun, setNoun] = useState("");
-  const [namePart, setNamePart] = useState("");
+function RefineParts({ parts, onRefine }: { parts: string[]; onRefine: (w: string, n: string, name: string, order: string) => void }) {
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+  const [c, setC] = useState("");
   const [order, setOrder] = useState("word_first");
 
   return (
     <div className="space-y-2">
+      <p className="text-[10px] text-gray-500">所持称号の文字を自由に選んで組み合わせられます。同じパートを複数選んでもOK</p>
       <div className="grid grid-cols-3 gap-2">
-        <select value={word} onChange={(e) => setWord(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
-          <option value="">フレーズなし</option>
-          {parts.words.map((w: string) => <option key={w} value={w}>{w}</option>)}
+        <select value={a} onChange={(e) => setA(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">パート1</option>
+          {parts.map((p: string) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select value={noun} onChange={(e) => setNoun(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
-          <option value="">名詞なし</option>
-          {parts.nouns.map((n: string) => <option key={n} value={n}>{n}</option>)}
+        <select value={b} onChange={(e) => setB(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">パート2</option>
+          {parts.map((p: string) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select value={namePart} onChange={(e) => setNamePart(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
-          <option value="">人物名なし</option>
-          {parts.names.map((n: string) => <option key={n} value={n}>{n}</option>)}
+        <select value={c} onChange={(e) => setC(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5">
+          <option value="">パート3</option>
+          {parts.map((p: string) => <option key={p} value={p}>{p}</option>)}
         </select>
       </div>
       <select value={order} onChange={(e) => setOrder(e.target.value)} className="rounded-lg border-gray-300 text-xs p-1.5 w-full">
-        <option value="word_first">フレーズ + 名詞 + 人物名</option>
-        <option value="name_first">人物名 + フレーズ + 名詞</option>
-        <option value="noun_first">名詞 + フレーズ + 人物名</option>
+        <option value="word_first">パート1 + パート2 + パート3</option>
+        <option value="word_name_first">パート1 + パート3 + パート2</option>
+        <option value="noun_first">パート2 + パート1 + パート3</option>
+        <option value="noun_name_first">パート2 + パート3 + パート1</option>
+        <option value="name_first">パート3 + パート1 + パート2</option>
+        <option value="name_noun_first">パート3 + パート2 + パート1</option>
       </select>
-      <button onClick={() => onRefine(word, noun, namePart, order)}
-        disabled={!word && !noun && !namePart}
+      <button onClick={() => onRefine(a, b, c, order)}
+        disabled={!a && !b && !c}
         className="w-full bg-gray-800 text-white rounded-full py-2 text-xs disabled:opacity-40">
         精錬する
       </button>
@@ -708,54 +713,3 @@ function RefineParts({ parts, onRefine }: { parts: { words: string[]; nouns: str
   );
 }
 
-const WORDS_LIST = [
-  "レポート未提出の", "単位を落とせし", "再履修のプロ", "課題に追われる",
-  "電機大の良心", "北千住の支配者", "数学で詰んだ", "過去問を渇望する",
-  "試験前日に徹夜する", "フル単の奇跡", "出席日数ギリギリの", "教授に目をつけられし",
-  "研究室に引きこもる", "学食のカレーを愛する", "3号館で迷子になった",
-  "線形代数で爆死した", "プログラミング課題を丸写しする", "意識だけは高い留年候補",
-  "通学路がほぼ旅", "プレデターになれない", "万年ブロンズの", "クソエイムを極めし",
-  "ウルトを無駄打ちする", "スプラで煽られる", "常にデスしている", "キャリーされ待ちの",
-  "味方にブチギレる", "ガチホコを逆走する", "マイクラで全ロスした", "マリオメーカーで沼る",
-  "回線落ちの帝王", "伝説の戦犯", "プレイヤースキル最底辺の", "ワンオペで崩壊する",
-  "労働の奴隷", "残業代が出ない", "バイトリーダーを気取る", "レジ締めが合わない",
-  "クレーマーを引き寄せる", "給料日前に干からびる", "貯金残高3桁の", "100円ローソン通いの",
-  "もやし生活の", "奢られ待ちの天才", "財布を家に忘れる",
-  "常に金ないが口癖の", "借金まみれの", "経済力皆無の", "Twitterに生息する",
-  "ネット弁慶の", "匿名でしかイキれない", "いいねを渇望する", "炎上寸前の",
-  "リプ欄でレスバする", "黒歴史を量産せし", "厨二病を拗らせた", "右手が疼く",
-  "邪気眼の使い手", "闇の組織に追われる", "限界オタクの", "推しに全財産を貢ぐ",
-  "液晶画面に恋する", "1日20時間画面を見る", "自称インフルエンサーの", "バズる幻覚を見る",
-  "存在が放送事故の", "息をするだけで面白い", "絶望的に服のセンスがない", "常に寝不足の",
-  "偏食の極み", "エナジードリンク中毒の", "三日坊主のエース", "言い訳の達人",
-  "責任転嫁のプロ", "プライドだけはエベレストな",
-  "口だけは達者な", "行動力を失いし", "部屋がゴミ屋敷の", "忘れ物の神様",
-  "信頼残高マイナスの", "陽キャのフリをした", "LINEの返信が遅すぎる", "既読無視の常習犯",
-  "嫉妬の化身", "すぐ病む", "メンヘラの極み", "恋愛初心者以下の", "独占欲の塊",
-  "記念日を忘れる", "愛が重すぎる", "朝起きられない", "布団から出られない",
-  "2度寝のファンタジスタ", "遅刻の常連", "時間を守る気がない", "常にギリギリを生きる",
-  "奇跡待ちの", "就活を現実逃避する", "面接で頭が真っ白になる", "お祈りメールのコレクター",
-  "自己分析で絶望する", "実家でイキる", "家族のパシリ", "親の脛を齧り尽くす",
-  "ペーパードライバーの", "常に裏コードを入力している", "魔導書を枕にする",
-  "混沌のオーラを纏う", "封印されし左手が暴れる", "黙示録の予言者", "終末を告げるもの",
-  "神の加護を失いし", "令和の怪物", "世紀の大悪党", "希代の詐欺師", "期待の新人（仮）",
-  "自称・天才エンジニア", "世界を救いそうにない勇者", "魔王のパシリ", "ただの一般人A",
-  "西村店長に怒られし", "チームラボで迷子になった", "息をするようにスベる", "深夜テンションの",
-  "松戸市代表", "カリフォルニア帰りの", "3浪の", "1留の", "留年確定の", "バ畜戦士",
-  "月給24万", "金欠の", "課金沼に沈みし", "花菜を奪いし者", "令和の奇行種",
-  "脳内お花畑の", "意識高い系", "圧倒的モブ", "メンヘラ製造機", "前世がティッシュ",
-  "夢はマイクワゾウスキー", "みかんから生まれし", "桃から生まれし", "韓国のり顔の",
-];
-
-const NOUNS_LIST = [
-  "支配者", "プロ", "帝王", "奇跡", "良心", "戦士", "候補", "常習犯", "コレクター", "使い手",
-  "観測者", "勇者", "パシリ", "一般人A", "天才", "怪物", "大悪党", "詐欺師",
-  "落ちこぼれ", "ファンタジスタ", "エース", "達人", "神様", "化身", "塊", "奴隷",
-  "リーダー", "モブ", "奇行種", "放送事故", "留年候補", "戦犯", "ブロンズ", "インフルエンサー",
-];
-
-const NAMES_LIST = [
-  "ゆいちゃん", "たいき", "あつき", "みおちゃん", "すばる",
-  "ゆっきー", "さよちゃん", "しゅり", "りゅう", "みな",
-  "そら", "はる", "れん", "あお", "なぎ",
-];

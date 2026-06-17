@@ -383,6 +383,14 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     setSubject("");
     setStudyMinutes("");
     setBeeryualResult(null);
+    // Direct push fallback for followers (pg_net is unreliable)
+    if (data?.post_id) {
+      fetch("/api/push/follow-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: data.post_id }),
+      }).catch(() => {});
+    }
     fetchPosts(1, search);
     setPage(1);
   };
