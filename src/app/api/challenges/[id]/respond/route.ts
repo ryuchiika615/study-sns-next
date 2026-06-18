@@ -35,6 +35,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: "この勝負はすでに回答済みです" }, { status: 400 });
   }
 
+  if (action === "accept" && challenge.stake > 0) {
+    const { data: profile } = await supabase.from("profiles").select("exchange_points").eq("id", user.id).single();
+    if (!profile || profile.exchange_points < challenge.stake) {
+      return NextResponse.json({ error: "エクスチェンジポイントが不足しているため受けられません" }, { status: 400 });
+    }
+  }
+
   const update: any = { status: action === "accept" ? "accepted" : "declined" };
   if (action === "accept") {
     update.accepted_at = new Date().toISOString();

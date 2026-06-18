@@ -15,7 +15,7 @@ export async function GET() {
   // Lazy evaluation: check accepted challenges that might have been completed
   const { data: activeChallenges } = await admin
     .from("challenges")
-    .select("id, challenger_id, opponent_id, target_value, accepted_at")
+    .select("id, challenger_id, opponent_id, target_value, accepted_at, stake")
     .eq("status", "accepted")
     .gt("target_value", 0);
 
@@ -52,6 +52,20 @@ export async function GET() {
           .update({ status: "completed", winner_id: winnerId, completed_at: new Date().toISOString() })
           .eq("id", c.id)
           .eq("status", "accepted");
+
+        if (c.stake > 0) {
+          const loserId = winnerId === c.challenger_id ? c.opponent_id : c.challenger_id;
+          const [loserRes, winnerRes] = await Promise.all([
+            admin.from("profiles").select("exchange_points").eq("id", loserId).single(),
+            admin.from("profiles").select("exchange_points").eq("id", winnerId).single(),
+          ]);
+          if (loserRes.data && winnerRes.data) {
+            await Promise.all([
+              admin.from("profiles").update({ exchange_points: Math.max(0, loserRes.data.exchange_points - c.stake) }).eq("id", loserId),
+              admin.from("profiles").update({ exchange_points: winnerRes.data.exchange_points + c.stake }).eq("id", winnerId),
+            ]);
+          }
+        }
       }
     }
   }
@@ -105,7 +119,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { opponent_id, message, challenge_type, target_value } = await request.json();
+  const { opponent_id, message, challenge_type, target_value, stake } = await request.json();
   if (!opponent_id) {
     return NextResponse.json({ error: "opponent_id required" }, { status: 400 });
   }
@@ -114,6 +128,14 @@ export async function POST(request: NextRequest) {
   }
   if (!target_value || target_value < 1) {
     return NextResponse.json({ error: "目標値を設定してください" }, { status: 400 });
+  }
+
+  const stakeAmount = Math.max(0, parseInt(stake) || 0);
+  if (stakeAmount > 0) {
+    const { data: profile } = await supabase.from("profiles").select("exchange_points").eq("id", user.id).single();
+    if (!profile || profile.exchange_points < stakeAmount) {
+      return NextResponse.json({ error: "エクスチェンジポイントが不足しています" }, { status: 400 });
+    }
   }
 
   // Must be mutual follows
@@ -155,6 +177,7 @@ export async function POST(request: NextRequest) {
       message: message || "勝負しよう！",
       challenge_type: challenge_type || "weekly_study_minutes",
       target_value: target_value || 0,
+      stake: stakeAmount,
       status: "pending",
     })
     .select()

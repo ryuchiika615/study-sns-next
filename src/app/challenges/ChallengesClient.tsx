@@ -34,6 +34,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
   const [selectedOpponent, setSelectedOpponent] = useState("");
   const [challengeMessage, setChallengeMessage] = useState("");
   const [challengeTarget, setChallengeTarget] = useState(0);
+  const [challengeStake, setChallengeStake] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -80,6 +81,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
         opponent_id: selectedOpponent,
         message: challengeMessage,
         target_value: challengeTarget,
+        stake: challengeStake,
       }),
     });
     const data = await res.json();
@@ -92,6 +94,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
     setSelectedOpponent("");
     setChallengeMessage("");
     setChallengeTarget(0);
+    setChallengeStake(0);
     fetchChallenges();
   };
 
@@ -145,6 +148,9 @@ export default function ChallengesClient({ userId }: { userId: string }) {
             <input type="number" value={challengeTarget || ""} onChange={(e) => setChallengeTarget(parseInt(e.target.value) || 0)}
               placeholder="目標値（分）"
               className="w-full p-2.5 border border-gray-200 rounded-lg text-sm" />
+            <input type="number" value={challengeStake || ""} onChange={(e) => setChallengeStake(Math.max(0, parseInt(e.target.value) || 0))}
+              placeholder="賭けポイント（0 = 賭けなし）"
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-sm" />
             {error && <p className="text-red-500 text-xs">{error}</p>}
             <div className="flex gap-2">
               <button onClick={handleCreate} disabled={submitting}
@@ -186,6 +192,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm">{c.challenger?.display_name || c.challenger?.username || "ユーザー"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{c.message}</p>
+                      {(c as any).stake > 0 && <p className="text-[10px] text-orange-500 mt-0.5">賭けポイント: {(c as any).stake}pt</p>}
                     </div>
                     <div>
                       {won ? <span className="text-yellow-500 text-xs font-bold">🏆 勝利！</span> : lost ? <span className="text-red-400 text-xs font-bold">敗北</span> : statusLabel(c.status)}
@@ -226,7 +233,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                   )}
                   {c.status === "completed" && c.winner_id && (
                     <p className="text-xs text-center mt-2 font-bold">
-                      {won ? "🎉 おめでとう！あなたの勝ちです！" : lost ? `😢 ${c.challenger?.display_name || c.challenger?.username || "相手"}の勝ち...` : ""}
+                      {won ? `🎉 おめでとう！${(c as any).stake > 0 ? ` ${(c as any).stake}pt 獲得！` : "あなたの勝ちです！"}` : lost ? `😢 ${c.challenger?.display_name || c.challenger?.username || "相手"}の勝ち...` : ""}
                     </p>
                   )}
                 </div>
@@ -262,6 +269,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm">{c.opponent?.display_name || c.opponent?.username || "ユーザー"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{c.message}</p>
+                      {(c as any).stake > 0 && <p className="text-[10px] text-orange-500 mt-0.5">賭けポイント: {(c as any).stake}pt</p>}
                     </div>
                     <div>
                       {won ? <span className="text-yellow-500 text-xs font-bold">🏆 勝利！</span> : lost ? <span className="text-red-400 text-xs font-bold">敗北</span> : statusLabel(c.status)}
@@ -290,7 +298,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                   )}
                   {c.status === "completed" && c.winner_id && (
                     <p className="text-xs text-center mt-2 font-bold">
-                      {won ? "🎉 おめでとう！あなたの勝ちです！" : lost ? `😢 ${c.opponent?.display_name || c.opponent?.username || "相手"}の勝ち...` : ""}
+                      {won ? `🎉 おめでとう！${(c as any).stake > 0 ? ` ${(c as any).stake}pt 獲得！` : "あなたの勝ちです！"}` : lost ? `😢 ${c.opponent?.display_name || c.opponent?.username || "相手"}の勝ち...` : ""}
                     </p>
                   )}
                 </div>
