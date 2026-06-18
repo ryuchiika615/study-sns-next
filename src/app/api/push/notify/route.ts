@@ -52,6 +52,23 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+
+  // Check follow bell settings (recipient may have turned off notifications for this sender)
+  if (sender_id) {
+    const bellCol = type === "follow_post" ? "notify_posts" : type === "like" ? "notify_likes" : type === "reply" ? "notify_comments" : null;
+    if (bellCol) {
+      const { data: follow } = await admin
+        .from("follows")
+        .select(bellCol)
+        .eq("follower_id", recipient_id)
+        .eq("following_id", sender_id)
+        .maybeSingle();
+      if (follow && !(follow as any)[bellCol]) {
+        return NextResponse.json({ ok: true, sent: 0, skipped: `${bellCol}_off` });
+      }
+    }
+  }
+
   const [subscriptionsResult, notifSettingsResult] = await Promise.all([
     admin
       .from("push_subscriptions")
