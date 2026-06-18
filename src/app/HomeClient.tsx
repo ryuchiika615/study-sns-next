@@ -39,6 +39,12 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   ));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
+  const [activeSurvey, setActiveSurvey] = useState<any>(null);
+  const [surveyResponse, setSurveyResponse] = useState<any>(null);
+  const [selectedOption, setSelectedOption] = useState("");
+  const [customReply, setCustomReply] = useState("");
+  const [surveySubmitting, setSurveySubmitting] = useState(false);
+  const [surveyDismissed, setSurveyDismissed] = useState(false);
   const [rankingPopup, setRankingPopup] = useState<{ top3: any[]; daysRemaining: number; month: number } | null>(null);
   const [dismissedWeek, setDismissedWeek] = useState(() => localStorage.getItem("dismissed_ranking_week") || "");
   const beeryualCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -322,6 +328,10 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     }
     setDismissedWeek(weekNum);
 
+    fetch("/api/surveys").then(r => r.ok && r.json()).then(d => {
+      if (d?.survey && !d.myResponse) { setActiveSurvey(d.survey); setSurveyDismissed(false); }
+    }).catch(() => {});
+
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
     };
@@ -395,6 +405,21 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     }
     fetchPosts(1, search);
     setPage(1);
+  };
+
+  const handleSurveySubmit = async () => {
+    if (!activeSurvey || !selectedOption) return;
+    setSurveySubmitting(true);
+    const res = await fetch("/api/surveys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ survey_id: activeSurvey.id, selected_option: selectedOption, custom_reply: customReply || null }),
+    });
+    if (res.ok) {
+      setSurveyResponse({ selected_option: selectedOption });
+      setActiveSurvey(null);
+    }
+    setSurveySubmitting(false);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -696,6 +721,42 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
               className="w-full mt-4 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
               閉じる
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeSurvey && !surveyDismissed && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSurveyDismissed(true)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-base">📊 アンケートが届きました</h3>
+              <button onClick={() => setSurveyDismissed(true)}
+                className="text-gray-500 text-xl cursor-pointer">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">回答よろしくお願いします！</p>
+            <p className="font-bold text-sm mb-3">{activeSurvey.question}</p>
+            <div className="space-y-2 mb-4">
+              {activeSurvey.options?.map((opt: string) => (
+                <label key={opt}
+                  className={`flex items-center gap-2 p-3 rounded-lg border text-sm cursor-pointer transition ${selectedOption === opt ? 'border-primary bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <input type="radio" name="survey-option" value={opt} checked={selectedOption === opt}
+                    onChange={() => setSelectedOption(opt)} className="cursor-pointer" />
+                  {opt}
+                </label>
+              ))}
+            </div>
+            {activeSurvey.allow_custom !== false && (
+              <textarea value={customReply} onChange={(e) => setCustomReply(e.target.value)}
+                placeholder="自由に返信（任意）"
+                className="w-full rounded-lg border-gray-300 text-sm mb-4" rows={2} />
+            )}
+            <button onClick={handleSurveySubmit} disabled={!selectedOption || surveySubmitting}
+              className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer disabled:opacity-50">
+              {surveySubmitting ? "送信中..." : "回答する"}
+            </button>
+            <p className="text-[10px] text-gray-400 text-center mt-2">閉じるを押すと後で回答できます</p>
           </div>
         </div>
       )}
