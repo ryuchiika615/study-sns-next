@@ -27,6 +27,10 @@ export async function POST(request: NextRequest) {
   const record = body.record;
   if (!record?.recipient_id) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
+  if (record.sender_id && record.recipient_id === record.sender_id) {
+    return NextResponse.json({ ok: true, sent: 0, skipped: "self" });
+  }
+
   const admin = createAdminClient();
 
   // Check quiet hours
