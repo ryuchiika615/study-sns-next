@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation";
 export function BottomNav({ unreadCount = 0 }: { unreadCount?: number }) {
   const pathname = usePathname();
 
-  const items = [
+  const items: { href: string; icon: string; label: string; customColor?: string; badge?: number }[] = [
     { href: "/", icon: "fa-home", label: "ホーム" },
     { href: "/rankings", icon: "fa-trophy", label: "ランキング" },
     { href: "/analytics", icon: "fa-chart-pie", label: "分析" },
     { href: "/challenges", icon: "fa-fire", label: "チャレンジ", customColor: "#ff6b6b" },
     { href: "/gacha", icon: "fa-calendar-check", label: "ログイン", customColor: "#4ade80" },
-    { href: "/notifications", icon: "fa-bell", label: "通知", badge: unreadCount },
+    { href: "/shop", icon: "fa-store", label: "ショップ" },
     { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール" },
   ];
 

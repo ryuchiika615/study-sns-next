@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
@@ -162,15 +163,26 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
         </h1>
         <p className="text-xs text-yellow-600 tracking-widest">リュッター</p>
 
-        <button onClick={() => setShowAnnouncement("list")}
-          className="absolute top-3 right-3 text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
-          <i className="far fa-envelope text-yellow-600" />
-          {totalUnread > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {totalUnread > 9 ? "9+" : totalUnread}
-            </span>
-          )}
-        </button>
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          <Link href="/notifications"
+            className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition relative">
+            <i className="far fa-bell text-yellow-600" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+          <button onClick={() => setShowAnnouncement("list")}
+            className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition relative">
+            <i className="far fa-envelope text-yellow-600" />
+            {totalUnread > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                {totalUnread > 9 ? "9+" : totalUnread}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       <SwipeBack>
