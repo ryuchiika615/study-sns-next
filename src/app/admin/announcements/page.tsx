@@ -70,7 +70,7 @@ export default function AdminAnnouncementsPage() {
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!confirm("削除しますか？")) return;
+    if (!confirm("取り消しますか？（ユーザーから非表示になります）")) return;
     setError("");
     setMessage("");
     try {
@@ -269,10 +269,15 @@ export default function AdminAnnouncementsPage() {
                 <p className="text-sm whitespace-pre-wrap">{a.content}</p>
                 <p className="text-xs text-gray-400 mt-1">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
               </div>
-              <button onClick={() => handleDeleteAnnouncement(a.id)}
-                className="text-red-500 text-sm cursor-pointer flex-shrink-0">
-                <i className="fas fa-trash" />
-              </button>
+              <div className="flex gap-2 flex-shrink-0 items-center">
+                {a.is_deleted && <span className="text-xs text-gray-400">取消済</span>}
+                {!a.is_deleted && (
+                  <button onClick={() => handleDeleteAnnouncement(a.id)}
+                    className="text-orange-500 text-xs cursor-pointer whitespace-nowrap">
+                    取り消し
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

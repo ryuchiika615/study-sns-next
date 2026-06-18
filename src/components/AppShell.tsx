@@ -46,6 +46,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
       const { data: announcements } = await supabase
         .from("admin_announcements")
         .select("id, content, created_at")
+        .eq("is_deleted", false)
         .order("created_at", { ascending: false });
       if (announcements) {
         const unread = readIds.length > 0

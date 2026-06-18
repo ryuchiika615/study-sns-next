@@ -290,6 +290,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `🎁 ${sender}からプレゼントが届きました。`, type: "gift", href: "/gacha" });
       } else if (lastNotif.notification_type === "mention") {
         addToast({ message: `${sender}からメンションが来ました`, type: "info", href });
+      } else if (lastNotif.notification_type === "admin_announcement") {
+        addToast({ message: `お知らせが届きました`, type: "info", href: "/" });
       }
       if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
@@ -321,7 +323,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     pollAll();
     fetch("/api/daily-summary").catch(() => {});
     fetch("/api/notification-settings").then(r => r.ok && r.json()).then(d => {
-      if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true };
+      if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true };
     }).catch(() => {});
     notifTimer.current = setInterval(pollAll, 15000);
 

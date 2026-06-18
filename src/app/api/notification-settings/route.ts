@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const VIBRATE_COLS = "vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post";
-const VIBRATE_DEFAULTS = { vibrate_like: true, vibrate_reply: true, vibrate_follow: true, vibrate_mention: true, vibrate_gift: true, vibrate_follow_post: true };
+const VIBRATE_COLS = "vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement";
+const VIBRATE_DEFAULTS = { vibrate_like: true, vibrate_reply: true, vibrate_follow: true, vibrate_mention: true, vibrate_gift: true, vibrate_follow_post: true, vibrate_admin_announcement: true };
 
 export async function GET() {
   const supabase = createServerSupabase();
@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { quiet_hours_start, quiet_hours_end, daily_summary, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post } = body;
+  const { quiet_hours_start, quiet_hours_end, daily_summary, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement } = body;
 
   const { error } = await supabase
     .from("notification_settings")
@@ -41,6 +41,7 @@ export async function PUT(request: NextRequest) {
       vibrate_mention,
       vibrate_gift,
       vibrate_follow_post,
+      vibrate_admin_announcement,
     }, { onConflict: "user_id" });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -62,6 +62,7 @@ export interface NotificationSettings {
   vibrate_mention: boolean;
   vibrate_gift: boolean;
   vibrate_follow_post: boolean;
+  vibrate_admin_announcement: boolean;
 }
 
 export interface MutedUser {
@@ -83,7 +84,7 @@ export interface NotificationWithSender {
   recipient_id: string;
   sender_id: string;
   post_id: string | null;
-  notification_type: "like" | "reply" | "follow" | "follow_post" | "gift" | "mention";
+  notification_type: "like" | "reply" | "follow" | "follow_post" | "gift" | "mention" | "admin_announcement";
   is_read: boolean;
   created_at: string;
   sender: Profile;

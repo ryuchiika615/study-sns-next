@@ -8,19 +8,24 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const readIds = (await supabase
+    .from("announcement_reads")
+    .select("announcement_id")
+    .eq("user_id", user.id)).data?.map(r => r.announcement_id) || [];
+
+  const readFilter = readIds.length > 0 ? readIds : ["no-announcement-matches"];
+
   const { count } = await supabase
     .from("admin_announcements")
     .select("*", { count: "exact", head: true })
-    .not("id", "in", (
-      await supabase.from("announcement_reads").select("announcement_id").eq("user_id", user.id)
-    ).data?.map(r => r.announcement_id) || []);
+    .eq("is_deleted", false)
+    .not("id", "in", readFilter);
 
   const { data: unread } = await supabase
     .from("admin_announcements")
     .select("id, content, created_at")
-    .not("id", "in", (
-      await supabase.from("announcement_reads").select("announcement_id").eq("user_id", user.id)
-    ).data?.map(r => r.announcement_id) || [])
+    .eq("is_deleted", false)
+    .not("id", "in", readFilter)
     .order("created_at", { ascending: false });
 
   return NextResponse.json({ unreadCount: count || 0, announcements: unread || [] });
