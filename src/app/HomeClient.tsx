@@ -331,9 +331,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   useEffect(() => {
     pollAll();
     fetch("/api/daily-summary").catch(() => {});
-    fetch("/api/notification-settings").then(r => r.ok && r.json()).then(d => {
-      if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true };
-    }).catch(() => {});
     notifTimer.current = setInterval(pollAll, 15000);
 
     // Weekly ranking popup
