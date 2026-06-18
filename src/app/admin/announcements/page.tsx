@@ -13,6 +13,7 @@ export default function AdminAnnouncementsPage() {
   const [surveys, setSurveys] = useState<any[]>([]);
   const [surveyQuestion, setSurveyQuestion] = useState("");
   const [surveyOptions, setSurveyOptions] = useState(["良い", "ダメ", "どちらでも"]);
+  const [surveyAnonymous, setSurveyAnonymous] = useState(true);
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [viewResults, setViewResults] = useState<string | null>(null);
   const router = useRouter();
@@ -90,12 +91,13 @@ export default function AdminAnnouncementsPage() {
     const res = await fetch("/api/admin/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: surveyQuestion.trim(), options: surveyOptions.filter(Boolean) }),
+      body: JSON.stringify({ question: surveyQuestion.trim(), options: surveyOptions.filter(Boolean), anonymous: surveyAnonymous }),
     });
     if (res.ok) {
       setMessage("アンケートを作成しました！");
       setSurveyQuestion("");
       setSurveyOptions(["良い", "ダメ", "どちらでも"]);
+      setSurveyAnonymous(true);
       setShowSurveyForm(false);
       fetchSurveys();
     } else {
@@ -168,6 +170,11 @@ export default function AdminAnnouncementsPage() {
                   className="w-full rounded-lg border-gray-300 text-sm" rows={3} />
                 <p className="text-[10px] text-gray-400 mt-0.5">「返信を入力」オプションが自動で追加されます</p>
               </div>
+              <label className="flex items-center justify-between text-xs cursor-pointer py-1">
+                <span>匿名投票（誰が答えたか見えない）</span>
+                <input type="checkbox" checked={surveyAnonymous} onChange={(e) => setSurveyAnonymous(e.target.checked)}
+                  className="cursor-pointer" />
+              </label>
               <button onClick={handleCreateSurvey}
                 className="bg-purple-600 text-white font-bold rounded-full px-6 py-2 text-sm">
                 アンケートを送信
@@ -181,7 +188,12 @@ export default function AdminAnnouncementsPage() {
               <div key={s.id} className="border border-gray-200 rounded-lg p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold">{s.question}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-bold">{s.question}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${s.anonymous ? "bg-gray-100 text-gray-500" : "bg-blue-50 text-blue-600"}`}>
+                        {s.anonymous ? "匿名" : "公開"}
+                      </span>
+                    </div>
                     <p className="text-[10px] text-gray-400 mt-0.5">
                       {s.closed_at ? `締切: ${new Date(s.closed_at).toLocaleString("ja-JP")}` : "回答受付中"}
                       {" · "}{s.total_responses}件の回答
@@ -215,6 +227,15 @@ export default function AdminAnnouncementsPage() {
                           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                             <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                           </div>
+                          {!s.anonymous && s.voters?.[opt]?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {s.voters[opt].map((v: any, i: number) => (
+                                <span key={i} className="text-[10px] bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded">
+                                  {v.display_name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -222,7 +243,10 @@ export default function AdminAnnouncementsPage() {
                       <div className="mt-2">
                         <p className="text-xs font-bold text-gray-500 mb-1">返信:</p>
                         {s.responses.filter((r: any) => r.custom_reply).map((r: any, i: number) => (
-                          <p key={i} className="text-xs text-gray-600 bg-gray-50 rounded p-1.5 mb-1">「{r.selected_option}」 {r.custom_reply}</p>
+                          <p key={i} className="text-xs text-gray-600 bg-gray-50 rounded p-1.5 mb-1">
+                            {!s.anonymous && r.users && <span className="font-medium">{r.users.display_name || r.users.username}: </span>}
+                            「{r.selected_option}」 {r.custom_reply}
+                          </p>
                         ))}
                       </div>
                     )}

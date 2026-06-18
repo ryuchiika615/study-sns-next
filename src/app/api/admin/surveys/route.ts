@@ -22,14 +22,20 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   const surveysWithStats = await Promise.all((surveys || []).map(async (s) => {
+    const selectCols = "selected_option, custom_reply" + (!s.anonymous ? ", user_id, users:user_id(display_name, username)" : "");
     const { data: responses } = await ctx.supabase
       .from("survey_responses")
-      .select("selected_option, custom_reply")
+      .select(selectCols)
       .eq("survey_id", s.id);
 
     const counts: Record<string, number> = {};
-    (responses || []).forEach((r) => {
+    const voters: Record<string, any[]> = {};
+    (responses || []).forEach((r: any) => {
       counts[r.selected_option] = (counts[r.selected_option] || 0) + 1;
+      if (!s.anonymous) {
+        if (!voters[r.selected_option]) voters[r.selected_option] = [];
+        voters[r.selected_option].push({ user_id: r.user_id, display_name: r.users?.display_name || r.users?.username || "ユーザー" });
+      }
     });
 
     return {
@@ -37,6 +43,7 @@ export async function GET() {
       total_responses: responses?.length || 0,
       counts,
       responses: responses || [],
+      ...(!s.anonymous ? { voters } : {}),
     };
   }));
 
@@ -47,7 +54,7 @@ export async function POST(request: NextRequest) {
   const ctx = await checkAdmin();
   if (!ctx) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { question, options, allow_custom } = await request.json();
+  const { question, options, allow_custom, anonymous } = await request.json();
   if (!question?.trim()) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
@@ -56,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await ctx.supabase
     .from("surveys")
-    .insert({ question: question.trim(), options: opts, allow_custom: allow_custom !== false, created_by: ctx.user.id })
+    .insert({ question: question.trim(), options: opts, allow_custom: allow_custom !== false, anonymous: anonymous !== false, created_by: ctx.user.id })
     .select()
     .single();
 

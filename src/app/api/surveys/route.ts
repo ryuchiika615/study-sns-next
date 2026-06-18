@@ -25,7 +25,37 @@ export async function GET() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return NextResponse.json({ survey: active, myResponse });
+  let results = null;
+  if (myResponse) {
+    const { data: allResponses } = await supabase
+      .from("survey_responses")
+      .select("selected_option, user_id, custom_reply" + (!active.anonymous ? ", users:user_id(display_name, username)" : ""))
+      .eq("survey_id", active.id);
+
+    const counts: Record<string, number> = {};
+    const voters: Record<string, any[]> = {};
+    const customs: { option: string; reply: string; user?: any }[] = [];
+
+    (allResponses || []).forEach((r: any) => {
+      counts[r.selected_option] = (counts[r.selected_option] || 0) + 1;
+      if (!active.anonymous) {
+        if (!voters[r.selected_option]) voters[r.selected_option] = [];
+        voters[r.selected_option].push({ user_id: r.user_id, display_name: r.users?.display_name || r.users?.username || "ユーザー" });
+      }
+      if (r.custom_reply) {
+        customs.push({ option: r.selected_option, reply: r.custom_reply, user: !active.anonymous ? { display_name: r.users?.display_name || r.users?.username || "ユーザー" } : undefined });
+      }
+    });
+
+    results = {
+      counts,
+      total: allResponses?.length || 0,
+      ...(!active.anonymous ? { voters } : {}),
+      ...(active.allow_custom !== false ? { customs } : {}),
+    };
+  }
+
+  return NextResponse.json({ survey: active, myResponse, results });
 }
 
 export async function POST(request: NextRequest) {
