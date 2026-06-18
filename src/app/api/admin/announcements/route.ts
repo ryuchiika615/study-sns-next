@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
       const vibMap = new Map((settings || []).map((s: any) => [s.user_id, s.vibrate_admin_announcement ?? true]));
 
       for (const sub of subscriptions) {
+        if (sub.user_id === ctx.user.id) continue; // skip sender
         try {
           const vibrate = vibMap.get(sub.user_id) ?? true;
           await webpush.sendNotification({

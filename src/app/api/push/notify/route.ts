@@ -47,6 +47,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing type or recipient_id" }, { status: 400 });
   }
 
+  if (sender_id && recipient_id === sender_id) {
+    return NextResponse.json({ ok: true, sent: 0, skipped: "self" });
+  }
+
   const admin = createAdminClient();
   const [subscriptionsResult, notifSettingsResult] = await Promise.all([
     admin
