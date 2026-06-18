@@ -541,11 +541,13 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           <form onSubmit={handleSubmit} encType="multipart/form-data">
           <textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => setContent(e.target.value.slice(0, 300))}
             placeholder="今日の学びを書こう"
             required
+            maxLength={300}
             className="w-full border-none outline-none text-lg resize-none h-20"
           />
+          <p className="text-xs text-right mt-1 text-gray-400">{content.length}/300</p>
           <input
             type="text"
             value={subject}
