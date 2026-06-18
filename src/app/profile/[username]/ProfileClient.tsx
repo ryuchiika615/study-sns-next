@@ -193,7 +193,7 @@ export default function ProfileClient({
       <div className="mx-auto my-4 max-w-xl space-y-3 px-4">
 
         {/* ===== プロフィールカード ===== */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="bg-gradient-to-r from-blue-900 to-blue-700 h-20" />
           <div className="px-4 pb-4">
             <div className="flex items-end -mt-10 mb-3">
