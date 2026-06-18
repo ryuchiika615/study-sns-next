@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { quiet_hours_start, quiet_hours_end, daily_summary, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement } = body;
+  const { quiet_hours_start, quiet_hours_end, daily_summary } = body;
 
   const { error } = await supabase
     .from("notification_settings")
@@ -35,13 +35,6 @@ export async function PUT(request: NextRequest) {
       quiet_hours_start,
       quiet_hours_end,
       daily_summary,
-      vibrate_like,
-      vibrate_reply,
-      vibrate_follow,
-      vibrate_mention,
-      vibrate_gift,
-      vibrate_follow_post,
-      vibrate_admin_announcement,
     }, { onConflict: "user_id" });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

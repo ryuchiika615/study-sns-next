@@ -46,13 +46,6 @@ export default function EditProfilePage() {
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
-  const [vibrateLike, setVibrateLike] = useState(true);
-  const [vibrateReply, setVibrateReply] = useState(true);
-  const [vibrateFollow, setVibrateFollow] = useState(true);
-  const [vibrateMention, setVibrateMention] = useState(true);
-  const [vibrateGift, setVibrateGift] = useState(true);
-  const [vibrateFollowPost, setVibrateFollowPost] = useState(true);
-  const [vibrateAdminAnnouncement, setVibrateAdminAnnouncement] = useState(true);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
@@ -103,20 +96,13 @@ export default function EditProfilePage() {
 
     const { data: notifSettings } = await supabase
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, daily_summary, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
+      .select("quiet_hours_start, quiet_hours_end, daily_summary")
       .eq("user_id", uid)
       .maybeSingle();
     if (notifSettings) {
       setQuietHoursStart(notifSettings.quiet_hours_start || "");
       setQuietHoursEnd(notifSettings.quiet_hours_end || "");
       setDailySummary(notifSettings.daily_summary ?? true);
-      setVibrateLike(notifSettings.vibrate_like ?? true);
-      setVibrateReply(notifSettings.vibrate_reply ?? true);
-      setVibrateFollow(notifSettings.vibrate_follow ?? true);
-      setVibrateMention(notifSettings.vibrate_mention ?? true);
-      setVibrateGift(notifSettings.vibrate_gift ?? true);
-      setVibrateFollowPost(notifSettings.vibrate_follow_post ?? true);
-      setVibrateAdminAnnouncement(notifSettings.vibrate_admin_announcement ?? true);
     }
   };
 
@@ -209,7 +195,7 @@ export default function EditProfilePage() {
     await fetch("/api/notification-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary, vibrate_like: vibrateLike, vibrate_reply: vibrateReply, vibrate_follow: vibrateFollow, vibrate_mention: vibrateMention, vibrate_gift: vibrateGift, vibrate_follow_post: vibrateFollowPost, vibrate_admin_announcement: vibrateAdminAnnouncement }),
+      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
     });
   };
 
@@ -579,35 +565,7 @@ export default function EditProfilePage() {
               <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
                 className="cursor-pointer" />
             </label>
-            <p className="text-xs font-medium text-gray-700 mt-1">バイブレーション設定</p>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>いいね</span>
-              <input type="checkbox" checked={vibrateLike} onChange={(e) => setVibrateLike(e.target.checked)} className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>返信</span>
-              <input type="checkbox" checked={vibrateReply} onChange={(e) => setVibrateReply(e.target.checked)} className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>フォロー</span>
-              <input type="checkbox" checked={vibrateFollow} onChange={(e) => setVibrateFollow(e.target.checked)} className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>メンション</span>
-              <input type="checkbox" checked={vibrateMention} onChange={(e) => setVibrateMention(e.target.checked)} className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>ギフト</span>
-              <input type="checkbox" checked={vibrateGift} onChange={(e) => setVibrateGift(e.target.checked)} className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>フォロー中ユーザーの投稿</span>
-              <input type="checkbox" checked={vibrateFollowPost} onChange={(e) => setVibrateFollowPost(e.target.checked)} className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>管理者お知らせ</span>
-              <input type="checkbox" checked={vibrateAdminAnnouncement} onChange={(e) => setVibrateAdminAnnouncement(e.target.checked)} className="cursor-pointer" />
-            </label>
+
           </div>
 
           <div>
