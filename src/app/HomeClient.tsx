@@ -65,7 +65,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true, admin_announcement: true, repost: true });
+  const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true, admin_announcement: true, repost: true, challenge: true });
+  const [incomingChallenge, setIncomingChallenge] = useState<any>(null);
 
   const dismissAchievement = useCallback(() => {
     const key = `target_achieved_${profile?.target_minutes}_${profile?.target_date || ""}`;
@@ -262,7 +263,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       const res = await fetch("/api/notification-settings");
       if (res.ok) {
         const d = await res.json();
-        if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true, repost: d.vibrate_repost ?? true };
+        if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true, repost: d.vibrate_repost ?? true, challenge: d.vibrate_challenge ?? true };
       }
     } catch {}
 
@@ -310,6 +311,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `お知らせが届きました`, type: "info", href: "/" });
       } else if (lastNotif.notification_type === "repost") {
         addToast({ message: `${sender}があなたの投稿を引用しました`, type: "info", href: lastNotif.post_id ? `/post/${lastNotif.post_id}` : undefined });
+      } else if (lastNotif.notification_type === "challenge") {
+        addToast({ message: `🔥 ${sender}から勝負が仕掛けられました！`, type: "info", href: "/challenges" });
       }
       if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
@@ -335,7 +338,23 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     }
   };
 
-  const pollAll = pollNotifications;
+  const pollChallenges = async () => {
+    try {
+      const res = await fetch("/api/challenges");
+      if (res.ok) {
+        const data = await res.json();
+        const pending = (data.incoming || []).find((c: any) => c.status === "pending");
+        if (pending) {
+          setIncomingChallenge(pending);
+        }
+      }
+    } catch {}
+  };
+
+  const pollAll = async () => {
+    await pollNotifications();
+    await pollChallenges();
+  };
 
   useEffect(() => {
     pollAll();
@@ -886,6 +905,51 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
               className="w-full bg-white text-gray-800 font-bold rounded-full py-3 text-base shadow-md cursor-pointer hover:bg-gray-100 transition">
               やったー！
             </button>
+          </div>
+        </div>
+      )}
+
+      {incomingChallenge && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setIncomingChallenge(null)}>
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-5xl mb-3">🔥</div>
+            <h2 className="text-lg font-bold mb-1">勝負が仕掛けられました！</h2>
+            <div className="flex justify-center mb-3">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 border-2 border-orange-300">
+                {incomingChallenge.challenger?.icon_url ? (
+                  <NextImage src={getOptimizedIconUrl(incomingChallenge.challenger.icon_url, 160)} width={64} height={64} className="rounded-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-xl" /></div>
+                )}
+              </div>
+            </div>
+            <p className="font-bold text-sm">{incomingChallenge.challenger?.display_name || incomingChallenge.challenger?.username}</p>
+            <p className="text-sm text-gray-600 mt-2 mb-4">{incomingChallenge.message}</p>
+            <div className="flex gap-2">
+              <button onClick={async () => {
+                await fetch(`/api/challenges/${incomingChallenge.id}/respond`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "accept" }),
+                });
+                setIncomingChallenge(null);
+                addToast({ message: "勝負を受けた！頑張って！", type: "info" });
+              }}
+                className="flex-1 bg-green-500 text-white rounded-full py-2.5 text-sm font-bold cursor-pointer hover:bg-green-600 transition active:scale-95">
+                受ける！
+              </button>
+              <button onClick={async () => {
+                await fetch(`/api/challenges/${incomingChallenge.id}/respond`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "decline" }),
+                });
+                setIncomingChallenge(null);
+              }}
+                className="flex-1 border border-gray-200 text-gray-500 rounded-full py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition active:scale-95">
+                断る
+              </button>
+            </div>
           </div>
         </div>
       )}

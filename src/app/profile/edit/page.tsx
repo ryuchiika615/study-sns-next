@@ -47,6 +47,7 @@ export default function EditProfilePage() {
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
   const [pushAdminAnnouncements, setPushAdminAnnouncements] = useState(true);
+  const [notifyChallenge, setNotifyChallenge] = useState(true);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
@@ -97,7 +98,7 @@ export default function EditProfilePage() {
 
     const { data: notifSettings } = await supabase
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, daily_summary, push_admin_announcements")
+      .select("quiet_hours_start, quiet_hours_end, daily_summary, push_admin_announcements, notify_challenge")
       .eq("user_id", uid)
       .maybeSingle();
     if (notifSettings) {
@@ -105,6 +106,7 @@ export default function EditProfilePage() {
       setQuietHoursEnd(notifSettings.quiet_hours_end || "");
       setDailySummary(notifSettings.daily_summary ?? true);
       setPushAdminAnnouncements(notifSettings.push_admin_announcements ?? true);
+      setNotifyChallenge(notifSettings.notify_challenge ?? true);
     }
   };
 
@@ -197,7 +199,7 @@ export default function EditProfilePage() {
     await fetch("/api/notification-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ push_admin_announcements: pushAdminAnnouncements, quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
+      body: JSON.stringify({ push_admin_announcements: pushAdminAnnouncements, quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary, notify_challenge: notifyChallenge }),
     });
   };
 
@@ -570,6 +572,11 @@ export default function EditProfilePage() {
             <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>管理者からのお知らせ</span>
               <input type="checkbox" checked={pushAdminAnnouncements} onChange={(e) => setPushAdminAnnouncements(e.target.checked)}
+                className="cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
+              <span>🔥 勉強チャレンジ</span>
+              <input type="checkbox" checked={notifyChallenge} onChange={(e) => setNotifyChallenge(e.target.checked)}
                 className="cursor-pointer" />
             </label>
 

@@ -33,17 +33,28 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // Check follow bell settings
-  const bellCol = record.notification_type === "follow_post" ? "notify_posts" : record.notification_type === "like" ? "notify_likes" : record.notification_type === "reply" ? "notify_comments" : record.notification_type === "repost" ? "notify_repost" : null;
-  if (bellCol && record.sender_id) {
-    const { data: follow } = await admin
-      .from("follows")
-      .select(bellCol)
-      .eq("follower_id", record.recipient_id)
-      .eq("following_id", record.sender_id)
+  // Check notification/bell settings
+  if (record.notification_type === "challenge") {
+    const { data: n } = await admin
+      .from("notification_settings")
+      .select("notify_challenge")
+      .eq("user_id", record.recipient_id)
       .maybeSingle();
-    if (follow && !(follow as any)[bellCol]) {
-      return NextResponse.json({ ok: true, sent: 0, skipped: `${bellCol}_off` });
+    if (n && !n.notify_challenge) {
+      return NextResponse.json({ ok: true, sent: 0, skipped: "notify_challenge_off" });
+    }
+  } else {
+    const bellCol = record.notification_type === "follow_post" ? "notify_posts" : record.notification_type === "like" ? "notify_likes" : record.notification_type === "reply" ? "notify_comments" : record.notification_type === "repost" ? "notify_repost" : null;
+    if (bellCol && record.sender_id) {
+      const { data: follow } = await admin
+        .from("follows")
+        .select(bellCol)
+        .eq("follower_id", record.recipient_id)
+        .eq("following_id", record.sender_id)
+        .maybeSingle();
+      if (follow && !(follow as any)[bellCol]) {
+        return NextResponse.json({ ok: true, sent: 0, skipped: `${bellCol}_off` });
+      }
     }
   }
 
@@ -56,12 +67,13 @@ export async function POST(request: NextRequest) {
     mention: "vibrate_mention",
     admin_announcement: "vibrate_admin_announcement",
     repost: "vibrate_repost",
+    challenge: "vibrate_challenge",
   };
 
   const [notifSettingsResult, subscriptionsResult, senderResult] = await Promise.all([
     admin
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
+      .select("quiet_hours_start, quiet_hours_end, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement, vibrate_challenge")
       .eq("user_id", record.recipient_id)
       .maybeSingle(),
     admin
@@ -101,33 +113,36 @@ export async function POST(request: NextRequest) {
 
   const senderName = sender?.display_name || sender?.username || "誰か";
 
-  // Include post content preview for like/reply/follow_post
-  let preview = "";
-  if (record.post_id) {
-    const { data: post } = await admin
-      .from("posts")
-      .select("content")
-      .eq("id", record.post_id)
-      .maybeSingle();
-    if (post?.content) {
-      preview = post.content.length > 30 ? post.content.slice(0, 30) + "…" : post.content;
+  let bodyText: string;
+  if (record.notification_type === "challenge") {
+    bodyText = `${senderName}から勝負が仕掛けられました！`;
+  } else {
+    let preview = "";
+    if (record.post_id) {
+      const { data: post } = await admin
+        .from("posts")
+        .select("content")
+        .eq("id", record.post_id)
+        .maybeSingle();
+      if (post?.content) {
+        preview = post.content.length > 30 ? post.content.slice(0, 30) + "…" : post.content;
+      }
     }
+    const messages: Record<string, string> = {
+      like: preview ? `${senderName}が「${preview}」にリアクションしました` : `${senderName}がリアクションしました`,
+      reply: preview ? `${senderName}が「${preview}」に返信しました` : `${senderName}からコメントが来ました`,
+      follow: `${senderName}がフォローしました`,
+      follow_post: preview ? `${senderName}が「${preview}」を投稿しました` : `${senderName}がリュイートしました`,
+      gift: `${senderName}からプレゼントが届きました。`,
+      mention: `${senderName}からメンションが来ました`,
+      repost: preview ? `${senderName}があなたの投稿「${preview}」を引用しました` : `${senderName}があなたの投稿を引用しました`,
+    };
+    bodyText = messages[record.notification_type] || "新しい通知があります";
   }
 
-  const messages: Record<string, string> = {
-    like: preview ? `${senderName}が「${preview}」にリアクションしました` : `${senderName}がリアクションしました`,
-    reply: preview ? `${senderName}が「${preview}」に返信しました` : `${senderName}からコメントが来ました`,
-    follow: `${senderName}がフォローしました`,
-    follow_post: preview ? `${senderName}が「${preview}」を投稿しました` : `${senderName}がリュイートしました`,
-    gift: `${senderName}からプレゼントが届きました。`,
-    mention: `${senderName}からメンションが来ました`,
-    repost: preview ? `${senderName}があなたの投稿「${preview}」を引用しました` : `${senderName}があなたの投稿を引用しました`,
-  };
-
-  const bodyText = messages[record.notification_type] || "新しい通知があります";
   const url = record.notification_type === "follow"
     ? `/profile/${record.sender_id}`
-    : record.post_id ? `/post/${record.post_id}` : "/";
+    : record.notification_type === "challenge" ? "/challenges" : record.post_id ? `/post/${record.post_id}` : "/";
 
   const vibrateCol = vibrateMap[record.notification_type] || "vibrate_like";
   const vibrate = notifSettings?.[vibrateCol] ?? true;
