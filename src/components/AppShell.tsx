@@ -184,28 +184,32 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
       {/* お知らせポップアップ（自動表示） */}
       {popupAnnouncement && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full shadow-xl flex flex-col max-h-[80vh]">
-            <div className="flex items-center justify-between p-4 pb-0">
-              <h3 className="font-bold text-base">📢 お知らせ</h3>
-              <button onClick={() => dismissPopup(popupAnnouncement.id)}
-                className="text-gray-500 text-xl cursor-pointer">
-                <i className="fas fa-times" />
-              </button>
-            </div>
-            <div className="overflow-y-auto p-4 pt-3">
-              <p className="text-sm whitespace-pre-wrap">{popupAnnouncement.content}</p>
-              <p className="text-xs text-gray-400 mt-3">{new Date(popupAnnouncement.created_at).toLocaleString("ja-JP")}</p>
-            </div>
-            <div className="p-4 pt-0 space-y-2">
-              <button onClick={() => markAnnouncementRead(popupAnnouncement.id)}
-                className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
-                既読にする
-              </button>
-              <button onClick={() => dismissPopup(popupAnnouncement.id)}
-                className="w-full text-xs text-gray-500 cursor-pointer bg-transparent border-none">
-                後で見る
-              </button>
+        <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto p-4" onClick={() => dismissPopup(popupAnnouncement.id)}>
+          <div className="flex items-center justify-center min-h-full">
+            <div className="bg-white rounded-xl max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-4">
+                <h3 className="font-bold text-base">📢 お知らせ</h3>
+                <button onClick={() => dismissPopup(popupAnnouncement.id)}
+                  className="text-gray-500 text-xl cursor-pointer">
+                  <i className="fas fa-times" />
+                </button>
+              </div>
+              <div className="px-4 pb-4">
+                <p className="text-sm whitespace-pre-wrap">{popupAnnouncement.content}</p>
+                <p className="text-xs text-gray-400 mt-3">{new Date(popupAnnouncement.created_at).toLocaleString("ja-JP")}</p>
+              </div>
+              <div className="px-4 pb-4 space-y-2">
+                <button onClick={() => markAnnouncementRead(popupAnnouncement.id)}
+                  className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
+                  既読にする
+                </button>
+                <div className="text-center">
+                  <button onClick={() => dismissPopup(popupAnnouncement.id)}
+                    className="text-xs text-gray-500 cursor-pointer bg-transparent border-none">
+                    後で見る
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
