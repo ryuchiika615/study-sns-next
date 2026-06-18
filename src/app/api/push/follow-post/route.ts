@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const { data: notifSettings } = await admin
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end")
+      .select("quiet_hours_start, quiet_hours_end, vibrate_follow_post")
       .eq("user_id", follower.follower_id)
       .maybeSingle();
 
@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
 
     for (const sub of subscriptions) {
       try {
+        const vibrate = notifSettings?.vibrate_follow_post ?? true;
         await webpush.sendNotification({
           endpoint: sub.endpoint,
           keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
           title: "リュッター",
           body: `${senderName}が投稿しました`,
           url: `/post/${post_id}`,
+          vibrate,
         }));
         sent++;
       } catch (err: any) {

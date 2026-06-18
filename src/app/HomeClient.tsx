@@ -250,6 +250,11 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   };
 
   const pollNotifications = async () => {
+    // Refresh vibration settings each poll
+    fetch("/api/notification-settings").then(r => r.ok && r.json()).then(d => {
+      if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true };
+    }).catch(() => {});
+
     const [notifResult, countResult] = await Promise.all([
       supabase.from("notifications")
         .select("id, notification_type, sender_id, post_id, created_at, sender:sender_id(id, display_name, username)")
