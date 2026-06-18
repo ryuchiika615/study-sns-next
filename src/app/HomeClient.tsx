@@ -433,6 +433,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       p_image_url: imageUrls[0] || null,
       p_image_urls: imageUrls.length > 0 ? imageUrls : null,
       p_study_date: studyDateVal,
+      p_quote_post_id: null,
     });
 
     setIsSubmitting(false);

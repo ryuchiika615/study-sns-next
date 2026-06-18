@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   const [notifSettingsResult, subscriptionsResult, senderResult] = await Promise.all([
     admin
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement, vibrate_challenge")
+      .select("quiet_hours_start, quiet_hours_end, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
       .eq("user_id", record.recipient_id)
       .maybeSingle(),
     admin

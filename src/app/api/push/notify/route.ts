@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", recipient_id),
     admin
       .from("notification_settings")
-      .select("vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement, vibrate_challenge")
+      .select("vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
       .eq("user_id", recipient_id)
       .maybeSingle(),
   ]);
