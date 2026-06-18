@@ -56,8 +56,12 @@ export interface NotificationSettings {
   quiet_hours_start: string | null;
   quiet_hours_end: string | null;
   daily_summary: boolean;
-  sound_enabled: boolean;
-  vibration_enabled: boolean;
+  vibrate_like: boolean;
+  vibrate_reply: boolean;
+  vibrate_follow: boolean;
+  vibrate_mention: boolean;
+  vibrate_gift: boolean;
+  vibrate_follow_post: boolean;
 }
 
 export interface MutedUser {

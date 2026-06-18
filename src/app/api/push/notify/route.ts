@@ -14,6 +14,15 @@ function ensureVapid() {
   return true;
 }
 
+const VIBRATE_MAP: Record<string, string> = {
+  like: "vibrate_like",
+  reply: "vibrate_reply",
+  follow: "vibrate_follow",
+  follow_post: "vibrate_follow_post",
+  gift: "vibrate_gift",
+  mention: "vibrate_mention",
+};
+
 export async function POST(request: NextRequest) {
   if (!ensureVapid()) {
     return NextResponse.json({ error: "VAPID not configured" }, { status: 500 });
@@ -45,7 +54,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", recipient_id),
     admin
       .from("notification_settings")
-      .select("sound_enabled, vibration_enabled")
+      .select("vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post")
       .eq("user_id", recipient_id)
       .maybeSingle(),
   ]);
@@ -53,9 +62,9 @@ export async function POST(request: NextRequest) {
   const subscriptions = subscriptionsResult.data;
   if (!subscriptions?.length) return NextResponse.json({ ok: true, sent: 0 });
 
-  const notifSettings = notifSettingsResult.data;
-  const soundEnabled = notifSettings?.sound_enabled ?? false;
-  const vibrationEnabled = notifSettings?.vibration_enabled ?? true;
+  const notifSettings: any = notifSettingsResult.data;
+  const vibrateCol = VIBRATE_MAP[type] || "vibrate_like";
+  const vibrate = notifSettings?.[vibrateCol] ?? true;
 
   const { data: sender } = await admin
     .from("profiles")
@@ -89,8 +98,7 @@ export async function POST(request: NextRequest) {
         title: "リュッター",
         body: bodyText,
         url,
-        sound_enabled: soundEnabled,
-        vibration_enabled: vibrationEnabled,
+        vibrate,
       }));
       sent++;
     } catch (err: any) {

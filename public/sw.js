@@ -8,20 +8,16 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("push", (event) => {
   const data = event.data?.json() || {};
-  const { title, body, icon, url, sound_enabled, vibration_enabled } = data;
-
-  const silent = !sound_enabled && !vibration_enabled;
-  const options = {
-    body: body || "",
-    icon: icon || "/icon-192.png",
-    badge: "/icon-192.png",
-    silent,
-    vibrate: vibration_enabled ? [200, 100, 200] : undefined,
-    data: { url: url || "/" },
-  };
+  const { title, body, icon, url, vibrate } = data;
 
   event.waitUntil(
-    self.registration.showNotification(title || "リュッター", options)
+    self.registration.showNotification(title || "リュッター", {
+      body: body || "",
+      icon: icon || "/icon-192.png",
+      badge: "/icon-192.png",
+      vibrate: vibrate ? [200, 100, 200] : undefined,
+      data: { url: url || "/" },
+    })
   );
 });
 

@@ -11,7 +11,7 @@ import { useToast } from "@/components/ToastProvider";
 import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
-import { formatStudyTime, getOptimizedIconUrl, compressImage, playNotificationSound, vibrateDevice } from "@/lib/utils";
+import { formatStudyTime, getOptimizedIconUrl, compressImage, vibrateDevice } from "@/lib/utils";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
@@ -63,8 +63,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const notifSoundRef = useRef(false);
-  const notifVibrateRef = useRef(true);
+  const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true });
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -291,8 +290,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       } else if (lastNotif.notification_type === "mention") {
         addToast({ message: `${sender}からメンションが来ました`, type: "info", href });
       }
-      if (notifSoundRef.current) playNotificationSound();
-      if (notifVibrateRef.current) vibrateDevice();
+      if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
     setUnreadCount(unread);
 
@@ -322,7 +320,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     pollAll();
     fetch("/api/daily-summary").catch(() => {});
     fetch("/api/notification-settings").then(r => r.ok && r.json()).then(d => {
-      if (d) { notifSoundRef.current = d.sound_enabled ?? false; notifVibrateRef.current = d.vibration_enabled ?? true; }
+      if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true };
     }).catch(() => {});
     notifTimer.current = setInterval(pollAll, 15000);
 
