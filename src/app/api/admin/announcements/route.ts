@@ -55,14 +55,16 @@ export async function POST(request: NextRequest) {
       .from("push_subscriptions")
       .select("endpoint, p256dh_key, auth_key, user_id");
     if (subscriptions?.length) {
-      // Get all users' vibrate_admin_announcement settings
+      // Get all users' notification settings
       const { data: settings } = await admin
         .from("notification_settings")
-        .select("user_id, vibrate_admin_announcement");
+        .select("user_id, push_admin_announcements, vibrate_admin_announcement");
+      const pushSet = new Set((settings || []).filter((s: any) => s.push_admin_announcements !== false).map((s: any) => s.user_id));
       const vibMap = new Map((settings || []).map((s: any) => [s.user_id, s.vibrate_admin_announcement ?? true]));
 
       for (const sub of subscriptions) {
         if (sub.user_id === ctx.user.id) continue; // skip sender
+        if (!pushSet.has(sub.user_id)) continue; // user disabled admin push
         try {
           const vibrate = vibMap.get(sub.user_id) ?? true;
           await webpush.sendNotification({

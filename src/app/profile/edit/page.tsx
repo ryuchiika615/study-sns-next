@@ -46,6 +46,7 @@ export default function EditProfilePage() {
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
+  const [pushAdminAnnouncements, setPushAdminAnnouncements] = useState(true);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
@@ -96,13 +97,14 @@ export default function EditProfilePage() {
 
     const { data: notifSettings } = await supabase
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, daily_summary")
+      .select("quiet_hours_start, quiet_hours_end, daily_summary, push_admin_announcements")
       .eq("user_id", uid)
       .maybeSingle();
     if (notifSettings) {
       setQuietHoursStart(notifSettings.quiet_hours_start || "");
       setQuietHoursEnd(notifSettings.quiet_hours_end || "");
       setDailySummary(notifSettings.daily_summary ?? true);
+      setPushAdminAnnouncements(notifSettings.push_admin_announcements ?? true);
     }
   };
 
@@ -195,7 +197,7 @@ export default function EditProfilePage() {
     await fetch("/api/notification-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
+      body: JSON.stringify({ push_admin_announcements: pushAdminAnnouncements, quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
     });
   };
 
@@ -563,6 +565,11 @@ export default function EditProfilePage() {
             <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>デイリーまとめ通知</span>
               <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
+                className="cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
+              <span>管理者からのお知らせ</span>
+              <input type="checkbox" checked={pushAdminAnnouncements} onChange={(e) => setPushAdminAnnouncements(e.target.checked)}
                 className="cursor-pointer" />
             </label>
 
