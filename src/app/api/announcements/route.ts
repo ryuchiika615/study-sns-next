@@ -23,7 +23,7 @@ export async function GET() {
 
   const { data: unread } = await supabase
     .from("admin_announcements")
-    .select("id, content, created_at")
+    .select("id, content, image_url, created_at")
     .eq("is_deleted", false)
     .not("id", "in", readFilter)
     .order("created_at", { ascending: false });

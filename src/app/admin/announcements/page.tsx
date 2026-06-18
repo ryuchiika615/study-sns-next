@@ -8,6 +8,8 @@ import Link from "next/link";
 export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [content, setContent] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [surveys, setSurveys] = useState<any[]>([]);
@@ -45,6 +47,29 @@ export default function AdminAnnouncementsPage() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `announcements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage.from("announcement-images").upload(path, file);
+    if (error) {
+      setError("画像のアップロードに失敗しました: " + error.message);
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("announcement-images").getPublicUrl(path);
+    setImageUrl(urlData?.publicUrl || "");
+    setUploading(false);
+  };
+
+  const removeImage = () => {
+    setImageUrl("");
+    const fileInput = document.getElementById("announcement-image") as HTMLInputElement;
+    if (fileInput) fileInput.value = "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -54,11 +79,12 @@ export default function AdminAnnouncementsPage() {
       const res = await fetch("/api/admin/announcements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: content.trim() }),
+        body: JSON.stringify({ content: content.trim(), image_url: imageUrl || undefined }),
       });
       if (res.ok) {
         setMessage("お知らせを送信しました！");
         setContent("");
+        removeImage();
         fetchAnnouncements();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -142,7 +168,23 @@ export default function AdminAnnouncementsPage() {
           <h2 className="font-bold">新規お知らせ</h2>
           <textarea value={content} onChange={(e) => setContent(e.target.value)}
             className="w-full rounded-lg border-gray-300 text-sm" rows={4} placeholder="お知らせ内容" required />
-          <button type="submit" className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm">
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
+            <input id="announcement-image" type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading}
+              className="text-xs w-full" />
+            {uploading && <p className="text-xs text-gray-400 mt-1">アップロード中...</p>}
+            {imageUrl && (
+              <div className="relative mt-2 inline-block">
+                <img src={imageUrl} alt="" className="h-24 rounded-lg object-cover" />
+                <button type="button" onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center cursor-pointer">
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+          <button type="submit" disabled={uploading}
+            className="bg-primary text-white font-bold rounded-full px-6 py-2 text-sm disabled:opacity-50">
             送信
           </button>
         </form>
@@ -266,6 +308,7 @@ export default function AdminAnnouncementsPage() {
           {announcements.map((a: any) => (
             <div key={a.id} className="p-4 border-b border-gray-100 last:border-0 flex justify-between items-start gap-3">
               <div className="flex-1 min-w-0">
+                {a.image_url && <img src={a.image_url} alt="" className="h-20 rounded-lg object-cover mb-2" />}
                 <p className="text-sm whitespace-pre-wrap">{a.content}</p>
                 <p className="text-xs text-gray-400 mt-1">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
               </div>

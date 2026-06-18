@@ -38,12 +38,12 @@ export async function POST(request: NextRequest) {
   const ctx = await checkAdmin();
   if (!ctx) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { content } = await request.json();
+  const { content, image_url } = await request.json();
   if (!content?.trim()) return NextResponse.json({ error: "content required" }, { status: 400 });
 
   const { data, error } = await ctx.supabase
     .from("admin_announcements")
-    .insert({ content: content.trim() })
+    .insert({ content: content.trim(), image_url: image_url || null })
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
