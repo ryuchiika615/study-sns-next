@@ -1,5 +1,7 @@
 import {
   Chart,
+  BarController,
+  DoughnutController,
   BarElement,
   ArcElement,
   CategoryScale,
@@ -8,5 +10,5 @@ import {
   Tooltip,
   Title,
 } from "chart.js";
-Chart.register(BarElement, ArcElement, CategoryScale, LinearScale, Legend, Tooltip, Title);
+Chart.register(BarController, DoughnutController, BarElement, ArcElement, CategoryScale, LinearScale, Legend, Tooltip, Title);
 export { Chart };
