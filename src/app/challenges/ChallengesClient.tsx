@@ -37,12 +37,15 @@ export default function ChallengesClient({ userId }: { userId: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const [progress, setProgress] = useState<Record<string, { challenger_minutes: number; opponent_minutes: number }>>({});
+
   const fetchChallenges = async () => {
     const res = await fetch("/api/challenges");
     if (res.ok) {
       const data = await res.json();
       setOutgoing(data.outgoing || []);
       setIncoming(data.incoming || []);
+      setProgress(data.progress || {});
     }
     setLoading(false);
   };
@@ -67,6 +70,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
 
   const handleCreate = async () => {
     if (!selectedOpponent || !challengeMessage) return;
+    if (!challengeTarget || challengeTarget < 1) { setError("目標値を設定してください"); return; }
     setSubmitting(true);
     setError("");
     const res = await fetch("/api/challenges", {
@@ -160,8 +164,17 @@ export default function ChallengesClient({ userId }: { userId: string }) {
           <div>
             <h3 className="text-sm font-bold text-gray-500 mb-2">📩 仕掛けられた勝負</h3>
             <div className="space-y-2">
-              {incoming.map((c) => (
-                <div key={c.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              {incoming.map((c) => {
+                const p = progress[c.id];
+                const isChallenger = c.challenger_id === userId;
+                const myMinutes = isChallenger ? p?.challenger_minutes : p?.opponent_minutes;
+                const theirMinutes = isChallenger ? p?.opponent_minutes : p?.challenger_minutes;
+                const myProgress = c.target_value > 0 ? Math.min(100, ((myMinutes || 0) / c.target_value) * 100) : 0;
+                const theirProgress = c.target_value > 0 ? Math.min(100, ((theirMinutes || 0) / c.target_value) * 100) : 0;
+                const won = c.status === "completed" && c.winner_id === userId;
+                const lost = c.status === "completed" && c.winner_id && c.winner_id !== userId;
+                return (
+                <div key={c.id} className={`bg-white rounded-xl shadow-sm border p-4 ${won ? "border-yellow-400 bg-yellow-50" : lost ? "border-gray-200 opacity-70" : "border-gray-100"}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                       {c.challenger?.icon_url ? (
@@ -174,8 +187,31 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                       <p className="font-bold text-sm">{c.challenger?.display_name || c.challenger?.username || "ユーザー"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{c.message}</p>
                     </div>
-                    <div>{statusLabel(c.status)}</div>
+                    <div>
+                      {won ? <span className="text-yellow-500 text-xs font-bold">🏆 勝利！</span> : lost ? <span className="text-red-400 text-xs font-bold">敗北</span> : statusLabel(c.status)}
+                    </div>
                   </div>
+                  {c.status === "accepted" && p && (
+                    <div className="mt-3 space-y-2">
+                      <div>
+                        <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                          <span>あなた ({myMinutes || 0}分)</span>
+                          <span>目標 {c.target_value}分</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${myProgress}%` }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                          <span>{c.challenger?.display_name || c.challenger?.username || "相手"} ({theirMinutes || 0}分)</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-orange-400 h-2 rounded-full transition-all" style={{ width: `${theirProgress}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {c.status === "pending" && (
                     <div className="flex gap-2 mt-3">
                       <button onClick={() => handleRespond(c.id, "accept")}
@@ -188,8 +224,13 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                       </button>
                     </div>
                   )}
+                  {c.status === "completed" && c.winner_id && (
+                    <p className="text-xs text-center mt-2 font-bold">
+                      {won ? "🎉 おめでとう！あなたの勝ちです！" : lost ? `😢 ${c.challenger?.display_name || c.challenger?.username || "相手"}の勝ち...` : ""}
+                    </p>
+                  )}
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         )}
@@ -199,8 +240,17 @@ export default function ChallengesClient({ userId }: { userId: string }) {
           <div>
             <h3 className="text-sm font-bold text-gray-500 mb-2">🔥 仕掛けた勝負</h3>
             <div className="space-y-2">
-              {outgoing.map((c) => (
-                <div key={c.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              {outgoing.map((c) => {
+                const p = progress[c.id];
+                const isChallenger = c.challenger_id === userId;
+                const myMinutes = isChallenger ? p?.challenger_minutes : p?.opponent_minutes;
+                const theirMinutes = isChallenger ? p?.opponent_minutes : p?.challenger_minutes;
+                const myProgress = c.target_value > 0 ? Math.min(100, ((myMinutes || 0) / c.target_value) * 100) : 0;
+                const theirProgress = c.target_value > 0 ? Math.min(100, ((theirMinutes || 0) / c.target_value) * 100) : 0;
+                const won = c.status === "completed" && c.winner_id === userId;
+                const lost = c.status === "completed" && c.winner_id && c.winner_id !== userId;
+                return (
+                <div key={c.id} className={`bg-white rounded-xl shadow-sm border p-4 ${won ? "border-yellow-400 bg-yellow-50" : lost ? "border-gray-200 opacity-70" : "border-gray-100"}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                       {c.opponent?.icon_url ? (
@@ -213,10 +263,38 @@ export default function ChallengesClient({ userId }: { userId: string }) {
                       <p className="font-bold text-sm">{c.opponent?.display_name || c.opponent?.username || "ユーザー"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{c.message}</p>
                     </div>
-                    <div>{statusLabel(c.status)}</div>
+                    <div>
+                      {won ? <span className="text-yellow-500 text-xs font-bold">🏆 勝利！</span> : lost ? <span className="text-red-400 text-xs font-bold">敗北</span> : statusLabel(c.status)}
+                    </div>
                   </div>
+                  {c.status === "accepted" && p && (
+                    <div className="mt-3 space-y-2">
+                      <div>
+                        <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                          <span>あなた ({myMinutes || 0}分)</span>
+                          <span>目標 {c.target_value}分</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${myProgress}%` }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                          <span>{c.opponent?.display_name || c.opponent?.username || "相手"} ({theirMinutes || 0}分)</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-orange-400 h-2 rounded-full transition-all" style={{ width: `${theirProgress}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {c.status === "completed" && c.winner_id && (
+                    <p className="text-xs text-center mt-2 font-bold">
+                      {won ? "🎉 おめでとう！あなたの勝ちです！" : lost ? `😢 ${c.opponent?.display_name || c.opponent?.username || "相手"}の勝ち...` : ""}
+                    </p>
+                  )}
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         )}

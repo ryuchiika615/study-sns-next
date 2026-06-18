@@ -10,6 +10,52 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const admin = createAdminClient();
+
+  // Lazy evaluation: check accepted challenges that might have been completed
+  const { data: activeChallenges } = await admin
+    .from("challenges")
+    .select("id, challenger_id, opponent_id, target_value, accepted_at")
+    .eq("status", "accepted")
+    .gt("target_value", 0);
+
+  if (activeChallenges) {
+    for (const c of activeChallenges) {
+      const [challengerPosts, opponentPosts] = await Promise.all([
+        admin
+          .from("posts")
+          .select("study_minutes")
+          .eq("user_id", c.challenger_id)
+          .gte("created_at", c.accepted_at),
+        admin
+          .from("posts")
+          .select("study_minutes")
+          .eq("user_id", c.opponent_id)
+          .gte("created_at", c.accepted_at),
+      ]);
+
+      const challengerTotal = (challengerPosts.data || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0);
+      const opponentTotal = (opponentPosts.data || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0);
+
+      let winnerId: string | null = null;
+      if (challengerTotal >= c.target_value && opponentTotal >= c.target_value) {
+        winnerId = challengerTotal >= opponentTotal ? c.challenger_id : c.opponent_id;
+      } else if (challengerTotal >= c.target_value) {
+        winnerId = c.challenger_id;
+      } else if (opponentTotal >= c.target_value) {
+        winnerId = c.opponent_id;
+      }
+
+      if (winnerId) {
+        await admin
+          .from("challenges")
+          .update({ status: "completed", winner_id: winnerId, completed_at: new Date().toISOString() })
+          .eq("id", c.id)
+          .eq("status", "accepted");
+      }
+    }
+  }
+
   const [challengerResult, opponentResult] = await Promise.all([
     supabase
       .from("challenges")
@@ -23,9 +69,34 @@ export async function GET() {
       .order("created_at", { ascending: false }),
   ]);
 
+  // Add progress data for accepted challenges
+  const allChallenges = [...(challengerResult.data || []), ...(opponentResult.data || [])];
+  const activeOnes = allChallenges.filter((c: any) => c.status === "accepted" && c.target_value > 0);
+
+  const progressMap: Record<string, { challenger_minutes: number; opponent_minutes: number }> = {};
+  await Promise.all(activeOnes.map(async (c: any) => {
+    const [challengerPosts, opponentPosts] = await Promise.all([
+      admin
+        .from("posts")
+        .select("study_minutes")
+        .eq("user_id", c.challenger_id)
+        .gte("created_at", c.accepted_at),
+      admin
+        .from("posts")
+        .select("study_minutes")
+        .eq("user_id", c.opponent_id)
+        .gte("created_at", c.accepted_at),
+    ]);
+    progressMap[c.id] = {
+      challenger_minutes: (challengerPosts.data || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0),
+      opponent_minutes: (opponentPosts.data || []).reduce((sum, p) => sum + (p.study_minutes || 0), 0),
+    };
+  }));
+
   return NextResponse.json({
     outgoing: challengerResult.data || [],
     incoming: opponentResult.data || [],
+    progress: progressMap,
   });
 }
 
@@ -40,6 +111,9 @@ export async function POST(request: NextRequest) {
   }
   if (opponent_id === user.id) {
     return NextResponse.json({ error: "自分自身には勝負を仕掛けられません" }, { status: 400 });
+  }
+  if (!target_value || target_value < 1) {
+    return NextResponse.json({ error: "目標値を設定してください" }, { status: 400 });
   }
 
   // Must be mutual follows
