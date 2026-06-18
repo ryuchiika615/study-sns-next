@@ -130,8 +130,8 @@ export default function EditProfilePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    if (username && !/^[a-zA-Z0-9_-]+$/.test(username)) {
-      setMessage("ユーザーIDは英数字と_-のみ使用できます");
+    if (username && !/^[a-zA-Z0-9_.!~()@^'"=]+$/.test(username)) {
+      setMessage("ユーザーIDに使用できない文字が含まれています");
       return;
     }
     const updateData: Record<string, any> = {
@@ -455,7 +455,7 @@ export default function EditProfilePage() {
             <label className="block text-xs font-medium text-gray-700">ユーザーID (@...)</label>
             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
               className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
-            <p className="text-[10px] text-gray-400 mt-0.5">英数字と_-のみ使用可能。変更するとURLも変わります。</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">一部記号も使用可能。変更するとURLも変わります。</p>
           </div>
 
           <div>
