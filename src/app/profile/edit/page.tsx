@@ -43,6 +43,7 @@ export default function EditProfilePage() {
   const [likedPage, setLikedPage] = useState(1);
 
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
@@ -102,6 +103,7 @@ export default function EditProfilePage() {
       .eq("user_id", uid)
       .maybeSingle();
     if (notifSettings) {
+      setQuietHoursEnabled(!!(notifSettings.quiet_hours_start && notifSettings.quiet_hours_end));
       setQuietHoursStart(notifSettings.quiet_hours_start || "");
       setQuietHoursEnd(notifSettings.quiet_hours_end || "");
       setDailySummary(notifSettings.daily_summary ?? true);
@@ -199,7 +201,7 @@ export default function EditProfilePage() {
     await fetch("/api/notification-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ push_admin_announcements: pushAdminAnnouncements, quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary, notify_challenge: notifyChallenge }),
+      body: JSON.stringify({ push_admin_announcements: pushAdminAnnouncements, quiet_hours_start: quietHoursEnabled ? quietHoursStart : null, quiet_hours_end: quietHoursEnabled ? quietHoursEnd : null, daily_summary: dailySummary, notify_challenge: notifyChallenge }),
     });
   };
 
@@ -551,18 +553,25 @@ export default function EditProfilePage() {
 
           <div className="border-t border-gray-100 pt-2 space-y-2">
             <p className="text-xs font-medium text-gray-700">通知設定</p>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-500">静音開始</label>
-                <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
+            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
+              <span>静音モード</span>
+              <input type="checkbox" checked={quietHoursEnabled} onChange={(e) => setQuietHoursEnabled(e.target.checked)}
+                className="cursor-pointer" />
+            </label>
+            {quietHoursEnabled && (
+              <div className="grid grid-cols-2 gap-2 pl-4">
+                <div>
+                  <label className="block text-xs text-gray-500">開始</label>
+                  <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
+                    className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500">終了</label>
+                  <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
+                    className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500">静音終了</label>
-                <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
-              </div>
-            </div>
+            )}
             <p className="text-[10px] text-gray-400">設定した時間帯はプッシュ通知が送信されなくなります</p>
             <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>デイリーまとめ通知</span>
