@@ -9,6 +9,7 @@ export default function GachaPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [titleProgress, setTitleProgress] = useState<{ owned: number; total: number } | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -21,6 +22,14 @@ export default function GachaPage() {
       });
       supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", data.user.id).eq("is_read", false).neq("notification_type", "follow_post").then(({ count }) => {
         setUnreadCount(count || 0);
+      });
+      // Title collection progress
+      supabase.from("gacha_items").select("id", { count: "exact", head: true }).eq("category", "title").then(({ count: total }) => {
+        if (!total) return;
+        supabase.from("user_items").select("id, item:item_id(category)").eq("user_id", data.user.id).then(({ data: items }) => {
+          const owned = items?.filter((ui: any) => ui.item?.category === "title").length || 0;
+          setTitleProgress({ owned, total });
+        });
       });
     });
   }, []);
@@ -95,6 +104,19 @@ export default function GachaPage() {
             <i className="fas fa-info-circle mr-1" /> 1日1回、リュイートするとポイントGET！
           </div>
         </div>
+
+        {/* 称号コレクション進捗 */}
+        {titleProgress && titleProgress.total > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-bold">称号コレクション</p>
+              <p className="text-xs text-gray-500">{titleProgress.owned}/{titleProgress.total} ({Math.round(titleProgress.owned/titleProgress.total*100)}%)</p>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-yellow-400 to-purple-500 rounded-full transition-all" style={{ width: `${titleProgress.total > 0 ? titleProgress.owned/titleProgress.total*100 : 0}%` }} />
+            </div>
+          </div>
+        )}
 
       </div>
     </AppShell>

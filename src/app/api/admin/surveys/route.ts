@@ -1,7 +1,17 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
+import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
+
+function ensureVapid() {
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) return false;
+  webpush.setVapidDetails("mailto:admin@ryutter.app", publicKey, privateKey);
+  return true;
+}
 
 async function checkAdmin() {
   const supabase = createServerSupabase();
@@ -68,6 +78,43 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Fire-and-forget push to all users with subscriptions
+  if (ensureVapid()) {
+    const admin = createAdminClient();
+    const { data: subscriptions } = await admin
+      .from("push_subscriptions")
+      .select("endpoint, p256dh_key, auth_key, user_id");
+    if (subscriptions?.length) {
+      const { data: settings } = await admin
+        .from("notification_settings")
+        .select("user_id, push_admin_announcements, vibrate_admin_announcement");
+      const pushSet = new Set((settings || []).filter((s: any) => s.push_admin_announcements !== false).map((s: any) => s.user_id));
+      const vibMap = new Map((settings || []).map((s: any) => [s.user_id, s.vibrate_admin_announcement ?? true]));
+
+      for (const sub of subscriptions) {
+        if (sub.user_id === ctx.user.id) continue;
+        if (!pushSet.has(sub.user_id)) continue;
+        try {
+          const vibrate = vibMap.get(sub.user_id) ?? true;
+          await webpush.sendNotification({
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
+          }, JSON.stringify({
+            title: "リュッター",
+            body: "アンケートが届きました: " + (data.question.length > 50 ? data.question.slice(0, 50) + "…" : data.question),
+            url: "/",
+            vibrate,
+          }));
+        } catch (err: any) {
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await admin.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+          }
+        }
+      }
+    }
+  }
+
   return NextResponse.json({ survey: data });
 }
 

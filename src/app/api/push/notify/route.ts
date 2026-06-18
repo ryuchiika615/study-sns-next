@@ -96,17 +96,38 @@ export async function POST(request: NextRequest) {
 
   const senderName = sender?.display_name || sender?.username || "誰か";
 
-  const messages: Record<string, string> = {
-    like: `${senderName}がリアクションしました`,
-    reply: `${senderName}からコメントが来ました`,
-    follow: `${senderName}がフォローしました`,
-    follow_post: `${senderName}がリュイートしました`,
-    gift: `${senderName}からプレゼントが届きました。`,
-    mention: `${senderName}からメンションが来ました`,
-    admin_announcement: `お知らせが届きました`,
-  };
+  // Include post content preview
+  let preview = "";
+  if (post_id) {
+    const { data: post } = await admin
+      .from("posts")
+      .select("content")
+      .eq("id", post_id)
+      .maybeSingle();
+    if (post?.content) {
+      preview = post.content.length > 30 ? post.content.slice(0, 30) + "…" : post.content;
+    }
+  }
 
-  const bodyText = messages[type] || "新しい通知があります";
+  let bodyText: string;
+  if (type === "like" && preview) {
+    bodyText = `${senderName}が「${preview}」にリアクションしました`;
+  } else if (type === "reply" && preview) {
+    bodyText = `${senderName}が「${preview}」に返信しました`;
+  } else if (type === "follow_post" && preview) {
+    bodyText = `${senderName}が「${preview}」を投稿しました`;
+  } else {
+    const messages: Record<string, string> = {
+      like: `${senderName}がリアクションしました`,
+      reply: `${senderName}からコメントが来ました`,
+      follow: `${senderName}がフォローしました`,
+      follow_post: `${senderName}がリュイートしました`,
+      gift: `${senderName}からプレゼントが届きました。`,
+      mention: `${senderName}からメンションが来ました`,
+      admin_announcement: `お知らせが届きました`,
+    };
+    bodyText = messages[type] || "新しい通知があります";
+  }
   const url = type === "follow"
     ? `/profile/${user.id}`
     : post_id ? `/post/${post_id}` : "/";

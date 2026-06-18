@@ -100,11 +100,24 @@ export async function POST(request: NextRequest) {
 
   const senderName = sender?.display_name || sender?.username || "誰か";
 
+  // Include post content preview for like/reply/follow_post
+  let preview = "";
+  if (record.post_id) {
+    const { data: post } = await admin
+      .from("posts")
+      .select("content")
+      .eq("id", record.post_id)
+      .maybeSingle();
+    if (post?.content) {
+      preview = post.content.length > 30 ? post.content.slice(0, 30) + "…" : post.content;
+    }
+  }
+
   const messages: Record<string, string> = {
-    like: `${senderName}がリアクションしました`,
-    reply: `${senderName}からコメントが来ました`,
+    like: preview ? `${senderName}が「${preview}」にリアクションしました` : `${senderName}がリアクションしました`,
+    reply: preview ? `${senderName}が「${preview}」に返信しました` : `${senderName}からコメントが来ました`,
     follow: `${senderName}がフォローしました`,
-    follow_post: `${senderName}がリュイートしました`,
+    follow_post: preview ? `${senderName}が「${preview}」を投稿しました` : `${senderName}がリュイートしました`,
     gift: `${senderName}からプレゼントが届きました。`,
     mention: `${senderName}からメンションが来ました`,
   };

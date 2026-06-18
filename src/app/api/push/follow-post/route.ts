@@ -25,6 +25,17 @@ export async function POST(request: NextRequest) {
 
   const senderName = senderProfile?.display_name || senderProfile?.username || "誰か";
 
+  // Get post content preview
+  let preview = "";
+  const { data: post } = await admin
+    .from("posts")
+    .select("content")
+    .eq("id", post_id)
+    .maybeSingle();
+  if (post?.content) {
+    preview = post.content.length > 30 ? post.content.slice(0, 30) + "…" : post.content;
+  }
+
   const { data: followers } = await admin
     .from("follows")
     .select("follower_id")
@@ -82,7 +93,7 @@ export async function POST(request: NextRequest) {
           keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
         }, JSON.stringify({
           title: "リュッター",
-          body: `${senderName}が投稿しました`,
+          body: preview ? `${senderName}が「${preview}」を投稿しました` : `${senderName}が投稿しました`,
           url: `/post/${post_id}`,
           vibrate,
         }));
