@@ -15,7 +15,6 @@ const PER_PAGE = 10;
 type ProfileClientProps = {
   user: { id: string };
   profile: any;
-  initialPosts: any[];
   isFollowing: boolean;
   subjectLabels: string;
   subjectData: string;
@@ -31,7 +30,7 @@ type ProfileClientProps = {
 };
 
 export default function ProfileClient({
-  user, profile, initialPosts, isFollowing: initialFollow,
+  user, profile, isFollowing: initialFollow,
   subjectLabels, subjectData, subjectColors,
   followersCount, followingCount, postCount,
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
@@ -41,9 +40,12 @@ export default function ProfileClient({
   const [isFollowing, setIsFollowing] = useState(initialFollow);
   const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
   const [showNotifyPopover, setShowNotifyPopover] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts");
-  const [posts, setPosts] = useState(initialPosts);
+  const [section, setSection] = useState<"posts" | "likes" | null>(null);
+  const [posts, setPosts] = useState<any[]>([]);
   const [postPage, setPostPage] = useState(1);
+  const [postLoading, setPostLoading] = useState(false);
+  const [postError, setPostError] = useState("");
+  const [hasMorePosts, setHasMorePosts] = useState(true);
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [likedPage, setLikedPage] = useState(1);
@@ -113,6 +115,32 @@ export default function ProfileClient({
     if (!res.ok) setNotifySettings(prev as any);
   };
 
+  const loadPosts = async () => {
+    setPostLoading(true);
+    setPostError("");
+    try {
+      const res = await fetch(`/api/posts/user?userId=${profile.id}&currentUserId=${user.id}&page=1`);
+      if (!res.ok) { setPostError("読み込み失敗"); setPostLoading(false); return; }
+      const data = await res.json();
+      setPosts(data.posts || []);
+      setPostPage(1);
+      setHasMorePosts((data.posts || []).length >= 10);
+    } catch (e: any) {
+      setPostError(e.message || "ネットワークエラー");
+    }
+    setPostLoading(false);
+  };
+
+  const loadMorePosts = async () => {
+    const next = postPage + 1;
+    const res = await fetch(`/api/posts/user?userId=${profile.id}&currentUserId=${user.id}&page=${next}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setPosts((prev) => [...prev, ...(data.posts || [])]);
+    setPostPage(next);
+    setHasMorePosts((data.posts || []).length >= 10);
+  };
+
   const loadLikedIds = async () => {
     setLikedLoading(true);
     setLikedError("");
@@ -158,8 +186,6 @@ export default function ProfileClient({
     await loadLikedPosts(likedIds, next);
   };
 
-  const visiblePosts = posts.slice(0, postPage * PER_PAGE);
-  const hasMorePosts = visiblePosts.length < posts.length;
   const hasMoreLiked = likedPosts.length < likedIds.length;
 
   return (
@@ -294,23 +320,50 @@ export default function ProfileClient({
           </div>
         )}
 
-        {/* ===== タブ ===== */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="flex border-b border-gray-100">
-            {["posts", "likes"].map((tab) => (
-              <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "likes") loadLikedIds(); }}
-                className={`flex-1 py-3 text-sm font-bold text-center cursor-pointer transition ${
-                  activeTab === tab ? "text-primary border-b-2 border-primary bg-blue-50/50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                }`}>
-                <i className={`${tab === "posts" ? "far fa-file-alt" : "far fa-heart"} mr-1.5`} />
-                {tab === "posts" ? "リュイート" : "いいね"}
-              </button>
-            ))}
+        {/* ===== 投稿/いいね セクション ===== */}
+        {!section && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 space-y-2">
+            <button onClick={() => { setSection("posts"); loadPosts(); }}
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition cursor-pointer border border-gray-100">
+              <i className="far fa-file-alt text-lg text-blue-500 w-6 text-center" />
+              <div className="text-left">
+                <p className="text-sm font-bold">リュイートを見る</p>
+                <p className="text-xs text-gray-400">{postCount}件の投稿</p>
+              </div>
+            </button>
+            <button onClick={() => { setSection("likes"); loadLikedIds(); }}
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition cursor-pointer border border-gray-100">
+              <i className="far fa-heart text-lg text-red-500 w-6 text-center" />
+              <div className="text-left">
+                <p className="text-sm font-bold">いいねを見る</p>
+                <p className="text-xs text-gray-400">いいねしたリュイート</p>
+              </div>
+            </button>
           </div>
+        )}
 
-          <div className="p-3">
-            <div className={`transition-opacity duration-200 ${activeTab === "posts" ? "opacity-100" : "hidden"}`}>
-              {visiblePosts.map((post: any) => (
+        {section === "posts" && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center justify-between p-3 border-b border-gray-100">
+              <button onClick={() => { setSection(null); setPosts([]); }}
+                className="flex items-center gap-1 text-sm text-gray-500 cursor-pointer">
+                <i className="fas fa-arrow-left text-xs" /> 戻る
+              </button>
+              <span className="text-sm font-bold">リュイート</span>
+              <div className="w-10" />
+            </div>
+            <div className="p-3">
+              {postError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{postError}</div>}
+              {postLoading && (
+                <div className="text-center py-8">
+                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                  <p className="text-gray-400 text-sm mt-2">読み込み中...</p>
+                </div>
+              )}
+              {!postLoading && posts.length === 0 && !postError && (
+                <div className="text-center py-8 text-gray-400 text-sm">リュイートがありません</div>
+              )}
+              {posts.map((post: any) => (
                 <PostCard key={post.id} post={post} currentUserId={user.id}
                   onDelete={(id) => {
                     const idx = posts.findIndex((p: any) => p.id === id);
@@ -318,18 +371,27 @@ export default function ProfileClient({
                   }}
                   onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
               ))}
-              {visiblePosts.length > 0 && hasMorePosts && (
-                <button onClick={() => setPostPage((p) => p + 1)}
+              {posts.length > 0 && hasMorePosts && (
+                <button onClick={loadMorePosts}
                   className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
                   もっと見る
                 </button>
               )}
-              {visiblePosts.length === 0 && (
-                <div className="text-center py-8 text-gray-400 text-sm">リュイートがありません</div>
-              )}
             </div>
+          </div>
+        )}
 
-            <div className={`transition-opacity duration-200 ${activeTab === "likes" ? "opacity-100" : "hidden"}`}>
+        {section === "likes" && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center justify-between p-3 border-b border-gray-100">
+              <button onClick={() => { setSection(null); setLikedPosts([]); setLikedIds([]); }}
+                className="flex items-center gap-1 text-sm text-gray-500 cursor-pointer">
+                <i className="fas fa-arrow-left text-xs" /> 戻る
+              </button>
+              <span className="text-sm font-bold">いいね</span>
+              <div className="w-10" />
+            </div>
+            <div className="p-3">
               {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
               {likedLoading && (
                 <div className="text-center py-8">
@@ -338,23 +400,23 @@ export default function ProfileClient({
                 </div>
               )}
               {!likedLoading && likedPosts.length === 0 && !likedError && (
-                  <div className="text-center py-8 text-gray-400 text-sm">いいねしたリュイートはありません</div>
-                )}
-                {likedPosts.map((post: any) => (
-                  <PostCard key={post.id} post={post} currentUserId={user.id}
-                    onDelete={() => {}}
-                    onUpdate={() => {}} />
-                ))}
-                {hasMoreLiked && (
-                  <button onClick={loadMoreLiked}
-                    className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition"
-                    disabled={likedLoading}>
-                    もっと見る
-                  </button>
-                )}
+                <div className="text-center py-8 text-gray-400 text-sm">いいねしたリュイートはありません</div>
+              )}
+              {likedPosts.map((post: any) => (
+                <PostCard key={post.id} post={post} currentUserId={user.id}
+                  onDelete={() => {}}
+                  onUpdate={() => {}} />
+              ))}
+              {hasMoreLiked && (
+                <button onClick={loadMoreLiked}
+                  className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition"
+                  disabled={likedLoading}>
+                  もっと見る
+                </button>
+              )}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </AppShell>
   );
