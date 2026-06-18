@@ -5,12 +5,13 @@ import { createClient } from "@/lib/supabase";
 import NextImage from "next/image";
 import PostCard from "@/components/PostCard";
 import StudyTimer from "@/components/StudyTimer";
+import StudyPomodoro from "@/components/StudyPomodoro";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
 import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
-import { formatStudyTime, getOptimizedIconUrl, compressImage } from "@/lib/utils";
+import { formatStudyTime, getOptimizedIconUrl, compressImage, playNotificationSound, vibrateDevice } from "@/lib/utils";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
@@ -62,6 +63,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const notifSoundRef = useRef(false);
+  const notifVibrateRef = useRef(true);
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -288,6 +291,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       } else if (lastNotif.notification_type === "mention") {
         addToast({ message: `${sender}からメンションが来ました`, type: "info", href });
       }
+      if (notifSoundRef.current) playNotificationSound();
+      if (notifVibrateRef.current) vibrateDevice();
     }
     setUnreadCount(unread);
 
@@ -316,6 +321,9 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   useEffect(() => {
     pollAll();
     fetch("/api/daily-summary").catch(() => {});
+    fetch("/api/notification-settings").then(r => r.ok && r.json()).then(d => {
+      if (d) { notifSoundRef.current = d.sound_enabled ?? false; notifVibrateRef.current = d.vibration_enabled ?? true; }
+    }).catch(() => {});
     notifTimer.current = setInterval(pollAll, 15000);
 
     // Weekly ranking popup
@@ -467,6 +475,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} />
         </div>
+
+        <StudyPomodoro />
       </div>
 
       {/* ===== 投稿フォーム ===== */}

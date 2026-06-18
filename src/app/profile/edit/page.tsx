@@ -40,6 +40,8 @@ export default function EditProfilePage() {
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -114,13 +116,15 @@ export default function EditProfilePage() {
 
     const { data: notifSettings } = await supabase
       .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, daily_summary")
+      .select("quiet_hours_start, quiet_hours_end, daily_summary, sound_enabled, vibration_enabled")
       .eq("user_id", uid)
       .maybeSingle();
     if (notifSettings) {
       setQuietHoursStart(notifSettings.quiet_hours_start || "");
       setQuietHoursEnd(notifSettings.quiet_hours_end || "");
       setDailySummary(notifSettings.daily_summary ?? true);
+      setSoundEnabled(notifSettings.sound_enabled ?? false);
+      setVibrationEnabled(notifSettings.vibration_enabled ?? true);
     }
   };
 
@@ -176,7 +180,7 @@ export default function EditProfilePage() {
     await fetch("/api/notification-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary }),
+      body: JSON.stringify({ quiet_hours_start: quietHoursStart || null, quiet_hours_end: quietHoursEnd || null, daily_summary: dailySummary, sound_enabled: soundEnabled, vibration_enabled: vibrationEnabled }),
     });
   };
 
@@ -501,6 +505,16 @@ export default function EditProfilePage() {
             <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>デイリーまとめ通知</span>
               <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
+                className="cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
+              <span><i className="fas fa-music mr-1" /> 通知音</span>
+              <input type="checkbox" checked={soundEnabled} onChange={(e) => setSoundEnabled(e.target.checked)}
+                className="cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
+              <span><i className="fas fa-mobile-alt mr-1" /> バイブレーション</span>
+              <input type="checkbox" checked={vibrationEnabled} onChange={(e) => setVibrationEnabled(e.target.checked)}
                 className="cursor-pointer" />
             </label>
           </div>

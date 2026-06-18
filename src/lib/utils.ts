@@ -100,6 +100,30 @@ export function compressImage(file: File, quality = 0.8, maxWidth = 1920): Promi
   });
 }
 
+let audioCtx: AudioContext | null = null;
+
+export function playNotificationSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.3);
+  } catch {}
+}
+
+export function vibrateDevice(pattern: number | number[] = [200, 100, 200]) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  } catch {}
+}
+
 export function getOptimizedIconUrl(url: string | null | undefined, size = 96): string {
   if (!url) return "";
   const m = url.match(SUPABASE_STORAGE_RE);

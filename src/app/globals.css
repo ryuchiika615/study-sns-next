@@ -2,14 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --bg-body: #f2f2f6;
+    --bg-card: #ffffff;
+    --bg-surface: #f9fafb;
+    --bg-overlay: rgba(0,0,0,0.5);
+    --text-body: #0f1419;
+    --text-muted: #6b7280;
+    --text-subtle: #9ca3af;
+    --text-heading: #111827;
+    --border-card: #e5e7eb;
+    --border-subtle: #f3f4f6;
+    --ring-focus: #1d9bf0;
+  }
+  .dark {
+    --bg-body: #0f172a;
+    --bg-card: #1e293b;
+    --bg-surface: #334155;
+    --bg-overlay: rgba(0,0,0,0.7);
+    --text-body: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
+    --text-heading: #f1f5f9;
+    --border-card: #334155;
+    --border-subtle: #1e293b;
+    --ring-focus: #60a5fa;
+  }
+}
+
 body {
   padding-bottom: 75px;
-  background: #f2f2f6;
-  color: #0f1419;
+  background: var(--bg-body);
+  color: var(--text-body);
   scroll-behavior: smooth;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Dark mode overrides for Tailwind utility classes */
+html.dark .bg-white { background-color: var(--bg-card); }
+html.dark .bg-gray-50 { background-color: var(--bg-surface); }
+html.dark .bg-gray-100 { background-color: var(--bg-surface); }
+html.dark .text-gray-900 { color: var(--text-heading); }
+html.dark .text-gray-800 { color: var(--text-heading); }
+html.dark .text-gray-700 { color: var(--text-body); }
+html.dark .text-gray-600 { color: var(--text-muted); }
+html.dark .text-gray-500 { color: var(--text-muted); }
+html.dark .text-gray-400 { color: var(--text-subtle); }
+html.dark .border-gray-100 { border-color: var(--border-subtle); }
+html.dark .border-gray-200 { border-color: var(--border-card); }
+html.dark .border-gray-300 { border-color: var(--border-card); }
+html.dark .ring-gray-200 { --tw-ring-color: var(--border-card); }
+html.dark .bg-blue-50 { background-color: #1e3a5f; }
+html.dark .bg-red-50 { background-color: #3b1c2a; }
+html.dark .text-blue-600 { color: #93c5fd; }
+html.dark .text-red-600 { color: #fca5a5; }
+html.dark .hover\:bg-gray-50:hover { background-color: var(--bg-surface); }
+html.dark .hover\:bg-gray-100:hover { background-color: var(--bg-surface); }
+html.dark .hover\:text-gray-300:hover { color: #cbd5e1; }
+html.dark .hover\:text-gray-400:hover { color: var(--text-muted); }
 
 /* 称号バッジ */
 .title-badge {
@@ -78,14 +130,17 @@ body {
 
 /* 投稿カード */
 .post-card {
-  @apply bg-white rounded-xl shadow-sm border border-gray-100 mx-4 mb-3 overflow-hidden;
+  @apply rounded-xl shadow-sm border mx-4 mb-3 overflow-hidden;
+  background: var(--bg-card);
+  border-color: var(--border-card);
 }
 
 /* 固定ボトムナビ */
 .bottom-nav {
-  @apply fixed bottom-0 left-0 w-full bg-dark flex justify-around items-start pt-2 pb-6 border-t border-gray-700 z-50;
+  @apply fixed bottom-0 left-0 w-full flex justify-around items-start pt-2 pb-6 border-t z-50;
   backdrop-filter: blur(12px);
   background: rgba(17, 17, 17, 0.92);
+  border-color: #374151;
 }
 .bottom-nav a {
   @apply text-gray-500 no-underline flex flex-col items-center gap-0.5 transition-all duration-200 active:scale-90;
@@ -131,4 +186,16 @@ button:not(:disabled) {
 }
 button:not(:disabled):active {
   transform: scale(0.96);
+}
+
+/* ポモドーロ — 暗視モード対応 */
+html.dark .pomodoro-card {
+  background: #1a2332 !important;
+  border-color: #2d3a50 !important;
+}
+html.dark .pomodoro-timer {
+  color: #fbbf24 !important;
+}
+html.dark .pomodoro-label {
+  color: #94a3b8 !important;
 }

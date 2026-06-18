@@ -38,12 +38,24 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data: subscriptions } = await admin
-    .from("push_subscriptions")
-    .select("endpoint, p256dh_key, auth_key")
-    .eq("user_id", recipient_id);
+  const [subscriptionsResult, notifSettingsResult] = await Promise.all([
+    admin
+      .from("push_subscriptions")
+      .select("endpoint, p256dh_key, auth_key")
+      .eq("user_id", recipient_id),
+    admin
+      .from("notification_settings")
+      .select("sound_enabled, vibration_enabled")
+      .eq("user_id", recipient_id)
+      .maybeSingle(),
+  ]);
 
+  const subscriptions = subscriptionsResult.data;
   if (!subscriptions?.length) return NextResponse.json({ ok: true, sent: 0 });
+
+  const notifSettings = notifSettingsResult.data;
+  const soundEnabled = notifSettings?.sound_enabled ?? false;
+  const vibrationEnabled = notifSettings?.vibration_enabled ?? true;
 
   const { data: sender } = await admin
     .from("profiles")
@@ -77,6 +89,8 @@ export async function POST(request: NextRequest) {
         title: "リュッター",
         body: bodyText,
         url,
+        sound_enabled: soundEnabled,
+        vibration_enabled: vibrationEnabled,
       }));
       sent++;
     } catch (err: any) {

@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import { useTheme } from "./ThemeProvider";
 
 export function Sidebar() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const supabase = createClient();
 
   useEffect(() => {
@@ -58,6 +60,11 @@ export function Sidebar() {
         <Link href="/profile/edit" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-user-gear w-6 text-center mr-3" /> 設定
         </Link>
+        <a href="javascript:void(0)" onClick={toggleTheme}
+          className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+          <i className={`fas ${theme === "dark" ? "fa-sun" : "fa-moon"} w-6 text-center mr-3`} />
+          {theme === "dark" ? "ライトモード" : "ダークモード"}
+        </a>
         {isAdmin && (
           <>
             <hr className="border-gray-700 my-5 mx-6" />

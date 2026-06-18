@@ -56,6 +56,8 @@ export interface NotificationSettings {
   quiet_hours_start: string | null;
   quiet_hours_end: string | null;
   daily_summary: boolean;
+  sound_enabled: boolean;
+  vibration_enabled: boolean;
 }
 
 export interface MutedUser {
