@@ -68,14 +68,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true, admin_announcement: true, repost: true, challenge: true });
   const [incomingChallenge, setIncomingChallenge] = useState<any>(null);
 
-  const handleDeletePost = useCallback((id: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== id));
-  }, []);
-
-  const handleUpdatePost = useCallback((id: string, data: any) => {
-    setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p));
-  }, []);
-
   const dismissAchievement = useCallback(() => {
     const key = `target_achieved_${profile?.target_minutes}_${profile?.target_date || ""}`;
     localStorage.setItem(key, "1");
@@ -360,32 +352,33 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   };
 
   const pollAll = async () => {
-    await Promise.all([pollNotifications(), pollChallenges()]);
+    await pollNotifications();
+    await pollChallenges();
   };
 
   useEffect(() => {
     pollAll();
-    Promise.all([
-      fetch("/api/daily-summary").catch(() => {}),
+    fetch("/api/daily-summary").catch(() => {});
+    notifTimer.current = setInterval(pollAll, 15000);
+
+    // Weekly ranking popup
+    const now = new Date();
+    const weekNum = `${now.getFullYear()}-W${String(Math.ceil((now.getDate() + (new Date(now.getFullYear(), now.getMonth(), 1).getDay())) / 7)).padStart(2, "0")}-${now.getMonth()}`;
+    if (localStorage.getItem("dismissed_ranking_week") !== weekNum) {
       fetch("/api/rankings/current-month").then(r => r.ok && r.json()).then(d => {
-        if (d) {
-          const now = new Date();
-          const weekNum = `${now.getFullYear()}-W${String(Math.ceil((now.getDate() + (new Date(now.getFullYear(), now.getMonth(), 1).getDay())) / 7)).padStart(2, "0")}-${now.getMonth()}`;
-          if (localStorage.getItem("dismissed_ranking_week") !== weekNum) {
-            setRankingPopup(d);
-          }
-          setDismissedWeek(weekNum);
-        }
-      }).catch(() => {}),
-      fetch("/api/surveys").then(r => r.ok && r.json()).then(d => {
-        if (d?.survey) {
-          setActiveSurvey(d.survey);
-          setSurveyResponse(d.myResponse || null);
-          setSurveyResults(d.results || null);
-          setSurveyDismissed(false);
-        }
-      }).catch(() => {}),
-    ]);
+        if (d) setRankingPopup(d);
+      }).catch(() => {});
+    }
+    setDismissedWeek(weekNum);
+
+    fetch("/api/surveys").then(r => r.ok && r.json()).then(d => {
+      if (d?.survey) {
+        setActiveSurvey(d.survey);
+        setSurveyResponse(d.myResponse || null);
+        setSurveyResults(d.results || null);
+        setSurveyDismissed(false);
+      }
+    }).catch(() => {});
 
     // Target achievement check
     if (initialProfile?.target_minutes > 0 && initialTotal >= initialProfile.target_minutes) {
@@ -394,8 +387,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         setShowTargetAchievement(true);
       }
     }
-
-    notifTimer.current = setInterval(pollAll, 15000);
 
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
@@ -744,8 +735,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
       {posts.map((post: any) => (
         <PostCard key={post.id} post={post} currentUserId={user.id}
-          onDelete={handleDeletePost}
-          onUpdate={handleUpdatePost} />
+          onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
       ))}
 
       {posts.length === 0 && (

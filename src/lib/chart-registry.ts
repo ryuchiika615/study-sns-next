@@ -1,11 +1,3 @@
-import {
-  Chart,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Legend,
-  Tooltip,
-  Title,
-} from "chart.js";
-Chart.register(BarElement, CategoryScale, LinearScale, Legend, Tooltip, Title);
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 export { Chart };
