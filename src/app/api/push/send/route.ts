@@ -33,13 +33,54 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // Check quiet hours
-  const { data: notifSettings } = await admin
-    .from("notification_settings")
-    .select("quiet_hours_start, quiet_hours_end")
-    .eq("user_id", record.recipient_id)
-    .maybeSingle();
+  // Check follow bell settings
+  const bellCol = record.notification_type === "follow_post" ? "notify_posts" : record.notification_type === "like" ? "notify_likes" : record.notification_type === "reply" ? "notify_comments" : null;
+  if (bellCol && record.sender_id) {
+    const { data: follow } = await admin
+      .from("follows")
+      .select(bellCol)
+      .eq("follower_id", record.recipient_id)
+      .eq("following_id", record.sender_id)
+      .maybeSingle();
+    if (follow && !(follow as any)[bellCol]) {
+      return NextResponse.json({ ok: true, sent: 0, skipped: `${bellCol}_off` });
+    }
+  }
 
+  const vibrateMap: Record<string, string> = {
+    like: "vibrate_like",
+    reply: "vibrate_reply",
+    follow: "vibrate_follow",
+    follow_post: "vibrate_follow_post",
+    gift: "vibrate_gift",
+    mention: "vibrate_mention",
+    admin_announcement: "vibrate_admin_announcement",
+  };
+
+  const [notifSettingsResult, subscriptionsResult, senderResult] = await Promise.all([
+    admin
+      .from("notification_settings")
+      .select("quiet_hours_start, quiet_hours_end, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
+      .eq("user_id", record.recipient_id)
+      .maybeSingle(),
+    admin
+      .from("push_subscriptions")
+      .select("endpoint, p256dh_key, auth_key")
+      .eq("user_id", record.recipient_id),
+    admin
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", record.sender_id)
+      .single(),
+  ]);
+
+  const notifSettings = notifSettingsResult.data as any;
+  const subscriptions = subscriptionsResult.data;
+  const sender = senderResult.data as any;
+
+  if (!subscriptions?.length) return NextResponse.json({ ok: true, sent: 0 });
+
+  // Check quiet hours
   if (notifSettings?.quiet_hours_start && notifSettings?.quiet_hours_end) {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -57,19 +98,6 @@ export async function POST(request: NextRequest) {
     if (isQuiet) return NextResponse.json({ ok: true, skipped: "quiet_hours", sent: 0 });
   }
 
-  const { data: subscriptions } = await admin
-    .from("push_subscriptions")
-    .select("endpoint, p256dh_key, auth_key")
-    .eq("user_id", record.recipient_id);
-
-  if (!subscriptions?.length) return NextResponse.json({ ok: true, sent: 0 });
-
-  const { data: sender } = await admin
-    .from("profiles")
-    .select("display_name, username")
-    .eq("id", record.sender_id)
-    .single();
-
   const senderName = sender?.display_name || sender?.username || "誰か";
 
   const messages: Record<string, string> = {
@@ -86,6 +114,9 @@ export async function POST(request: NextRequest) {
     ? `/profile/${record.sender_id}`
     : record.post_id ? `/post/${record.post_id}` : "/";
 
+  const vibrateCol = vibrateMap[record.notification_type] || "vibrate_like";
+  const vibrate = notifSettings?.[vibrateCol] ?? true;
+
   let sent = 0;
   for (const sub of subscriptions) {
     try {
@@ -96,6 +127,7 @@ export async function POST(request: NextRequest) {
         title: "リュッター",
         body: bodyText,
         url,
+        vibrate,
       }));
       sent++;
     } catch (err: any) {
