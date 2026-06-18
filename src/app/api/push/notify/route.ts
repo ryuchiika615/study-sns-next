@@ -21,6 +21,7 @@ const VIBRATE_MAP: Record<string, string> = {
   follow_post: "vibrate_follow_post",
   gift: "vibrate_gift",
   mention: "vibrate_mention",
+  admin_announcement: "vibrate_admin_announcement",
 };
 
 export async function POST(request: NextRequest) {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", recipient_id),
     admin
       .from("notification_settings")
-      .select("vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post")
+      .select("vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
       .eq("user_id", recipient_id)
       .maybeSingle(),
   ]);
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
     follow_post: `${senderName}がリュイートしました`,
     gift: `${senderName}からプレゼントが届きました。`,
     mention: `${senderName}からメンションが来ました`,
+    admin_announcement: `お知らせが届きました`,
   };
 
   const bodyText = messages[type] || "新しい通知があります";
