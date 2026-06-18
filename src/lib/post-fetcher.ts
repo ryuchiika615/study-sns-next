@@ -90,7 +90,9 @@ export async function fetchAndEnrichPosts(
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (search) query = query.ilike("content", `%${search}%`);
+  if (search) {
+    query = query.or(`content.ilike.%${search}%,subject.ilike.%${search}%`);
+  }
   if (userId) query = query.eq("user_id", userId);
 
   const { data: posts, count } = await query;
@@ -119,6 +121,13 @@ export async function fetchAndEnrichPosts(
     map.set(r.reaction, (map.get(r.reaction) || 0) + 1);
   }
 
+  // Fetch quoted posts for quote reposts
+  const quotePostIds = (posts || []).map((p: any) => p.quote_post_id).filter(Boolean);
+  const { data: quotedPosts } = quotePostIds.length > 0
+    ? await supabase.from("posts").select("id, content, user_id, user:user_id(id, display_name, username, icon_url)").in("id", quotePostIds)
+    : { data: [] };
+  const quotedPostMap = new Map((quotedPosts || []).map((qp: any) => [qp.id, qp]));
+
   const titleIds = (posts || [])
     .map((p: any) => p.user?.current_title_id)
     .filter(Boolean);
@@ -135,6 +144,7 @@ export async function fetchAndEnrichPosts(
 
   const enriched = (posts || []).map((post: any) => {
     const postReactions = reactionsGrouped.get(post.id) || new Map();
+    const quotedPost = post.quote_post_id ? quotedPostMap.get(post.quote_post_id) : null;
     return {
       ...post,
       is_liked: likedPostIds.has(post.id),
@@ -147,6 +157,7 @@ export async function fetchAndEnrichPosts(
       formatted_time: formatRelativeTime(post.created_at),
       current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,
       current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
+      quoted_post: quotedPost || null,
     };
   });
 

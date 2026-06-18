@@ -47,6 +47,8 @@ export default function PostCard({
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [quoteContent, setQuoteContent] = useState("");
   const commentInputRef = useRef<HTMLInputElement>(null);
   const swipeStartY = useRef(0);
   const swipeDist = useRef(0);
@@ -300,6 +302,65 @@ export default function PostCard({
                 ))}
               </div>
             )}
+
+            {/* Quoted post embed */}
+            {post.quoted_post && (
+              <Link href={`/post/${post.quoted_post.id}`} className="block mt-3 border border-gray-200 rounded-xl p-3 hover:bg-gray-50 no-underline text-inherit">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                    {post.quoted_post.user?.icon_url ? (
+                      <Image src={getOptimizedIconUrl(post.quoted_post.user.icon_url, 60)} width={20} height={20} className="object-cover" alt="" />
+                    ) : (
+                      <i className="fas fa-user text-xs text-gray-400 flex items-center justify-center w-full h-full" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">{post.quoted_post.user?.display_name || "ユーザー"}</span>
+                  <span className="text-xs text-gray-500">@{post.quoted_post.user?.username}</span>
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">{post.quoted_post.content}</p>
+              </Link>
+            )}
+
+            {/* Quote repost form */}
+            {showQuoteForm && (
+              <div className="mt-3 border border-primary/30 rounded-xl p-3 bg-primary/5">
+                <p className="text-xs font-bold text-gray-600 mb-2">引用してリュイート</p>
+                <textarea value={quoteContent} onChange={(e) => setQuoteContent(e.target.value)}
+                  className="w-full rounded-lg border-gray-300 text-sm resize-none" rows={2} placeholder="コメントを入力（任意）" />
+                <div className="flex gap-2 mt-2">
+                  <button onClick={async () => {
+                    if (!quoteContent.trim()) return;
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+                    const { data, error } = await supabase.rpc("create_post", {
+                      p_content: quoteContent.trim(),
+                      p_subject: "その他",
+                      p_study_minutes: 0,
+                      p_image_url: null,
+                      p_image_urls: null,
+                      p_study_date: null,
+                      p_quote_post_id: post.id,
+                    });
+                    if (!error && data?.post_id) {
+                      setShowQuoteForm(false);
+                      setQuoteContent("");
+                      fetch("/api/push/follow-post", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ post_id: data.post_id }),
+                      }).catch(() => {});
+                      router.refresh();
+                    }
+                  }} className="bg-primary text-white rounded-full px-4 py-1 text-xs font-bold cursor-pointer">
+                    引用リュイート
+                  </button>
+                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); }}
+                    className="text-gray-500 text-xs bg-none border-none cursor-pointer">
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -307,6 +368,10 @@ export default function PostCard({
       <div className="flex items-center gap-3 px-4 pb-3 flex-wrap">
         <button onClick={toggleComments} className="flex items-center gap-1.5 text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-primary">
           <i className="far fa-comment" /> <span>{post.comments_count}</span>
+        </button>
+        <button onClick={() => setShowQuoteForm(!showQuoteForm)}
+          className="flex items-center gap-1 text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-primary">
+          <i className="fas fa-retweet" /> <span>引用</span>
         </button>
         <div className="flex items-center gap-1 flex-wrap">
           <div className="relative">

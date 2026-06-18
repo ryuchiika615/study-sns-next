@@ -22,6 +22,7 @@ const VIBRATE_MAP: Record<string, string> = {
   gift: "vibrate_gift",
   mention: "vibrate_mention",
   admin_announcement: "vibrate_admin_announcement",
+  repost: "vibrate_repost",
 };
 
 export async function POST(request: NextRequest) {
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   // Check follow bell settings (recipient may have turned off notifications for this sender)
   if (sender_id) {
-    const bellCol = type === "follow_post" ? "notify_posts" : type === "like" ? "notify_likes" : type === "reply" ? "notify_comments" : null;
+    const bellCol = type === "follow_post" ? "notify_posts" : type === "like" ? "notify_likes" : type === "reply" ? "notify_comments" : type === "repost" ? "notify_repost" : null;
     if (bellCol) {
       const { data: follow } = await admin
         .from("follows")
@@ -116,6 +117,8 @@ export async function POST(request: NextRequest) {
     bodyText = `${senderName}が「${preview}」に返信しました`;
   } else if (type === "follow_post" && preview) {
     bodyText = `${senderName}が「${preview}」を投稿しました`;
+  } else if (type === "repost" && preview) {
+    bodyText = `${senderName}があなたの投稿「${preview}」を引用しました`;
   } else {
     const messages: Record<string, string> = {
       like: `${senderName}がリアクションしました`,
@@ -125,6 +128,7 @@ export async function POST(request: NextRequest) {
       gift: `${senderName}からプレゼントが届きました。`,
       mention: `${senderName}からメンションが来ました`,
       admin_announcement: `お知らせが届きました`,
+      repost: `${senderName}があなたの投稿を引用しました`,
     };
     bodyText = messages[type] || "新しい通知があります";
   }

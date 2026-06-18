@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
 
   // Check follow bell settings
-  const bellCol = record.notification_type === "follow_post" ? "notify_posts" : record.notification_type === "like" ? "notify_likes" : record.notification_type === "reply" ? "notify_comments" : null;
+  const bellCol = record.notification_type === "follow_post" ? "notify_posts" : record.notification_type === "like" ? "notify_likes" : record.notification_type === "reply" ? "notify_comments" : record.notification_type === "repost" ? "notify_repost" : null;
   if (bellCol && record.sender_id) {
     const { data: follow } = await admin
       .from("follows")
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
     gift: "vibrate_gift",
     mention: "vibrate_mention",
     admin_announcement: "vibrate_admin_announcement",
+    repost: "vibrate_repost",
   };
 
   const [notifSettingsResult, subscriptionsResult, senderResult] = await Promise.all([
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
     follow_post: preview ? `${senderName}が「${preview}」を投稿しました` : `${senderName}がリュイートしました`,
     gift: `${senderName}からプレゼントが届きました。`,
     mention: `${senderName}からメンションが来ました`,
+    repost: preview ? `${senderName}があなたの投稿「${preview}」を引用しました` : `${senderName}があなたの投稿を引用しました`,
   };
 
   const bodyText = messages[record.notification_type] || "新しい通知があります";

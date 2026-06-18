@@ -37,6 +37,7 @@ export interface PostWithDetails {
   subject: string;
   study_minutes: number;
   reply_to_id: string | null;
+  quote_post_id: string | null;
   created_at: string;
   updated_at: string | null;
   user: Profile;
@@ -50,6 +51,12 @@ export interface PostWithDetails {
   display_study_time: string;
   subject_color: string;
   formatted_time: string;
+  quoted_post: {
+    id: string;
+    content: string;
+    user_id: string;
+    user: { id: string; display_name: string | null; username: string | null; icon_url: string | null };
+  } | null;
 }
 
 export interface NotificationSettings {
@@ -84,7 +91,7 @@ export interface NotificationWithSender {
   recipient_id: string;
   sender_id: string;
   post_id: string | null;
-  notification_type: "like" | "reply" | "follow" | "follow_post" | "gift" | "mention" | "admin_announcement";
+  notification_type: "like" | "reply" | "follow" | "follow_post" | "gift" | "mention" | "admin_announcement" | "repost";
   is_read: boolean;
   created_at: string;
   sender: Profile;

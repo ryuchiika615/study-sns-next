@@ -18,7 +18,7 @@ export default function FollowPageClient({
   unreadCount: number;
 }) {
   const [users, setUsers] = useState<any[]>([]);
-  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean }>>({});
+  const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean; notify_repost: boolean }>>({});
   const [openSettingsFor, setOpenSettingsFor] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function FollowPageClient({
       } else {
         const { data: follows } = await supabase
           .from("follows")
-          .select("following_id, notify_posts, notify_likes, notify_comments")
+          .select("following_id, notify_posts, notify_likes, notify_comments, notify_repost")
           .eq("follower_id", profile.id);
         if (follows && follows.length > 0) {
           const ids = follows.map((r: any) => r.following_id);
@@ -55,7 +55,7 @@ export default function FollowPageClient({
             .in("id", ids);
           setUsers(profiles || []);
           const s: Record<string, any> = {};
-          follows.forEach((f: any) => { s[f.following_id] = { notify_posts: f.notify_posts, notify_likes: f.notify_likes, notify_comments: f.notify_comments }; });
+          follows.forEach((f: any) => { s[f.following_id] = { notify_posts: f.notify_posts, notify_likes: f.notify_likes, notify_comments: f.notify_comments, notify_repost: f.notify_repost }; });
           setSettings(s);
         } else {
           setUsers([]);
@@ -151,6 +151,11 @@ export default function FollowPageClient({
                             <span>返信</span>
                             <input type="checkbox" checked={settings[u.id]?.notify_comments ?? true}
                               onChange={(e) => toggleSetting(u.id, "notify_comments", e.target.checked)} />
+                          </label>
+                          <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
+                            <span>引用リュイート</span>
+                            <input type="checkbox" checked={settings[u.id]?.notify_repost ?? true}
+                              onChange={(e) => toggleSetting(u.id, "notify_repost", e.target.checked)} />
                           </label>
                         </div>
                       )}

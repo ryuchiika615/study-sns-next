@@ -64,7 +64,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true });
+  const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true, admin_announcement: true, repost: true });
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -255,7 +255,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       const res = await fetch("/api/notification-settings");
       if (res.ok) {
         const d = await res.json();
-        if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true };
+        if (d) vibratePrefs.current = { like: d.vibrate_like ?? true, reply: d.vibrate_reply ?? true, follow: d.vibrate_follow ?? true, mention: d.vibrate_mention ?? true, gift: d.vibrate_gift ?? true, follow_post: d.vibrate_follow_post ?? true, admin_announcement: d.vibrate_admin_announcement ?? true, repost: d.vibrate_repost ?? true };
       }
     } catch {}
 
@@ -301,6 +301,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `${sender}からメンションが来ました`, type: "info", href });
       } else if (lastNotif.notification_type === "admin_announcement") {
         addToast({ message: `お知らせが届きました`, type: "info", href: "/" });
+      } else if (lastNotif.notification_type === "repost") {
+        addToast({ message: `${sender}があなたの投稿を引用しました`, type: "info", href: lastNotif.post_id ? `/post/${lastNotif.post_id}` : undefined });
       }
       if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
