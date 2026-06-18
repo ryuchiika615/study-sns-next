@@ -269,6 +269,24 @@ export default function ProfileClient({
                 </div>
               )}
             </div>
+
+            {/* 投稿・いいねボタン */}
+            {!section && (
+              <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                <button onClick={() => { setSection("posts"); loadPosts(); }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-blue-50 transition cursor-pointer">
+                  <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
+                  <span className="text-sm font-bold">リュイートを見る</span>
+                  <span className="text-xs text-gray-400 ml-auto">{postCount}件</span>
+                </button>
+                <button onClick={() => { setSection("likes"); loadLikedIds(); }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-50 transition cursor-pointer">
+                  <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
+                  <span className="text-sm font-bold">いいねを見る</span>
+                  <i className="fas fa-chevron-right text-xs text-gray-300 ml-auto" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -317,28 +335,6 @@ export default function ProfileClient({
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <h3 className="font-bold text-sm text-gray-500 mb-3"><i className="fas fa-calendar-alt mr-1.5" />{new Date().getFullYear()}年の勉強</h3>
             <StudyCalendar data={calendarData} />
-          </div>
-        )}
-
-        {/* ===== 投稿/いいね セクション ===== */}
-        {!section && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 space-y-2">
-            <button onClick={() => { setSection("posts"); loadPosts(); }}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition cursor-pointer border border-gray-100">
-              <i className="far fa-file-alt text-lg text-blue-500 w-6 text-center" />
-              <div className="text-left">
-                <p className="text-sm font-bold">リュイートを見る</p>
-                <p className="text-xs text-gray-400">{postCount}件の投稿</p>
-              </div>
-            </button>
-            <button onClick={() => { setSection("likes"); loadLikedIds(); }}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition cursor-pointer border border-gray-100">
-              <i className="far fa-heart text-lg text-red-500 w-6 text-center" />
-              <div className="text-left">
-                <p className="text-sm font-bold">いいねを見る</p>
-                <p className="text-xs text-gray-400">いいねしたリュイート</p>
-              </div>
-            </button>
           </div>
         )}
 
