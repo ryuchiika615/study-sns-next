@@ -30,6 +30,8 @@ export default function StudyBGMRecorder({ supabase, userId }: { supabase: any; 
   const [bgmName, setBgmName] = useState("");
   const [bgmPrice, setBgmPrice] = useState(100);
   const [uploading, setUploading] = useState(false);
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [editPriceValue, setEditPriceValue] = useState(100);
   const [message, setMessage] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -170,6 +172,14 @@ export default function StudyBGMRecorder({ supabase, userId }: { supabase: any; 
     if (!error) loadData();
   };
 
+  const handleUpdatePrice = async (bgmId: string) => {
+    if (editPriceValue < 10) return;
+    const { error } = await supabase.from("audio_bgm").update({ price: editPriceValue }).eq("id", bgmId);
+    if (error) { setMessage(error.message); return; }
+    setEditingPrice(null);
+    loadData();
+  };
+
   return (
     <div className="space-y-2">
       <p className="text-[10px] text-gray-500">自分の声でBGMを録音（最大10秒）、ループ再生されます。出品すると他のユーザーが購入でき、売上の90%が手に入ります。</p>
@@ -255,10 +265,31 @@ export default function StudyBGMRecorder({ supabase, userId }: { supabase: any; 
                   <div key={bgm.id} className="flex items-center justify-between p-2 rounded-lg border border-gray-200">
                     <div className="flex-1 min-w-0 mr-2">
                       <p className="text-xs font-medium truncate">{bgm.name}</p>
-                      <p className="text-[10px] text-gray-400">{bgm.price}pt / 再生{bgm.plays_count}回</p>
+                      <p className="text-[10px] text-gray-400">
+                        {editingPrice === bgm.id ? (
+                          <span className="flex items-center gap-1">
+                            <input type="number" value={editPriceValue} min={10}
+                              onChange={(e) => setEditPriceValue(Math.max(10, parseInt(e.target.value) || 0))}
+                              className="w-16 rounded border-gray-300 text-xs p-0.5" />
+                            <span>pt</span>
+                            <button onClick={() => handleUpdatePrice(bgm.id)}
+                              className="text-green-600 font-bold cursor-pointer">保存</button>
+                            <button onClick={() => setEditingPrice(null)}
+                              className="text-gray-400 cursor-pointer">取消</button>
+                          </span>
+                        ) : (
+                          <span>{bgm.price}pt / 再生{bgm.plays_count}回</span>
+                        )}
+                      </p>
                     </div>
-                    <button onClick={() => handleDelete(bgm.id)}
-                      className="text-xs text-red-500 cursor-pointer">削除</button>
+                    <div className="flex items-center gap-1.5">
+                      {!editingPrice && (
+                        <button onClick={() => { setEditingPrice(bgm.id); setEditPriceValue(bgm.price); }}
+                          className="text-xs text-blue-500 cursor-pointer">値段変更</button>
+                      )}
+                      <button onClick={() => handleDelete(bgm.id)}
+                        className="text-xs text-red-500 cursor-pointer">削除</button>
+                    </div>
                   </div>
                 ))}
               </div>
