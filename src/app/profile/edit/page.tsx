@@ -49,6 +49,7 @@ export default function EditProfilePage() {
   const [dailySummary, setDailySummary] = useState(true);
   const [pushAdminAnnouncements, setPushAdminAnnouncements] = useState(true);
   const [notifyChallenge, setNotifyChallenge] = useState(true);
+  const [bgmUserId, setBgmUserId] = useState("");
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
@@ -58,6 +59,7 @@ export default function EditProfilePage() {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
       userIdRef.current = data.user.id;
+      setBgmUserId(data.user.id);
       loadData(data.user.id);
     });
   }, []);
@@ -687,7 +689,7 @@ export default function EditProfilePage() {
         {/* BGM録音・販売 */}
         <div className="bg-white rounded-xl border border-gray-200 p-3">
           <h2 className="text-sm font-bold mb-2"><i className="fas fa-microphone mr-1" /> BGM録音・販売</h2>
-          <StudyBGMRecorder supabase={supabase} userId={userIdRef.current || ""} />
+          {bgmUserId && <StudyBGMRecorder key={bgmUserId} supabase={supabase} userId={bgmUserId} />}
         </div>
 
         {/* 称号を精錬（部位組み合わせ） */}
