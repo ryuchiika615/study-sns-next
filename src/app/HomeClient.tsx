@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import NextImage from "next/image";
 import PostCard from "@/components/PostCard";
@@ -34,7 +34,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [studyMinutes, setStudyMinutes] = useState("");
   const [studyDate, setStudyDate] = useState("");
   const [unreadCount, setUnreadCount] = useState(initialUnread);
-  const [totalMinutes] = useState(initialTotal);
+  const [totalMinutes, setTotalMinutes] = useState(initialTotal);
+  const [showTargetAchievement, setShowTargetAchievement] = useState(false);
   const seenNotifs = useRef<Set<string>>(new Set(
     JSON.parse(localStorage.getItem("seen_notifs") || "[]")
   ));
@@ -65,6 +66,12 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const smallOverlayRef = useRef<HTMLImageElement>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true, admin_announcement: true, repost: true });
+
+  const dismissAchievement = useCallback(() => {
+    const key = `target_achieved_${profile?.target_minutes}_${profile?.target_date || ""}`;
+    localStorage.setItem(key, "1");
+    setShowTargetAchievement(false);
+  }, [profile?.target_minutes, profile?.target_date]);
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -354,6 +361,14 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       }
     }).catch(() => {});
 
+    // Target achievement check
+    if (initialProfile?.target_minutes > 0 && initialTotal >= initialProfile.target_minutes) {
+      const key = `target_achieved_${initialProfile.target_minutes}_${initialProfile.target_date || ""}`;
+      if (!localStorage.getItem(key)) {
+        setShowTargetAchievement(true);
+      }
+    }
+
     return () => {
       if (notifTimer.current) clearInterval(notifTimer.current);
     };
@@ -412,6 +427,16 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     }
     if (data.streak) {
       addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
+    }
+    // Update local total and check target achievement
+    const studyMins = parseInt(studyMinutes || "0");
+    const newTotal = totalMinutes + studyMins;
+    setTotalMinutes(newTotal);
+    if (profile?.target_minutes > 0 && newTotal >= profile.target_minutes) {
+      const key = `target_achieved_${profile.target_minutes}_${profile.target_date || ""}`;
+      if (!localStorage.getItem(key)) {
+        setShowTargetAchievement(true);
+      }
     }
     setContent("");
     setSubject("");
@@ -843,6 +868,22 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showTargetAchievement && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={dismissAchievement}>
+          <div className="bg-gradient-to-br from-yellow-300 via-yellow-200 to-orange-200 rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-6xl mb-4 animate-bounce">🎉</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">目標達成おめでとう！</h2>
+            <p className="text-gray-700 mb-2">目標の <span className="font-bold">{Math.floor(profile?.target_minutes / 60)}時間{profile?.target_minutes % 60}分</span> を達成しました！</p>
+            <p className="text-sm text-gray-600 mb-6">これからも勉強頑張ってください！</p>
+            <div className="text-4xl mb-4">🏆🌟🎊</div>
+            <button onClick={dismissAchievement}
+              className="w-full bg-white text-gray-800 font-bold rounded-full py-3 text-base shadow-md cursor-pointer hover:bg-gray-100 transition">
+              やったー！
+            </button>
           </div>
         </div>
       )}
