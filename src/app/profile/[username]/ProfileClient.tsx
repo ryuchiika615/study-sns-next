@@ -194,168 +194,173 @@ export default function ProfileClient({
 
         {/* ===== プロフィールカード ===== */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="bg-gradient-to-r from-blue-900 to-blue-700 h-20" />
-          <div className="px-4 pb-4">
-            <div className="flex items-end -mt-10 mb-3">
-              <div className="avatar-frame w-20 h-20 border-4 border-white rounded-full shadow-md bg-white">
-                {profile?.icon_url ? (
-                  <Image src={getOptimizedIconUrl(profile.icon_url, 320)} width={80} height={80} className="rounded-full object-cover" alt="" />
-                ) : (
-                  <i className="fas fa-user-circle text-5xl text-gray-300" />
-                )}
-              </div>
-            </div>
-            <div className="flex items-start justify-between">
-              <div className="min-w-0 flex-1">
-                <h2 className="text-xl font-bold truncate">{profile?.display_name || profile.username}</h2>
-                <p className="text-gray-500 text-sm">@{profile?.username || profile.username}</p>
-                {profile?.bio && <p className="text-sm mt-1 text-gray-700">{profile.bio}</p>}
-
-                <div className="flex items-center gap-4 mt-3 text-sm">
-                  <span><strong className="text-gray-900">{postCount}</strong><span className="text-gray-500 ml-1">リュイート</span></span>
-                  <Link href={`/profile/${encodeURIComponent(profile.username || profile.id)}/follow?tab=followers`}
-                    className="hover:underline cursor-pointer text-gray-500">
-                    <strong className="text-gray-900">{followersCount}</strong><span className="ml-1">フォロワー</span>
-                  </Link>
-                  <Link href={`/profile/${encodeURIComponent(profile.username || profile.id)}/follow?tab=following`}
-                    className="hover:underline cursor-pointer text-gray-500">
-                    <strong className="text-gray-900">{followingCount}</strong><span className="ml-1">フォロー中</span>
-                  </Link>
+          {/* 上部: overflow-hidden でアバターのはみ出しをクリップ */}
+          <div className="overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-900 to-blue-700 h-20" />
+            <div className="px-4 pb-4">
+              <div className="flex items-end -mt-10 mb-3">
+                <div className="avatar-frame w-20 h-20 border-4 border-white rounded-full shadow-md bg-white">
+                  {profile?.icon_url ? (
+                    <Image src={getOptimizedIconUrl(profile.icon_url, 320)} width={80} height={80} className="rounded-full object-cover" alt="" />
+                  ) : (
+                    <i className="fas fa-user-circle text-5xl text-gray-300" />
+                  )}
                 </div>
               </div>
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold truncate">{profile?.display_name || profile.username}</h2>
+                  <p className="text-gray-500 text-sm">@{profile?.username || profile.username}</p>
+                  {profile?.bio && <p className="text-sm mt-1 text-gray-700">{profile.bio}</p>}
 
-              {user.id !== profile?.id && (
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button onClick={handleFollow}
-                    className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer transition ${
-                      isFollowing ? "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200" : "bg-primary text-white hover:bg-blue-600"
-                    }`}>
-                    {isFollowing ? "フォロー中" : "フォローする"}
+                  <div className="flex items-center gap-4 mt-3 text-sm">
+                    <span><strong className="text-gray-900">{postCount}</strong><span className="text-gray-500 ml-1">リュイート</span></span>
+                    <Link href={`/profile/${encodeURIComponent(profile.username || profile.id)}/follow?tab=followers`}
+                      className="hover:underline cursor-pointer text-gray-500">
+                      <strong className="text-gray-900">{followersCount}</strong><span className="ml-1">フォロワー</span>
+                    </Link>
+                    <Link href={`/profile/${encodeURIComponent(profile.username || profile.id)}/follow?tab=following`}
+                      className="hover:underline cursor-pointer text-gray-500">
+                      <strong className="text-gray-900">{followingCount}</strong><span className="ml-1">フォロー中</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {user.id !== profile?.id && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={handleFollow}
+                      className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer transition ${
+                        isFollowing ? "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200" : "bg-primary text-white hover:bg-blue-600"
+                      }`}>
+                      {isFollowing ? "フォロー中" : "フォローする"}
+                    </button>
+                    {isFollowing && (
+                      <div className="relative">
+                        <button onClick={() => setShowNotifyPopover(!showNotifyPopover)}
+                          className={`text-lg cursor-pointer p-1.5 rounded-full transition ${
+                            notifySettings?.notify_posts ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-gray-600"
+                          }`}
+                          title="通知設定">
+                          <i className="fas fa-bell" />
+                        </button>
+                        {showNotifyPopover && (
+                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-52 z-10">
+                            <p className="text-xs font-bold text-gray-600 mb-2">{profile.display_name || profile.username} の通知</p>
+                            <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
+                              <span>投稿</span>
+                              <input type="checkbox" checked={notifySettings?.notify_posts ?? true}
+                                onChange={(e) => toggleNotifySetting("notify_posts", e.target.checked)}
+                                className="cursor-pointer" />
+                            </label>
+                            <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
+                              <span>いいね</span>
+                              <input type="checkbox" checked={notifySettings?.notify_likes ?? true}
+                                onChange={(e) => toggleNotifySetting("notify_likes", e.target.checked)}
+                                className="cursor-pointer" />
+                            </label>
+                            <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
+                              <span>返信</span>
+                              <input type="checkbox" checked={notifySettings?.notify_comments ?? true}
+                                onChange={(e) => toggleNotifySetting("notify_comments", e.target.checked)}
+                                className="cursor-pointer" />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 投稿・いいねボタン (閉じてる時) */}
+              {!section && (
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                  <button onClick={() => { setSection("posts"); loadPosts(); }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-blue-50 transition cursor-pointer">
+                    <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
+                    <span className="text-sm font-bold">リュイートを見る</span>
+                    <span className="text-xs text-gray-400 ml-auto">{postCount}件</span>
                   </button>
-                  {isFollowing && (
-                    <div className="relative">
-                      <button onClick={() => setShowNotifyPopover(!showNotifyPopover)}
-                        className={`text-lg cursor-pointer p-1.5 rounded-full transition ${
-                          notifySettings?.notify_posts ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-gray-600"
-                        }`}
-                        title="通知設定">
-                        <i className="fas fa-bell" />
-                      </button>
-                      {showNotifyPopover && (
-                        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-52 z-10">
-                          <p className="text-xs font-bold text-gray-600 mb-2">{profile.display_name || profile.username} の通知</p>
-                          <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer">
-                            <span>投稿</span>
-                            <input type="checkbox" checked={notifySettings?.notify_posts ?? true}
-                              onChange={(e) => toggleNotifySetting("notify_posts", e.target.checked)}
-                              className="cursor-pointer" />
-                          </label>
-                          <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
-                            <span>いいね</span>
-                            <input type="checkbox" checked={notifySettings?.notify_likes ?? true}
-                              onChange={(e) => toggleNotifySetting("notify_likes", e.target.checked)}
-                              className="cursor-pointer" />
-                          </label>
-                          <label className="flex items-center justify-between py-1.5 text-sm cursor-pointer border-t border-gray-100">
-                            <span>返信</span>
-                            <input type="checkbox" checked={notifySettings?.notify_comments ?? true}
-                              onChange={(e) => toggleNotifySetting("notify_comments", e.target.checked)}
-                              className="cursor-pointer" />
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <button onClick={() => { setSection("likes"); loadLikedIds(); }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-50 transition cursor-pointer">
+                    <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
+                    <span className="text-sm font-bold">いいねを見る</span>
+                    <i className="fas fa-chevron-right text-xs text-gray-300 ml-auto" />
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* 投稿・いいねボタン or コンテンツ */}
-            {!section && (
-              <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
-                <button onClick={() => { setSection("posts"); loadPosts(); }}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-blue-50 transition cursor-pointer">
-                  <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
-                  <span className="text-sm font-bold">リュイートを見る</span>
-                  <span className="text-xs text-gray-400 ml-auto">{postCount}件</span>
-                </button>
-                <button onClick={() => { setSection("likes"); loadLikedIds(); }}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-50 transition cursor-pointer">
-                  <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
-                  <span className="text-sm font-bold">いいねを見る</span>
-                  <i className="fas fa-chevron-right text-xs text-gray-300 ml-auto" />
-                </button>
-              </div>
-            )}
-            {section === "posts" && (
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <button onClick={() => { setSection(null); setPosts([]); }}
-                    className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                    <i className="fas fa-arrow-left" /> 戻る
-                  </button>
-                  <span className="text-xs font-bold">リュイート</span>
-                  <div className="w-8" />
-                </div>
-                {postError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{postError}</div>}
-                {postLoading && (
-                  <div className="text-center py-4">
-                    <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                  </div>
-                )}
-                {!postLoading && posts.length === 0 && !postError && (
-                  <div className="text-center py-4 text-gray-400 text-xs">リュイートがありません</div>
-                )}
-                {posts.map((post: any) => (
-                  <PostCard key={post.id} post={post} currentUserId={user.id}
-                    onDelete={(id) => {
-                      const idx = posts.findIndex((p: any) => p.id === id);
-                      if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
-                    }}
-                    onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
-                ))}
-                {posts.length > 0 && hasMorePosts && (
-                  <button onClick={loadMorePosts}
-                    className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
-                    もっと見る
-                  </button>
-                )}
-              </div>
-            )}
-            {section === "likes" && (
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <button onClick={() => { setSection(null); setLikedPosts([]); setLikedIds([]); }}
-                    className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                    <i className="fas fa-arrow-left" /> 戻る
-                  </button>
-                  <span className="text-xs font-bold">いいね</span>
-                  <div className="w-8" />
-                </div>
-                {likedError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{likedError}</div>}
-                {likedLoading && (
-                  <div className="text-center py-4">
-                    <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                  </div>
-                )}
-                {!likedLoading && likedPosts.length === 0 && !likedError && (
-                  <div className="text-center py-4 text-gray-400 text-xs">いいねしたリュイートはありません</div>
-                )}
-                {likedPosts.map((post: any) => (
-                  <PostCard key={post.id} post={post} currentUserId={user.id}
-                    onDelete={() => {}}
-                    onUpdate={() => {}} />
-                ))}
-                {hasMoreLiked && (
-                  <button onClick={loadMoreLiked}
-                    className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition"
-                    disabled={likedLoading}>
-                    もっと見る
-                  </button>
-                )}
-              </div>
-            )}
           </div>
+
+          {/* 投稿・いいねコンテンツ (overflow-hidden の外なのでクリップされない) */}
+          {section === "posts" && (
+            <div className="px-4 pb-4 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2 pt-3">
+                <button onClick={() => { setSection(null); setPosts([]); }}
+                  className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                  <i className="fas fa-arrow-left" /> 戻る
+                </button>
+                <span className="text-xs font-bold">リュイート</span>
+                <div className="w-8" />
+              </div>
+              {postError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{postError}</div>}
+              {postLoading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                </div>
+              )}
+              {!postLoading && posts.length === 0 && !postError && (
+                <div className="text-center py-4 text-gray-400 text-xs">リュイートがありません</div>
+              )}
+              {posts.map((post: any) => (
+                <PostCard key={post.id} post={post} currentUserId={user.id}
+                  onDelete={(id) => {
+                    const idx = posts.findIndex((p: any) => p.id === id);
+                    if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
+                  }}
+                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+              ))}
+              {posts.length > 0 && hasMorePosts && (
+                <button onClick={loadMorePosts}
+                  className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
+                  もっと見る
+                </button>
+              )}
+            </div>
+          )}
+          {section === "likes" && (
+            <div className="px-4 pb-4 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2 pt-3">
+                <button onClick={() => { setSection(null); setLikedPosts([]); setLikedIds([]); }}
+                  className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                  <i className="fas fa-arrow-left" /> 戻る
+                </button>
+                <span className="text-xs font-bold">いいね</span>
+                <div className="w-8" />
+              </div>
+              {likedError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{likedError}</div>}
+              {likedLoading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                </div>
+              )}
+              {!likedLoading && likedPosts.length === 0 && !likedError && (
+                <div className="text-center py-4 text-gray-400 text-xs">いいねしたリュイートはありません</div>
+              )}
+              {likedPosts.map((post: any) => (
+                <PostCard key={post.id} post={post} currentUserId={user.id}
+                  onDelete={() => {}}
+                  onUpdate={() => {}} />
+              ))}
+              {hasMoreLiked && (
+                <button onClick={loadMoreLiked}
+                  className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition"
+                  disabled={likedLoading}>
+                  もっと見る
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ===== 勉強時間カード ===== */}
