@@ -270,7 +270,7 @@ export default function ProfileClient({
               )}
             </div>
 
-            {/* 投稿・いいねボタン */}
+            {/* 投稿・いいねボタン or コンテンツ */}
             {!section && (
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
                 <button onClick={() => { setSection("posts"); loadPosts(); }}
@@ -285,6 +285,74 @@ export default function ProfileClient({
                   <span className="text-sm font-bold">いいねを見る</span>
                   <i className="fas fa-chevron-right text-xs text-gray-300 ml-auto" />
                 </button>
+              </div>
+            )}
+            {section === "posts" && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <button onClick={() => { setSection(null); setPosts([]); }}
+                    className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                    <i className="fas fa-arrow-left" /> 戻る
+                  </button>
+                  <span className="text-xs font-bold">リュイート</span>
+                  <div className="w-8" />
+                </div>
+                {postError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{postError}</div>}
+                {postLoading && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                  </div>
+                )}
+                {!postLoading && posts.length === 0 && !postError && (
+                  <div className="text-center py-4 text-gray-400 text-xs">リュイートがありません</div>
+                )}
+                {posts.map((post: any) => (
+                  <PostCard key={post.id} post={post} currentUserId={user.id}
+                    onDelete={(id) => {
+                      const idx = posts.findIndex((p: any) => p.id === id);
+                      if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
+                    }}
+                    onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+                ))}
+                {posts.length > 0 && hasMorePosts && (
+                  <button onClick={loadMorePosts}
+                    className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
+                    もっと見る
+                  </button>
+                )}
+              </div>
+            )}
+            {section === "likes" && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <button onClick={() => { setSection(null); setLikedPosts([]); setLikedIds([]); }}
+                    className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                    <i className="fas fa-arrow-left" /> 戻る
+                  </button>
+                  <span className="text-xs font-bold">いいね</span>
+                  <div className="w-8" />
+                </div>
+                {likedError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{likedError}</div>}
+                {likedLoading && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                  </div>
+                )}
+                {!likedLoading && likedPosts.length === 0 && !likedError && (
+                  <div className="text-center py-4 text-gray-400 text-xs">いいねしたリュイートはありません</div>
+                )}
+                {likedPosts.map((post: any) => (
+                  <PostCard key={post.id} post={post} currentUserId={user.id}
+                    onDelete={() => {}}
+                    onUpdate={() => {}} />
+                ))}
+                {hasMoreLiked && (
+                  <button onClick={loadMoreLiked}
+                    className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition"
+                    disabled={likedLoading}>
+                    もっと見る
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -338,81 +406,7 @@ export default function ProfileClient({
           </div>
         )}
 
-        {section === "posts" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="flex items-center justify-between p-3 border-b border-gray-100">
-              <button onClick={() => { setSection(null); setPosts([]); }}
-                className="flex items-center gap-1 text-sm text-gray-500 cursor-pointer">
-                <i className="fas fa-arrow-left text-xs" /> 戻る
-              </button>
-              <span className="text-sm font-bold">リュイート</span>
-              <div className="w-10" />
-            </div>
-            <div className="p-3">
-              {postError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{postError}</div>}
-              {postLoading && (
-                <div className="text-center py-8">
-                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                  <p className="text-gray-400 text-sm mt-2">読み込み中...</p>
-                </div>
-              )}
-              {!postLoading && posts.length === 0 && !postError && (
-                <div className="text-center py-8 text-gray-400 text-sm">リュイートがありません</div>
-              )}
-              {posts.map((post: any) => (
-                <PostCard key={post.id} post={post} currentUserId={user.id}
-                  onDelete={(id) => {
-                    const idx = posts.findIndex((p: any) => p.id === id);
-                    if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
-                  }}
-                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
-              ))}
-              {posts.length > 0 && hasMorePosts && (
-                <button onClick={loadMorePosts}
-                  className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition">
-                  もっと見る
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
-        {section === "likes" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="flex items-center justify-between p-3 border-b border-gray-100">
-              <button onClick={() => { setSection(null); setLikedPosts([]); setLikedIds([]); }}
-                className="flex items-center gap-1 text-sm text-gray-500 cursor-pointer">
-                <i className="fas fa-arrow-left text-xs" /> 戻る
-              </button>
-              <span className="text-sm font-bold">いいね</span>
-              <div className="w-10" />
-            </div>
-            <div className="p-3">
-              {likedError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{likedError}</div>}
-              {likedLoading && (
-                <div className="text-center py-8">
-                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                  <p className="text-gray-400 text-sm mt-2">読み込み中...</p>
-                </div>
-              )}
-              {!likedLoading && likedPosts.length === 0 && !likedError && (
-                <div className="text-center py-8 text-gray-400 text-sm">いいねしたリュイートはありません</div>
-              )}
-              {likedPosts.map((post: any) => (
-                <PostCard key={post.id} post={post} currentUserId={user.id}
-                  onDelete={() => {}}
-                  onUpdate={() => {}} />
-              ))}
-              {hasMoreLiked && (
-                <button onClick={loadMoreLiked}
-                  className="w-full py-3 text-sm text-primary font-bold cursor-pointer hover:bg-blue-50 rounded-lg transition"
-                  disabled={likedLoading}>
-                  もっと見る
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </AppShell>
   );
