@@ -7,15 +7,21 @@ import { Sidebar } from "./Sidebar";
 import SwipeBack from "./SwipeBack";
 import InstallBanner from "./InstallBanner";
 
+const DISMISSED_KEY = "ryutter_dismissed_announcements";
+
 export default function AppShell({ children, unreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
   const initialized = useRef(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState<any[]>([]);
   const [pendingGifts, setPendingGifts] = useState<any[]>([]);
   const [showAnnouncement, setShowAnnouncement] = useState<any>(null);
+  const [popupAnnouncement, setPopupAnnouncement] = useState<any>(null);
+  const dismissedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
+
+    dismissedRef.current = new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]"));
 
     const doPing = () => {
       navigator.sendBeacon("/api/auth/ping", JSON.stringify({}));
@@ -42,10 +48,16 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
         .select("id, content, created_at")
         .order("created_at", { ascending: false });
       if (announcements) {
-        setUnreadAnnouncements(readIds.length > 0
+        const unread = readIds.length > 0
           ? announcements.filter(a => !readIds.includes(a.id))
-          : announcements
-        );
+          : announcements;
+        setUnreadAnnouncements(unread);
+
+        // Auto-show the latest unread announcement as popup
+        const latest = unread[0];
+        if (latest && !dismissedRef.current.has(latest.id) && !popupAnnouncement) {
+          setPopupAnnouncement(latest);
+        }
       }
 
       const { data: gifts } = await supabase
@@ -79,6 +91,17 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     });
     setUnreadAnnouncements((prev) => prev.filter((a: any) => a.id !== id));
     setShowAnnouncement(null);
+    setPopupAnnouncement(null);
+
+    // Show next unread
+    const next = unreadAnnouncements.filter((a: any) => a.id !== id)[0];
+    if (next) setPopupAnnouncement(next);
+  };
+
+  const dismissPopup = (id: string) => {
+    dismissedRef.current.add(id);
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissedRef.current]));
+    setPopupAnnouncement(null);
   };
 
   const claimGift = async (giftId: string) => {
@@ -128,9 +151,6 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
   }, []);
 
   const totalUnread = unreadAnnouncements.length + pendingGifts.length;
-  const currentAnnouncement = showAnnouncement && showAnnouncement !== "list"
-    ? showAnnouncement
-    : unreadAnnouncements.length > 0 ? unreadAnnouncements[0] : null;
 
   return (
     <>
@@ -160,6 +180,31 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
 
       <BottomNav unreadCount={unreadCount} />
       <InstallBanner />
+
+      {/* お知らせポップアップ（自動表示） */}
+      {popupAnnouncement && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-base">📢 お知らせ</h3>
+              <button onClick={() => dismissPopup(popupAnnouncement.id)}
+                className="text-gray-500 text-xl cursor-pointer">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <p className="text-sm whitespace-pre-wrap mb-4">{popupAnnouncement.content}</p>
+            <p className="text-xs text-gray-400 mb-4">{new Date(popupAnnouncement.created_at).toLocaleString("ja-JP")}</p>
+            <button onClick={() => markAnnouncementRead(popupAnnouncement.id)}
+              className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer">
+              既読にする
+            </button>
+            <button onClick={() => dismissPopup(popupAnnouncement.id)}
+              className="w-full mt-2 text-xs text-gray-500 cursor-pointer bg-transparent border-none">
+              後で見る
+            </button>
+          </div>
+        </div>
+      )}
 
       {showAnnouncement === "list" && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAnnouncement(null)}>
