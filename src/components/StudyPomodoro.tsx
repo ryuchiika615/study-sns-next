@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase";
 
 type Phase = "work" | "break";
 
 const WORK_MINUTES = 25;
 const BREAK_MINUTES = 5;
 
-const BGM_TRACKS = [
-  { id: "none", label: "なし" },
+const PRESET_TRACKS = [
+  { id: "none", label: "なし", url: "" },
   { id: "lofi", label: "Lo-fi", url: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1" },
   { id: "rain", label: "雨の音", url: "https://www.youtube.com/embed/mPZkdNFk_b4?autoplay=1&loop=1" },
   { id: "nature", label: "自然", url: "https://www.youtube.com/embed/eKFTSSKCzWA?autoplay=1&loop=1" },
@@ -23,12 +24,30 @@ export default function StudyPomodoro() {
   const [sessionCount, setSessionCount] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [bgmId, setBgmId] = useState("none");
+  const [userBgms, setUserBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const supabase = createClient();
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_SESSION_KEY);
     if (saved) setSessionCount(parseInt(saved, 10));
+  }, []);
+
+  useEffect(() => {
+    const loadUserBgms = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const [ownRes, purchasedRes] = await Promise.all([
+        supabase.from("audio_bgm").select("id, name, audio_url").eq("user_id", user.id),
+        supabase.from("purchased_bgm").select("bgm:bgm_id(id, name, audio_url)").eq("user_id", user.id),
+      ]);
+      const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
+      const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
+      setUserBgms([...own, ...purchased]);
+    };
+    loadUserBgms();
   }, []);
 
   useEffect(() => {
@@ -52,18 +71,28 @@ export default function StudyPomodoro() {
   }, [running]);
 
   useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     if (bgmId && bgmId !== "none") {
-      const track = BGM_TRACKS.find((t) => t.id === bgmId);
-      if (track?.url) {
-        const audio = new Audio(track.url);
+      const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
+      if (preset?.url) {
+        const audio = new Audio(preset.url);
+        audio.loop = true;
+        audio.volume = 0.3;
+        audioRef.current = audio;
+        audio.play().catch(() => {});
+        return;
+      }
+      const userBgm = userBgms.find((b) => b.id === bgmId);
+      if (userBgm?.audio_url) {
+        const audio = new Audio(userBgm.audio_url);
         audio.loop = true;
         audio.volume = 0.3;
         audioRef.current = audio;
         audio.play().catch(() => {});
       }
-    } else if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
     }
     return () => {
       if (audioRef.current) {
@@ -175,9 +204,18 @@ export default function StudyPomodoro() {
             <i className="fas fa-music text-xs text-gray-400" />
             <select value={bgmId} onChange={(e) => setBgmId(e.target.value)}
               className="flex-1 rounded-lg border-gray-300 text-xs py-1">
-              {BGM_TRACKS.map((t) => (
-                <option key={t.id} value={t.id}>{t.label}</option>
-              ))}
+              <optgroup label="プリセット">
+                {PRESET_TRACKS.map((t) => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </optgroup>
+              {userBgms.length > 0 && (
+                <optgroup label="あなたのBGM">
+                  {userBgms.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
         </div>

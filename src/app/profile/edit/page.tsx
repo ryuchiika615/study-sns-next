@@ -8,6 +8,7 @@ import AppShell from "@/components/AppShell";
 import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
+import StudyBGMRecorder from "@/components/StudyBGMRecorder";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isIconItem, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 
 const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
@@ -610,6 +611,12 @@ export default function EditProfilePage() {
               </div>
             ));
           })()}
+        </div>
+
+        {/* BGM録音・販売 */}
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-2"><i className="fas fa-microphone mr-1" /> BGM録音・販売</h2>
+          <StudyBGMRecorder supabase={supabase} userId={userIdRef.current || ""} />
         </div>
 
         {/* 称号を精錬（部位組み合わせ） */}
