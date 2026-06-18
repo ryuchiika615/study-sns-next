@@ -8,17 +8,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("push", (event) => {
   const data = event.data?.json() || {};
-  const { title, body, icon, url, vibrate } = data;
-
-  // iOS: vibrate オプションがサポートされていないため、バイブOFFなら通知を表示しない
-  if (!vibrate && /iphone|ipad|ipod/i.test(navigator.userAgent)) return;
+  const { title, body, icon, url } = data;
 
   event.waitUntil(
     self.registration.showNotification(title || "リュッター", {
       body: body || "",
       icon: icon || "/icon-192.png",
       badge: "/icon-192.png",
-      vibrate: vibrate ? [200, 100, 200] : [],
       data: { url: url || "/" },
     })
   );

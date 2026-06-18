@@ -454,18 +454,45 @@ export default function EditProfilePage() {
               const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
               const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
               const json = fresh.toJSON();
-              await fetch("/api/push/subscribe", {
+              const res = await fetch("/api/push/subscribe", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, verify: true }),
+                body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
               });
-              setMessage("プッシュ通知を再登録しました！");
+              const data = await res.json();
+              if (data.ok) {
+                setMessage("プッシュ通知を再登録しました！");
+              } else {
+                setMessage("再登録に失敗しました。");
+              }
             } catch {
               setMessage("再登録に失敗しました。ブラウザの通知設定を確認してください。");
             }
           }}
             className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
             通知を再登録
+          </button>
+        </div>
+
+        {/* テスト通知 */}
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-1">テスト通知を送る</h2>
+          <p className="text-[10px] text-gray-500 mb-2">スマホにプッシュ通知が届くかテストします</p>
+          <button onClick={async () => {
+            try {
+              const res = await fetch("/api/push/test", { method: "POST" });
+              const data = await res.json();
+              if (data.ok) {
+                setMessage(`テスト通知を送信しました (${data.sent}件)`);
+              } else {
+                setMessage(data.error || "テスト送信に失敗しました");
+              }
+            } catch {
+              setMessage("テスト送信に失敗しました");
+            }
+          }}
+            className="w-full bg-orange-500 text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
+            テスト通知を送信
           </button>
         </div>
 
