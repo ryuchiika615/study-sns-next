@@ -123,31 +123,37 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
     const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
+    const sendSubscription = async (subscription: PushSubscription, verify = false) => {
+      const json = subscription.toJSON();
+      try {
+        const res = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, verify }),
+        });
+        const data = await res.json();
+        if (data.retry) {
+          await subscription.unsubscribe();
+          const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+          await sendSubscription(fresh, false);
+        }
+      } catch (_) {}
+    };
+
+    let reg: ServiceWorkerRegistration;
     const subscribe = async () => {
       try {
-        const reg = await navigator.serviceWorker.register("/sw.js");
+        reg = await navigator.serviceWorker.register("/sw.js");
         const existing = await reg.pushManager.getSubscription();
         if (existing) {
-          const json = existing.toJSON();
-          fetch("/api/push/subscribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
-          }).catch(() => {});
+          await sendSubscription(existing, true);
           return;
         }
         const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
-        const json = sub.toJSON();
-        fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
-        }).catch(() => {});
+        await sendSubscription(sub, false);
       } catch (_) {}
     };
-    if (Notification.permission === "granted") {
-      subscribe();
-    } else if (Notification.permission === "default") {
+    if (Notification.permission === "granted" || Notification.permission === "default") {
       subscribe();
     }
   }, []);

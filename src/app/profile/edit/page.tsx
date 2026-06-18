@@ -441,6 +441,34 @@ export default function EditProfilePage() {
           </button>
         </form>
 
+        {/* 通知の再登録 */}
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <h2 className="text-sm font-bold mb-1">プッシュ通知の再登録</h2>
+          <p className="text-[10px] text-gray-500 mb-2">スマホに通知が届かなくなった場合、こちらを試してください</p>
+          <button onClick={async () => {
+            try {
+              const reg = await navigator.serviceWorker.ready;
+              const sub = await reg.pushManager.getSubscription();
+              if (sub) await sub.unsubscribe();
+              const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
+              const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+              const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+              const json = fresh.toJSON();
+              await fetch("/api/push/subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, verify: true }),
+              });
+              setMessage("プッシュ通知を再登録しました！");
+            } catch {
+              setMessage("再登録に失敗しました。ブラウザの通知設定を確認してください。");
+            }
+          }}
+            className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
+            通知を再登録
+          </button>
+        </div>
+
         {/* パスワード変更 */}
         <form onSubmit={handleChangePassword} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2.5">
           <h2 className="text-sm font-bold">パスワード変更</h2>
