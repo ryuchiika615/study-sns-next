@@ -34,7 +34,11 @@ export default function EditProfilePage() {
   const [followingCount, setFollowingCount] = useState(0);
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [myPosts, setMyPosts] = useState<any[]>([]);
-  const [profileTab, setProfileTab] = useState<"posts" | "likes">("posts");
+  const [myPostsLoading, setMyPostsLoading] = useState(false);
+  const [myPostsError, setMyPostsError] = useState("");
+  const [likedLoading, setLikedLoading] = useState(false);
+  const [likedError, setLikedError] = useState("");
+  const [editSection, setEditSection] = useState<"posts" | "likes" | null>(null);
   const [postPage, setPostPage] = useState(1);
   const [likedPage, setLikedPage] = useState(1);
 
@@ -97,31 +101,6 @@ export default function EditProfilePage() {
     setFollowersCount(followers ?? 0);
     setFollowingCount(following ?? 0);
 
-    const { data: likesData } = await supabase
-      .from("likes")
-      .select("post_id")
-      .eq("user_id", uid);
-    if (likesData) {
-      const postIds = likesData.map((l) => l.post_id);
-      if (postIds.length > 0) {
-        const { data: posts } = await supabase
-          .from("posts")
-          .select("*, user:user_id(id, display_name, username, icon_url)")
-          .in("id", postIds)
-          .order("created_at", { ascending: false });
-        setLikedPosts(posts ?? []);
-      } else {
-        setLikedPosts([]);
-      }
-    }
-
-    const { data: myPostsData } = await supabase
-      .from("posts")
-      .select("*, user:user_id(id, display_name, username, icon_url)")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
-    setMyPosts(myPostsData ?? []);
-
     const { data: notifSettings } = await supabase
       .from("notification_settings")
       .select("quiet_hours_start, quiet_hours_end, daily_summary, vibrate_like, vibrate_reply, vibrate_follow, vibrate_mention, vibrate_gift, vibrate_follow_post, vibrate_admin_announcement")
@@ -139,6 +118,43 @@ export default function EditProfilePage() {
       setVibrateFollowPost(notifSettings.vibrate_follow_post ?? true);
       setVibrateAdminAnnouncement(notifSettings.vibrate_admin_announcement ?? true);
     }
+  };
+
+  const loadMyPosts = async () => {
+    setMyPostsLoading(true);
+    setMyPostsError("");
+    setPostPage(1);
+    const { data: myPostsData } = await supabase
+      .from("posts")
+      .select("*, user:user_id(id, display_name, username, icon_url)")
+      .eq("user_id", userIdRef.current)
+      .order("created_at", { ascending: false });
+    if (myPostsData === null) { setMyPostsError("読み込み失敗"); }
+    else { setMyPosts(myPostsData); }
+    setMyPostsLoading(false);
+  };
+
+  const loadLikedPosts = async () => {
+    setLikedLoading(true);
+    setLikedError("");
+    setLikedPage(1);
+    const { data: likesData } = await supabase
+      .from("likes")
+      .select("post_id")
+      .eq("user_id", userIdRef.current);
+    if (!likesData) { setLikedError("読み込み失敗"); setLikedLoading(false); return; }
+    const postIds = likesData.map((l: any) => l.post_id);
+    if (postIds.length > 0) {
+      const { data: posts } = await supabase
+        .from("posts")
+        .select("*, user:user_id(id, display_name, username, icon_url)")
+        .in("id", postIds)
+        .order("created_at", { ascending: false });
+      setLikedPosts(posts ?? []);
+    } else {
+      setLikedPosts([]);
+    }
+    setLikedLoading(false);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -379,93 +395,132 @@ export default function EditProfilePage() {
           <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">{message}</div>
         )}
 
-        {/* プロフィール情報 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-2 relative">
-          <button onClick={toggleTheme}
-            className="absolute top-3 right-3 text-lg w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer border-none transition">
-            {theme === "dark" ? "☀️" : "🌙"}
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-              {profile.icon_url ? (
-                <Image src={getOptimizedIconUrl(profile.icon_url, 168)} width={56} height={56} className="rounded-full object-cover" alt="" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">
-                  {(profile.display_name || "?")[0]}
+        {/* プロフィール情報 + 投稿/いいね */}
+        <div className="bg-white rounded-xl border border-gray-200">
+          <div className="p-3 space-y-2 relative">
+            <button onClick={toggleTheme}
+              className="absolute top-3 right-3 text-lg w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer border-none transition">
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                {profile.icon_url ? (
+                  <Image src={getOptimizedIconUrl(profile.icon_url, 168)} width={56} height={56} className="rounded-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">
+                    {(profile.display_name || "?")[0]}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm truncate">{profile.display_name || "ユーザー"}</span>
+                  <span className="text-xs text-gray-400 truncate">@{profile.username || "unknown"}</span>
+                </div>
+                <div className="flex gap-3 mt-0.5">
+                  <Link href={`/profile/${encodeURIComponent(profile?.username || userIdRef.current)}/follow?tab=following`}
+                    className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
+                    <strong className="text-gray-800">{followingCount}</strong> フォロー
+                  </Link>
+                  <Link href={`/profile/${encodeURIComponent(profile?.username || userIdRef.current)}/follow?tab=followers`}
+                    className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
+                    <strong className="text-gray-800">{followersCount}</strong> フォロワー
+                  </Link>
+                </div>
+              </div>
+            </div>
+            {profile.current_title_id && (() => {
+              const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
+              return equippedTitle ? (
+                <div className="text-xs text-gray-600 ml-0.5">
+                  <span className="text-gray-400">称号:</span> <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
+                </div>
+              ) : null;
+            })()}
+
+            {/* 投稿・いいねボタン */}
+            {!editSection && (
+              <div className="pt-2 border-t border-gray-100 space-y-1">
+                <button onClick={() => { setEditSection("posts"); loadMyPosts(); }}
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 transition cursor-pointer text-left">
+                  <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
+                  <span className="text-sm font-bold">自分の投稿を見る</span>
+                </button>
+                <button onClick={() => { setEditSection("likes"); loadLikedPosts(); }}
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 transition cursor-pointer text-left">
+                  <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
+                  <span className="text-sm font-bold">いいねした投稿を見る</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 投稿コンテンツ */}
+          {editSection === "posts" && (
+            <div className="border-t border-gray-100 p-3 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <button onClick={() => { setEditSection(null); setMyPosts([]); }}
+                  className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                  <i className="fas fa-arrow-left" /> 戻る
+                </button>
+                <span className="text-xs font-bold">自分の投稿</span>
+                <div className="w-8" />
+              </div>
+              {myPostsError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs">{myPostsError}</div>}
+              {myPostsLoading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                 </div>
               )}
+              {!myPostsLoading && myPosts.length === 0 && !myPostsError && (
+                <p className="text-xs text-gray-400 text-center py-3">まだ投稿がありません</p>
+              )}
+              {myPosts.slice(0, postPage * 10).map((post: any) => (
+                <PostCard key={post.id} post={post} currentUserId={userIdRef.current || ""}
+                  onDelete={(id) => setMyPosts((prev) => prev.filter((p: any) => p.id !== id))}
+                  onUpdate={(id, data) => setMyPosts((prev: any[]) => prev.map((p: any) =>
+                    p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+              ))}
+              {myPosts.length > postPage * 10 && (
+                <button onClick={() => setPostPage((p) => p + 1)}
+                  className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                  もっと見る
+                </button>
+              )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm truncate">{profile.display_name || "ユーザー"}</span>
-                <span className="text-xs text-gray-400 truncate">@{profile.username || "unknown"}</span>
+          )}
+          {editSection === "likes" && (
+            <div className="border-t border-gray-100 p-3 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <button onClick={() => { setEditSection(null); setLikedPosts([]); }}
+                  className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                  <i className="fas fa-arrow-left" /> 戻る
+                </button>
+                <span className="text-xs font-bold">いいねした投稿</span>
+                <div className="w-8" />
               </div>
-              <div className="flex gap-3 mt-0.5">
-                <Link href={`/profile/${encodeURIComponent(profile?.username || userIdRef.current)}/follow?tab=following`}
-                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
-                  <strong className="text-gray-800">{followingCount}</strong> フォロー
-                </Link>
-                <Link href={`/profile/${encodeURIComponent(profile?.username || userIdRef.current)}/follow?tab=followers`}
-                  className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
-                  <strong className="text-gray-800">{followersCount}</strong> フォロワー
-                </Link>
-              </div>
+              {likedError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs">{likedError}</div>}
+              {likedLoading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                </div>
+              )}
+              {!likedLoading && likedPosts.length === 0 && !likedError && (
+                <p className="text-xs text-gray-400 text-center py-3">いいねした投稿はありません</p>
+              )}
+              {likedPosts.slice(0, likedPage * 10).map((post: any) => (
+                <PostCard key={post.id} post={post} currentUserId={userIdRef.current || ""}
+                  onDelete={() => {}}
+                  onUpdate={() => {}} />
+              ))}
+              {likedPosts.length > likedPage * 10 && (
+                <button onClick={() => setLikedPage((p) => p + 1)}
+                  className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                  もっと見る
+                </button>
+              )}
             </div>
-          </div>
-          {profile.current_title_id && (() => {
-            const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
-            return equippedTitle ? (
-              <div className="text-xs text-gray-600 ml-0.5">
-                <span className="text-gray-400">称号:</span> <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
-              </div>
-            ) : null;
-          })()}
-        </div>
-
-        {/* 自分の投稿 / いいねした投稿 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-2">
-          <div className="flex gap-1 border-b border-gray-100 pb-2">
-            <button onClick={() => { setProfileTab("posts"); setPostPage(1); }}
-              className={`text-xs font-medium px-3 py-1 rounded-full cursor-pointer transition ${profileTab === "posts" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
-              自分の投稿 ({myPosts.length})
-            </button>
-            <button onClick={() => { setProfileTab("likes"); setLikedPage(1); }}
-              className={`text-xs font-medium px-3 py-1 rounded-full cursor-pointer transition ${profileTab === "likes" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"}`}>
-              いいねした投稿 ({likedPosts.length})
-            </button>
-          </div>
-          <div className="space-y-1.5 max-h-96 overflow-y-auto">
-            {(profileTab === "posts" ? myPosts : likedPosts).length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-3">
-                {profileTab === "posts" ? "まだ投稿がありません" : "いいねした投稿はありません"}
-              </p>
-            )}
-            {(profileTab === "posts" ? myPosts : likedPosts).slice(0, (profileTab === "posts" ? postPage : likedPage) * 10).map((post: any) => (
-              <PostCard key={post.id} post={post} currentUserId={userIdRef.current || ""}
-                onDelete={(id) => {
-                  setMyPosts((prev) => prev.filter((p: any) => p.id !== id));
-                  setLikedPosts((prev) => prev.filter((p: any) => p.id !== id));
-                }}
-                onUpdate={(id, data) => {
-                  setMyPosts((prev: any[]) => prev.map((p: any) =>
-                    p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p));
-                  setLikedPosts((prev: any[]) => prev.map((p: any) =>
-                    p.id === id ? { ...p, ...data } : p));
-                }} />
-            ))}
-            {profileTab === "posts" && myPosts.length > postPage * 10 && (
-              <button onClick={() => setPostPage((p) => p + 1)}
-                className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
-                もっと見る
-              </button>
-            )}
-            {profileTab === "likes" && likedPosts.length > likedPage * 10 && (
-              <button onClick={() => setLikedPage((p) => p + 1)}
-                className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
-                もっと見る
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* プロフィール設定 */}
