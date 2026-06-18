@@ -36,6 +36,7 @@ export default function EditProfilePage() {
   const [postPage, setPostPage] = useState(1);
   const [likedPage, setLikedPage] = useState(1);
 
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
   const [dailySummary, setDailySummary] = useState(true);
@@ -74,6 +75,7 @@ export default function EditProfilePage() {
       setItems(items);
       setTitles(items.filter((i: any) => i.category === "title"));
       setIcons(items.filter((i: any) => i.category === "icon"));
+      setFavoriteIds(new Set(userItemsResult.data.filter((ui: any) => ui.is_favorite).map((ui: any) => ui.item_id)));
     }
 
     setUnreadCount(notifResult.count || 0);
@@ -273,6 +275,64 @@ export default function EditProfilePage() {
       else next.add(id);
       return next;
     });
+  };
+
+  const handleToggleFavorite = async (itemId: string) => {
+    const isFav = favoriteIds.has(itemId);
+    const { error } = await supabase
+      .from("user_items")
+      .update({ is_favorite: !isFav })
+      .eq("user_id", userIdRef.current)
+      .eq("item_id", itemId);
+    if (!error) {
+      const next = new Set(favoriteIds);
+      if (isFav) next.delete(itemId); else next.add(itemId);
+      setFavoriteIds(next);
+    }
+  };
+
+  const sortTitles = (list: any[]) => {
+    return [...list].sort((a, b) => {
+      const aFav = favoriteIds.has(a.id) ? 0 : 1;
+      const bFav = favoriteIds.has(b.id) ? 0 : 1;
+      if (aFav !== bFav) return aFav - bFav;
+      return (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+    });
+  };
+
+  const refinedTitles = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
+  const rawTitles = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
+
+  const titleCard = (item: any) => {
+    const isEquipped = profile.current_title_id === item.id;
+    const sellable = canSell(item);
+    const isFav = favoriteIds.has(item.id);
+    return (
+      <div key={item.id} className={`relative p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'} ${isFav ? 'ring-2 ring-yellow-400' : ''}`}>
+        <button onClick={() => handleToggleFavorite(item.id)}
+          className="absolute top-1 right-1 text-base cursor-pointer bg-transparent border-none p-0 leading-none z-10">
+          {isFav ? '❤️' : '🤍'}
+        </button>
+        <div className="flex items-center justify-between pr-5">
+          <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
+          {isRefinedItem(item) && <span className="text-xs text-gray-400">精錬品</span>}
+        </div>
+        <span className="ml-1 text-sm">{itemDisplayName(item)}</span>
+        <div className="flex gap-1 mt-1">
+          <button onClick={() => handleEquip(item.id, "current_title_id")}
+            className="flex-1 text-xs text-primary hover:underline py-0.5">
+            {isEquipped ? "装備中" : "装備"}
+          </button>
+           {sellable && (
+             <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+               <input type="checkbox" checked={selectedSell.has(item.id)}
+                 onChange={() => toggleSellItem(item.id)} />
+               {isRefinedItem(item) ? "捨てる" : "売却"}
+             </label>
+           )}
+         </div>
+       </div>
+    );
   };
 
   if (!profile) return null;
@@ -560,47 +620,38 @@ export default function EditProfilePage() {
 
         {/* 称号一覧 */}
         <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-2">所持称号</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {titles.map((item: any) => {
-              const isEquipped = profile.current_title_id === item.id;
-              const sellable = canSell(item);
-              return (
-                <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                  <div className="flex items-center justify-between">
-                    <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
-                    {isRefinedItem(item) && <span className="text-xs text-gray-400">精錬品</span>}
-                  </div>
-                  <span className="ml-1 text-sm">{itemDisplayName(item)}</span>
-                  <div className="flex gap-1 mt-1">
-                    <button onClick={() => handleEquip(item.id, "current_title_id")}
-                      className="flex-1 text-xs text-primary hover:underline py-0.5">
-                      {isEquipped ? "装備中" : "装備"}
-                    </button>
-                     {sellable && (
-                       <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                         <input type="checkbox" checked={selectedSell.has(item.id)}
-                           onChange={() => toggleSellItem(item.id)} />
-                         {isRefinedItem(item) ? "捨てる" : "売却"}
-                       </label>
-                     )}
-                   </div>
-                 </div>
-               );
-             })}
-           </div>
-           {selectedSell.size > 0 && (
-             <button onClick={() => handleSell(Array.from(selectedSell))}
-               className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
-               選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
-                 const item = items.find((i: any) => i.id === id);
-                 if (!item) return sum;
-                 if (isRefinedItem(item)) return sum;
-                 return sum + (SELL_VALUES[item?.rarity] || 0);
-               }, 0)}pt)
-             </button>
-           )}
-         </div>
+          <h2 className="text-sm font-bold mb-2">所持称号 ({titles.length})</h2>
+
+          {refinedTitles.length > 0 && (
+            <>
+              <p className="text-xs text-gray-400 mb-1.5">精錬品称号 ({refinedTitles.length})</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {refinedTitles.map((item: any) => titleCard(item))}
+              </div>
+            </>
+          )}
+
+          {rawTitles.length > 0 && (
+            <>
+              <p className="text-xs text-gray-400 mb-1.5">通常称号 ({rawTitles.length})</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {rawTitles.map((item: any) => titleCard(item))}
+              </div>
+            </>
+          )}
+
+          {selectedSell.size > 0 && (
+            <button onClick={() => handleSell(Array.from(selectedSell))}
+              className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
+              選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
+                const item = items.find((i: any) => i.id === id);
+                if (!item) return sum;
+                if (isRefinedItem(item)) return sum;
+                return sum + (SELL_VALUES[item?.rarity] || 0);
+              }, 0)}pt)
+            </button>
+          )}
+        </div>
 
           {/* アバター一覧 */}
           <div className="bg-white rounded-xl border border-gray-200 p-3">
