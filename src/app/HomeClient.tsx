@@ -3,11 +3,16 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import NextImage from "next/image";
+import dynamic from "next/dynamic";
 import PostCard from "@/components/PostCard";
 import StudyTimer from "@/components/StudyTimer";
 import StudyPomodoro from "@/components/StudyPomodoro";
-import { WeeklyChart } from "@/components/WeeklyChart";
 import { useToast } from "@/components/ToastProvider";
+
+const WeeklyChart = dynamic(() => import("@/components/WeeklyChart").then(m => ({ default: m.WeeklyChart })), {
+  ssr: false,
+  loading: () => <div className="h-48 bg-gray-100 rounded-xl animate-pulse" />,
+});
 import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
