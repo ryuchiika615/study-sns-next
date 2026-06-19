@@ -183,18 +183,8 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
                 <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[180px]">
                   <Link href="/settings" onClick={() => setSettingsOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
-                    <i className="fas fa-wrench text-primary w-5 text-center" />
-                    <span>各種設定</span>
-                  </Link>
-                  <Link href="/profile/edit" onClick={() => setSettingsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
-                    <i className="fas fa-user-edit text-blue-500 w-5 text-center" />
-                    <span>プロフィール編集</span>
-                  </Link>
-                  <Link href="/shop" onClick={() => setSettingsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
-                    <i className="fas fa-store text-orange-500 w-5 text-center" />
-                    <span>ショップ</span>
+                    <i className="fas fa-envelope text-primary w-5 text-center" />
+                    <span>要望・報告</span>
                   </Link>
                 </div>
               </>
