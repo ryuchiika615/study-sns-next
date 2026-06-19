@@ -28,38 +28,37 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-bold flex items-center gap-1.5">
-          <i className="fas fa-user-plus text-blue-400 text-xs" /> おすすめユーザー
+          <i className="fas fa-user-plus text-blue-400 text-xs" /> フォローおすすめ
         </h2>
         <button onClick={() => setDismissed(true)} className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
           閉じる
         </button>
       </div>
-      <div className="divide-y divide-gray-50">
-        {users.map((u) => (
-          <div key={u.id} className="flex items-center justify-between px-4 py-2.5">
-            <Link href={`/profile/${u.username || u.id}`} className="flex items-center gap-2.5 no-underline min-w-0">
-              <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                {u.icon_url ? (
-                  <img src={u.icon_url} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-sm" /></div>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-800 truncate">{u.display_name || u.username}</p>
-                <p className="text-[10px] text-gray-400 truncate">@{u.username}</p>
-              </div>
-            </Link>
-            <button onClick={async () => {
-              await supabase.from("follows").insert({ follower_id: userId, following_id: u.id });
-              setUsers((prev) => prev.filter((x) => x.id !== u.id));
-              onFollow?.();
-            }}
-              className="text-xs bg-blue-500 text-white rounded-full px-4 py-1.5 font-medium cursor-pointer hover:bg-blue-600 transition active:scale-95 flex-shrink-0">
-              フォロー
-            </button>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <div className="flex gap-3 p-3">
+          {users.map((u) => (
+            <div key={u.id} className="flex flex-col items-center gap-1.5 w-24 flex-shrink-0">
+              <Link href={`/profile/${u.username || u.id}`} className="flex flex-col items-center gap-1 no-underline">
+                <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                  {u.icon_url ? (
+                    <img src={u.icon_url} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-sm" /></div>
+                  )}
+                </div>
+                <p className="text-xs font-bold text-gray-800 truncate w-full text-center leading-tight">{u.display_name || u.username}</p>
+              </Link>
+              <button onClick={async () => {
+                await supabase.from("follows").insert({ follower_id: userId, following_id: u.id });
+                setUsers((prev) => prev.filter((x) => x.id !== u.id));
+                onFollow?.();
+              }}
+                className="text-[10px] bg-blue-500 text-white rounded-full px-2.5 py-1 font-medium cursor-pointer hover:bg-blue-600 transition active:scale-95">
+                フォロー
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
