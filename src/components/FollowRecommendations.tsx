@@ -9,20 +9,21 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!userId) { console.log("FollowRecommendations: no userId"); return; }
-    console.log("FollowRecommendations: fetching for", userId);
+    if (!userId) return;
     fetch(`/api/recommend-users?userId=${userId}`)
-      .then(r => { console.log("FollowRecommendations: status", r.status); return r.ok ? r.json() : null; })
+      .then(r => r.ok ? r.json() : null)
       .then(data => {
-        console.log("FollowRecommendations: data", data?.users?.length, "users");
         if (data?.users) setUsers(data.users);
+        if (data?.totalProfiles !== undefined) setDebug(`全${data.totalProfiles}人`);
       })
-      .catch((e) => console.error("FollowRecommendations: error", e));
+      .catch(() => {});
   }, [userId]);
+
+  const [debug, setDebug] = useState("");
 
   if (!userId) return <div className="text-xs text-red-400 p-2">[debug: no userId]</div>;
   if (dismissed) return null;
-  if (users.length === 0) return <div className="text-xs text-gray-400 p-2">[おすすめユーザーはいません]</div>;
+  if (users.length === 0) return <div className="text-xs text-gray-400 p-2">[おすすめユーザーはいません] {debug}</div>;
 
   const supabase = createClient();
 
