@@ -10,27 +10,10 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
 
   useEffect(() => {
     if (!userId) return;
-    const supabase = createClient();
-    (async () => {
-      const { data: following } = await supabase.from("follows").select("following_id").eq("follower_id", userId);
-      const followingIds = (following || []).map((f: any) => f.following_id);
-      followingIds.push(userId);
-
-      const { data: profiles } = followingIds.length > 0
-        ? await supabase
-            .from("profiles")
-            .select("id, display_name, username, icon_url")
-            .filter("id", "not.in", `(${followingIds.join(",")})`)
-            .order("updated_at", { ascending: false })
-            .limit(5)
-        : await supabase
-            .from("profiles")
-            .select("id, display_name, username, icon_url")
-            .order("updated_at", { ascending: false })
-            .limit(5);
-
-      setUsers(profiles || []);
-    })();
+    fetch(`/api/recommend-users?userId=${userId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.users) setUsers(data.users); })
+      .catch(() => {});
   }, [userId]);
 
   if (dismissed || users.length === 0) return null;
