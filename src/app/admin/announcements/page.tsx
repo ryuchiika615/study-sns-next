@@ -207,10 +207,29 @@ export default function AdminAnnouncementsPage() {
                   className="w-full rounded-lg border-gray-300 text-sm" placeholder="例: この機能どうしますか？" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">選択肢（改行区切り）</label>
-                <textarea value={surveyOptions.join("\n")} onChange={(e) => setSurveyOptions(e.target.value.split("\n").map(s => s.trim()).filter(Boolean))}
-                  className="w-full rounded-lg border-gray-300 text-sm" rows={3} />
-                <p className="text-[10px] text-gray-400 mt-0.5">「返信を入力」オプションが自動で追加されます</p>
+                <label className="text-xs text-gray-500">選択肢</label>
+                <div className="space-y-1.5">
+                  {surveyOptions.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <input type="text" value={opt} onChange={(e) => {
+                        const next = [...surveyOptions];
+                        next[i] = e.target.value;
+                        setSurveyOptions(next);
+                      }} className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${i + 1}`} />
+                      {surveyOptions.length > 1 && (
+                        <button onClick={() => setSurveyOptions(surveyOptions.filter((_, j) => j !== i))}
+                          className="text-red-400 text-xs cursor-pointer hover:text-red-600">
+                          <i className="fas fa-times" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setSurveyOptions([...surveyOptions, ""])}
+                  className="text-xs text-primary cursor-pointer hover:underline mt-1.5">
+                  <i className="fas fa-plus mr-0.5" /> 選択肢を追加
+                </button>
+                <p className="text-[10px] text-gray-400 mt-1">「返信を入力」オプションが自動で追加されます</p>
               </div>
               <label className="flex items-center justify-between text-xs cursor-pointer py-1">
                 <span>匿名投票（誰が答えたか見えない）</span>
