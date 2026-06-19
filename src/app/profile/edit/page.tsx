@@ -253,12 +253,8 @@ export default function EditProfilePage() {
 
         {/* ① プロフィールカード（ヘッダー） */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="p-4 space-y-3 relative">
-            <button onClick={toggleTheme}
-              className="absolute top-3 right-3 text-lg w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer border-none transition">
-              {theme === "dark" ? "☀️" : "🌙"}
-            </button>
-            <div className="flex items-center gap-3">
+          <div className="p-4 space-y-3">
+            <div className="flex items-start gap-3">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                 {profile.icon_url ? (
                   <Image src={getOptimizedIconUrl(profile.icon_url, 168)} width={56} height={56} className="rounded-full object-cover" alt="" />
@@ -284,13 +280,19 @@ export default function EditProfilePage() {
                   </Link>
                 </div>
               </div>
-              <div className="text-center flex-shrink-0">
-                <p className="text-xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
-                <p className="text-[9px] text-gray-400">pt</p>
-                <Link href="/shop"
-                  className="text-[9px] text-primary hover:underline block mt-0.5">
-                  交換所
-                </Link>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={toggleTheme}
+                  className="text-sm w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer border-none transition">
+                  {theme === "dark" ? "☀️" : "🌙"}
+                </button>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
+                  <p className="text-[9px] text-gray-400">pt</p>
+                  <Link href="/shop"
+                    className="text-[9px] text-primary hover:underline block">
+                    交換所
+                  </Link>
+                </div>
               </div>
             </div>
             {profile.current_title_id && (() => {
