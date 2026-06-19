@@ -218,6 +218,30 @@ export default function EditProfilePage() {
     }
   };
 
+  const sectionCard = (title: string, icon: string, children: React.ReactNode) => (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+        <i className={`fas ${icon} text-primary text-sm w-4 text-center`} />
+        <h2 className="text-sm font-bold">{title}</h2>
+      </div>
+      <div className="p-4 space-y-3">
+        {children}
+      </div>
+    </div>
+  );
+
+  const sectionForm = (title: string, icon: string, onSubmit: (e: React.FormEvent) => Promise<void>, children: React.ReactNode) => (
+    <form onSubmit={onSubmit} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+        <i className={`fas ${icon} text-primary text-sm w-4 text-center`} />
+        <h2 className="text-sm font-bold">{title}</h2>
+      </div>
+      <div className="p-4 space-y-3">
+        {children}
+      </div>
+    </form>
+  );
+
   if (!profile) return null;
 
   return (
@@ -227,9 +251,9 @@ export default function EditProfilePage() {
           <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">{message}</div>
         )}
 
-        {/* プロフィール情報 + 投稿/いいね */}
-        <div className="bg-white rounded-xl border border-gray-200">
-          <div className="p-3 space-y-2 relative">
+        {/* ① プロフィールカード（ヘッダー） */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="p-4 space-y-3 relative">
             <button onClick={toggleTheme}
               className="absolute top-3 right-3 text-lg w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer border-none transition">
               {theme === "dark" ? "☀️" : "🌙"}
@@ -269,35 +293,31 @@ export default function EditProfilePage() {
                 </div>
               ) : null;
             })()}
-
-            {/* 投稿・いいねボタン */}
-            {!editSection && (
-              <div className="pt-2 border-t border-gray-100 space-y-1">
-                <button onClick={() => { setEditSection("posts"); loadMyPosts(); }}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 transition cursor-pointer text-left">
-                  <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
-                  <span className="text-sm font-bold">自分の投稿を見る</span>
-                </button>
-                <button onClick={() => { setEditSection("likes"); loadLikedPosts(); }}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 transition cursor-pointer text-left">
-                  <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
-                  <span className="text-sm font-bold">いいねした投稿を見る</span>
-                </button>
-              </div>
-            )}
           </div>
+
+          {/* 投稿・いいねリンク */}
+          {!editSection && (
+            <div className="border-t border-gray-100">
+              <button onClick={() => { setEditSection("posts"); loadMyPosts(); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition cursor-pointer text-left border-b border-gray-100">
+                <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
+                <span className="text-sm font-bold">自分の投稿を見る</span>
+              </button>
+              <button onClick={() => { setEditSection("likes"); loadLikedPosts(); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition cursor-pointer text-left">
+                <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
+                <span className="text-sm font-bold">いいねした投稿を見る</span>
+              </button>
+            </div>
+          )}
 
           {/* 投稿コンテンツ */}
           {editSection === "posts" && (
-            <div className="border-t border-gray-100 p-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <button onClick={() => { setEditSection(null); setMyPosts([]); }}
-                  className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                  <i className="fas fa-arrow-left" /> 戻る
-                </button>
-                <span className="text-xs font-bold">自分の投稿</span>
-                <div className="w-8" />
-              </div>
+            <div className="border-t border-gray-100 p-4 space-y-2">
+              <button onClick={() => { setEditSection(null); setMyPosts([]); }}
+                className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer mb-2">
+                <i className="fas fa-arrow-left" /> 戻る
+              </button>
               {myPostsError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs">{myPostsError}</div>}
               {myPostsLoading && (
                 <div className="text-center py-4">
@@ -315,22 +335,18 @@ export default function EditProfilePage() {
               ))}
               {myPosts.length > postPage * 10 && (
                 <button onClick={() => setPostPage((p) => p + 1)}
-                  className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                  className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
                   もっと見る
                 </button>
               )}
             </div>
           )}
           {editSection === "likes" && (
-            <div className="border-t border-gray-100 p-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <button onClick={() => { setEditSection(null); setLikedPosts([]); }}
-                  className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                  <i className="fas fa-arrow-left" /> 戻る
-                </button>
-                <span className="text-xs font-bold">いいねした投稿</span>
-                <div className="w-8" />
-              </div>
+            <div className="border-t border-gray-100 p-4 space-y-2">
+              <button onClick={() => { setEditSection(null); setLikedPosts([]); }}
+                className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer mb-2">
+                <i className="fas fa-arrow-left" /> 戻る
+              </button>
               {likedError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs">{likedError}</div>}
               {likedLoading && (
                 <div className="text-center py-4">
@@ -347,7 +363,7 @@ export default function EditProfilePage() {
               ))}
               {likedPosts.length > likedPage * 10 && (
                 <button onClick={() => setLikedPage((p) => p + 1)}
-                  className="w-full py-1.5 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
+                  className="w-full py-2 text-xs text-primary font-bold cursor-pointer hover:bg-gray-50 rounded-lg">
                   もっと見る
                 </button>
               )}
@@ -355,44 +371,54 @@ export default function EditProfilePage() {
           )}
         </div>
 
-        {/* プロフィール設定 */}
-        <form onSubmit={handleUpdateProfile} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2.5">
-          <h2 className="text-sm font-bold">プロフィール設定</h2>
+        {/* ② プロフィール設定 */}
+        {sectionForm("プロフィール", "fa-user", handleUpdateProfile,
+          <>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">ユーザーID (@...)</label>
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
+              <p className="text-[10px] text-gray-400 mt-0.5">一部記号も使用可能。変更するとURLも変わります。</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">表示名</label>
+              <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">自己紹介</label>
+              <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={300}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" rows={2} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">アイコン画像</label>
+              <input type="file" name="icon" accept="image/*" className="text-xs mt-0.5" />
+            </div>
+            <button type="submit" className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
+              保存
+            </button>
+          </>
+        )}
 
-          <div>
-            <label className="block text-xs font-medium text-gray-700">ユーザーID (@...)</label>
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
-            <p className="text-[10px] text-gray-400 mt-0.5">一部記号も使用可能。変更するとURLも変わります。</p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">表示名</label>
-            <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">自己紹介</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={300}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" rows={2} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+        {/* ③ 学習目標 */}
+        {sectionCard("学習目標", "fa-bullseye",
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700">目標日</label>
               <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)}
                 className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700">目標時間(分)</label>
+              <label className="block text-xs font-medium text-gray-700">目標時間（分）</label>
               <input type="number" value={targetMinutes} onChange={(e) => setTargetMinutes(e.target.value)}
                 className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={0} />
             </div>
           </div>
+        )}
 
-          <div className="border-t border-gray-100 pt-2 space-y-2">
-            <p className="text-xs font-medium text-gray-700">通知設定</p>
+        {/* ④ 通知設定 */}
+        {sectionCard("通知設定", "fa-bell",
+          <>
             <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>静音モード</span>
               <input type="checkbox" checked={quietHoursEnabled} onChange={(e) => setQuietHoursEnabled(e.target.checked)}
@@ -412,7 +438,7 @@ export default function EditProfilePage() {
                 </div>
               </div>
             )}
-            <p className="text-[10px] text-gray-400">設定した時間帯はプッシュ通知が送信されなくなります</p>
+            <p className="text-[10px] text-gray-400 -mt-1">設定した時間帯はプッシュ通知が送信されなくなります</p>
             <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
               <span>デイリーまとめ通知</span>
               <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
@@ -428,94 +454,87 @@ export default function EditProfilePage() {
               <input type="checkbox" checked={notifyChallenge} onChange={(e) => setNotifyChallenge(e.target.checked)}
                 className="cursor-pointer" />
             </label>
-
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">アイコン画像</label>
-            <input type="file" name="icon" accept="image/*" className="text-xs mt-0.5" />
-          </div>
-
-          <button type="submit" className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
-            保存
-          </button>
-        </form>
-
-        {/* 通知の再登録 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-1">プッシュ通知の再登録</h2>
-          <p className="text-[10px] text-gray-500 mb-2">スマホに通知が届かなくなった場合、こちらを試してください</p>
-          <button onClick={async () => {
-            try {
-              const reg = await navigator.serviceWorker.ready;
-              const sub = await reg.pushManager.getSubscription();
-              if (sub) await sub.unsubscribe();
-              const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
-              const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-              const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
-              const json = fresh.toJSON();
-              const res = await fetch("/api/push/subscribe", {
-                method: "POST",
+            <button onClick={async () => {
+              await fetch("/api/notification-settings", {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+                body: JSON.stringify({
+                  push_admin_announcements: pushAdminAnnouncements,
+                  quiet_hours_start: quietHoursEnabled ? quietHoursStart : null,
+                  quiet_hours_end: quietHoursEnabled ? quietHoursEnd : null,
+                  daily_summary: dailySummary,
+                  notify_challenge: notifyChallenge,
+                }),
               });
-              const data = await res.json();
-              if (data.ok) {
-                setMessage("プッシュ通知を再登録しました！");
-              } else {
-                setMessage("再登録に失敗しました。");
+              setMessage("通知設定を保存しました");
+            }}
+              className="w-full bg-gray-100 text-gray-700 font-medium rounded-full py-1.5 text-xs cursor-pointer hover:bg-gray-200 transition">
+              通知設定を保存
+            </button>
+          </>
+        )}
+
+        {/* ⑤ プッシュ通知 */}
+        {sectionCard("プッシュ通知", "fa-mobile-alt",
+          <>
+            <p className="text-[10px] text-gray-500">スマホに通知が届かないときは再登録をお試しください</p>
+            <button onClick={async () => {
+              try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) await sub.unsubscribe();
+                const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
+                const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+                const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+                const json = fresh.toJSON();
+                const res = await fetch("/api/push/subscribe", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+                });
+                const data = await res.json();
+                setMessage(data.ok ? "プッシュ通知を再登録しました！" : "再登録に失敗しました。");
+              } catch {
+                setMessage("再登録に失敗しました。ブラウザの通知設定を確認してください。");
               }
-            } catch {
-              setMessage("再登録に失敗しました。ブラウザの通知設定を確認してください。");
-            }
-          }}
-            className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
-            通知を再登録
-          </button>
-        </div>
-
-        {/* テスト通知 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-1">テスト通知を送る</h2>
-          <p className="text-[10px] text-gray-500 mb-2">スマホにプッシュ通知が届くかテストします</p>
-          <button onClick={async () => {
-            try {
-              const res = await fetch("/api/push/test", { method: "POST" });
-              const data = await res.json();
-              if (data.ok) {
-                setMessage(`テスト通知を送信しました (${data.sent}件)`);
-              } else {
-                setMessage(data.error || "テスト送信に失敗しました");
+            }}
+              className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
+              <i className="fas fa-sync-alt mr-1" /> 通知を再登録
+            </button>
+            <button onClick={async () => {
+              try {
+                const res = await fetch("/api/push/test", { method: "POST" });
+                const data = await res.json();
+                setMessage(data.ok ? `テスト通知を送信しました (${data.sent}件)` : (data.error || "テスト送信に失敗しました"));
+              } catch {
+                setMessage("テスト送信に失敗しました");
               }
-            } catch {
-              setMessage("テスト送信に失敗しました");
-            }
-          }}
-            className="w-full bg-orange-500 text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
-            テスト通知を送信
-          </button>
-        </div>
+            }}
+              className="w-full bg-orange-500 text-white font-medium rounded-full py-1.5 text-xs cursor-pointer hover:bg-orange-400 transition">
+              <i className="fas fa-paper-plane mr-1" /> テスト通知を送信
+            </button>
+          </>
+        )}
 
-        {/* パスワード変更 */}
-        <form onSubmit={handleChangePassword} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2.5">
-          <h2 className="text-sm font-bold">パスワード変更</h2>
-          <div>
-            <label className="block text-xs font-medium text-gray-700">新しいパスワード</label>
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700">新しいパスワード（確認）</label>
-            <input type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
-          </div>
-          <button type="submit" disabled={passwordChanging}
-            className="w-full bg-gray-800 text-white font-bold rounded-full py-1.5 text-sm disabled:opacity-50 cursor-pointer">
-            パスワードを変更
-          </button>
-        </form>
-
-
+        {/* ⑥ アカウント */}
+        {sectionForm("アカウント", "fa-lock", handleChangePassword,
+          <>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">新しいパスワード</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">新しいパスワード（確認）</label>
+              <input type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
+            </div>
+            <button type="submit" disabled={passwordChanging}
+              className="w-full bg-gray-800 text-white font-bold rounded-full py-1.5 text-sm disabled:opacity-50 cursor-pointer">
+              パスワードを変更
+            </button>
+          </>
+        )}
 
       </div>
     </AppShell>
