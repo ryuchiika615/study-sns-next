@@ -24,6 +24,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+          media="print"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var link = document.querySelector('link[href*="font-awesome"]');
+                if (link) {
+                  link.onload = function() { this.media = "all"; };
+                  if (link.sheet) { link.media = "all"; }
+                }
+              })();
+            `,
+          }}
         />
       </head>
       <body>

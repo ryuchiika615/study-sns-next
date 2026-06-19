@@ -1,6 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import { subjectColor } from "@/lib/utils";
+import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
 import AppShell from "@/components/AppShell";
 import HomeClient from "./HomeClient";
 
@@ -77,6 +78,8 @@ export default async function HomePage() {
 
   const totalMinutes = rawPosts.reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
 
+  const { posts: initialPosts, totalPages: initialTotalPages } = await fetchAndEnrichPosts(supabase, user.id);
+
   return (
     <AppShell unreadCount={unreadCount}>
       <HomeClient
@@ -86,6 +89,8 @@ export default async function HomePage() {
         weeklyLabels={weeklyLabels}
         weeklyDatasets={datasets}
         totalMinutes={totalMinutes}
+        initialPosts={initialPosts}
+        initialTotalPages={initialTotalPages}
       />
     </AppShell>
   );

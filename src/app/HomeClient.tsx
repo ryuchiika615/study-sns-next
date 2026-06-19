@@ -25,14 +25,16 @@ type HomeClientProps = {
   weeklyLabels: string[];
   weeklyDatasets: any[];
   totalMinutes: number;
+  initialPosts?: any[];
+  initialTotalPages?: number;
 };
 
-export default function HomeClient({ user, profile: initialProfile, unreadCount: initialUnread, weeklyLabels, weeklyDatasets, totalMinutes: initialTotal }: HomeClientProps) {
+export default function HomeClient({ user, profile: initialProfile, unreadCount: initialUnread, weeklyLabels, weeklyDatasets, totalMinutes: initialTotal, initialPosts, initialTotalPages }: HomeClientProps) {
   const supabase = createClient();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>(initialPosts || []);
   const [profile] = useState(initialProfile);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(initialTotalPages || 1);
   const [search, setSearch] = useState("");
   const [content, setContent] = useState("");
   const [subject, setSubject] = useState("");
@@ -41,6 +43,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [totalMinutes, setTotalMinutes] = useState(initialTotal);
   const [showTargetAchievement, setShowTargetAchievement] = useState(false);
+  const initialFetchDone = useRef(!!initialPosts);
   const seenNotifs = useRef<Set<string>>(new Set(
     JSON.parse(localStorage.getItem("seen_notifs") || "[]")
   ));
@@ -399,6 +402,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   }, []);
 
   useEffect(() => {
+    if (initialFetchDone.current) { initialFetchDone.current = false; return; }
     fetchPosts(page, search);
   }, [page]);
 
