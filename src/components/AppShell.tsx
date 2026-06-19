@@ -140,8 +140,6 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
       }
     };
     fetchAnnouncementsAndGifts();
-    const timer = setInterval(fetchAnnouncementsAndGifts, 15000);
-    return () => clearInterval(timer);
   }, []);
 
   const markAnnouncementRead = async (id: string) => {
