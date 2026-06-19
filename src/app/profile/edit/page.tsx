@@ -297,16 +297,16 @@ export default function EditProfilePage() {
 
           {/* 投稿・いいねリンク */}
           {!editSection && (
-            <div className="border-t border-gray-100">
+            <div className="border-t border-gray-100 grid grid-cols-2">
               <button onClick={() => { setEditSection("posts"); loadMyPosts(); }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition cursor-pointer text-left border-b border-gray-100">
-                <i className="far fa-file-alt text-blue-500 w-5 text-center text-sm" />
-                <span className="text-sm font-bold">自分の投稿を見る</span>
+                className="flex items-center justify-center gap-2 py-3 hover:bg-blue-50 transition cursor-pointer text-left border-r border-gray-100">
+                <i className="far fa-file-alt text-blue-500 text-sm" />
+                <span className="text-sm font-bold">自分の投稿</span>
               </button>
               <button onClick={() => { setEditSection("likes"); loadLikedPosts(); }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition cursor-pointer text-left">
-                <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
-                <span className="text-sm font-bold">いいねした投稿を見る</span>
+                className="flex items-center justify-center gap-2 py-3 hover:bg-red-50 transition cursor-pointer text-left">
+                <i className="far fa-heart text-red-500 text-sm" />
+                <span className="text-sm font-bold">いいねした投稿</span>
               </button>
             </div>
           )}
