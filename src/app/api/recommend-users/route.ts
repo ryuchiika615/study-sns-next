@@ -9,22 +9,16 @@ export async function GET(request: Request) {
   if (!userId) return NextResponse.json({ users: [] });
 
   const supabase = createServerSupabase();
+  const { data: all } = await supabase
+    .from("profiles")
+    .select("id, display_name, username, icon_url")
+    .order("updated_at", { ascending: false });
+
   const { data: following } = await supabase.from("follows").select("following_id").eq("follower_id", userId);
-  const followingIds = (following || []).map((f: any) => f.following_id);
-  followingIds.push(userId);
+  const followingIds = new Set((following || []).map((f: any) => f.following_id));
+  followingIds.add(userId);
 
-  const { data: profiles } = followingIds.length > 0
-    ? await supabase
-        .from("profiles")
-        .select("id, display_name, username, icon_url")
-        .filter("id", "not.in", `(${followingIds.join(",")})`)
-        .order("updated_at", { ascending: false })
-        .limit(5)
-    : await supabase
-        .from("profiles")
-        .select("id, display_name, username, icon_url")
-        .order("updated_at", { ascending: false })
-        .limit(5);
+  const users = (all || []).filter((p: any) => !followingIds.has(p.id)).slice(0, 5);
 
-  return NextResponse.json({ users: profiles || [] });
+  return NextResponse.json({ users });
 }
