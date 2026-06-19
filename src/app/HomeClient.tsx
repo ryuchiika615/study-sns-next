@@ -19,6 +19,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
 import { formatStudyTime, getOptimizedIconUrl, compressImage, vibrateDevice } from "@/lib/utils";
+import FollowRecommendations from "@/components/FollowRecommendations";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
@@ -383,10 +384,14 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
     fetch("/api/surveys").then(r => r.ok && r.json()).then(d => {
       if (d?.survey) {
-        setActiveSurvey(d.survey);
-        setSurveyResponse(d.myResponse || null);
-        setSurveyResults(d.results || null);
-        setSurveyDismissed(false);
+        if (d.myResponse) {
+          setSurveyResponse(d.myResponse);
+          setSurveyResults(d.results || null);
+          setSurveyDismissed(true);
+        } else {
+          setActiveSurvey(d.survey);
+          setSurveyDismissed(false);
+        }
       }
     }).catch(() => {});
 
@@ -729,6 +734,8 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         </form>
       </div>
       </div>
+
+      <FollowRecommendations userId={user.id} />
 
       {/* ===== 投稿一覧 ===== */}
       {loading && posts.length === 0 ? (
