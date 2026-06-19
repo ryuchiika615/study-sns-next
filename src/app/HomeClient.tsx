@@ -67,9 +67,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const vibratePrefs = useRef<Record<string, boolean>>({ like: true, reply: true, follow: true, mention: true, gift: true, follow_post: true, admin_announcement: true, repost: true, challenge: true });
   const [incomingChallenge, setIncomingChallenge] = useState<any>(null);
-  const [recentBgm, setRecentBgm] = useState<any>(null);
-  const [bgmAudio, setBgmAudio] = useState<HTMLAudioElement | null>(null);
-  const [bgmPlaying, setBgmPlaying] = useState(false);
 
   const dismissAchievement = useCallback(() => {
     const key = `target_achieved_${profile?.target_minutes}_${profile?.target_date || ""}`;
@@ -354,50 +351,9 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     } catch {}
   };
 
-  const fetchRecentBgm = async () => {
-    try {
-      const { data } = await supabase
-        .from("audio_bgm")
-        .select("id, name, audio_url, price, user_id, profiles!audio_bgm_user_id_fkey(display_name, username)")
-        .order("created_at", { ascending: false })
-        .limit(3);
-      if (!data?.length) return;
-      const { data: purchased } = await supabase
-        .from("purchased_bgm")
-        .select("bgm_id")
-        .eq("user_id", user.id);
-      const purchasedIds = new Set((purchased || []).map((p: any) => p.bgm_id));
-      const latest = data.find((b: any) => b.user_id !== user.id && !purchasedIds.has(b.id));
-      if (latest) setRecentBgm(latest);
-    } catch {}
-  };
-
-  const handleBuyBgm = async (bgmId: string) => {
-    const { error } = await supabase.rpc("purchase_bgm", { p_bgm_id: bgmId });
-    if (!error) {
-      setRecentBgm(null);
-      addToast({ message: "BGMを購入しました！", type: "info" });
-    }
-  };
-
-  const toggleBgmPlay = (url: string) => {
-    if (bgmPlaying && bgmAudio) {
-      bgmAudio.pause();
-      setBgmPlaying(false);
-      return;
-    }
-    const audio = new Audio(url);
-    audio.loop = false;
-    audio.onended = () => setBgmPlaying(false);
-    audio.play();
-    setBgmAudio(audio);
-    setBgmPlaying(true);
-  };
-
   const pollAll = async () => {
     await pollNotifications();
     await pollChallenges();
-    await fetchRecentBgm();
   };
 
   useEffect(() => {
@@ -585,39 +541,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
 
         <StudyPomodoro />
       </div>
-
-      {/* ===== 新着BGM ===== */}
-      {recentBgm && (
-        <div className="mx-4 mb-3 p-3 rounded-xl bg-gradient-to-r from-purple-900 to-indigo-800 text-white border border-purple-400 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-700 flex items-center justify-center flex-shrink-0 text-lg">
-              <i className="fas fa-music" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-purple-200">新着BGM</p>
-              <p className="text-sm font-bold truncate">{recentBgm.name}</p>
-              <p className="text-[10px] text-purple-300">
-                {(recentBgm as any).profiles?.display_name || (recentBgm as any).profiles?.username || "ユーザー"}が出品しました
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <button onClick={() => toggleBgmPlay(recentBgm.audio_url)}
-                  className="text-xs bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 cursor-pointer transition">
-                  <i className={`fas fa-${bgmPlaying ? "stop" : "play"} mr-1`} />
-                  {bgmPlaying ? "停止" : "試聴"}
-                </button>
-                <button onClick={() => handleBuyBgm(recentBgm.id)}
-                  className="text-xs bg-yellow-500 text-yellow-900 hover:bg-yellow-400 rounded-full px-3 py-1 font-bold cursor-pointer transition">
-                  購入 ({recentBgm.price}pt)
-                </button>
-                <a href="/profile/edit"
-                  className="text-xs text-purple-200 hover:text-white ml-auto cursor-pointer transition">
-                  マーケットへ <i className="fas fa-arrow-right ml-0.5" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ===== 投稿フォーム ===== */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 mb-4 overflow-hidden">
