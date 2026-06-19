@@ -44,6 +44,9 @@ export default function EditProfilePage() {
   const [notifyChallenge, setNotifyChallenge] = useState(true);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [titles, setTitles] = useState<any[]>([]);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackType, setFeedbackType] = useState("feedback");
+  const [feedbackSending, setFeedbackSending] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
@@ -610,6 +613,51 @@ export default function EditProfilePage() {
             <button type="submit" disabled={passwordChanging}
               className="w-full bg-gray-800 text-white font-bold rounded-full py-1.5 text-sm disabled:opacity-50 cursor-pointer">
               パスワードを変更
+            </button>
+          </>
+        )}
+
+        {/* ⑦ 要望を送る */}
+        {sectionCard("要望・報告", "fa-envelope",
+          <>
+            <p className="text-[10px] text-gray-500">運営への要望、不具合報告、質問など</p>
+            <textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="自由に書いてください..."
+              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" rows={3} maxLength={1000} />
+            <div className="flex items-center justify-between">
+              <select value={feedbackType} onChange={(e) => setFeedbackType(e.target.value)}
+                className="rounded-lg border-gray-300 text-xs p-1.5">
+                <option value="feedback">要望</option>
+                <option value="bug">不具合報告</option>
+                <option value="question">質問</option>
+                <option value="other">その他</option>
+              </select>
+              <span className="text-[10px] text-gray-400">{feedbackText.length}/1000</span>
+            </div>
+            <button onClick={async () => {
+              if (!feedbackText.trim()) return;
+              setFeedbackSending(true);
+              try {
+                const res = await fetch("/api/feedback", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ content: feedbackText, type: feedbackType }),
+                });
+                const data = await res.json();
+                if (data.ok) {
+                  setMessage("送信しました！ありがとうございます");
+                  setFeedbackText("");
+                } else {
+                  setMessage(data.error || "送信に失敗しました");
+                }
+              } catch {
+                setMessage("送信に失敗しました");
+              }
+              setFeedbackSending(false);
+            }}
+              disabled={!feedbackText.trim() || feedbackSending}
+              className="w-full bg-gray-800 text-white font-bold rounded-full py-1.5 text-sm disabled:opacity-40 cursor-pointer">
+              {feedbackSending ? "送信中..." : "送信する"}
             </button>
           </>
         )}

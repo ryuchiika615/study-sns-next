@@ -171,6 +171,10 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
               </span>
             )}
           </Link>
+          <Link href="/profile/edit"
+            className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
+            <i className="fas fa-cog text-yellow-600" />
+          </Link>
           <button onClick={() => setShowAnnouncement("list")}
             className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition relative">
             <i className="far fa-envelope text-yellow-600" />
