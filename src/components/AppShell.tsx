@@ -16,6 +16,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
   const [pendingGifts, setPendingGifts] = useState<any[]>([]);
   const [showAnnouncement, setShowAnnouncement] = useState<any>(null);
   const [popupAnnouncement, setPopupAnnouncement] = useState<any>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const dismissedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -171,10 +172,34 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
               </span>
             )}
           </Link>
-          <Link href="/settings"
-            className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
-            <i className="fas fa-cog text-yellow-600" />
-          </Link>
+          <div className="relative">
+            <button onClick={() => setSettingsOpen(!settingsOpen)}
+              className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition">
+              <i className="fas fa-cog text-yellow-600" />
+            </button>
+            {settingsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setSettingsOpen(false)} />
+                <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[180px]">
+                  <Link href="/settings" onClick={() => setSettingsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
+                    <i className="fas fa-wrench text-primary w-5 text-center" />
+                    <span>各種設定</span>
+                  </Link>
+                  <Link href="/profile/edit" onClick={() => setSettingsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
+                    <i className="fas fa-user-edit text-blue-500 w-5 text-center" />
+                    <span>プロフィール編集</span>
+                  </Link>
+                  <Link href="/shop" onClick={() => setSettingsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
+                    <i className="fas fa-store text-orange-500 w-5 text-center" />
+                    <span>ショップ</span>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={() => setShowAnnouncement("list")}
             className="text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition relative">
             <i className="far fa-envelope text-yellow-600" />
