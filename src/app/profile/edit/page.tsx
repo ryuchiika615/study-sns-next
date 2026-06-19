@@ -36,12 +36,6 @@ export default function EditProfilePage() {
   const [postPage, setPostPage] = useState(1);
   const [likedPage, setLikedPage] = useState(1);
 
-  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
-  const [quietHoursStart, setQuietHoursStart] = useState("");
-  const [quietHoursEnd, setQuietHoursEnd] = useState("");
-  const [dailySummary, setDailySummary] = useState(true);
-  const [pushAdminAnnouncements, setPushAdminAnnouncements] = useState(true);
-  const [notifyChallenge, setNotifyChallenge] = useState(true);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [titles, setTitles] = useState<any[]>([]);
   const { theme, toggleTheme } = useTheme();
@@ -89,20 +83,6 @@ export default function EditProfilePage() {
     ]);
     setFollowersCount(followers ?? 0);
     setFollowingCount(following ?? 0);
-
-    const { data: notifSettings } = await supabase
-      .from("notification_settings")
-      .select("quiet_hours_start, quiet_hours_end, daily_summary, push_admin_announcements, notify_challenge")
-      .eq("user_id", uid)
-      .maybeSingle();
-    if (notifSettings) {
-      setQuietHoursEnabled(!!(notifSettings.quiet_hours_start && notifSettings.quiet_hours_end));
-      setQuietHoursStart(notifSettings.quiet_hours_start || "");
-      setQuietHoursEnd(notifSettings.quiet_hours_end || "");
-      setDailySummary(notifSettings.daily_summary ?? true);
-      setPushAdminAnnouncements(notifSettings.push_admin_announcements ?? true);
-      setNotifyChallenge(notifSettings.notify_challenge ?? true);
-    }
   };
 
   const loadMyPosts = async () => {
@@ -209,12 +189,6 @@ export default function EditProfilePage() {
     } else {
       setMessage(error.message || "保存に失敗しました");
     }
-
-    await fetch("/api/notification-settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ push_admin_announcements: pushAdminAnnouncements, quiet_hours_start: quietHoursEnabled ? quietHoursStart : null, quiet_hours_end: quietHoursEnabled ? quietHoursEnd : null, daily_summary: dailySummary, notify_challenge: notifyChallenge }),
-    });
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -494,65 +468,7 @@ export default function EditProfilePage() {
           </div>
         )}
 
-        {/* ④ 通知設定 */}
-        {sectionCard("通知設定", "fa-bell",
-          <>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>静音モード</span>
-              <input type="checkbox" checked={quietHoursEnabled} onChange={(e) => setQuietHoursEnabled(e.target.checked)}
-                className="cursor-pointer" />
-            </label>
-            {quietHoursEnabled && (
-              <div className="grid grid-cols-2 gap-2 pl-4">
-                <div>
-                  <label className="block text-xs text-gray-500">開始</label>
-                  <input type="time" value={quietHoursStart} onChange={(e) => setQuietHoursStart(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500">終了</label>
-                  <input type="time" value={quietHoursEnd} onChange={(e) => setQuietHoursEnd(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 text-xs py-1 mt-0.5" />
-                </div>
-              </div>
-            )}
-            <p className="text-[10px] text-gray-400 -mt-1">設定した時間帯はプッシュ通知が送信されなくなります</p>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>デイリーまとめ通知</span>
-              <input type="checkbox" checked={dailySummary} onChange={(e) => setDailySummary(e.target.checked)}
-                className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>管理者からのお知らせ</span>
-              <input type="checkbox" checked={pushAdminAnnouncements} onChange={(e) => setPushAdminAnnouncements(e.target.checked)}
-                className="cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between text-xs cursor-pointer py-0.5">
-              <span>🔥 勉強チャレンジ</span>
-              <input type="checkbox" checked={notifyChallenge} onChange={(e) => setNotifyChallenge(e.target.checked)}
-                className="cursor-pointer" />
-            </label>
-            <button onClick={async () => {
-              await fetch("/api/notification-settings", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  push_admin_announcements: pushAdminAnnouncements,
-                  quiet_hours_start: quietHoursEnabled ? quietHoursStart : null,
-                  quiet_hours_end: quietHoursEnabled ? quietHoursEnd : null,
-                  daily_summary: dailySummary,
-                  notify_challenge: notifyChallenge,
-                }),
-              });
-              setMessage("通知設定を保存しました");
-            }}
-              className="w-full bg-gray-100 text-gray-700 font-medium rounded-full py-1.5 text-xs cursor-pointer hover:bg-gray-200 transition">
-              通知設定を保存
-            </button>
-          </>
-        )}
-
-        {/* ⑤ アカウント */}
+        {/* アカウント */}
         {sectionForm("アカウント", "fa-lock", handleChangePassword,
           <>
             <div>
