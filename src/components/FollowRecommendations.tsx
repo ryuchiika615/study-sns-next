@@ -16,17 +16,18 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
       const followingIds = (following || []).map((f: any) => f.following_id);
       followingIds.push(userId);
 
-      let query = supabase
-        .from("profiles")
-        .select("id, display_name, username, icon_url")
-        .order("updated_at", { ascending: false })
-        .limit(5);
-
-      if (followingIds.length > 0) {
-        query = query.not("id", "in", `(${followingIds.join(",")})`);
-      }
-
-      const { data: profiles } = await query;
+      const { data: profiles } = followingIds.length > 0
+        ? await supabase
+            .from("profiles")
+            .select("id, display_name, username, icon_url")
+            .filter("id", "not.in", `(${followingIds.join(",")})`)
+            .order("updated_at", { ascending: false })
+            .limit(5)
+        : await supabase
+            .from("profiles")
+            .select("id, display_name, username, icon_url")
+            .order("updated_at", { ascending: false })
+            .limit(5);
 
       setUsers(profiles || []);
     })();
