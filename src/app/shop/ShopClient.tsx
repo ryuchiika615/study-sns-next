@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
@@ -20,12 +20,12 @@ export default function ShopClient({ userId }: { userId: string }) {
   const [message, setMessage] = useState("");
   const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
   const [bgmUserId, setBgmUserId] = useState("");
+  const [inventoryOpen, setInventoryOpen] = useState(false);
   const supabase = createClient();
 
   const loadData = async () => {
-    const [profileResult, userItemsResult, notifResult] = await Promise.all([
+    const [profileResult, notifResult] = await Promise.all([
       supabase.from("profiles").select("id, display_name, username, bio, icon_url, points, exchange_points, current_title_id, current_avatar_id").eq("id", userId).single(),
-      supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", userId),
       supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", userId).eq("is_read", false).neq("notification_type", "follow_post"),
     ]);
 
@@ -33,15 +33,22 @@ export default function ShopClient({ userId }: { userId: string }) {
       setProfile(profileResult.data);
     }
 
-    if (userItemsResult.data) {
-      const items = userItemsResult.data.map((ui: any) => ui.item);
+    setUnreadCount(notifResult.count || 0);
+  };
+
+  const loadInventory = useCallback(async () => {
+    const { data: userItemsResult } = await supabase
+      .from("user_items")
+      .select("*, item:item_id(*)")
+      .eq("user_id", userId);
+
+    if (userItemsResult) {
+      const items = userItemsResult.map((ui: any) => ui.item);
       setItems(items);
       setTitles(items.filter((i: any) => i.category === "title"));
       setIcons(items.filter((i: any) => i.category === "icon"));
     }
-
-    setUnreadCount(notifResult.count || 0);
-  };
+  }, [userId, supabase]);
 
   useEffect(() => {
     if (userId) {
@@ -134,9 +141,6 @@ export default function ShopClient({ userId }: { userId: string }) {
     });
   };
 
-  const refinedTitles = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
-  const rawTitles = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
-
   const titleCard = (item: any) => {
     const isEquipped = profile.current_title_id === item.id;
     const sellable = canSell(item);
@@ -174,7 +178,6 @@ export default function ShopClient({ userId }: { userId: string }) {
     }
     return [...tokens].sort();
   };
-  const parts = ownedParts();
 
   if (!profile) return null;
 
@@ -255,89 +258,113 @@ export default function ShopClient({ userId }: { userId: string }) {
           {bgmUserId && <StudyBGMRecorder key={bgmUserId} supabase={supabase} userId={bgmUserId} />}
         </div>
 
-        {/* 称号を精錬（部位組み合わせ） */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-2">称号を精錬（部位組み合わせ）</h2>
-          <RefineParts parts={parts} onRefine={handleRefineParts} />
-        </div>
+        {/* 称号管理（開いたらロード） */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <button onClick={() => {
+            if (!inventoryOpen) loadInventory();
+            setInventoryOpen(!inventoryOpen);
+          }}
+            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
+            <div className="flex items-center gap-2">
+              <i className="fas fa-box text-primary text-sm" />
+              <h2 className="text-sm font-bold">称号管理</h2>
+            </div>
+            <i className={`fas fa-chevron-${inventoryOpen ? "up" : "down"} text-gray-400 text-xs transition-transform`} />
+          </button>
 
-        {/* 一括売却 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-2">一括売却</h2>
-          <p className="text-[10px] text-gray-500 mb-2">装備中は売却できません（精錬品は0ptで捨てられます）</p>
-          <div className="flex gap-2">
-            {["N", "R", "SR"].map((rarity) => (
-              <button key={rarity} onClick={() => handleBulkSell(rarity)}
-                className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-xs font-medium hover:bg-red-100">
-                {rarity}以下を売却
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 称号一覧 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-2">所持称号 ({titles.length})</h2>
-
-          {refinedTitles.length > 0 && (
-            <>
-              <p className="text-xs text-gray-400 mb-1.5">精錬品称号 ({refinedTitles.length})</p>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {refinedTitles.map((item: any) => titleCard(item))}
+          {inventoryOpen && (
+            <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-3">
+              {/* 称号を精錬（部位組み合わせ） */}
+              <div>
+                <h3 className="text-xs font-bold mb-2">称号を精錬（部位組み合わせ）</h3>
+                <RefineParts parts={ownedParts()} onRefine={handleRefineParts} />
               </div>
-            </>
-          )}
 
-          {rawTitles.length > 0 && (
-            <>
-              <p className="text-xs text-gray-400 mb-1.5">通常称号 ({rawTitles.length})</p>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {rawTitles.map((item: any) => titleCard(item))}
-              </div>
-            </>
-          )}
-
-          {selectedSell.size > 0 && (
-            <button onClick={() => handleSell(Array.from(selectedSell))}
-              className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
-              選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
-                const item = items.find((i: any) => i.id === id);
-                if (!item) return sum;
-                if (isRefinedItem(item)) return sum;
-                return sum + (SELL_VALUES[item?.rarity] || 0);
-              }, 0)}pt)
-            </button>
-          )}
-        </div>
-
-        {/* アバター一覧 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <h2 className="text-sm font-bold mb-2">所持アバター</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {icons.map((item: any) => {
-              const isEquipped = profile.current_avatar_id === item.id;
-              const sellable = canSell(item);
-              return (
-                <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                  <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
-                  <span className="ml-1">{itemDisplayName(item).replace("【アイコン】", "")}</span>
-                  <div className="flex gap-1 mt-1">
-                    <button onClick={() => handleEquip(item.id, "current_avatar_id")}
-                      className="flex-1 text-xs text-primary hover:underline py-0.5">
-                      {isEquipped ? "装備中" : "装備"}
+              {/* 一括売却 */}
+              <div>
+                <h3 className="text-xs font-bold mb-2">一括売却</h3>
+                <p className="text-[10px] text-gray-500 mb-2">装備中は売却できません（精錬品は0ptで捨てられます）</p>
+                <div className="flex gap-2">
+                  {["N", "R", "SR"].map((rarity) => (
+                    <button key={rarity} onClick={() => handleBulkSell(rarity)}
+                      className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-xs font-medium hover:bg-red-100">
+                      {rarity}以下を売却
                     </button>
-                    {sellable && (
-                      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                        <input type="checkbox" checked={selectedSell.has(item.id)}
-                          onChange={() => toggleSellItem(item.id)} />
-                        売却
-                      </label>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              {/* 称号一覧 */}
+              <div>
+                <h3 className="text-xs font-bold mb-2">所持称号 ({titles.length})</h3>
+                {(() => {
+                  const refined = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
+                  const raw = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
+                  return (
+                    <>
+                      {refined.length > 0 && (
+                        <>
+                          <p className="text-xs text-gray-400 mb-1.5">精錬品称号 ({refined.length})</p>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            {refined.map((item: any) => titleCard(item))}
+                          </div>
+                        </>
+                      )}
+                      {raw.length > 0 && (
+                        <>
+                          <p className="text-xs text-gray-400 mb-1.5">通常称号 ({raw.length})</p>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            {raw.map((item: any) => titleCard(item))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+                {selectedSell.size > 0 && (
+                  <button onClick={() => handleSell(Array.from(selectedSell))}
+                    className="mt-3 w-full bg-red-500 text-white rounded-full py-2 text-sm font-medium">
+                    選択した{selectedSell.size}個を売却 (+{Array.from(selectedSell).reduce((sum, id) => {
+                      const item = items.find((i: any) => i.id === id);
+                      if (!item) return sum;
+                      if (isRefinedItem(item)) return sum;
+                      return sum + (SELL_VALUES[item?.rarity] || 0);
+                    }, 0)}pt)
+                  </button>
+                )}
+              </div>
+
+              {/* アバター一覧 */}
+              <div>
+                <h3 className="text-xs font-bold mb-2">所持アバター ({icons.length})</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {icons.map((item: any) => {
+                    const isEquipped = profile.current_avatar_id === item.id;
+                    const sellable = canSell(item);
+                    return (
+                      <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
+                        <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
+                        <span className="ml-1">{itemDisplayName(item).replace("【アイコン】", "")}</span>
+                        <div className="flex gap-1 mt-1">
+                          <button onClick={() => handleEquip(item.id, "current_avatar_id")}
+                            className="flex-1 text-xs text-primary hover:underline py-0.5">
+                            {isEquipped ? "装備中" : "装備"}
+                          </button>
+                          {sellable && (
+                            <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                              <input type="checkbox" checked={selectedSell.has(item.id)}
+                                onChange={() => toggleSellItem(item.id)} />
+                              売却
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
