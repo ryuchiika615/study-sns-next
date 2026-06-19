@@ -284,6 +284,14 @@ export default function EditProfilePage() {
                   </Link>
                 </div>
               </div>
+              <div className="text-center flex-shrink-0">
+                <p className="text-xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
+                <p className="text-[9px] text-gray-400">pt</p>
+                <Link href="/shop"
+                  className="text-[9px] text-primary hover:underline block mt-0.5">
+                  交換所
+                </Link>
+              </div>
             </div>
             {profile.current_title_id && (() => {
               const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
