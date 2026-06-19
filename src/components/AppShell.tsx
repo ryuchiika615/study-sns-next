@@ -26,6 +26,9 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
   const [pushAdminAnnouncements, setPushAdminAnnouncements] = useState(true);
   const [notifyChallenge, setNotifyChallenge] = useState(true);
   const [unreadCount, setUnreadCount] = useState(propUnreadCount);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [passwordChanging, setPasswordChanging] = useState(false);
 
   const loadNotifSettings = async () => {
     const supabase = createClient();
@@ -244,6 +247,11 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
                         <i className="fas fa-bell text-red-400 w-5 text-center" />
                         <span>通知設定</span>
                       </button>
+                      <button onClick={() => setSettingsPage("account")}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 cursor-pointer">
+                        <i className="fas fa-lock text-gray-600 w-5 text-center" />
+                        <span>アカウント</span>
+                      </button>
                       <button onClick={() => setSettingsPage("push")}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 cursor-pointer">
                         <i className="fas fa-sync-alt text-blue-500 w-5 text-center" />
@@ -356,6 +364,42 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
                       }}
                         className="w-full bg-gray-100 text-gray-700 font-medium rounded-full py-1.5 text-xs cursor-pointer hover:bg-gray-200 transition mt-1">
                         通知設定を保存
+                      </button>
+                    </>
+                  ) : settingsPage === "account" ? (
+                    <>
+                      <button onClick={() => { setSettingsPage(null); setNewPassword(""); setNewPasswordConfirm(""); }}
+                        className="flex items-center gap-1 text-xs text-gray-500 mb-2 cursor-pointer hover:text-gray-700">
+                        <i className="fas fa-chevron-left" /> 戻る
+                      </button>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">新しいパスワード</label>
+                        <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">新しいパスワード（確認）</label>
+                        <input type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                          className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" minLength={6} required />
+                      </div>
+                      <button onClick={async () => {
+                        if (newPassword !== newPasswordConfirm) { setPushMsg("パスワードが一致しません"); return; }
+                        if (newPassword.length < 6) { setPushMsg("パスワードは6文字以上で入力してください"); return; }
+                        setPasswordChanging(true);
+                        const supabase = createClient();
+                        const { error } = await supabase.auth.updateUser({ password: newPassword });
+                        setPasswordChanging(false);
+                        if (error) {
+                          setPushMsg(`パスワード変更失敗: ${error.message}`);
+                        } else {
+                          setPushMsg("パスワードを変更しました！");
+                          setNewPassword("");
+                          setNewPasswordConfirm("");
+                        }
+                      }}
+                        disabled={!newPassword || !newPasswordConfirm || passwordChanging}
+                        className="w-full bg-gray-800 text-white font-bold rounded-full py-1.5 text-sm mt-1 disabled:opacity-50 cursor-pointer">
+                        パスワードを変更
                       </button>
                     </>
                   ) : null}
