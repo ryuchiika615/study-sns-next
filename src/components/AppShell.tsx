@@ -17,6 +17,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
   const [showAnnouncement, setShowAnnouncement] = useState<any>(null);
   const [popupAnnouncement, setPopupAnnouncement] = useState<any>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<string | null>(null);
   const [pushMsg, setPushMsg] = useState("");
   const dismissedRef = useRef<Set<string>>(new Set());
 
@@ -180,52 +181,67 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
             </button>
             {settingsOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => { setSettingsOpen(false); setPushMsg(""); }} />
-                <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[220px]">
-                  {pushMsg && <div className="px-3 py-1.5 mb-1 bg-blue-50 text-blue-700 rounded-lg text-[10px]">{pushMsg}</div>}
-                  <Link href="/settings" onClick={() => setSettingsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
-                    <i className="fas fa-envelope text-primary w-5 text-center" />
-                    <span>要望・報告</span>
-                  </Link>
-                  <div className="border-t border-gray-100 mt-1 pt-2 px-3 pb-1">
-                    <p className="text-[10px] text-gray-500 mb-2">プッシュ通知が届かないときは再登録</p>
-                    <button onClick={async () => {
-                      try {
-                        const reg = await navigator.serviceWorker.ready;
-                        const sub = await reg.pushManager.getSubscription();
-                        if (sub) await sub.unsubscribe();
-                        const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
-                        const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-                        const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
-                        const json = fresh.toJSON();
-                        const res = await fetch("/api/push/subscribe", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
-                        });
-                        const data = await res.json();
-                        setPushMsg(data.ok ? "プッシュ通知を再登録しました！" : "再登録に失敗しました。");
-                      } catch {
-                        setPushMsg("再登録に失敗しました。ブラウザの通知設定を確認してください。");
-                      }
-                    }}
-                      className="w-full bg-primary text-white font-bold rounded-full py-1 text-xs cursor-pointer mb-1.5">
-                      <i className="fas fa-sync-alt mr-1" /> 通知を再登録
-                    </button>
-                    <button onClick={async () => {
-                      try {
-                        const res = await fetch("/api/push/test", { method: "POST" });
-                        const data = await res.json();
-                        setPushMsg(data.ok ? `テスト通知を送信しました (${data.sent}件)` : (data.error || "テスト送信に失敗しました"));
-                      } catch {
-                        setPushMsg("テスト送信に失敗しました");
-                      }
-                    }}
-                      className="w-full bg-orange-500 text-white font-medium rounded-full py-1 text-xs cursor-pointer hover:bg-orange-400 transition">
-                      <i className="fas fa-paper-plane mr-1" /> テスト通知を送信
-                    </button>
-                  </div>
+                <div className="fixed inset-0 z-40" onClick={() => { setSettingsOpen(false); setSettingsPage(null); setPushMsg(""); }} />
+                <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[180px]">
+                  {!settingsPage ? (
+                    <>
+                      <div className="px-3 py-2 text-xs font-bold text-gray-400 border-b border-gray-100 mb-1">メニュー</div>
+                      <button onClick={() => setSettingsPage("push")}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 cursor-pointer">
+                        <i className="fas fa-mobile-alt text-blue-500 w-5 text-center" />
+                        <span>プッシュ通知</span>
+                      </button>
+                      <Link href="/settings" onClick={() => setSettingsOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm no-underline text-gray-700">
+                        <i className="fas fa-envelope text-primary w-5 text-center" />
+                        <span>要望・報告</span>
+                      </Link>
+                    </>
+                  ) : settingsPage === "push" ? (
+                    <>
+                      <button onClick={() => { setSettingsPage(null); setPushMsg(""); }}
+                        className="flex items-center gap-1 text-xs text-gray-500 mb-2 cursor-pointer hover:text-gray-700">
+                        <i className="fas fa-chevron-left" /> 戻る
+                      </button>
+                      {pushMsg && <div className="px-3 py-1.5 mb-1 bg-blue-50 text-blue-700 rounded-lg text-[10px]">{pushMsg}</div>}
+                      <p className="text-[10px] text-gray-500 px-1 mb-2">スマホに通知が届かないときは再登録をお試しください</p>
+                      <button onClick={async () => {
+                        try {
+                          const reg = await navigator.serviceWorker.ready;
+                          const sub = await reg.pushManager.getSubscription();
+                          if (sub) await sub.unsubscribe();
+                          const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
+                          const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+                          const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+                          const json = fresh.toJSON();
+                          const res = await fetch("/api/push/subscribe", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+                          });
+                          const data = await res.json();
+                          setPushMsg(data.ok ? "プッシュ通知を再登録しました！" : "再登録に失敗しました。");
+                        } catch {
+                          setPushMsg("再登録に失敗しました。ブラウザの通知設定を確認してください。");
+                        }
+                      }}
+                        className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer mb-1.5">
+                        <i className="fas fa-sync-alt mr-1" /> 通知を再登録
+                      </button>
+                      <button onClick={async () => {
+                        try {
+                          const res = await fetch("/api/push/test", { method: "POST" });
+                          const data = await res.json();
+                          setPushMsg(data.ok ? `テスト通知を送信しました (${data.sent}件)` : (data.error || "テスト送信に失敗しました"));
+                        } catch {
+                          setPushMsg("テスト送信に失敗しました");
+                        }
+                      }}
+                        className="w-full bg-orange-500 text-white font-medium rounded-full py-1.5 text-xs cursor-pointer hover:bg-orange-400 transition">
+                        <i className="fas fa-paper-plane mr-1" /> テスト通知を送信
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               </>
             )}

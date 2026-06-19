@@ -552,49 +552,7 @@ export default function EditProfilePage() {
           </>
         )}
 
-        {/* ⑤ プッシュ通知 */}
-        {sectionCard("プッシュ通知", "fa-mobile-alt",
-          <>
-            <p className="text-[10px] text-gray-500">スマホに通知が届かないときは再登録をお試しください</p>
-            <button onClick={async () => {
-              try {
-                const reg = await navigator.serviceWorker.ready;
-                const sub = await reg.pushManager.getSubscription();
-                if (sub) await sub.unsubscribe();
-                const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
-                const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-                const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
-                const json = fresh.toJSON();
-                const res = await fetch("/api/push/subscribe", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
-                });
-                const data = await res.json();
-                setMessage(data.ok ? "プッシュ通知を再登録しました！" : "再登録に失敗しました。");
-              } catch {
-                setMessage("再登録に失敗しました。ブラウザの通知設定を確認してください。");
-              }
-            }}
-              className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
-              <i className="fas fa-sync-alt mr-1" /> 通知を再登録
-            </button>
-            <button onClick={async () => {
-              try {
-                const res = await fetch("/api/push/test", { method: "POST" });
-                const data = await res.json();
-                setMessage(data.ok ? `テスト通知を送信しました (${data.sent}件)` : (data.error || "テスト送信に失敗しました"));
-              } catch {
-                setMessage("テスト送信に失敗しました");
-              }
-            }}
-              className="w-full bg-orange-500 text-white font-medium rounded-full py-1.5 text-xs cursor-pointer hover:bg-orange-400 transition">
-              <i className="fas fa-paper-plane mr-1" /> テスト通知を送信
-            </button>
-          </>
-        )}
-
-        {/* ⑥ アカウント */}
+        {/* ⑤ アカウント */}
         {sectionForm("アカウント", "fa-lock", handleChangePassword,
           <>
             <div>
