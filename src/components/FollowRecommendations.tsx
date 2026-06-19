@@ -11,24 +11,16 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
   useEffect(() => {
     if (!userId) return;
     fetch(`/api/recommend-users?userId=${userId}`)
-      .then(async r => {
-        const text = await r.text();
-        let json;
-        try { json = JSON.parse(text); } catch { json = null; }
-        return { ok: r.ok, status: r.status, text: text.slice(0, 200), json };
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.users) setUsers(data.users);
       })
-      .then(res => {
-        setDebug(`status=${res.status} data=${res.ok ? JSON.stringify(res.json) : res.text}`);
-        if (res.ok && res.json?.users) setUsers(res.json.users);
-      })
-      .catch((e) => setDebug(`fetch error: ${e.message}`));
+      .catch(() => {});
   }, [userId]);
 
-  const [debug, setDebug] = useState("");
-
-  if (!userId) return <div className="text-xs text-red-400 p-2">[debug: no userId {debug}]</div>;
+  if (!userId) return null;
   if (dismissed) return null;
-  if (users.length === 0) return <div className="text-xs text-gray-400 p-2">[おすすめユーザーはいません] {debug}</div>;
+  if (users.length === 0) return null;
 
   const supabase = createClient();
 
