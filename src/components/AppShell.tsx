@@ -10,7 +10,7 @@ import InstallBanner from "./InstallBanner";
 
 const DISMISSED_KEY = "ryutter_dismissed_announcements";
 
-export default function AppShell({ children, unreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
+export default function AppShell({ children, unreadCount: propUnreadCount = 0 }: { children: React.ReactNode; unreadCount?: number }) {
   const initialized = useRef(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState<any[]>([]);
   const [pendingGifts, setPendingGifts] = useState<any[]>([]);
@@ -25,6 +25,7 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
   const [dailySummary, setDailySummary] = useState(true);
   const [pushAdminAnnouncements, setPushAdminAnnouncements] = useState(true);
   const [notifyChallenge, setNotifyChallenge] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(propUnreadCount);
 
   const loadNotifSettings = async () => {
     const supabase = createClient();
@@ -59,6 +60,33 @@ export default function AppShell({ children, unreadCount = 0 }: { children: Reac
     doPing();
     const interval = setInterval(doPing, 5 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setUnreadCount(propUnreadCount);
+  }, [propUnreadCount]);
+
+  useEffect(() => {
+    const refreshUnread = async () => {
+      if (document.hidden) return;
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { count } = await supabase.from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .eq("is_read", false)
+        .neq("notification_type", "follow_post");
+      if (count !== null) setUnreadCount(count);
+    };
+    window.addEventListener("focus", refreshUnread);
+    document.addEventListener("visibilitychange", refreshUnread);
+    window.addEventListener("pageshow", refreshUnread);
+    return () => {
+      window.removeEventListener("focus", refreshUnread);
+      document.removeEventListener("visibilitychange", refreshUnread);
+      window.removeEventListener("pageshow", refreshUnread);
+    };
   }, []);
 
   useEffect(() => {
