@@ -9,6 +9,7 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    if (!userId) return;
     const supabase = createClient();
     (async () => {
       const { data: following } = await supabase.from("follows").select("following_id").eq("follower_id", userId);

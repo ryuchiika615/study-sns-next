@@ -40,11 +40,13 @@ export default function EditProfilePage() {
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
       userIdRef.current = data.user.id;
+      setUserId(data.user.id);
       loadData(data.user.id);
     });
   }, []);
@@ -352,7 +354,7 @@ export default function EditProfilePage() {
           )}
         </div>
 
-        <FollowRecommendations userId={userIdRef.current || ""} />
+        <FollowRecommendations userId={userId} />
 
         {/* ② プロフィール設定 */}
         {sectionForm("プロフィール", "fa-user", handleUpdateProfile,
