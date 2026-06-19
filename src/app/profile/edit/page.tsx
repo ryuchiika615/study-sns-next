@@ -44,8 +44,6 @@ export default function EditProfilePage() {
   const [notifyChallenge, setNotifyChallenge] = useState(true);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [titles, setTitles] = useState<any[]>([]);
-  const [icons, setIcons] = useState<any[]>([]);
-  const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
@@ -146,7 +144,6 @@ export default function EditProfilePage() {
 
   const loadInventory = () => {
     setTitles(items.filter((i: any) => i.category === "title"));
-    setIcons(items.filter((i: any) => i.category === "icon"));
   };
 
   const handleEquip = async (itemId: string, slot: string) => {
@@ -162,24 +159,6 @@ export default function EditProfilePage() {
       await supabase.from("profiles").update({ [slot]: itemId }).eq("id", user.id);
       loadData(user.id);
     }
-  };
-
-  const handleSell = async (itemIds: string[]) => {
-    const { data, error } = await supabase.rpc("sell_items", { p_item_ids: itemIds });
-    if (!error && data) {
-      setMessage("売却しました！");
-      setSelectedSell(new Set());
-      loadData();
-    }
-  };
-
-  const toggleSellItem = (id: string) => {
-    setSelectedSell((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -465,65 +444,30 @@ export default function EditProfilePage() {
               </button>
 
               {inventoryOpen && (
-                <div className="space-y-3 pt-2">
-                  {/* 称号一覧 */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1.5">所持称号 ({titles.length})</p>
-                    {(() => {
-                      const sortTitles = (list: any[]) => [...list].sort((a: any, b: any) => (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0));
-                      const refined = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
-                      const raw = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
-                      const canSell = (item: any) => item.id !== profile.current_title_id && item.id !== profile.current_avatar_id;
-                      const titleCard = (item: any) => {
-                        const isEquipped = profile.current_title_id === item.id;
-                        const sellable = canSell(item);
-                        return (
-                          <div key={item.id} className={`p-2 rounded-lg border text-xs ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                            <div className="flex items-center justify-between">
-                              <span className={`title-badge ${item.rarity}`}>{item.rarity}</span>
-                              {isRefinedItem(item) && <span className="text-[10px] text-gray-400">精錬品</span>}
-                            </div>
-                            <span className="ml-0.5">{itemDisplayName(item)}</span>
-                            <div className="flex gap-1 mt-1">
-                              <button type="button" onClick={() => handleEquip(item.id, "current_title_id")}
-                                className="flex-1 text-[10px] text-primary hover:underline py-0.5 cursor-pointer">
-                                {isEquipped ? "装備中" : "装備"}
-                              </button>
-                              {sellable && (
-                                <label className="flex items-center gap-1 text-[10px] text-gray-500 cursor-pointer">
-                                  <input type="checkbox" checked={selectedSell.has(item.id)}
-                                    onChange={() => toggleSellItem(item.id)} />
-                                  売却
-                                </label>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      };
+                <div className="space-y-2 pt-2">
+                  {(() => {
+                    const sortTitles = (list: any[]) => [...list].sort((a: any, b: any) => (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0));
+                    const refined = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
+                    const raw = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
+                    const list = [...refined, ...raw];
+                    if (!list.length) return <p className="text-xs text-gray-400">称号をまだ持っていません</p>;
+                    return list.map((item: any) => {
+                      const isEquipped = profile.current_title_id === item.id;
                       return (
-                        <>
-                          {refined.length > 0 && (
-                            <div className="mb-2">
-                              <p className="text-[10px] text-gray-400 mb-1">精錬品称号 ({refined.length})</p>
-                              <div className="grid grid-cols-2 gap-1.5">{refined.map((item: any) => titleCard(item))}</div>
-                            </div>
-                          )}
-                          {raw.length > 0 && (
-                            <div>
-                              <p className="text-[10px] text-gray-400 mb-1">通常称号 ({raw.length})</p>
-                              <div className="grid grid-cols-2 gap-1.5">{raw.map((item: any) => titleCard(item))}</div>
-                            </div>
-                          )}
-                        </>
+                        <div key={item.id} className={`flex items-center justify-between py-1.5 px-2 rounded-lg ${isEquipped ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`title-badge ${item.rarity} flex-shrink-0`}>{item.rarity}</span>
+                            <span className="text-xs truncate">{itemDisplayName(item)}</span>
+                            {isRefinedItem(item) && <span className="text-[10px] text-gray-400 flex-shrink-0">精錬品</span>}
+                          </div>
+                          <button type="button" onClick={() => handleEquip(item.id, "current_title_id")}
+                            className={`text-xs flex-shrink-0 px-2.5 py-1 rounded-full font-medium cursor-pointer transition ${isEquipped ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                            {isEquipped ? "装備中" : "装備"}
+                          </button>
+                        </div>
                       );
-                    })()}
-                    {selectedSell.size > 0 && (
-                      <button type="button" onClick={() => handleSell(Array.from(selectedSell))}
-                        className="w-full bg-red-500 text-white rounded-full py-1.5 text-[10px] font-medium cursor-pointer">
-                        選択した{selectedSell.size}個を売却
-                      </button>
-                    )}
-                  </div>
+                    });
+                  })()}
                 </div>
               )}
             </div>
