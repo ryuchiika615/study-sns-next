@@ -735,9 +735,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       </div>
       </div>
 
-      <FollowRecommendations userId={user.id} />
-
-      {/* ===== 投稿一覧 ===== */}
       {loading && posts.length === 0 ? (
         <>
           <PostCardSkeleton />
