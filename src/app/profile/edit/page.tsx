@@ -9,8 +9,9 @@ import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
-import { itemDisplayName, isRefinedItem, SELL_VALUES, RARITY_ORDER } from "@/lib/shop-catalog";
+import { itemDisplayName, isRefinedItem, SELL_VALUES, RARITY_ORDER, SHOP_CATALOG } from "@/lib/shop-catalog";
 import FollowRecommendations from "@/components/FollowRecommendations";
+import RefineParts from "@/components/RefineParts";
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -139,6 +140,32 @@ export default function EditProfilePage() {
       await supabase.from("profiles").update({ [slot]: itemId }).eq("id", user.id);
       loadData(user.id);
     }
+  };
+
+  const handleRefineParts = async (word: string, noun: string, namePart: string, order: string, connA?: string, connB?: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase.rpc("refine_parts", {
+      p_word: word, p_noun: noun, p_name_part: namePart, p_order: order,
+      p_conn_a: connA || '', p_conn_b: connB || '',
+    });
+    if (!error && data) {
+      setMessage("精錬しました！");
+      loadData(user.id);
+    } else {
+      setMessage(error?.message || "精錬に失敗しました");
+    }
+  };
+
+  const ownedParts = () => {
+    const displayNames = titles.map((t: any) => itemDisplayName(t));
+    const tokens = new Set<string>();
+    for (const name of displayNames) {
+      tokens.add(name);
+      const parts = name.split(/[\s,、。．.（）()「」【】]+/).filter(Boolean);
+      for (const p of parts) tokens.add(p);
+    }
+    return [...tokens].sort();
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -403,30 +430,39 @@ export default function EditProfilePage() {
               </button>
 
               {inventoryOpen && (
-                <div className="space-y-2 pt-2">
-                  {(() => {
-                    const sortTitles = (list: any[]) => [...list].sort((a: any, b: any) => (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0));
-                    const refined = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
-                    const raw = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
-                    const list = [...refined, ...raw];
-                    if (!list.length) return <p className="text-xs text-gray-400">称号をまだ持っていません</p>;
-                    return list.map((item: any) => {
-                      const isEquipped = profile.current_title_id === item.id;
-                      return (
-                        <div key={item.id} className={`flex items-center justify-between py-1.5 px-2 rounded-lg ${isEquipped ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className={`title-badge ${item.rarity} flex-shrink-0`}>{item.rarity}</span>
-                            <span className="text-xs truncate">{itemDisplayName(item)}</span>
-                            {isRefinedItem(item) && <span className="text-[10px] text-gray-400 flex-shrink-0">精錬品</span>}
+                <div className="space-y-3 pt-2">
+                  {/* 精錬 */}
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <h3 className="text-xs font-bold mb-2">称号を精錬</h3>
+                    <RefineParts parts={ownedParts()} onRefine={handleRefineParts} />
+                  </div>
+
+                  {/* 称号一覧 */}
+                  <div className="space-y-1">
+                    {(() => {
+                      const sortTitles = (list: any[]) => [...list].sort((a: any, b: any) => (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0));
+                      const refined = sortTitles(titles.filter((t: any) => isRefinedItem(t)));
+                      const raw = sortTitles(titles.filter((t: any) => !isRefinedItem(t)));
+                      const list = [...refined, ...raw];
+                      if (!list.length) return <p className="text-xs text-gray-400">称号をまだ持っていません</p>;
+                      return list.map((item: any) => {
+                        const isEquipped = profile.current_title_id === item.id;
+                        return (
+                          <div key={item.id} className={`flex items-center justify-between py-1.5 px-2 rounded-lg ${isEquipped ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`title-badge ${item.rarity} flex-shrink-0`}>{item.rarity}</span>
+                              <span className="text-xs truncate">{itemDisplayName(item)}</span>
+                              {isRefinedItem(item) && <span className="text-[10px] text-gray-400 flex-shrink-0">精錬品</span>}
+                            </div>
+                            <button type="button" onClick={() => handleEquip(item.id, "current_title_id")}
+                              className={`text-xs flex-shrink-0 px-3 py-1.5 rounded-full font-bold cursor-pointer transition ${isEquipped ? 'bg-primary text-white shadow-sm' : 'bg-white text-primary border border-primary hover:bg-primary hover:text-white'}`}>
+                              {isEquipped ? "装備中" : "装備"}
+                            </button>
                           </div>
-                          <button type="button" onClick={() => handleEquip(item.id, "current_title_id")}
-                            className={`text-xs flex-shrink-0 px-3 py-1.5 rounded-full font-bold cursor-pointer transition ${isEquipped ? 'bg-primary text-white shadow-sm' : 'bg-white text-primary border border-primary hover:bg-primary hover:text-white'}`}>
-                            {isEquipped ? "装備中" : "装備"}
-                          </button>
-                        </div>
-                      );
-                    });
-                  })()}
+                        );
+                      });
+                    })()}
+                  </div>
                 </div>
               )}
             </div>
