@@ -7,13 +7,13 @@ export function BottomNav({ unreadCount = 0 }: { unreadCount?: number }) {
   const pathname = usePathname();
 
   const items: { href: string; icon: string; label: string; customColor?: string; badge?: number }[] = [
-    { href: "/", icon: "fa-home", label: "ホーム" },
-    { href: "/rankings", icon: "fa-trophy", label: "ランキング" },
-    { href: "/analytics", icon: "fa-chart-pie", label: "分析" },
+    { href: "/", icon: "fa-home", label: "ホーム", customColor: "#f59e0b" },
+    { href: "/rankings", icon: "fa-trophy", label: "ランキング", customColor: "#a78bfa" },
+    { href: "/analytics", icon: "fa-chart-pie", label: "分析", customColor: "#60a5fa" },
     { href: "/challenges", icon: "fa-fire", label: "チャレンジ", customColor: "#ff6b6b" },
     { href: "/gacha", icon: "fa-calendar-check", label: "ログイン", customColor: "#4ade80" },
-    { href: "/shop", icon: "fa-store", label: "ショップ" },
-    { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール" },
+    { href: "/shop", icon: "fa-store", label: "ショップ", customColor: "#fb923c" },
+    { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール", customColor: "#34d399" },
   ];
 
   return (
