@@ -435,12 +435,17 @@ export default function EditProfilePage() {
                 if (!inventoryOpen) loadInventory();
                 setInventoryOpen(!inventoryOpen);
               }}
-                className="w-full flex items-center justify-between py-2 cursor-pointer hover:opacity-70 transition">
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition ${inventoryOpen ? 'bg-primary/10 border border-primary/20' : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'}`}>
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-box text-primary text-sm" />
-                  <span className="text-sm font-bold">称号管理</span>
+                  <i className={`fas fa-box ${inventoryOpen ? 'text-primary' : 'text-gray-400'} text-sm`} />
+                  <span className={`text-sm font-bold ${inventoryOpen ? 'text-primary' : 'text-gray-700'}`}>称号管理</span>
                 </div>
-                <i className={`fas fa-chevron-${inventoryOpen ? "up" : "down"} text-gray-400 text-xs transition-transform`} />
+                <div className="flex items-center gap-2">
+                  {titles.length > 0 && (
+                    <span className="text-[10px] text-gray-400">{titles.length}個</span>
+                  )}
+                  <i className={`fas fa-chevron-${inventoryOpen ? "up" : "down"} text-gray-400 text-xs transition-transform`} />
+                </div>
               </button>
 
               {inventoryOpen && (
