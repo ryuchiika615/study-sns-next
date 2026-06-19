@@ -10,6 +10,7 @@ import Link from "next/link";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
 import { itemDisplayName, isRefinedItem, SELL_VALUES, RARITY_ORDER } from "@/lib/shop-catalog";
+import FollowRecommendations from "@/components/FollowRecommendations";
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -350,6 +351,8 @@ export default function EditProfilePage() {
             </div>
           )}
         </div>
+
+        <FollowRecommendations userId={userIdRef.current || ""} />
 
         {/* ② プロフィール設定 */}
         {sectionForm("プロフィール", "fa-user", handleUpdateProfile,
