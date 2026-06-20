@@ -174,7 +174,12 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
     }
   };
 
+  const pushInitialized = useRef(false);
+
   useEffect(() => {
+    if (pushInitialized.current) return;
+    pushInitialized.current = true;
+
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
 
     const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
