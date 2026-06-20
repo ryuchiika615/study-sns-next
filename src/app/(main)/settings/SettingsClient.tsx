@@ -15,7 +15,7 @@ const sectionCard = (title: string, icon: string, children: React.ReactNode) => 
   </div>
 );
 
-export default function SettingsClient({ userId }: { userId: string }) {
+export default function SettingsClient() {
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState("feedback");
   const [feedbackSending, setFeedbackSending] = useState(false);

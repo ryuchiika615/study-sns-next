@@ -22,9 +22,10 @@ type Challenge = {
   opponent?: { id: string; display_name: string | null; username: string | null; icon_url: string | null };
 };
 
-export default function ChallengesClient({ userId }: { userId: string }) {
+export default function ChallengesClient() {
   const router = useRouter();
   const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
   const [outgoing, setOutgoing] = useState<Challenge[]>([]);
   const [incoming, setIncoming] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +52,13 @@ export default function ChallengesClient({ userId }: { userId: string }) {
   };
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
     fetchChallenges();
     // Fetch mutual follows for challenge creation
     supabase.from("follows").select("following_id, following:following_id(id, display_name, username, icon_url)")
@@ -66,7 +74,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
         const mutualIds = new Set(reverseFollows.map(f => f.follower_id));
         setMutualFollows(myFollows.filter(f => mutualIds.has(f.following_id)).map(f => f.following));
       });
-  }, []);
+  }, [userId]);
 
   const handleCreate = async () => {
     if (!selectedOpponent || !challengeMessage) return;

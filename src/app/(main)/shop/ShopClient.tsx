@@ -11,7 +11,8 @@ import { getOptimizedIconUrl } from "@/lib/utils";
 
 const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
 
-export default function ShopClient({ userId }: { userId: string }) {
+export default function ShopClient() {
+  const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
@@ -21,6 +22,12 @@ export default function ShopClient({ userId }: { userId: string }) {
   const [bgmUserId, setBgmUserId] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
 
   const loadData = async () => {
     const { data: profileData } = await supabase.from("profiles").select("id, display_name, username, bio, icon_url, points, exchange_points, current_title_id, current_avatar_id").eq("id", userId).single();
