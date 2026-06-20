@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { memo, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,7 +17,7 @@ function highlightMentions(text: string) {
   );
 }
 
-export default function PostCard({
+const PostCard = memo(function PostCard({
   post,
   currentUserId,
   onDelete,
@@ -488,4 +488,6 @@ export default function PostCard({
       )}
     </div>
   );
-}
+});
+
+export default PostCard;

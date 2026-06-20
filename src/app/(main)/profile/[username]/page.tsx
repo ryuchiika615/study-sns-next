@@ -1,7 +1,31 @@
+import type { Metadata } from "next";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { redirect, notFound } from "next/navigation";
 import { subjectColor } from "@/lib/utils";
 import ProfileClient from "./ProfileClient";
+
+export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
+  const supabase = createServerSupabase();
+  const { username } = params;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, username, bio, icon_url")
+    .eq(isUuid ? "id" : "username", username)
+    .maybeSingle();
+  const displayName = profile?.display_name || profile?.username || "ユーザー";
+  const description = profile?.bio?.slice(0, 150) || "リュッターで勉強記録を共有しよう";
+  const iconUrl = profile?.icon_url;
+  return {
+    title: `${displayName}のプロフィール - リュッター`,
+    description,
+    openGraph: {
+      title: `${displayName}のプロフィール`,
+      description,
+      images: iconUrl ? [{ url: iconUrl }] : [],
+    },
+  };
+}
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
   const supabase = createServerSupabase();
@@ -36,7 +60,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
-    supabase.from("posts").select("study_minutes, subject, created_at").eq("user_id", profile.id).gt("study_minutes", 0),
+    supabase.from("posts").select("study_minutes, subject, created_at").eq("user_id", profile.id).gt("study_minutes", 0).gte("created_at", yearStart),
     supabase.from("posts").select("created_at, study_minutes").eq("user_id", profile.id).gte("created_at", yearStart).gt("study_minutes", 0),
   ]);
 

@@ -193,7 +193,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
 
-    const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
+    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
     const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
     const subscribe = async () => {
@@ -290,7 +290,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           const reg = await navigator.serviceWorker.ready;
                           const sub = await reg.pushManager.getSubscription();
                           if (sub) await sub.unsubscribe();
-                          const key = "BDoPeVkeMYclyZBi4GMNRh4dNemJzOTvdnT3Qn-7Zt313qt6EPpOGohsbWjpgc5kh_KpeDQXxC9ndI_kqs23dgg";
+                          const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
                           const applicationServerKey = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
                           const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
                           const json = fresh.toJSON();
