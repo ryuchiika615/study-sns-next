@@ -19,6 +19,8 @@ export default function NotificationsClient({ notifications: initial }: { notifi
         .eq("recipient_id", data.user.id)
         .eq("is_read", false)
         .then(({ error }) => { if (error) console.error(error); });
+      // Clean up read notifications older than 30 days
+      supabase.rpc("cleanup_old_notifications", { days_old: 30 }).catch(() => {});
     });
   }, []);
 
