@@ -6,7 +6,6 @@ import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import PostCard from "@/components/PostCard";
 import StudyTimer from "@/components/StudyTimer";
-import StudyPomodoro from "@/components/StudyPomodoro";
 import { useToast } from "@/components/ToastProvider";
 
 const WeeklyChart = dynamic(() => import("@/components/WeeklyChart").then(m => ({ default: m.WeeklyChart })), {
@@ -16,11 +15,14 @@ const WeeklyChart = dynamic(() => import("@/components/WeeklyChart").then(m => (
 const SurveyPopup = dynamic(() => import("@/components/SurveyPopup"), { ssr: false });
 const ChallengePopup = dynamic(() => import("@/components/ChallengePopup"), { ssr: false });
 const BeeryualCamera = dynamic(() => import("@/components/BeeryualCamera"), { ssr: false });
+const StudyPomodoro = dynamic(() => import("@/components/StudyPomodoro"), {
+  ssr: false,
+  loading: () => <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />,
+});
 import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
 import { formatStudyTime, getOptimizedIconUrl, compressImage, vibrateDevice } from "@/lib/utils";
-import FollowRecommendations from "@/components/FollowRecommendations";
 
 type HomeClientProps = {
   user: { id: string; email?: string };
