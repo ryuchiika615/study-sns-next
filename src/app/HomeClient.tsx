@@ -309,11 +309,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
         addToast({ message: `${sender}がフォローしました`, type: "follow", href });
       } else if (lastNotif.notification_type === "follow_post") {
         addToast({ message: `${sender}が投稿しました`, type: "follow_post", href });
-        fetch("/api/push/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "follow_post", recipient_id: user.id, sender_id: (lastNotif as any).sender?.id || (lastNotif as any).sender_id, post_id: (lastNotif as any).post_id }),
-        }).catch(() => {});
       } else if (lastNotif.notification_type === "gift") {
         addToast({ message: `🎁 ${sender}からプレゼントが届きました。`, type: "gift", href: "/gacha" });
       } else if (lastNotif.notification_type === "mention") {
