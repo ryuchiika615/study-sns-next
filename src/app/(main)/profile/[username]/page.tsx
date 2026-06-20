@@ -31,13 +31,12 @@ export default async function UserProfilePage({ params }: { params: { username: 
   if (error || !profile) notFound();
 
   const yearStart = `${new Date().getFullYear()}-01-01`;
-  const [followResult, followersResult, followingResult, postCountResult, statsResult, unreadResult, calendarResult] = await Promise.all([
+  const [followResult, followersResult, followingResult, postCountResult, statsResult, calendarResult] = await Promise.all([
     supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", profile.id).maybeSingle(),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
     supabase.from("posts").select("study_minutes, subject, created_at").eq("user_id", profile.id).gt("study_minutes", 0),
-    supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", user.id).eq("is_read", false).neq("notification_type", "follow_post"),
     supabase.from("posts").select("created_at, study_minutes").eq("user_id", profile.id).gte("created_at", yearStart).gt("study_minutes", 0),
   ]);
 
@@ -80,7 +79,6 @@ export default async function UserProfilePage({ params }: { params: { username: 
       totalStudyDisplay={fmtStudyTime(totalMinutes)}
       monthStudyDisplay={fmtStudyTime(monthMinutes)}
       totalStudyMinutes={totalMinutes}
-      unreadCount={unreadResult.count || 0}
       calendarData={calendarData}
     />
   );

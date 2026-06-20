@@ -5,17 +5,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 import { getOptimizedIconUrl } from "@/lib/utils";
 
 export default function FollowPageClient({
-  currentUserId, profile, tab, isOwner, unreadCount,
+  currentUserId, profile, tab, isOwner,
 }: {
   currentUserId: string;
   profile: any;
   tab: "followers" | "following";
   isOwner: boolean;
-  unreadCount: number;
 }) {
   const [users, setUsers] = useState<any[]>([]);
   const [settings, setSettings] = useState<Record<string, { notify_posts: boolean; notify_likes: boolean; notify_comments: boolean; notify_repost: boolean }>>({});
@@ -84,8 +82,7 @@ export default function FollowPageClient({
   };
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="mx-auto my-4 max-w-xl px-4">
+    <div className="mx-auto my-4 max-w-xl px-4">
         <div className="bg-white rounded-xl border border-gray-200">
           <div className="flex border-b border-gray-100">
             <button onClick={() => switchTab("followers")}
@@ -175,6 +172,5 @@ export default function FollowPageClient({
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }

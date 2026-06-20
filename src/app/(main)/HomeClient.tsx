@@ -27,7 +27,6 @@ import { formatStudyTime, getOptimizedIconUrl, compressImage, vibrateDevice } fr
 type HomeClientProps = {
   user: { id: string; email?: string };
   profile: any;
-  unreadCount: number;
   weeklyLabels: string[];
   weeklyDatasets: any[];
   totalMinutes: number;
@@ -35,7 +34,7 @@ type HomeClientProps = {
   initialTotalPages?: number;
 };
 
-export default function HomeClient({ user, profile: initialProfile, unreadCount: initialUnread, weeklyLabels, weeklyDatasets, totalMinutes: initialTotal, initialPosts, initialTotalPages }: HomeClientProps) {
+export default function HomeClient({ user, profile: initialProfile, weeklyLabels, weeklyDatasets, totalMinutes: initialTotal, initialPosts, initialTotalPages }: HomeClientProps) {
   const supabase = createClient();
   const [posts, setPosts] = useState<any[]>(initialPosts || []);
   const [profile] = useState(initialProfile);
@@ -46,7 +45,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [subject, setSubject] = useState("");
   const [studyMinutes, setStudyMinutes] = useState("");
   const [studyDate, setStudyDate] = useState("");
-  const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [totalMinutes, setTotalMinutes] = useState(initialTotal);
   const [showTargetAchievement, setShowTargetAchievement] = useState(false);
   const initialFetchDone = useRef(!!initialPosts);
@@ -145,7 +143,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
       }
       if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
-    setUnreadCount(unread);
 
     if (latestCreatedAt.current && page === 1 && !search) {
       const { data: followedUsers } = await supabase

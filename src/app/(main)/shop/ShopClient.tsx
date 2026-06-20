@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 import StudyBGMRecorder from "@/components/StudyBGMRecorder";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 import RefineParts from "@/components/RefineParts";
@@ -17,7 +16,6 @@ export default function ShopClient({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
   const [icons, setIcons] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [message, setMessage] = useState("");
   const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
   const [bgmUserId, setBgmUserId] = useState("");
@@ -25,16 +23,11 @@ export default function ShopClient({ userId }: { userId: string }) {
   const supabase = createClient();
 
   const loadData = async () => {
-    const [profileResult, notifResult] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, username, bio, icon_url, points, exchange_points, current_title_id, current_avatar_id").eq("id", userId).single(),
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", userId).eq("is_read", false).neq("notification_type", "follow_post"),
-    ]);
+    const { data: profileData } = await supabase.from("profiles").select("id, display_name, username, bio, icon_url, points, exchange_points, current_title_id, current_avatar_id").eq("id", userId).single();
 
-    if (profileResult.data) {
-      setProfile(profileResult.data);
+    if (profileData) {
+      setProfile(profileData);
     }
-
-    setUnreadCount(notifResult.count || 0);
   };
 
   const loadInventory = useCallback(async () => {
@@ -183,8 +176,7 @@ export default function ShopClient({ userId }: { userId: string }) {
   if (!profile) return null;
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
+    <div className="p-4 max-w-2xl mx-auto space-y-4">
         {message && (
           <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">{message}</div>
         )}
@@ -369,6 +361,5 @@ export default function ShopClient({ userId }: { userId: string }) {
         </div>
 
       </div>
-    </AppShell>
   );
 }

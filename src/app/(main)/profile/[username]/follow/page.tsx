@@ -19,13 +19,6 @@ export default async function FollowPage({ params, searchParams }: { params: { u
 
   if (!profile) notFound();
 
-  const { count: unreadCount } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("recipient_id", user.id)
-    .eq("is_read", false)
-    .neq("notification_type", "follow_post");
-
   const isOwner = user.id === profile.id;
 
   return (
@@ -34,7 +27,6 @@ export default async function FollowPage({ params, searchParams }: { params: { u
       profile={profile}
       tab={tab}
       isOwner={isOwner}
-      unreadCount={unreadCount || 0}
     />
   );
 }

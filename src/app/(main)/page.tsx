@@ -2,7 +2,6 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import { subjectColor } from "@/lib/utils";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
-import AppShell from "@/components/AppShell";
 import HomeClient from "./HomeClient";
 
 export default async function HomePage() {
@@ -16,18 +15,12 @@ export default async function HomePage() {
   const startStr = startDate.toISOString().split("T")[0];
   const endStr = today.toISOString().split("T")[0];
 
-  const [profileResult, unreadResult, postsResult] = await Promise.all([
+  const [profileResult, postsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, display_name, username, icon_url, points, exchange_points, current_title_id, current_avatar_id, target_date, target_minutes, is_admin, bio, department, theme_color")
       .eq("id", user.id)
       .single(),
-    supabase
-      .from("notifications")
-      .select("*", { count: "exact", head: true })
-      .eq("recipient_id", user.id)
-      .eq("is_read", false)
-      .neq("notification_type", "follow_post"),
     supabase
       .from("posts")
       .select("created_at, study_minutes, subject")
@@ -39,7 +32,6 @@ export default async function HomePage() {
   ]);
 
   const profile = profileResult.data;
-  const unreadCount = unreadResult.count || 0;
   const rawPosts = postsResult.data || [];
 
   const weeklyLabels: string[] = [];
@@ -81,17 +73,14 @@ export default async function HomePage() {
   const { posts: initialPosts, totalPages: initialTotalPages } = await fetchAndEnrichPosts(supabase, user.id);
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <HomeClient
-        user={{ id: user.id }}
-        profile={profile}
-        unreadCount={unreadCount}
-        weeklyLabels={weeklyLabels}
-        weeklyDatasets={datasets}
-        totalMinutes={totalMinutes}
-        initialPosts={initialPosts}
-        initialTotalPages={initialTotalPages}
-      />
-    </AppShell>
+    <HomeClient
+      user={{ id: user.id }}
+      profile={profile}
+      weeklyLabels={weeklyLabels}
+      weeklyDatasets={datasets}
+      totalMinutes={totalMinutes}
+      initialPosts={initialPosts}
+      initialTotalPages={initialTotalPages}
+    />
   );
 }

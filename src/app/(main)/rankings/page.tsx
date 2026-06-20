@@ -9,21 +9,12 @@ export default async function RankingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const [rankingsData, unreadResult] = await Promise.all([
-    fetchRankingsData(supabase, DEFAULT_DAYS),
-    supabase
-      .from("notifications")
-      .select("*", { count: "exact", head: true })
-      .eq("recipient_id", user.id)
-      .eq("is_read", false)
-      .neq("notification_type", "follow_post"),
-  ]);
+  const rankingsData = await fetchRankingsData(supabase, DEFAULT_DAYS);
 
   return (
     <RankingsClient
       initialRanking={rankingsData}
       initialDays={DEFAULT_DAYS}
-      unreadCount={unreadResult.count || 0}
     />
   );
 }

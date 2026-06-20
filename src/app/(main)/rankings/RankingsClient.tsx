@@ -4,13 +4,11 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
-import AppShell from "@/components/AppShell";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 
-export default function RankingsClient({ initialRanking, initialDays, unreadCount }: {
+export default function RankingsClient({ initialRanking, initialDays }: {
   initialRanking: any[];
   initialDays: number;
-  unreadCount: number;
 }) {
   const [ranking, setRanking] = useState(initialRanking);
   const [days, setDays] = useState(initialDays);
@@ -67,8 +65,7 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
   };
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="mx-4 my-4 space-y-3">
+    <div className="mx-4 my-4 space-y-3">
         {/* 期間選択 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">
           {[7, 30, 90, 365].map((d) => (
@@ -136,6 +133,5 @@ export default function RankingsClient({ initialRanking, initialDays, unreadCoun
           )}
         </div>
       </div>
-    </AppShell>
   );
 }

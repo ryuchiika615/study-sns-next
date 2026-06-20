@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase";
 import { getOptimizedIconUrl, formatStudyTime } from "@/lib/utils";
 
@@ -121,8 +120,7 @@ export default function ChallengesClient({ userId }: { userId: string }) {
   };
 
   return (
-    <AppShell>
-      <div className="mx-4 my-4 space-y-4">
+    <div className="mx-4 my-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">🔥 勉強チャレンジ</h2>
           <button onClick={() => setShowCreate(true)}
@@ -315,6 +313,5 @@ export default function ChallengesClient({ userId }: { userId: string }) {
           </div>
         )}
       </div>
-    </AppShell>
   );
 }

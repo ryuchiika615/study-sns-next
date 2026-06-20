@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 
 export default function GachaPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [titleProgress, setTitleProgress] = useState<{ owned: number; total: number } | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -19,9 +17,6 @@ export default function GachaPage() {
       setUser(data.user);
       supabase.from("profiles").select("*").eq("id", data.user.id).single().then(({ data: profile }) => {
         if (profile) setProfile(profile);
-      });
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", data.user.id).eq("is_read", false).neq("notification_type", "follow_post").then(({ count }) => {
-        setUnreadCount(count || 0);
       });
       // Title collection progress
       supabase.from("gacha_items").select("id", { count: "exact", head: true }).eq("category", "title").then(({ count: total }) => {
@@ -34,7 +29,7 @@ export default function GachaPage() {
     });
   }, []);
 
-  if (!profile) return <AppShell unreadCount={unreadCount}><div className="p-4 text-center text-gray-500 py-12">読み込み中...</div></AppShell>;
+  if (!profile) return <div className="p-4 text-center text-gray-500 py-12">読み込み中...</div>;
 
   const currentStreak = profile.consecutive_post_days || 0;
 
@@ -58,8 +53,7 @@ export default function GachaPage() {
   };
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="mx-4 my-4 space-y-3">
+    <div className="mx-4 my-4 space-y-3">
 
         {/* 連続ボーナスカード */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -119,6 +113,5 @@ export default function GachaPage() {
         )}
 
       </div>
-    </AppShell>
   );
 }

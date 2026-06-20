@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 const PieChart = dynamic(() => import("@/components/Charts").then(m => m.PieChart), { ssr: false });
 const BarChart = dynamic(() => import("@/components/Charts").then(m => m.BarChart), { ssr: false });
 import { subjectColor, formatStudyTime } from "@/lib/utils";
@@ -24,7 +23,6 @@ export default function AnalyticsPage() {
   const [user, setUser] = useState<any>(null);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
-  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
@@ -100,9 +98,7 @@ export default function AnalyticsPage() {
     supabase.auth.getUser().then(({ data: authData }) => {
       if (!authData.user) { router.push("/auth/login"); return; }
       setUser(authData.user);
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", authData.user.id).eq("is_read", false).neq("notification_type", "follow_post").then(({ count }) => {
-        setUnreadCount(count || 0);
-      });
+      // unread count fetched by AppShell
     });
   }, []);
 
@@ -115,11 +111,10 @@ export default function AnalyticsPage() {
     fetchData(start, end);
   };
 
-  if (!data) return <AppShell><div className="p-4 text-center text-gray-500 py-12">読み込み中...</div></AppShell>;
+  if (!data) return <div className="p-4 text-center text-gray-500 py-12">読み込み中...</div>;
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="mx-4 my-4 space-y-3">
+    <div className="mx-4 my-4 space-y-3">
         {/* 合計時間 */}
         <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-xl shadow-sm p-5 text-center text-white">
           <p className="text-sm text-blue-200">期間合計</p>
@@ -168,6 +163,5 @@ export default function AnalyticsPage() {
           <BarChart labels={data.bar_labels} data={data.bar_data} />
         </div>
       </div>
-    </AppShell>
   );
 }

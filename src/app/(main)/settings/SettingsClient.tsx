@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 
 const sectionCard = (title: string, icon: string, children: React.ReactNode) => (
   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -17,25 +16,14 @@ const sectionCard = (title: string, icon: string, children: React.ReactNode) => 
 );
 
 export default function SettingsClient({ userId }: { userId: string }) {
-  const [unreadCount, setUnreadCount] = useState(0);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState("feedback");
   const [feedbackSending, setFeedbackSending] = useState(false);
   const [message, setMessage] = useState("");
   const supabase = createClient();
 
-  useEffect(() => {
-    supabase.from("notifications")
-      .select("*", { count: "exact", head: true })
-      .eq("recipient_id", userId)
-      .eq("is_read", false)
-      .neq("notification_type", "follow_post")
-      .then(({ count }) => setUnreadCount(count || 0));
-  }, [userId]);
-
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
+    <div className="p-4 max-w-2xl mx-auto space-y-4">
         <h1 className="text-lg font-bold flex items-center gap-2">
           <i className="fas fa-cog text-primary" /> 設定
         </h1>
@@ -91,6 +79,5 @@ export default function SettingsClient({ userId }: { userId: string }) {
 
         <p className="text-xs text-gray-400 text-center">他の設定は順次追加予定</p>
       </div>
-    </AppShell>
   );
 }

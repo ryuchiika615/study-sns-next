@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 const PostCard = dynamic(() => import("@/components/PostCard"));
 import Link from "next/link";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
@@ -22,7 +21,6 @@ export default function EditProfilePage() {
   const [bio, setBio] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [targetMinutes, setTargetMinutes] = useState("");
-  const [unreadCount, setUnreadCount] = useState(0);
   const [message, setMessage] = useState("");
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -56,10 +54,9 @@ export default function EditProfilePage() {
   const loadData = async (userId?: string) => {
     const uid = userId || userIdRef.current;
     if (!uid) return;
-    const [profileResult, userItemsResult, notifResult] = await Promise.all([
+    const [profileResult, userItemsResult] = await Promise.all([
       supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", uid).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", uid),
-      supabase.from("notifications").select("*", { count: "exact", head: true }).eq("recipient_id", uid).eq("is_read", false).neq("notification_type", "follow_post"),
     ]);
 
     if (profileResult.data) {
@@ -74,10 +71,7 @@ export default function EditProfilePage() {
     if (userItemsResult.data) {
       const items = userItemsResult.data.map((ui: any) => ui.item);
       setItems(items);
-
     }
-
-    setUnreadCount(notifResult.count || 0);
 
     const [{ count: followers }, { count: following }] = await Promise.all([
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", uid),
@@ -246,8 +240,7 @@ export default function EditProfilePage() {
   if (!profile) return null;
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
+    <div className="p-4 max-w-2xl mx-auto space-y-4">
         {message && (
           <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">{message}</div>
         )}
@@ -486,7 +479,6 @@ export default function EditProfilePage() {
         )}
 
       </div>
-    </AppShell>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
-import AppShell from "@/components/AppShell";
 const PostCard = dynamic(() => import("@/components/PostCard"));
 import Link from "next/link";
 import Image from "next/image";
@@ -26,7 +25,6 @@ type ProfileClientProps = {
   totalStudyDisplay: string;
   monthStudyDisplay: string;
   totalStudyMinutes: number;
-  unreadCount: number;
   calendarData?: { date: string; minutes: number }[];
 };
 
@@ -35,7 +33,7 @@ export default function ProfileClient({
   subjectLabels, subjectData, subjectColors,
   followersCount, followingCount, postCount,
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
-  unreadCount, calendarData,
+  calendarData,
 }: ProfileClientProps) {
   const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
@@ -190,8 +188,7 @@ export default function ProfileClient({
   const hasMoreLiked = likedPosts.length < likedIds.length;
 
   return (
-    <AppShell unreadCount={unreadCount}>
-      <div className="mx-auto my-4 max-w-xl space-y-3 px-4">
+    <div className="mx-auto my-4 max-w-xl space-y-3 px-4">
 
         {/* ===== プロフィールカード ===== */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -414,6 +411,5 @@ export default function ProfileClient({
 
 
       </div>
-    </AppShell>
   );
 }

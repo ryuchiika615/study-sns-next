@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase";
 import { getOptimizedIconUrl } from "@/lib/utils";
 
@@ -81,8 +80,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
   };
 
   return (
-    <AppShell unreadCount={0}>
-      <div className="mx-4 my-4 space-y-3">
+    <div className="mx-4 my-4 space-y-3">
         {notifications.length === 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-12 text-center">
             <p className="text-gray-400"><i className="far fa-bell-slash text-3xl mb-2 block" /></p>
@@ -130,6 +128,5 @@ export default function NotificationsClient({ notifications: initial }: { notifi
           </div>
         ))}
       </div>
-    </AppShell>
   );
 }
