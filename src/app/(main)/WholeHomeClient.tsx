@@ -6,11 +6,6 @@ import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import PostCard from "@/components/PostCard";
 import { useToast } from "@/components/ToastProvider";
-
-const WeeklyChart = dynamic(() => import("@/components/WeeklyChart").then(m => ({ default: m.WeeklyChart })), {
-  ssr: false,
-  loading: () => <div className="h-48 bg-gray-100 rounded-xl animate-pulse" />,
-});
 const SurveyPopup = dynamic(() => import("@/components/SurveyPopup"), { ssr: false });
 const ChallengePopup = dynamic(() => import("@/components/ChallengePopup"), { ssr: false });
 import PullToRefresh from "@/components/PullToRefresh";
@@ -21,15 +16,13 @@ import { formatStudyTime, getOptimizedIconUrl, vibrateDevice } from "@/lib/utils
 type WholeHomeClientProps = {
   userId: string;
   profile: any;
-  weeklyLabels: string[];
-  weeklyDatasets: any[];
   totalMinutes: number;
   initialPosts?: any[];
   initialTotalPages?: number;
   search?: string;
 };
 
-export default function WholeHomeClient({ userId, profile: initialProfile, weeklyLabels, weeklyDatasets, totalMinutes: initialTotal, initialPosts, initialTotalPages, search = "" }: WholeHomeClientProps) {
+export default function WholeHomeClient({ userId, profile: initialProfile, totalMinutes: initialTotal, initialPosts, initialTotalPages, search = "" }: WholeHomeClientProps) {
   const supabase = createClient();
   const [posts, setPosts] = useState<any[]>(initialPosts || []);
   const [profile] = useState(initialProfile);
@@ -271,13 +264,6 @@ export default function WholeHomeClient({ userId, profile: initialProfile, weekl
             <p className="text-sm text-gray-400">目標合計 {Math.floor(profile.target_minutes / 60)}時間{profile.target_minutes % 60}分</p>
             <p className="text-lg text-yellow-400 font-bold mt-1">あと {formatRemaining(profile.target_minutes - totalMinutes)}</p>
           </div>
-        )}
-
-        {weeklyLabels.length > 0 && (
-          <WeeklyChart labels={weeklyLabels} datasets={weeklyDatasets.map(d => ({
-            ...d,
-            backgroundColor: d.backgroundColor,
-          }))} />
         )}
       </div>
 

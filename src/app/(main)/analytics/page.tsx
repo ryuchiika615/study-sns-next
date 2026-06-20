@@ -6,6 +6,10 @@ import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
 const PieChart = dynamic(() => import("@/components/Charts").then(m => m.PieChart), { ssr: false });
 const BarChart = dynamic(() => import("@/components/Charts").then(m => m.BarChart), { ssr: false });
+const WeeklyChart = dynamic(() => import("@/components/WeeklyChart").then(m => ({ default: m.WeeklyChart })), {
+  ssr: false,
+  loading: () => <div className="h-48 bg-gray-100 rounded-xl animate-pulse" />,
+});
 import { subjectColor, formatStudyTime } from "@/lib/utils";
 
 function getTodayString(): string {
@@ -79,6 +83,41 @@ export default function AnalyticsPage() {
       dayData.push(dayMap.get(key) || 0);
     }
 
+    const weeklyLabels: string[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      weeklyLabels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+    }
+
+    const weeklySubjects = new Map<string, number[]>();
+    posts.forEach((post: any) => {
+      const postDate = post.created_at.split("T")[0];
+      const idx = weeklyLabels.findIndex((_, i) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().split("T")[0] === postDate;
+      });
+      if (idx >= 0) {
+        if (!weeklySubjects.has(post.subject)) {
+          weeklySubjects.set(post.subject, new Array(7).fill(0));
+        }
+        weeklySubjects.get(post.subject)![idx] += post.study_minutes || 0;
+      }
+    });
+
+    let weeklyDatasets: { label: string; data: number[]; backgroundColor: string }[];
+    if (weeklySubjects.size === 0) {
+      weeklyDatasets = [{ label: "勉強時間", data: new Array(7).fill(0), backgroundColor: "#1877f2" }];
+    } else {
+      weeklyDatasets = Array.from(weeklySubjects.entries()).map(([subject, data]) => ({
+        label: subject,
+        data,
+        backgroundColor: subjectColor(subject),
+      }));
+    }
+
     setData({
       start: startStr,
       end: endStr,
@@ -89,6 +128,8 @@ export default function AnalyticsPage() {
       bar_data: JSON.stringify(dayData),
       subject_list: subjectRows,
       total_all_time_display: formatStudyTime(totalMinutes),
+      weeklyLabels,
+      weeklyDatasets,
     });
     setStart(startStr);
     setEnd(endStr);
@@ -162,6 +203,13 @@ export default function AnalyticsPage() {
           <h3 className="font-bold text-sm text-gray-500 mb-4"><i className="fas fa-chart-bar mr-1.5" />日別勉強時間</h3>
           <BarChart labels={data.bar_labels} data={data.bar_data} />
         </div>
+
+        {data.weeklyLabels?.length > 0 && (
+          <WeeklyChart labels={data.weeklyLabels} datasets={data.weeklyDatasets.map((d: any) => ({
+            ...d,
+            backgroundColor: d.backgroundColor,
+          }))} />
+        )}
       </div>
   );
 }
