@@ -164,6 +164,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   useEffect(() => {
     pollAll();
+    const timer = setInterval(pollAll, 15000);
     fetch("/api/daily-summary").catch(() => {});
 
     const refreshOnFocus = () => {
@@ -209,6 +210,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     }
 
     return () => {
+      clearInterval(timer);
       window.removeEventListener("focus", refreshOnFocus);
       document.removeEventListener("visibilitychange", refreshOnFocus);
       window.removeEventListener("pageshow", refreshOnFocus);
