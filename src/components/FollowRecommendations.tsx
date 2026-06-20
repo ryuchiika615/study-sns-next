@@ -41,7 +41,7 @@ export default function FollowRecommendations({ userId, onFollow }: { userId: st
               <Link href={`/profile/${u.username || u.id}`} className="flex flex-col items-center gap-1 no-underline">
                 <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
                   {u.icon_url ? (
-                    <img src={u.icon_url} className="w-full h-full object-cover" alt="" />
+                    <img src={u.icon_url} loading="lazy" className="w-full h-full object-cover" alt="" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-sm" /></div>
                   )}

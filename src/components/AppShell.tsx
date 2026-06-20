@@ -440,7 +440,7 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
               </div>
               <div className="px-4 pb-4">
                 {popupAnnouncement.image_url && (
-                  <img src={popupAnnouncement.image_url} alt="" className="w-full rounded-lg mb-3 max-h-60 object-cover" />
+                  <img src={popupAnnouncement.image_url} alt="" loading="lazy" className="w-full rounded-lg mb-3 max-h-60 object-cover" />
                 )}
                 <p className="text-sm whitespace-pre-wrap">{popupAnnouncement.content}</p>
                 <p className="text-xs text-gray-400 mt-3">{new Date(popupAnnouncement.created_at).toLocaleString("ja-JP")}</p>
@@ -503,7 +503,7 @@ export default function AppShell({ children, unreadCount: propUnreadCount = 0 }:
                   {pendingGifts.length > 0 && <h4 className="text-sm font-bold text-gray-600 mb-2">📢 お知らせ</h4>}
                   {unreadAnnouncements.map((a: any) => (
                     <div key={a.id} className="border border-gray-200 rounded-lg p-3">
-                      {a.image_url && <img src={a.image_url} alt="" className="w-full rounded-lg mb-2 max-h-48 object-cover" />}
+                      {a.image_url && <img src={a.image_url} alt="" loading="lazy" className="w-full rounded-lg mb-2 max-h-48 object-cover" />}
                       <p className="text-sm whitespace-pre-wrap mb-2">{a.content}</p>
                       <p className="text-xs text-gray-400 mb-2">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
                       <button onClick={() => markAnnouncementRead(a.id)}

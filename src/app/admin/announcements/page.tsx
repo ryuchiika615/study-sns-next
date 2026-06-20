@@ -191,7 +191,7 @@ export default function AdminAnnouncementsPage() {
             {uploading && <p className="text-xs text-gray-400 mt-1">アップロード中...</p>}
             {imageUrl && (
               <div className="relative mt-2 inline-block">
-                <img src={imageUrl} alt="" className="h-24 rounded-lg object-cover" />
+                <img src={imageUrl} alt="" loading="lazy" className="h-24 rounded-lg object-cover" />
                 <button type="button" onClick={removeImage}
                   className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center cursor-pointer">
                   ×
@@ -352,7 +352,7 @@ export default function AdminAnnouncementsPage() {
           {announcements.map((a: any) => (
             <div key={a.id} className="p-4 border-b border-gray-100 last:border-0 flex justify-between items-start gap-3">
               <div className="flex-1 min-w-0">
-                {a.image_url && <img src={a.image_url} alt="" className="h-20 rounded-lg object-cover mb-2" />}
+                {a.image_url && <img src={a.image_url} alt="" loading="lazy" className="h-20 rounded-lg object-cover mb-2" />}
                 <p className="text-sm whitespace-pre-wrap">{a.content}</p>
                 <p className="text-xs text-gray-400 mt-1">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
               </div>
