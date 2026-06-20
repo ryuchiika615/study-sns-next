@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
-import { PieChart, BarChart } from "@/components/Charts";
+const PieChart = dynamic(() => import("@/components/Charts").then(m => m.PieChart), { ssr: false });
+const BarChart = dynamic(() => import("@/components/Charts").then(m => m.BarChart), { ssr: false });
 import { subjectColor, formatStudyTime } from "@/lib/utils";
 
 function getTodayString(): string {

@@ -8,7 +8,7 @@ const PostCard = dynamic(() => import("@/components/PostCard"));
 import Link from "next/link";
 import Image from "next/image";
 import StudyCalendar from "@/components/StudyCalendar";
-import { PieChart } from "@/components/Charts";
+const PieChart = dynamic(() => import("@/components/Charts").then(m => m.PieChart), { ssr: false });
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 
 const PER_PAGE = 10;
