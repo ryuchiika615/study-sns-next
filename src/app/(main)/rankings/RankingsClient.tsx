@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,7 +12,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
 }) {
   const [ranking, setRanking] = useState(initialRanking);
   const [days, setDays] = useState(initialDays);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   const fetchRankings = async (d: number) => {
@@ -56,6 +56,10 @@ export default function RankingsClient({ initialRanking, initialDays }: {
     setDays(d);
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchRankings(initialDays);
+  }, []);
 
   const getMedal = (rank: number) => {
     if (rank === 1) return { emoji: "🥇", bg: "bg-yellow-50 border-yellow-300", rankBg: "bg-yellow-100 text-yellow-700" };
