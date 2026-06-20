@@ -7,6 +7,7 @@ export default function SurveyPopup({
   selectedOption,
   customReply,
   surveySubmitting,
+  readOnly,
   onSelectOption,
   onCustomReplyChange,
   onSubmit,
@@ -19,6 +20,7 @@ export default function SurveyPopup({
   selectedOption: string;
   customReply: string;
   surveySubmitting: boolean;
+  readOnly?: boolean;
   onSelectOption: (opt: string) => void;
   onCustomReplyChange: (v: string) => void;
   onSubmit: () => Promise<void>;
@@ -42,7 +44,7 @@ export default function SurveyPopup({
         </div>
         <p className="font-bold text-sm mb-3">{activeSurvey.question}</p>
 
-        {!surveyResponse ? (
+        {!surveyResponse && !readOnly ? (
           <>
             <p className="text-xs text-gray-500 mb-3">回答よろしくお願いします！</p>
             <div className="space-y-2 mb-4">

@@ -122,8 +122,19 @@ export async function PUT(request: NextRequest) {
   const ctx = await checkAdmin();
   if (!ctx) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { survey_id } = await request.json();
+  const body = await request.json();
+  const { survey_id, action } = body;
+
   if (!survey_id) return NextResponse.json({ error: "survey_id required" }, { status: 400 });
+
+  if (action === "publish_results") {
+    const { error } = await ctx.supabase
+      .from("surveys")
+      .update({ results_published_at: new Date().toISOString() })
+      .eq("id", survey_id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
 
   const { error } = await ctx.supabase
     .from("surveys")

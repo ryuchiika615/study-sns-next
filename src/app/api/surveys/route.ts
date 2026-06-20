@@ -8,10 +8,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Find either an active survey (not closed) OR a survey with published results
   const { data: active } = await supabase
     .from("surveys")
     .select("*")
-    .is("closed_at", null)
+    .or("closed_at.is.null,results_published_at.not.is.null")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -24,6 +25,38 @@ export async function GET() {
     .eq("survey_id", active.id)
     .eq("user_id", user.id)
     .maybeSingle();
+
+  // If survey is closed but has published results, show results even without response
+  if (active.closed_at && active.results_published_at) {
+    const { data: allResponses } = await supabase
+      .from("survey_responses")
+      .select("selected_option, user_id, custom_reply" + (!active.anonymous ? ", users:user_id(display_name, username)" : ""))
+      .eq("survey_id", active.id);
+
+    const counts: Record<string, number> = {};
+    const voters: Record<string, any[]> = {};
+    const customs: { option: string; reply: string; user?: any }[] = [];
+
+    (allResponses || []).forEach((r: any) => {
+      counts[r.selected_option] = (counts[r.selected_option] || 0) + 1;
+      if (!active.anonymous) {
+        if (!voters[r.selected_option]) voters[r.selected_option] = [];
+        voters[r.selected_option].push({ user_id: r.user_id, display_name: r.users?.display_name || r.users?.username || "ユーザー" });
+      }
+      if (r.custom_reply) {
+        customs.push({ option: r.selected_option, reply: r.custom_reply, user: !active.anonymous ? { display_name: r.users?.display_name || r.users?.username || "ユーザー" } : undefined });
+      }
+    });
+
+    const results = {
+      counts,
+      total: allResponses?.length || 0,
+      ...(!active.anonymous ? { voters } : {}),
+      ...(active.allow_custom !== false ? { customs } : {}),
+    };
+
+    return NextResponse.json({ survey: active, myResponse, results, readOnly: true });
+  }
 
   let results = null;
   if (myResponse) {
@@ -55,7 +88,7 @@ export async function GET() {
     };
   }
 
-  return NextResponse.json({ survey: active, myResponse, results });
+  return NextResponse.json({ survey: active, myResponse, results, readOnly: active.closed_at ? true : false });
 }
 
 export async function POST(request: NextRequest) {

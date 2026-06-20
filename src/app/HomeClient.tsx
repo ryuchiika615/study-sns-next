@@ -59,6 +59,7 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [customReply, setCustomReply] = useState("");
   const [surveySubmitting, setSurveySubmitting] = useState(false);
   const [surveyDismissed, setSurveyDismissed] = useState(false);
+  const [publishedDismissed, setPublishedDismissed] = useState(() => localStorage.getItem("dismissed_published_survey") || "");
   const [rankingPopup, setRankingPopup] = useState<{ top3: any[]; daysRemaining: number; month: number } | null>(null);
   const [dismissedWeek, setDismissedWeek] = useState(() => localStorage.getItem("dismissed_ranking_week") || "");
   const beeryualCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -389,6 +390,11 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           setSurveyResponse(d.myResponse);
           setSurveyResults(d.results || null);
           setSurveyDismissed(true);
+        } else if (d.readOnly) {
+          if (publishedDismissed === d.survey.id) return;
+          setActiveSurvey(d.survey);
+          setSurveyResults(d.results || null);
+          setSurveyDismissed(false);
         } else {
           setActiveSurvey(d.survey);
           setSurveyDismissed(false);
@@ -826,11 +832,24 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
           selectedOption={selectedOption}
           customReply={customReply}
           surveySubmitting={surveySubmitting}
+          readOnly={!surveyResponse && !!surveyResults}
           onSelectOption={setSelectedOption}
           onCustomReplyChange={setCustomReply}
           onSubmit={handleSurveySubmit}
-          onDismiss={() => setSurveyDismissed(true)}
-          onClose={() => setSurveyDismissed(true)}
+          onDismiss={() => {
+            if (!surveyResponse && surveyResults) {
+              localStorage.setItem("dismissed_published_survey", activeSurvey.id);
+              setPublishedDismissed(activeSurvey.id);
+            }
+            setSurveyDismissed(true);
+          }}
+          onClose={() => {
+            if (!surveyResponse && surveyResults) {
+              localStorage.setItem("dismissed_published_survey", activeSurvey.id);
+              setPublishedDismissed(activeSurvey.id);
+            }
+            setSurveyDismissed(true);
+          }}
         />
       )}
 

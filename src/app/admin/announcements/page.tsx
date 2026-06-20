@@ -148,6 +148,22 @@ export default function AdminAnnouncementsPage() {
     }
   };
 
+  const handlePublishResults = async (surveyId: string) => {
+    if (!confirm("アンケート結果をユーザーに公開しますか？")) return;
+    const res = await fetch("/api/admin/surveys", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ survey_id: surveyId, action: "publish_results" }),
+    });
+    if (res.ok) {
+      setMessage("アンケート結果を公開しました");
+      fetchSurveys();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "公開失敗");
+    }
+  };
+
   const viewSurvey = surveys.find((s) => s.id === viewResults);
 
   return (
@@ -265,11 +281,20 @@ export default function AdminAnnouncementsPage() {
                       className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 cursor-pointer whitespace-nowrap">
                       結果
                     </button>
-                    {!s.closed_at && (
+                    {!s.closed_at ? (
                       <button onClick={() => handleCloseSurvey(s.id)}
                         className="text-xs px-2 py-1 rounded bg-orange-50 text-orange-600 cursor-pointer whitespace-nowrap">
                         締切
                       </button>
+                    ) : !s.results_published_at ? (
+                      <button onClick={() => handlePublishResults(s.id)}
+                        className="text-xs px-2 py-1 rounded bg-green-50 text-green-600 cursor-pointer whitespace-nowrap">
+                        結果を公開
+                      </button>
+                    ) : (
+                      <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 whitespace-nowrap">
+                        公開済
+                      </span>
                     )}
                   </div>
                 </div>
