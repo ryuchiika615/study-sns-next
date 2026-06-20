@@ -254,7 +254,6 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
-  const notifTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchPosts = async (p: number, q: string) => {
     setLoading(true);
@@ -365,7 +364,14 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
   useEffect(() => {
     pollAll();
     fetch("/api/daily-summary").catch(() => {});
-    notifTimer.current = setInterval(pollAll, 15000);
+
+    const refreshOnFocus = () => {
+      if (document.hidden) return;
+      pollAll();
+    };
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    window.addEventListener("pageshow", refreshOnFocus);
 
     // Weekly ranking popup
     const now = new Date();
@@ -399,7 +405,9 @@ export default function HomeClient({ user, profile: initialProfile, unreadCount:
     }
 
     return () => {
-      if (notifTimer.current) clearInterval(notifTimer.current);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+      window.removeEventListener("pageshow", refreshOnFocus);
     };
   }, []);
 
