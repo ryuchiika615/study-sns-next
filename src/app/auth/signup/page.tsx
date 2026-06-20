@@ -31,7 +31,7 @@ export default function SignupPage() {
       return;
     }
 
-    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "_")}@study-sns.local`;
+    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "_")}@study-sns.com`;
 
     const { error: authError } = await supabase.auth.signUp({
       email,
