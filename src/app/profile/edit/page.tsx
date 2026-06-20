@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
-import PostCard from "@/components/PostCard";
+const PostCard = dynamic(() => import("@/components/PostCard"));
 import Link from "next/link";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";

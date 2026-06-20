@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
 import AppShell from "@/components/AppShell";
-import PostCard from "@/components/PostCard";
+const PostCard = dynamic(() => import("@/components/PostCard"));
 import Link from "next/link";
 import Image from "next/image";
 import StudyCalendar from "@/components/StudyCalendar";
