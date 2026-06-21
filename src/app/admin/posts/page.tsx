@@ -11,22 +11,32 @@ export default function AdminPostsPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [selectAll, setSelectAll] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editMinutes, setEditMinutes] = useState(0);
+  const [editSubject, setEditSubject] = useState("");
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
-      fetchPosts();
+      fetchPosts(1);
     });
   }, []);
 
-  const fetchPosts = async () => {
-    const res = await fetch("/api/admin/posts");
+  const fetchPosts = async (p: number) => {
+    setPage(p);
+    const res = await fetch(`/api/admin/posts?page=${p}`);
     if (res.status === 403) { setError("管理者のみアクセスできます"); return; }
     if (res.ok) {
       const data = await res.json();
       setPosts(data.posts);
+      setTotalPages(data.totalPages);
+      setSelected(new Set());
+      setSelectAll(false);
     }
   };
 
@@ -51,12 +61,40 @@ export default function AdminPostsPage() {
     });
     if (res.ok) {
       setMessage(`${selected.size}件を削除しました`);
-      setSelected(new Set());
-      setSelectAll(false);
-      fetchPosts();
+      fetchPosts(page);
     } else {
       const err = await res.json().catch(() => ({ error: "不明なエラー" }));
       setError(err.error || "削除に失敗しました");
+    }
+  };
+
+  const startEdit = (post: any) => {
+    setEditingId(post.id);
+    setEditContent(post.content || "");
+    setEditMinutes(post.study_minutes || 0);
+    setEditSubject(post.subject || "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditContent("");
+    setEditMinutes(0);
+    setEditSubject("");
+  };
+
+  const saveEdit = async (id: string) => {
+    const res = await fetch("/api/admin/posts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId: id, content: editContent, study_minutes: editMinutes }),
+    });
+    if (res.ok) {
+      setMessage("保存しました");
+      setEditingId(null);
+      fetchPosts(page);
+    } else {
+      const err = await res.json().catch(() => ({ error: "保存に失敗" }));
+      setError(err.error);
     }
   };
 
@@ -95,6 +133,7 @@ export default function AdminPostsPage() {
                 <th className="px-3 py-2 text-left">科目</th>
                 <th className="px-3 py-2 text-right">時間</th>
                 <th className="px-3 py-2 text-left">日時</th>
+                <th className="px-3 py-2 w-24">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -104,11 +143,44 @@ export default function AdminPostsPage() {
                     <input type="checkbox" checked={selected.has(post.id)} onChange={() => toggleSelect(post.id)} />
                   </td>
                   <td className="px-3 py-2">{post.user?.display_name || post.user_id?.slice(0, 8)}</td>
-                  <td className="px-3 py-2 max-w-xs truncate">{post.content}</td>
+                  <td className="px-3 py-2 max-w-xs">
+                    {editingId === post.id ? (
+                      <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg text-xs p-1.5" rows={2} />
+                    ) : (
+                      <span className="truncate block">{post.content}</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2">{post.subject}</td>
-                  <td className="px-3 py-2 text-right">{post.study_minutes}m</td>
+                  <td className="px-3 py-2 text-right">
+                    {editingId === post.id ? (
+                      <input type="number" value={editMinutes} onChange={(e) => setEditMinutes(parseInt(e.target.value) || 0)}
+                        className="w-16 border border-gray-300 rounded text-xs p-1 text-right" min={0} />
+                    ) : (
+                      `${post.study_minutes}m`
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-gray-500 text-xs">
                     {new Date(post.created_at).toLocaleString("ja-JP")}
+                  </td>
+                  <td className="px-3 py-2">
+                    {editingId === post.id ? (
+                      <div className="flex gap-1">
+                        <button onClick={() => saveEdit(post.id)}
+                          className="text-xs bg-primary text-white px-2 py-1 rounded font-bold cursor-pointer hover:bg-blue-600">
+                          保存
+                        </button>
+                        <button onClick={cancelEdit}
+                          className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded cursor-pointer hover:bg-gray-300">
+                          取消
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(post)}
+                        className="text-xs text-primary hover:underline cursor-pointer">
+                        編集
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -116,6 +188,21 @@ export default function AdminPostsPage() {
           </table>
           {posts.length === 0 && <p className="text-center text-gray-500 py-8">リュイートがありません</p>}
         </div>
+
+        {/* ページネーション */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <button onClick={() => fetchPosts(page - 1)} disabled={page <= 1}
+              className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default">
+              &laquo; 前へ
+            </button>
+            <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+            <button onClick={() => fetchPosts(page + 1)} disabled={page >= totalPages}
+              className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default">
+              次へ &raquo;
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
