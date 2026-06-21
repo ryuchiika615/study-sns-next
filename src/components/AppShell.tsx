@@ -7,6 +7,7 @@ import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import SwipeBack from "./SwipeBack";
 import InstallBanner from "./InstallBanner";
+import PullToRefresh from "./PullToRefresh";
 
 const DISMISSED_KEY = "ryutter_dismissed_announcements";
 
@@ -434,9 +435,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <SwipeBack>
-        <div className="container mx-auto max-w-2xl px-0 page-enter">
-          {children}
-        </div>
+        <PullToRefresh onRefresh={async () => { window.location.reload(); }}>
+          <div className="container mx-auto max-w-2xl px-0 page-enter">
+            {children}
+          </div>
+        </PullToRefresh>
       </SwipeBack>
 
       <BottomNav unreadCount={unreadCount} />
