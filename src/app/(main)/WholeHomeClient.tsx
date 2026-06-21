@@ -164,8 +164,19 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   useEffect(() => {
     pollAll();
-    const timer = setInterval(pollAll, 15000);
     fetch("/api/daily-summary").catch(() => {});
+
+    // Supabase Realtime subscriptions for instant notifications
+    const channel = supabase.channel("home-realtime")
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${userId}` },
+        () => { pollNotifications(); }
+      )
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "challenges", filter: `opponent_id=eq.${userId}` },
+        () => { pollChallenges(); }
+      )
+      .subscribe();
 
     const refreshOnFocus = () => {
       if (document.hidden) return;
@@ -210,7 +221,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     }
 
     return () => {
-      clearInterval(timer);
+      supabase.removeChannel(channel);
       window.removeEventListener("focus", refreshOnFocus);
       document.removeEventListener("visibilitychange", refreshOnFocus);
       window.removeEventListener("pageshow", refreshOnFocus);
