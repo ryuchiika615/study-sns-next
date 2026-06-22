@@ -76,6 +76,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const handleResume = useCallback(() => {
     const now = Date.now();
     startTimeRef.current = now - pausedElapsedRef.current * 1000;
+    pausedElapsedRef.current = 0;
     localStorage.setItem(STORAGE_KEY, String(startTimeRef.current));
     localStorage.removeItem(STORAGE_PAUSED_KEY);
     setStatus("running");
