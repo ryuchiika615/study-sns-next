@@ -4,7 +4,42 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { Chart } from "@/lib/chart-registry";
 
-type Habit = { id: string; name: string; sort_order: number };
+type Habit = { id: string; name: string; sort_order: number; days: number[] | null };
+
+const DAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function daySummary(days: number[] | null) {
+  if (!days || days.length === 7) return "毎日";
+  return DAY_LABELS.filter((_, i) => days.includes(i)).join("");
+}
+
+function isScheduledToday(days: number[] | null) {
+  if (!days) return true;
+  return days.includes(new Date().getDay());
+}
+
+function scheduledHabits(habits: Habit[], date: string) {
+  const dow = new Date(date).getDay();
+  return habits.filter(h => !h.days || h.days.includes(dow));
+}
+
+function DaySelector({ value, onChange }: { value: number[]; onChange: (v: number[]) => void }) {
+  return (
+    <div className="flex gap-1">
+      {DAY_LABELS.map((label, i) => (
+        <button key={i} type="button" onClick={() => {
+          const next = value.includes(i) ? value.filter(d => d !== i) : [...value, i].sort();
+          onChange(next.length === 0 ? [i] : next);
+        }}
+          className={`w-7 h-7 rounded-full text-[11px] font-bold border-none cursor-pointer ${
+            value.includes(i) ? "bg-primary text-white" : "bg-gray-100 text-gray-500"
+          }`}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 type HabitLog = { id: string; habit_id: string; date: string; achieved: boolean };
 type Textbook = { id: string; title: string; total_pages: number; pages_completed: number; target_end_date: string | null };
 type CalendarDay = { date: string; minutes: number };
@@ -22,10 +57,9 @@ const sectionCard = (title: string, icon: string, children: React.ReactNode) => 
   </div>
 );
 
-function TrendChart({ logs, habits }: { logs: HabitLog[]; habits: Habit[] }) {
+function TrendChart({ logs, habits: allHabits }: { logs: HabitLog[]; habits: Habit[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
-  const total = habits.length || 1;
 
   const days: { date: string; rate: number }[] = [];
   const grouped = new Map<string, HabitLog[]>();
@@ -37,7 +71,9 @@ function TrendChart({ logs, habits }: { logs: HabitLog[]; habits: Habit[] }) {
   const labels: string[] = [];
   const data: number[] = [];
   for (const [date, dayLogs] of sorted) {
-    const achieved = dayLogs.filter(l => l.achieved).length;
+    const relevant = scheduledHabits(allHabits, date);
+    const total = relevant.length || 1;
+    const achieved = dayLogs.filter(l => l.achieved && relevant.some(h => h.id === l.habit_id)).length;
     labels.push(date.slice(5));
     data.push(Math.round((achieved / total) * 100));
   }
@@ -69,14 +105,13 @@ function TrendChart({ logs, habits }: { logs: HabitLog[]; habits: Habit[] }) {
       },
     });
     return () => { if (chartRef.current) chartRef.current.destroy(); };
-  }, [logs, habits]);
+  }, [logs, allHabits]);
 
   if (labels.length === 0) return <p className="text-gray-400 text-sm text-center py-4">データがありません</p>;
   return <canvas ref={canvasRef} height={200} />;
 }
 
-function HabitCalendar({ logs, habits, year, month }: { logs: HabitLog[]; habits: Habit[]; year: number; month: number }) {
-  const total = habits.length || 1;
+function HabitCalendar({ logs, habits: allHabits, year, month }: { logs: HabitLog[]; habits: Habit[]; year: number; month: number }) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const logMap = new Map<string, HabitLog[]>();
@@ -89,9 +124,11 @@ function HabitCalendar({ logs, habits, year, month }: { logs: HabitLog[]; habits
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
     const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const dayHabits = scheduledHabits(allHabits, key);
+    const total = dayHabits.length || 1;
     const dayLogs = logMap.get(key) || [];
-    const achieved = dayLogs.filter(l => l.achieved).length;
-    const rate = total > 0 ? Math.round((achieved / total) * 100) : 0;
+    const achieved = dayLogs.filter(l => l.achieved && dayHabits.some(h => h.id === l.habit_id)).length;
+    const rate = Math.round((achieved / total) * 100);
     cells.push({ day: d, rate, key });
   }
 
@@ -157,17 +194,21 @@ export default function TasksClient({
   const [progressPages, setProgressPages] = useState("");
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [editingHabitName, setEditingHabitName] = useState("");
+  const [newHabitDays, setNewHabitDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [editDays, setEditDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
 
   const today = new Date().toISOString().split("T")[0];
 
   const addToast = (msg: string) => { setMessage(msg); setTimeout(() => setMessage(""), 3000); };
+
+  const defaultDays = [0, 1, 2, 3, 4, 5, 6];
 
   const seedHabits = useCallback(async () => {
     const existing = habits.map(h => h.name);
     const toAdd = DEFAULT_HABITS.filter(n => !existing.includes(n));
     if (toAdd.length === 0) return;
     const maxOrder = habits.reduce((m, h) => Math.max(m, h.sort_order), 0);
-    const inserts = toAdd.map((name, i) => ({ user_id: userId, name, sort_order: maxOrder + i + 1 }));
+    const inserts = toAdd.map((name, i) => ({ user_id: userId, name, sort_order: maxOrder + i + 1, days: defaultDays }));
     const { data } = await supabase.from("habits").insert(inserts).select();
     if (data) setHabits(prev => [...prev, ...data]);
   }, [habits, userId]);
@@ -192,11 +233,12 @@ export default function TasksClient({
     if (!newHabitName.trim()) return;
     const maxOrder = habits.reduce((m, h) => Math.max(m, h.sort_order), 0);
     const { data, error } = await supabase.from("habits").insert({
-      user_id: userId, name: newHabitName.trim(), sort_order: maxOrder + 1,
+      user_id: userId, name: newHabitName.trim(), sort_order: maxOrder + 1, days: newHabitDays,
     }).select().single();
     if (error) { addToast(error.message); return; }
     setHabits(prev => [...prev, data]);
     setNewHabitName("");
+    setNewHabitDays([0, 1, 2, 3, 4, 5, 6]);
     addToast("習慣を追加しました");
   };
 
@@ -212,12 +254,13 @@ export default function TasksClient({
   const startEditHabit = (habit: Habit) => {
     setEditingHabitId(habit.id);
     setEditingHabitName(habit.name);
+    setEditDays(habit.days ?? [0, 1, 2, 3, 4, 5, 6]);
   };
 
   const saveEditHabit = async (id: string) => {
     if (!editingHabitName.trim()) return;
-    await supabase.from("habits").update({ name: editingHabitName.trim() }).eq("id", id);
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, name: editingHabitName.trim() } : h));
+    await supabase.from("habits").update({ name: editingHabitName.trim(), days: editDays }).eq("id", id);
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, name: editingHabitName.trim(), days: editDays } : h));
     setEditingHabitId(null);
     addToast("編集しました");
   };
@@ -229,10 +272,13 @@ export default function TasksClient({
     }));
   };
 
+  const relevantToday = habits.filter(h => isScheduledToday(h.days));
+
   const achievementRate = (date: string) => {
-    if (habits.length === 0) return 0;
-    const dl = logs.filter(l => l.date === date && l.achieved);
-    return Math.round((dl.length / habits.length) * 100);
+    const relevant = scheduledHabits(habits, date);
+    if (relevant.length === 0) return 0;
+    const dl = logs.filter(l => l.date === date && l.achieved && relevant.some(h => h.id === l.habit_id));
+    return Math.round((dl.length / relevant.length) * 100);
   };
 
   const dates = [...new Set(logs.map(l => l.date))].sort((a, b) => b.localeCompare(a));
@@ -311,7 +357,7 @@ export default function TasksClient({
       {sectionCard("今日の習慣", "fa-check-circle",
         <>
           <div className="space-y-1">
-            {habits.map(h => {
+            {habits.filter(h => isScheduledToday(h.days)).map(h => {
               const dl = logs.find(l => l.habit_id === h.id && l.date === today);
               const done = dl?.achieved ?? false;
               return (
@@ -332,9 +378,9 @@ export default function TasksClient({
             })}
           </div>
           <div className="bg-gray-50 rounded-xl p-3 text-center">
-            <p className="text-xs text-gray-500">今日の達成率</p>
+            <p className="text-xs text-gray-500">{DAY_LABELS[new Date().getDay()]}曜日 - 今日の達成率</p>
             <p className="text-2xl font-bold text-primary">{achievementRate(today)}%</p>
-            <p className="text-xs text-gray-400">{logs.filter(l => l.date === today && l.achieved).length}/{habits.length}項目</p>
+            <p className="text-xs text-gray-400">{logs.filter(l => l.date === today && l.achieved && habits.some(h => h.id === l.habit_id && isScheduledToday(h.days))).length}/{habits.filter(h => isScheduledToday(h.days)).length}項目</p>
           </div>
         </>
       )}
@@ -342,35 +388,42 @@ export default function TasksClient({
       {sectionCard("習慣の管理", "fa-gear",
         <>
           <div className="flex gap-2">
-            <input type="text" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)}
-              placeholder="新しい習慣"
-              className="flex-1 rounded-lg border-gray-300 text-sm py-1.5"
-              onKeyDown={(e) => e.key === "Enter" && addHabit()} />
+            <div className="flex-1 space-y-1">
+              <input type="text" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)}
+                placeholder="新しい習慣"
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5"
+                onKeyDown={(e) => e.key === "Enter" && addHabit()} />
+              <DaySelector value={newHabitDays} onChange={setNewHabitDays} />
+            </div>
             <button onClick={addHabit}
-              className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0">
+              className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0 self-start mt-1">
               追加
             </button>
           </div>
-          <div className="space-y-1 max-h-48 overflow-y-auto">
+          <div className="space-y-1 max-h-64 overflow-y-auto">
             {habits.map((h, i) => (
-              <div key={h.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50">
+              <div key={h.id} className="border border-gray-100 rounded-lg p-2 space-y-1">
                 {editingHabitId === h.id ? (
-                  <div className="flex gap-1 items-center w-full">
-                    <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
-                      className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
-                      onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
-                    <button onClick={() => saveEditHabit(h.id)}
-                      className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
-                    <button onClick={() => setEditingHabitId(null)}
-                      className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
+                  <div className="space-y-1.5">
+                    <div className="flex gap-1 items-center">
+                      <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
+                        className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
+                        onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
+                      <button onClick={() => saveEditHabit(h.id)}
+                        className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
+                      <button onClick={() => setEditingHabitId(null)}
+                        className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
+                    </div>
+                    <DaySelector value={editDays} onChange={setEditDays} />
                   </div>
                 ) : (
-                  <>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-300 text-xs w-4">{i + 1}.</span>
-                      <span>{h.name}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm min-w-0">
+                      <span className="text-gray-300 text-xs w-4 shrink-0">{i + 1}.</span>
+                      <span className="truncate">{h.name}</span>
+                      <span className="text-[10px] text-gray-400 shrink-0">{daySummary(h.days)}</span>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 shrink-0">
                       <button onClick={() => startEditHabit(h)}
                         className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
                         <i className="fas fa-pen" />
@@ -380,7 +433,7 @@ export default function TasksClient({
                         <i className="fas fa-times" />
                       </button>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             ))}
@@ -420,20 +473,24 @@ export default function TasksClient({
               </tr>
             </thead>
             <tbody>
-              {dates.slice(0, 31).map(date => (
+              {dates.slice(0, 31).map(date => {
+                const dayHabits = scheduledHabits(habits, date);
+                return (
                 <tr key={date} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-2 px-1 sticky left-0 bg-white text-gray-500 whitespace-nowrap">{date}</td>
+                  <td className="py-2 px-1 sticky left-0 bg-white text-gray-500 whitespace-nowrap">{date} ({DAY_LABELS[new Date(date).getDay()]})</td>
                   {habits.map(h => {
+                    const scheduled = !h.days || h.days.includes(new Date(date).getDay());
                     const l = logs.find(li => li.habit_id === h.id && li.date === date);
                     return (
                       <td key={h.id} className="py-2 px-1 text-center">
-                        {l?.achieved ? <span className="text-green-500">✅</span> : <span className="text-gray-300">❌</span>}
+                        {scheduled ? (l?.achieved ? <span className="text-green-500">✅</span> : <span className="text-gray-300">❌</span>) : <span className="text-gray-200">-</span>}
                       </td>
                     );
                   })}
                   <td className="py-2 px-1 text-center font-bold">{achievementRate(date)}%</td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
