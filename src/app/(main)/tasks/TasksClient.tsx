@@ -197,6 +197,7 @@ export default function TasksClient({
   const [newHabitDays, setNewHabitDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editDays, setEditDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [showHabitEdit, setShowHabitEdit] = useState(false);
+  const [showTextbookEdit, setShowTextbookEdit] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -441,12 +442,24 @@ export default function TasksClient({
         </div>
       )}
 
-      <button onClick={() => setShowHabitEdit(v => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 cursor-pointer bg-white mx-auto">
-        <i className={`fas fa-${showHabitEdit ? "chevron-up" : "gear"} text-primary`} />
-        習慣の編集・追加
-        <span className="text-xs text-gray-400 font-normal">({habits.length})</span>
-      </button>
+      <div className="flex gap-2 justify-center">
+        <button onClick={() => setShowHabitEdit(v => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold cursor-pointer transition ${
+            showHabitEdit ? "bg-primary text-white border-primary" : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
+          }`}>
+          <i className={`fas fa-${showHabitEdit ? "chevron-up" : "gear"}`} />
+          習慣の編集・追加
+          <span className="text-[10px] opacity-70">({habits.length})</span>
+        </button>
+        <button onClick={() => setShowTextbookEdit(v => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold cursor-pointer transition ${
+            showTextbookEdit ? "bg-primary text-white border-primary" : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
+          }`}>
+          <i className={`fas fa-${showTextbookEdit ? "chevron-up" : "book"}`} />
+          テキスト管理
+          <span className="text-[10px] opacity-70">({textbooks.length})</span>
+        </button>
+      </div>
 
       {showHabitEdit && sectionCard(null, null,
         <>
@@ -504,7 +517,7 @@ export default function TasksClient({
         </>
       )}
 
-      {sectionCard("テキスト管理", "fa-book",
+      {showTextbookEdit && sectionCard(null, null,
         <>
           {textbooks.length === 0 && (
             <p className="text-gray-400 text-sm text-center py-4">テキストが登録されていません</p>
