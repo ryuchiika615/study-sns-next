@@ -485,7 +485,7 @@ export default function TasksClient({
             showTextbookEdit ? "bg-primary text-white border-primary" : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
           }`}>
           <i className={`fas fa-${showTextbookEdit ? "chevron-up" : "book"}`} />
-          テキスト管理
+          テキスト編集・追加
           <span className="text-[10px] opacity-70">({textbooks.length})</span>
         </button>
       </div>
