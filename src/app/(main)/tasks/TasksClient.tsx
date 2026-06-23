@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { Chart } from "@/lib/chart-registry";
 
-type Habit = { id: string; name: string; sort_order: number; days: number[] | null };
+type Habit = { id: string; name: string; sort_order: number; days: number[] | null; notify_enabled: boolean; notify_time: string };
 
 const DAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -198,6 +198,8 @@ export default function TasksClient({
   const [editDays, setEditDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [showHabitEdit, setShowHabitEdit] = useState(false);
   const [showTextbookEdit, setShowTextbookEdit] = useState(false);
+  const [editNotify, setEditNotify] = useState(false);
+  const [editNotifyTime, setEditNotifyTime] = useState("21:00");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -210,12 +212,36 @@ export default function TasksClient({
     const toAdd = DEFAULT_HABITS.filter(n => !existing.includes(n));
     if (toAdd.length === 0) return;
     const maxOrder = habits.reduce((m, h) => Math.max(m, h.sort_order), 0);
-    const inserts = toAdd.map((name, i) => ({ user_id: userId, name, sort_order: maxOrder + i + 1, days: defaultDays }));
+    const inserts = toAdd.map((name, i) => ({ user_id: userId, name, sort_order: maxOrder + i + 1, days: defaultDays, notify_enabled: false, notify_time: "21:00" }));
     const { data } = await supabase.from("habits").insert(inserts).select();
     if (data) setHabits(prev => [...prev, ...data]);
   }, [habits, userId]);
 
   useEffect(() => { if (habits.length === 0) seedHabits(); }, []);
+
+  useEffect(() => {
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission === "default") Notification.requestPermission();
+    const check = () => {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      habits.filter(h => h.notify_enabled && isScheduledToday(h.days)).forEach(h => {
+        const log = logs.find(l => l.habit_id === h.id && l.date === today);
+        if (log?.achieved) return;
+        if (h.notify_time <= timeStr) {
+          const key = `notified-${h.id}-${today}`;
+          if (localStorage.getItem(key)) return;
+          localStorage.setItem(key, "1");
+          if (Notification.permission === "granted") {
+            new Notification("習慣が未達成です", { body: `「${h.name}」がまだ完了していません！`, icon: "/favicon.ico" });
+          }
+        }
+      });
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => clearInterval(id);
+  }, [habits, logs, today]);
 
   const toggleHabit = async (habitId: string) => {
     const existing = logs.find(l => l.habit_id === habitId && l.date === today);
@@ -236,6 +262,7 @@ export default function TasksClient({
     const maxOrder = habits.reduce((m, h) => Math.max(m, h.sort_order), 0);
     const { data, error } = await supabase.from("habits").insert({
       user_id: userId, name: newHabitName.trim(), sort_order: maxOrder + 1, days: newHabitDays,
+      notify_enabled: false, notify_time: "21:00",
     }).select().single();
     if (error) { addToast(error.message); return; }
     setHabits(prev => [...prev, data]);
@@ -257,12 +284,14 @@ export default function TasksClient({
     setEditingHabitId(habit.id);
     setEditingHabitName(habit.name);
     setEditDays(habit.days ?? [0, 1, 2, 3, 4, 5, 6]);
+    setEditNotify(habit.notify_enabled);
+    setEditNotifyTime(habit.notify_time);
   };
 
   const saveEditHabit = async (id: string) => {
     if (!editingHabitName.trim()) return;
-    await supabase.from("habits").update({ name: editingHabitName.trim(), days: editDays }).eq("id", id);
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, name: editingHabitName.trim(), days: editDays } : h));
+    await supabase.from("habits").update({ name: editingHabitName.trim(), days: editDays, notify_enabled: editNotify, notify_time: editNotifyTime }).eq("id", id);
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, name: editingHabitName.trim(), days: editDays, notify_enabled: editNotify, notify_time: editNotifyTime } : h));
     setEditingHabitId(null);
     addToast("編集しました");
   };
@@ -491,12 +520,24 @@ export default function TasksClient({
                         className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
                     </div>
                     <DaySelector value={editDays} onChange={setEditDays} />
+                    <div className="flex items-center gap-3 pt-1">
+                      <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                        <input type="checkbox" checked={editNotify} onChange={(e) => setEditNotify(e.target.checked)}
+                          className="rounded border-gray-300 text-primary" />
+                        通知
+                      </label>
+                      {editNotify && (
+                        <input type="time" value={editNotifyTime} onChange={(e) => setEditNotifyTime(e.target.value)}
+                          className="rounded border-gray-300 text-xs py-0.5 px-1" />
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm min-w-0">
                       <span className="text-gray-300 text-xs w-4 shrink-0">{i + 1}.</span>
                       <span className="truncate">{h.name}</span>
+                      {h.notify_enabled && <i className="fas fa-bell text-[10px] text-amber-400" />}
                       <span className="text-[10px] text-gray-400 shrink-0">{daySummary(h.days)}</span>
                     </div>
                     <div className="flex gap-1 shrink-0">
