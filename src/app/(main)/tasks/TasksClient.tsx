@@ -47,12 +47,12 @@ type TextbookLog = { date: string; pages_completed: number };
 
 const DEFAULT_HABITS = ["8時間睡眠", "運動", "読書", "スマホ制限", "禁酒"];
 
-const sectionCard = (title: string, icon: string, children: React.ReactNode) => (
+const sectionCard = (title: string | null, icon: string | null, children: React.ReactNode) => (
   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-      <i className={`fas ${icon} text-primary text-sm w-4 text-center`} />
+    {title && <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+      {icon && <i className={`fas ${icon} text-primary text-sm w-4 text-center`} />}
       <h2 className="text-sm font-bold">{title}</h2>
-    </div>
+    </div>}
     <div className="p-4 space-y-3">{children}</div>
   </div>
 );
@@ -196,6 +196,7 @@ export default function TasksClient({
   const [editingHabitName, setEditingHabitName] = useState("");
   const [newHabitDays, setNewHabitDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editDays, setEditDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [showHabitEdit, setShowHabitEdit] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -385,62 +386,6 @@ export default function TasksClient({
         </>
       )}
 
-      {sectionCard("習慣の管理", "fa-gear",
-        <>
-          <div className="flex gap-2">
-            <div className="flex-1 space-y-1">
-              <input type="text" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)}
-                placeholder="新しい習慣"
-                className="w-full rounded-lg border-gray-300 text-sm py-1.5"
-                onKeyDown={(e) => e.key === "Enter" && addHabit()} />
-              <DaySelector value={newHabitDays} onChange={setNewHabitDays} />
-            </div>
-            <button onClick={addHabit}
-              className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0 self-start mt-1">
-              追加
-            </button>
-          </div>
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            {habits.map((h, i) => (
-              <div key={h.id} className="border border-gray-100 rounded-lg p-2 space-y-1">
-                {editingHabitId === h.id ? (
-                  <div className="space-y-1.5">
-                    <div className="flex gap-1 items-center">
-                      <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
-                        className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
-                        onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
-                      <button onClick={() => saveEditHabit(h.id)}
-                        className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
-                      <button onClick={() => setEditingHabitId(null)}
-                        className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
-                    </div>
-                    <DaySelector value={editDays} onChange={setEditDays} />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm min-w-0">
-                      <span className="text-gray-300 text-xs w-4 shrink-0">{i + 1}.</span>
-                      <span className="truncate">{h.name}</span>
-                      <span className="text-[10px] text-gray-400 shrink-0">{daySummary(h.days)}</span>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => startEditHabit(h)}
-                        className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
-                        <i className="fas fa-pen" />
-                      </button>
-                      <button onClick={() => deleteHabit(h.id)}
-                        className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
-                        <i className="fas fa-times" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
       {sectionCard("達成率の推移", "fa-chart-line",
         <TrendChart logs={logs} habits={habits} />
       )}
@@ -494,6 +439,69 @@ export default function TasksClient({
             </tbody>
           </table>
         </div>
+      )}
+
+      <button onClick={() => setShowHabitEdit(v => !v)}
+        className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 cursor-pointer bg-white mx-auto">
+        <i className={`fas fa-${showHabitEdit ? "chevron-up" : "gear"} text-primary`} />
+        習慣の編集
+        <span className="text-xs text-gray-400 font-normal">({habits.length})</span>
+      </button>
+
+      {showHabitEdit && sectionCard(null, null,
+        <>
+          <div className="flex gap-2">
+            <div className="flex-1 space-y-1">
+              <input type="text" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)}
+                placeholder="新しい習慣"
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5"
+                onKeyDown={(e) => e.key === "Enter" && addHabit()} />
+              <DaySelector value={newHabitDays} onChange={setNewHabitDays} />
+            </div>
+            <button onClick={addHabit}
+              className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0 self-start mt-1">
+              追加
+            </button>
+          </div>
+          <div className="space-y-1 max-h-64 overflow-y-auto">
+            {habits.map((h, i) => (
+              <div key={h.id} className="border border-gray-100 rounded-lg p-2 space-y-1">
+                {editingHabitId === h.id ? (
+                  <div className="space-y-1.5">
+                    <div className="flex gap-1 items-center">
+                      <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
+                        className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
+                        onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
+                      <button onClick={() => saveEditHabit(h.id)}
+                        className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
+                      <button onClick={() => setEditingHabitId(null)}
+                        className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
+                    </div>
+                    <DaySelector value={editDays} onChange={setEditDays} />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm min-w-0">
+                      <span className="text-gray-300 text-xs w-4 shrink-0">{i + 1}.</span>
+                      <span className="truncate">{h.name}</span>
+                      <span className="text-[10px] text-gray-400 shrink-0">{daySummary(h.days)}</span>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => startEditHabit(h)}
+                        className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
+                        <i className="fas fa-pen" />
+                      </button>
+                      <button onClick={() => deleteHabit(h.id)}
+                        className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {sectionCard("テキスト管理", "fa-book",
