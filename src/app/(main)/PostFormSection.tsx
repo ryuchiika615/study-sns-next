@@ -25,11 +25,15 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [studyDate, setStudyDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
-  const [subjectOptions, setSubjectOptions] = useState<string[]>([]);
+  const [textbooks, setTextbooks] = useState<{ id: string; title: string; total_pages: number; pages_completed: number }[]>([]);
+  const [tbPages, setTbPages] = useState("");
+
+  const subjectOptions = textbooks.map(t => t.title);
+  const matchedTextbook = textbooks.find(t => t.title === subject);
 
   useEffect(() => {
-    supabase.from("textbooks").select("title").eq("user_id", userId).then(({ data }) => {
-      if (data) setSubjectOptions(data.map(t => t.title));
+    supabase.from("textbooks").select("id, title, total_pages, pages_completed").eq("user_id", userId).then(({ data }) => {
+      if (data) setTextbooks(data);
     });
   }, [userId]);
 
@@ -85,9 +89,26 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
     }
 
+    if (matchedTextbook && tbPages) {
+      const pages = parseInt(tbPages) || 0;
+      if (pages > 0) {
+        await supabase.from("textbook_progress_logs").insert({
+          textbook_id: matchedTextbook.id, user_id: userId,
+          pages_completed: pages, date: studyDateVal,
+        });
+        await supabase.from("textbooks").update({
+          pages_completed: matchedTextbook.pages_completed + pages,
+        }).eq("id", matchedTextbook.id).eq("user_id", userId);
+        setTextbooks(prev => prev.map(t =>
+          t.id === matchedTextbook.id ? { ...t, pages_completed: t.pages_completed + pages } : t
+        ));
+      }
+    }
+
     setContent("");
     setSubject("");
     setStudyMinutes("");
+    setTbPages("");
     setBeeryualResult(null);
 
     if (data?.post_id) {
@@ -157,6 +178,23 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           <datalist id="subjects">
             {subjectOptions.map(s => <option key={s} value={s} />)}
           </datalist>
+
+          {matchedTextbook && (
+            <div className="mt-2.5 flex gap-2 items-center">
+              <span className="text-xs text-gray-500 whitespace-nowrap">
+                <i className="fas fa-book mr-1" />{matchedTextbook.title}
+                <span className="text-gray-400 ml-1">({matchedTextbook.pages_completed}/{matchedTextbook.total_pages}P)</span>
+              </span>
+              <input
+                type="number"
+                value={tbPages}
+                onChange={(e) => setTbPages(e.target.value)}
+                min={1} max={matchedTextbook.total_pages - matchedTextbook.pages_completed}
+                placeholder="読了ページ"
+                className="flex-1 p-2 border border-gray-200 rounded-lg text-sm"
+              />
+            </div>
+          )}
 
           <div className="flex gap-2.5 mt-2.5">
             <input
