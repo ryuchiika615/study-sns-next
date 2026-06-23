@@ -219,24 +219,6 @@ export default function TasksClient({
 
   useEffect(() => { if (habits.length === 0) seedHabits(); }, []);
 
-  useEffect(() => {
-    const check = () => {
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const due = habits.filter(h => h.notify_enabled && isScheduledToday(h.days) && h.notify_time <= timeStr);
-      if (due.length > 0) {
-        const overdue = due.some(h => {
-          const log = logs.find(l => l.habit_id === h.id && l.date === today);
-          return !log?.achieved;
-        });
-        if (overdue) fetch("/api/push/habit-notify/self", { method: "POST" }).catch(() => {});
-      }
-    };
-    check();
-    const id = setInterval(check, 120000);
-    return () => clearInterval(id);
-  }, [habits, logs, today]);
-
   const toggleHabit = async (habitId: string) => {
     const existing = logs.find(l => l.habit_id === habitId && l.date === today);
     if (existing) {
