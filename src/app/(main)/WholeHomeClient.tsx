@@ -54,6 +54,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   }, [profile?.target_minutes, profile?.target_date]);
 
   const [hasNewPosts, setHasNewPosts] = useState(false);
+  const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
@@ -233,6 +234,16 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     fetchPosts(page, search);
   }, [page]);
 
+  useEffect(() => {
+    const fetchActive = async () => {
+      const res = await fetch("/api/study/active-users");
+      if (res.ok) setActiveUsers(await res.json());
+    };
+    fetchActive();
+    const iv = setInterval(fetchActive, 30000);
+    return () => clearInterval(iv);
+  }, []);
+
   const handleSurveySubmit = async () => {
     if (!activeSurvey || !selectedOption) return;
     setSurveySubmitting(true);
@@ -253,6 +264,20 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   return (
     <>
+      {activeUsers.length > 0 && (
+        <div className="mx-4 mb-3 bg-blue-50 rounded-xl p-3 border border-blue-100">
+          <p className="text-xs font-bold text-blue-600 mb-2"><i className="fas fa-book-open mr-1" />勉強中のユーザー</p>
+          <div className="flex flex-wrap gap-2">
+            {activeUsers.map((s: any) => (
+              <a key={s.user_id} href={`/profile/${s.user_id}`}
+                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1 text-sm no-underline text-gray-700 border border-blue-100 hover:bg-blue-50">
+                <img src={s.user?.icon_url || "/default-icon.png"} alt="" className="w-5 h-5 rounded-full" />
+                {s.user?.display_name || s.user?.username || "不明"}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
       <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (

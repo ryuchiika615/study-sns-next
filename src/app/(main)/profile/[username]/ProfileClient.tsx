@@ -16,6 +16,7 @@ type ProfileClientProps = {
   user: { id: string };
   profile: any;
   isFollowing: boolean;
+  consecutivePostDays: number;
   subjectLabels: string;
   subjectData: string;
   subjectColors: string;
@@ -29,7 +30,7 @@ type ProfileClientProps = {
 };
 
 export default function ProfileClient({
-  user, profile, isFollowing: initialFollow,
+  user, profile, isFollowing: initialFollow, consecutivePostDays,
   subjectLabels, subjectData, subjectColors,
   followersCount, followingCount, postCount,
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
@@ -38,6 +39,15 @@ export default function ProfileClient({
   const supabase = createClient();
   const [isFollowing, setIsFollowing] = useState(initialFollow);
   const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
+  const [badges, setBadges] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user.id === profile.id) {
+      fetch("/api/study/weekly-badge").then(r => r.ok && r.json()).then(d => { if (d) setBadges(d.badges || []); });
+    } else {
+      supabase.from("weekly_badges").select("*").eq("user_id", profile.id).order("week_start", { ascending: false }).then(({ data }) => { if (data) setBadges(data); });
+    }
+  }, []);
   const [showNotifyPopover, setShowNotifyPopover] = useState(false);
   const [section, setSection] = useState<"posts" | "likes" | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
@@ -364,6 +374,12 @@ export default function ProfileClient({
         {/* ===== 勉強時間カード ===== */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center gap-4">
+            {consecutivePostDays > 0 && (
+              <div className="flex-1 text-center py-2 rounded-lg bg-orange-50">
+                <p className="text-xs text-orange-500 font-bold">連続勉強</p>
+                <p className="text-lg font-bold text-orange-600">🔥{consecutivePostDays}日</p>
+              </div>
+            )}
             <div className="flex-1 text-center py-2 rounded-lg bg-blue-50">
               <p className="text-xs text-blue-500 font-bold">総勉強時間</p>
               <p className="text-lg font-bold text-blue-700">{totalStudyDisplay}</p>
@@ -386,6 +402,19 @@ export default function ProfileClient({
             </div>
           )}
         </div>
+
+        {badges.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 className="font-bold text-sm text-gray-500 mb-3"><i className="fas fa-medal mr-1.5" />週間目標達成バッジ</h3>
+            <div className="flex flex-wrap gap-2">
+              {badges.map((b: any) => (
+                <span key={b.id} className="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full">
+                  🏅 {new Date(b.week_start).toLocaleDateString("ja-JP", { month: "short", day: "numeric" })}週
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ===== 科目内訳 ===== */}
         {(() => {

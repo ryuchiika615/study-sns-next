@@ -34,7 +34,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
 
   const { username } = params;
 
-  const fields = "id, username, display_name, bio, icon_url, target_date, target_minutes";
+  const fields = "id, username, display_name, bio, icon_url, target_date, target_minutes, consecutive_post_days";
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
 
   let { data: profile, error } = await supabase
@@ -94,6 +94,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
       user={{ id: user.id }}
       profile={profile}
       isFollowing={!!followResult.data}
+      consecutivePostDays={profile.consecutive_post_days || 0}
       subjectLabels={JSON.stringify([...subjectMap.keys()])}
       subjectData={JSON.stringify([...subjectMap.values()])}
       subjectColors={JSON.stringify([...subjectMap.keys()].map((s) => subjectColor(s)))}

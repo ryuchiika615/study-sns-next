@@ -116,6 +116,24 @@ export interface SubjectBreakdown {
   color: string;
 }
 
+export interface StudyingSession {
+  user_id: string;
+  heartbeat_at: string;
+  user: {
+    id: string;
+    display_name: string | null;
+    username: string | null;
+    icon_url: string | null;
+  } | null;
+}
+
+export interface WeeklyBadge {
+  id: string;
+  user_id: string;
+  week_start: string;
+  created_at: string;
+}
+
 export interface UserFeedback {
   id: number;
   user_id: string;

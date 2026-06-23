@@ -23,6 +23,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const startTimeRef = useRef<number | null>(null);
   const pausedElapsedRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const saved = getStartTime();
@@ -46,11 +47,17 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       };
       tick();
       tickRef.current = setInterval(tick, 1000);
-    } else if (tickRef.current) {
-      clearInterval(tickRef.current);
-      tickRef.current = null;
+      heartbeatRef.current = setInterval(() => {
+        fetch("/api/study/heartbeat", { method: "POST" }).catch(() => {});
+      }, 60000);
+    } else {
+      if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
+      if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     }
-    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+    };
   }, [status]);
 
   const handleStart = useCallback(() => {
@@ -59,6 +66,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     pausedElapsedRef.current = 0;
     localStorage.setItem(STORAGE_KEY, String(now));
     localStorage.removeItem(STORAGE_PAUSED_KEY);
+    fetch("/api/study/heartbeat", { method: "POST" }).catch(() => {});
     setStatus("running");
   }, []);
 
@@ -70,6 +78,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     localStorage.removeItem(STORAGE_KEY);
     localStorage.setItem(STORAGE_PAUSED_KEY, String(elapsed));
     startTimeRef.current = null;
+    fetch("/api/study/heartbeat", { method: "DELETE" }).catch(() => {});
     setStatus("paused");
   }, []);
 
@@ -79,6 +88,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     pausedElapsedRef.current = 0;
     localStorage.setItem(STORAGE_KEY, String(startTimeRef.current));
     localStorage.removeItem(STORAGE_PAUSED_KEY);
+    fetch("/api/study/heartbeat", { method: "POST" }).catch(() => {});
     setStatus("running");
   }, []);
 
@@ -90,6 +100,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     localStorage.removeItem(STORAGE_PAUSED_KEY);
     startTimeRef.current = null;
     pausedElapsedRef.current = 0;
+    fetch("/api/study/heartbeat", { method: "DELETE" }).catch(() => {});
     setStatus("idle");
     setDisplay(0);
   }, [onStop]);

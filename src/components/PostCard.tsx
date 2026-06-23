@@ -234,6 +234,11 @@ const PostCard = memo(function PostCard({
                 {post.user?.display_name || "ユーザー"}
               </Link>
             </strong>
+            {post.user?.consecutive_post_days ? (
+              <span className="text-xs font-bold text-orange-500" title={`${post.user.consecutive_post_days}日連続勉強中`}>
+                🔥{post.user.consecutive_post_days}
+              </span>
+            ) : null}
             <span className="text-gray-500 text-sm">@{post.user?.username || post.user?.display_name || post.user_id?.slice(0, 8)}</span>
             <span className="text-gray-500 text-sm">·</span>
             <span className="text-gray-500 text-sm">{post.formatted_time}</span>
