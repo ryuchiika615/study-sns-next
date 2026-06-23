@@ -116,6 +116,20 @@ export interface SubjectBreakdown {
   color: string;
 }
 
+export interface UserFeedback {
+  id: number;
+  user_id: string;
+  content: string;
+  type: string;
+  created_at: string;
+  user: {
+    id: string;
+    display_name: string | null;
+    username: string | null;
+    icon_url: string | null;
+  } | null;
+}
+
 export interface WeeklyChartData {
   labels: string[];
   datasets: {

@@ -105,6 +105,12 @@ export default function AdminDashboard() {
             <div className="font-bold text-sm">お知らせ</div>
             <div className="text-xs text-gray-500 mt-1">全ユーザーへのお知らせ</div>
           </Link>
+
+          <Link href="/admin/feedback" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">💬</div>
+            <div className="font-bold text-sm">要望・報告</div>
+            <div className="text-xs text-gray-500 mt-1">ユーザーからのフィードバック</div>
+          </Link>
         </div>
       </div>
     </div>
