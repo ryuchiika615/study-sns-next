@@ -54,6 +54,9 @@ export function Sidebar() {
         <Link href="/analytics" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-chart-pie w-6 text-center mr-3" /> 分析
         </Link>
+        <Link href="/tasks" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+          <i className="fas fa-tasks w-6 text-center mr-3" style={{ color: "#4ade80" }} /> タスク管理
+        </Link>
         <Link href="/gacha" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="far fa-calendar-check w-6 text-center mr-3" style={{ color: "#4ade80" }} /> ログインボーナス
         </Link>

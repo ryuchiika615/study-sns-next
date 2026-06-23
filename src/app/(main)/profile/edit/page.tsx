@@ -206,6 +206,19 @@ export default function EditProfilePage() {
         </>)
       }
 
+      {sectionCard("ログインボーナス", "fa-calendar-check",
+        <Link href="/gacha" className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 no-underline">
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+            <i className="fas fa-calendar-check text-green-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900">ログインボーナス</p>
+            <p className="text-xs text-gray-500">連続ログインでアイテムをGET！</p>
+          </div>
+          <i className="fas fa-chevron-right text-gray-300 text-xs" />
+        </Link>
+      )}
+
       {sectionCard("学習目標", "fa-bullseye",
         <div className="grid grid-cols-2 gap-3">
           <div>
