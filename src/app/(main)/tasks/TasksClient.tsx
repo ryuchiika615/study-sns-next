@@ -219,30 +219,6 @@ export default function TasksClient({
 
   useEffect(() => { if (habits.length === 0) seedHabits(); }, []);
 
-  useEffect(() => {
-    if (typeof Notification === "undefined") return;
-    if (Notification.permission === "default") Notification.requestPermission();
-    const check = () => {
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      habits.filter(h => h.notify_enabled && isScheduledToday(h.days)).forEach(h => {
-        const log = logs.find(l => l.habit_id === h.id && l.date === today);
-        if (log?.achieved) return;
-        if (h.notify_time <= timeStr) {
-          const key = `notified-${h.id}-${today}`;
-          if (localStorage.getItem(key)) return;
-          localStorage.setItem(key, "1");
-          if (Notification.permission === "granted") {
-            new Notification("習慣が未達成です", { body: `「${h.name}」がまだ完了していません！`, icon: "/favicon.ico" });
-          }
-        }
-      });
-    };
-    check();
-    const id = setInterval(check, 60000);
-    return () => clearInterval(id);
-  }, [habits, logs, today]);
-
   const toggleHabit = async (habitId: string) => {
     const existing = logs.find(l => l.habit_id === habitId && l.date === today);
     if (existing) {
