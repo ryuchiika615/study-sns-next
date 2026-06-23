@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useRef, useCallback } from "react";
+import { memo, useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -48,6 +48,7 @@ const PostCard = memo(function PostCard({
   const [editDate, setEditDate] = useState(post.study_date || "");
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
+  const [subjectOptions, setSubjectOptions] = useState<string[]>([]);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteContent, setQuoteContent] = useState("");
@@ -56,6 +57,14 @@ const PostCard = memo(function PostCard({
   const swipeDist = useRef(0);
   const [swipeTranslate, setSwipeTranslate] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (editing && subjectOptions.length === 0) {
+      supabase.from("textbooks").select("title").eq("user_id", currentUserId).then(({ data }) => {
+        if (data) setSubjectOptions(data.map(t => t.title));
+      });
+    }
+  }, [editing]);
 
   const handleReply = useCallback((username: string) => {
     setCommentText(`@${username} `);
@@ -280,8 +289,7 @@ const PostCard = memo(function PostCard({
                 className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
               />
               <datalist id="edit-subjects">
-                <option value="数学" /><option value="英語" /><option value="プログラミング" />
-                <option value="物理" /><option value="基本情報" />
+                {subjectOptions.map(s => <option key={s} value={s} />)}
               </datalist>
             </div>
             <div className="flex gap-2 items-center">

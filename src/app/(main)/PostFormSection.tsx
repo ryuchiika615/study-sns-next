@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
@@ -25,6 +25,13 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [studyDate, setStudyDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
+  const [subjectOptions, setSubjectOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase.from("textbooks").select("title").eq("user_id", userId).then(({ data }) => {
+      if (data) setSubjectOptions(data.map(t => t.title));
+    });
+  }, [userId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,8 +155,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             className="w-full mt-2.5 p-2.5 border border-gray-200 rounded-lg text-sm"
           />
           <datalist id="subjects">
-            <option value="数学" /><option value="英語" /><option value="プログラミング" />
-            <option value="物理" /><option value="基本情報" />
+            {subjectOptions.map(s => <option key={s} value={s} />)}
           </datalist>
 
           <div className="flex gap-2.5 mt-2.5">
