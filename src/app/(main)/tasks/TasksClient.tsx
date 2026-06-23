@@ -444,7 +444,7 @@ export default function TasksClient({
       <button onClick={() => setShowHabitEdit(v => !v)}
         className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 cursor-pointer bg-white mx-auto">
         <i className={`fas fa-${showHabitEdit ? "chevron-up" : "gear"} text-primary`} />
-        習慣の編集
+        習慣の編集・追加
         <span className="text-xs text-gray-400 font-normal">({habits.length})</span>
       </button>
 
