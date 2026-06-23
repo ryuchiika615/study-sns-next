@@ -27,6 +27,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
   const [textbooks, setTextbooks] = useState<{ id: string; title: string; total_pages: number; pages_completed: number }[]>([]);
   const [tbPages, setTbPages] = useState("");
+  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const subjectOptions = textbooks.map(t => t.title);
   const matchedTextbook = textbooks.find(t => t.title === subject);
@@ -36,6 +39,17 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       if (data) setTextbooks(data);
     });
   }, [userId]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+          subjectRef.current && !subjectRef.current.contains(e.target as Node)) {
+        setShowSubjectDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,32 +180,34 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             className="w-full border-none outline-none text-lg resize-none h-20"
           />
           <p className="text-xs text-right mt-1 text-gray-400">{content.length}/300</p>
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="科目名"
-            list="subjects"
-            required
-            className="w-full mt-2.5 p-2.5 border border-gray-200 rounded-lg text-sm"
-          />
-          <datalist id="subjects">
-            {subjectOptions.map(s => <option key={s} value={s} />)}
-          </datalist>
-          {textbooks.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {textbooks.map(t =>
-                <button key={t.id} type="button" onClick={() => setSubject(t.title)}
-                  className={`text-xs px-2.5 py-1 rounded-full border cursor-pointer transition ${
-                    subject === t.title
-                      ? "bg-primary text-white border-primary"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
-                  }`}>
-                  {t.title}
-                </button>
-              )}
-            </div>
-          )}
+          <div className="relative mt-2.5">
+            <input
+              ref={subjectRef}
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              onFocus={() => setShowSubjectDropdown(true)}
+              placeholder="科目名"
+              required
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-sm"
+            />
+            {showSubjectDropdown && textbooks.length > 0 && (
+              <div ref={dropdownRef}
+                className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                {textbooks.map(t =>
+                  <button key={t.id} type="button" onClick={() => { setSubject(t.title); setShowSubjectDropdown(false); }}
+                    className={`w-full text-left px-3 py-2 text-sm border-none cursor-pointer transition ${
+                      subject === t.title
+                        ? "bg-primary/10 text-primary font-bold"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}>
+                    <span>{t.title}</span>
+                    <span className="text-xs text-gray-400 ml-2">{t.pages_completed}/{t.total_pages}P</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {matchedTextbook && (
             <div className="mt-2.5 flex gap-2 items-center">
