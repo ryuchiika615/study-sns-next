@@ -6,7 +6,6 @@ import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import PostCard from "@/components/PostCard";
 import { useToast } from "@/components/ToastProvider";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
 const SurveyPopup = dynamic(() => import("@/components/SurveyPopup"), { ssr: false });
 const ChallengePopup = dynamic(() => import("@/components/ChallengePopup"), { ssr: false });
 import PullToRefresh from "@/components/PullToRefresh";
@@ -27,12 +26,11 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const supabase = createClient();
   const [posts, setPosts] = useState<any[]>(initialPosts || []);
   const [profile] = useState(initialProfile);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(initialTotalPages || 1);
   const [totalMinutes, setTotalMinutes] = useState(initialTotal);
   const [showTargetAchievement, setShowTargetAchievement] = useState(false);
-  const [hasMore, setHasMore] = useState(() => (initialTotalPages || 1) > 1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const initialFetchDone = useRef(!!initialPosts);
   const seenNotifs = useRef<Set<string>>(new Set(
     JSON.parse(localStorage.getItem("seen_notifs") || "[]")
   ));
@@ -57,64 +55,21 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const virtualParentRef = useRef<HTMLDivElement>(null);
 
-  const refreshPosts = useCallback(async () => {
+  const fetchPosts = async (p: number, q: string) => {
     setLoading(true);
-    const result = await fetchAndEnrichPosts(supabase, userId, { page: 1, search });
+    const result = await fetchAndEnrichPosts(supabase, userId, { page: p, search: q });
     setPosts(result.posts);
-    setCurrentPage(1);
     setTotalPages(result.totalPages);
-    setHasMore(1 < (result.totalPages || 1));
     if (result.posts.length > 0) {
       latestCreatedAt.current = result.posts[0].created_at;
     }
     setHasNewPosts(false);
     setLoading(false);
-  }, [userId, search]);
-
-  const loadNextPage = useCallback(async () => {
-    setIsLoadingMore(true);
-    const nextPage = currentPage + 1;
-    const result = await fetchAndEnrichPosts(supabase, userId, { page: nextPage, search });
-    setPosts(prev => [...prev, ...result.posts]);
-    setCurrentPage(nextPage);
-    setTotalPages(result.totalPages);
-    setHasMore(nextPage < (result.totalPages || 1));
-    setIsLoadingMore(false);
-  }, [currentPage, userId, search]);
-
-  const loadNextPageRef = useRef(loadNextPage);
-  loadNextPageRef.current = loadNextPage;
-  const isLoadingMoreRef = useRef(isLoadingMore);
-  isLoadingMoreRef.current = isLoadingMore;
-  const hasMoreRef = useRef(hasMore);
-  hasMoreRef.current = hasMore;
-  const loadingRef = useRef(loading);
-  loadingRef.current = loading;
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingMoreRef.current && !loadingRef.current) {
-        loadNextPageRef.current();
-      }
-    }, { rootMargin: "400px" });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const virtualizer = useWindowVirtualizer({
-    count: posts.length,
-    estimateSize: () => 350,
-    overscan: 5,
-    getItemKey: (index) => posts[index]?.id ?? index,
-  });
+  };
 
   const pollNotifications = async () => {
     try {
@@ -170,7 +125,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
 
-    if (latestCreatedAt.current && currentPage === 1 && !search) {
+    if (latestCreatedAt.current && page === 1 && !search) {
       const { data: followedUsers } = await supabase
         .from("follows")
         .select("following_id")
@@ -275,6 +230,11 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   }, []);
 
   useEffect(() => {
+    if (initialFetchDone.current) { initialFetchDone.current = false; return; }
+    fetchPosts(page, search);
+  }, [page]);
+
+  useEffect(() => {
     const fetchActive = async () => {
       const res = await fetch("/api/study/active-users");
       if (res.ok) setActiveUsers(await res.json());
@@ -318,7 +278,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
         </div>
       )}
-      <PullToRefresh onRefresh={refreshPosts}>
+      <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (
         <>
@@ -327,53 +287,18 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           <PostCardSkeleton />
         </>
       ) : null}
-
       {hasNewPosts && (
-        <button onClick={refreshPosts}
+        <button onClick={() => { fetchPosts(1, search); }}
           className="w-[calc(100%-2rem)] mx-4 py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl border border-blue-100 hover:bg-blue-100 cursor-pointer shadow-sm mb-3">
           <i className="fas fa-arrow-up mr-1" /> 新しい投稿があります
         </button>
       )}
 
-      {posts.length > 0 && (
-        <div ref={virtualParentRef} style={{ position: 'relative', width: '100%' }}>
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const post = posts[virtualRow.index];
-              return (
-                <div
-                  key={virtualRow.key}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  <PostCard post={post} currentUserId={userId}
-                    onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-                    onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
-                </div>
-              );
-            })}
-          </div>
-
-          <div ref={sentinelRef}>
-            {isLoadingMore && (
-              <div className="flex items-center justify-center py-6">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="ml-2 text-sm text-gray-500">読み込み中...</span>
-              </div>
-            )}
-            {!hasMore && posts.length > 0 && (
-              <div className="text-center py-6 text-gray-400 text-sm">
-                すべての投稿を表示しました
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {posts.map((post: any) => (
+        <PostCard key={post.id} post={post} currentUserId={userId}
+          onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+      ))}
 
       {posts.length === 0 && !loading && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 py-12 text-center">
@@ -381,6 +306,22 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           <p className="text-gray-500">まだポストがありません</p>
         </div>
       )}
+
+      <div className="flex items-center justify-center gap-3 mx-4 my-5 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
+        {page > 1 && (
+          <button onClick={() => setPage(page - 1)}
+            className="px-4 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50">
+            &laquo; 前へ
+          </button>
+        )}
+        <span className="px-4 py-2 text-gray-500 font-bold text-sm">{page} / {totalPages}</span>
+        {page < totalPages && (
+          <button onClick={() => setPage(page + 1)}
+            className="px-4 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50">
+            次へ &raquo;
+          </button>
+        )}
+      </div>
       </PullToRefresh>
 
       {rankingPopup && (
