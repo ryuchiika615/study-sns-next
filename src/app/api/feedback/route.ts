@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { content, type } = await request.json();
+  const { content, type, image_url } = await request.json();
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return NextResponse.json({ error: "内容を入力してください" }, { status: 400 });
   }
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     user_id: user.id,
     content: content.trim(),
     type: type || "feedback",
+    image_url: image_url || null,
   });
 
   if (error) {

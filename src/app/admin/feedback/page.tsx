@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import type { UserFeedback } from "@/lib/types";
@@ -19,13 +19,30 @@ const typeColors: Record<string, string> = {
   other: "bg-gray-100 text-gray-700",
 };
 
+const PER_PAGE = 5;
+
 export default function AdminFeedbackPage() {
   const [feedbacks, setFeedbacks] = useState<UserFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const router = useRouter();
   const supabase = createClient();
+
+  const loadPage = useCallback(async (p: number) => {
+    setLoading(true);
+    const res = await fetch(`/api/admin/feedback?page=${p}`);
+    if (res.ok) {
+      const json = await res.json();
+      setFeedbacks(json.data || []);
+      setTotal(json.total || 0);
+    } else {
+      setError("取得に失敗しました");
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -33,16 +50,11 @@ export default function AdminFeedbackPage() {
       const { data: profile } = await supabase
         .from("profiles").select("is_admin").eq("id", data.user.id).single();
       if (!profile?.is_admin) { setError("管理者のみアクセスできます"); setLoading(false); return; }
-
-      const res = await fetch("/api/admin/feedback");
-      if (res.ok) {
-        setFeedbacks(await res.json());
-      } else {
-        setError("取得に失敗しました");
-      }
-      setLoading(false);
+      loadPage(1);
     });
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,9 +96,16 @@ export default function AdminFeedbackPage() {
                         {typeLabels[fb.type] || fb.type}
                       </span>
                     </div>
-                    <p className={`text-sm text-gray-600 mt-1 ${expandedId !== fb.id ? "line-clamp-2" : ""}`}>
-                      {fb.content}
-                    </p>
+                    {expandedId === fb.id ? (
+                      <div className="mt-1 space-y-2">
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{fb.content}</p>
+                        {fb.image_url && (
+                          <img src={fb.image_url} alt="添付画像" className="max-h-60 rounded-lg border border-gray-200" />
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{fb.content}</p>
+                    )}
                     <p className="text-[10px] text-gray-400 mt-1">
                       {new Date(fb.created_at).toLocaleDateString("ja-JP", {
                         year: "numeric", month: "2-digit", day: "2-digit",
@@ -98,6 +117,26 @@ export default function AdminFeedbackPage() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <button
+              onClick={() => { setPage((p) => { const np = p - 1; loadPage(np); return np; }); }}
+              disabled={page <= 1}
+              className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-300 bg-white disabled:opacity-30 cursor-pointer disabled:cursor-default"
+            >
+              ← 前のページ
+            </button>
+            <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+            <button
+              onClick={() => { setPage((p) => { const np = p + 1; loadPage(np); return np; }); }}
+              disabled={page >= totalPages}
+              className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-300 bg-white disabled:opacity-30 cursor-pointer disabled:cursor-default"
+            >
+              次のページ →
+            </button>
           </div>
         )}
 

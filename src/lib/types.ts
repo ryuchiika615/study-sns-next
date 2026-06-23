@@ -121,6 +121,7 @@ export interface UserFeedback {
   user_id: string;
   content: string;
   type: string;
+  image_url: string | null;
   created_at: string;
   user: {
     id: string;

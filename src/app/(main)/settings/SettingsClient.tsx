@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { compressImage } from "@/lib/utils";
 
 const sectionCard = (title: string, icon: string, children: React.ReactNode) => (
   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -20,7 +21,21 @@ export default function SettingsClient() {
   const [feedbackType, setFeedbackType] = useState("feedback");
   const [feedbackSending, setFeedbackSending] = useState(false);
   const [message, setMessage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const supabase = createClient();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
 
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-4">
@@ -49,19 +64,55 @@ export default function SettingsClient() {
               </select>
               <span className="text-[10px] text-gray-400">{feedbackText.length}/1000</span>
             </div>
+
+            {imagePreview ? (
+              <div className="relative inline-block">
+                <img src={imagePreview} alt="プレビュー" className="max-h-40 rounded-lg border border-gray-200" />
+                <button onClick={removeImage}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center cursor-pointer border-none">
+                  ×
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                <i className="fas fa-image text-gray-400" />
+                <span>画像を添付</span>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              </label>
+            )}
+
             <button onClick={async () => {
               if (!feedbackText.trim()) return;
               setFeedbackSending(true);
               try {
+                let imageUrl: string | null = null;
+                if (imageFile) {
+                  const compressed = imageFile.type.startsWith("image/")
+                    ? await compressImage(imageFile).catch(() => imageFile) : imageFile;
+                  const fileExt = imageFile.name.split(".").pop();
+                  const fileName = `feedback/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+                  const { error: uploadError } = await supabase.storage
+                    .from("post-images")
+                    .upload(fileName, compressed);
+                  if (!uploadError) {
+                    const { data: urlData } = supabase.storage
+                      .from("post-images")
+                      .getPublicUrl(fileName);
+                    imageUrl = urlData?.publicUrl || null;
+                  }
+                }
+
                 const res = await fetch("/api/feedback", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ content: feedbackText, type: feedbackType }),
+                  body: JSON.stringify({ content: feedbackText, type: feedbackType, image_url: imageUrl }),
                 });
                 const data = await res.json();
                 if (data.ok) {
                   setMessage("送信しました！ありがとうございます");
                   setFeedbackText("");
+                  setImageFile(null);
+                  setImagePreview(null);
                 } else {
                   setMessage(data.error || "送信に失敗しました");
                 }

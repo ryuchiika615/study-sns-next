@@ -13,19 +13,25 @@ async function requireAdmin() {
   return user;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+  const limit = 5;
+  const offset = (page - 1) * limit;
+
   const admin = createAdminClient();
-  const { data, error } = await admin
+  const { data, error, count } = await admin
     .from("user_feedback")
     .select(`
       *,
       user:user_id(id, display_name, username, icon_url)
-    `)
-    .order("created_at", { ascending: false });
+    `, { count: "estimated" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json({ data, total: count });
 }
