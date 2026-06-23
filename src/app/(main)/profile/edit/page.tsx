@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
-import { formatStudyTime } from "@/lib/utils";
+import { formatStudyTime, subjectColor } from "@/lib/utils";
 import ProfileHeader from "./ProfileHeader";
 import TitleManager from "./TitleManager";
 import FollowRecommendations from "@/components/FollowRecommendations";
@@ -171,7 +171,7 @@ export default function EditProfilePage() {
         loadMyPosts={loadMyPosts} loadLikedPosts={loadLikedPosts}
         onDeletePost={(id: string) => setMyPosts((prev) => prev.filter((p: any) => p.id !== id))}
         onUpdatePost={(id: string, data: any) => setMyPosts((prev: any[]) => prev.map((p: any) =>
-          p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))}
+          p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))}
       />
 
       <FollowRecommendations userId={userId} />

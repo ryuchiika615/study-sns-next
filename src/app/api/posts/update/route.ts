@@ -7,13 +7,15 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { postId, content, study_minutes } = await request.json();
+  const { postId, content, study_minutes, subject, study_date } = await request.json();
   if (!postId || !content?.trim()) {
     return NextResponse.json({ error: "postId and content required" }, { status: 400 });
   }
 
   const admin = createAdminClient();
   const updateData: Record<string, any> = { content: content.trim(), study_minutes: study_minutes || 0 };
+  if (subject !== undefined) updateData.subject = subject;
+  if (study_date !== undefined) updateData.study_date = study_date;
   updateData.updated_at = new Date().toISOString();
   const { error } = await admin.from("posts").update(updateData).eq("id", postId).eq("user_id", user.id);
 

@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import StudyCalendar from "@/components/StudyCalendar";
 const PieChart = dynamic(() => import("@/components/Charts").then(m => m.PieChart), { ssr: false });
-import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
+import { formatStudyTime, subjectColor, getOptimizedIconUrl } from "@/lib/utils";
 
 const PER_PAGE = 10;
 
@@ -316,7 +316,7 @@ export default function ProfileClient({
                     const idx = posts.findIndex((p: any) => p.id === id);
                     if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
                   }}
-                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
               ))}
               {posts.length > 0 && hasMorePosts && (
                 <button onClick={loadMorePosts}

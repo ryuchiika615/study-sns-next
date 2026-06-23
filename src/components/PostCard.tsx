@@ -28,7 +28,7 @@ const PostCard = memo(function PostCard({
   post: PostWithDetails;
   currentUserId: string;
   onDelete?: (id: string) => void;
-  onUpdate?: (id: string, data: { content?: string; study_minutes?: number }) => void;
+  onUpdate?: (id: string, data: { content?: string; study_minutes?: number; subject?: string; study_date?: string | null }) => void;
   defaultShowComments?: boolean;
   initialComments?: any[];
 }) {
@@ -44,6 +44,8 @@ const PostCard = memo(function PostCard({
   const [editedLocally, setEditedLocally] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [editMinutes, setEditMinutes] = useState(String(post.study_minutes));
+  const [editSubject, setEditSubject] = useState(post.subject);
+  const [editDate, setEditDate] = useState(post.study_date || "");
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -183,20 +185,22 @@ const PostCard = memo(function PostCard({
     const res = await fetch("/api/posts/update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId: post.id, content: editContent.trim(), study_minutes: minutes }),
+      body: JSON.stringify({ postId: post.id, content: editContent.trim(), study_minutes: minutes, subject: editSubject.trim() || "その他", study_date: editDate || null }),
     });
     if (!res.ok) {
       alert("保存に失敗しました。もう一度お試しください。");
       return;
     }
     setEditedLocally(true);
-    onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes });
+    onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes, subject: editSubject.trim() || "その他", study_date: editDate || null });
     setEditing(false);
   };
 
   const handleCancelEdit = () => {
     setEditContent(post.content);
     setEditMinutes(String(post.study_minutes));
+    setEditSubject(post.subject);
+    setEditDate(post.study_date || "");
     setEditing(false);
   };
 
@@ -261,6 +265,29 @@ const PostCard = memo(function PostCard({
               onChange={(e) => setEditContent(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 text-sm resize-none h-20"
             />
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-gray-500">科目:</span>
+              <input
+                type="text"
+                value={editSubject}
+                onChange={(e) => setEditSubject(e.target.value)}
+                list="edit-subjects"
+                className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
+              />
+              <datalist id="edit-subjects">
+                <option value="数学" /><option value="英語" /><option value="プログラミング" />
+                <option value="物理" /><option value="基本情報" />
+              </datalist>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-gray-500">日付:</span>
+              <input
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
+              />
+            </div>
             <div className="flex gap-2 items-center">
               <span className="text-sm text-gray-500">勉強時間（分）:</span>
               <input

@@ -11,7 +11,7 @@ const ChallengePopup = dynamic(() => import("@/components/ChallengePopup"), { ss
 import PullToRefresh from "@/components/PullToRefresh";
 import { PostCardSkeleton } from "@/components/Skeleton";
 import { fetchAndEnrichPosts } from "@/lib/post-fetcher";
-import { formatStudyTime, getOptimizedIconUrl, vibrateDevice } from "@/lib/utils";
+import { formatStudyTime, subjectColor, getOptimizedIconUrl, vibrateDevice } from "@/lib/utils";
 
 type WholeHomeClientProps = {
   userId: string;
@@ -272,7 +272,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       {posts.map((post: any) => (
         <PostCard key={post.id} post={post} currentUserId={userId}
           onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
       ))}
 
       {posts.length === 0 && !loading && (
