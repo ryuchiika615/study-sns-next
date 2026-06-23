@@ -155,6 +155,8 @@ export default function TasksClient({
   const [formTarget, setFormTarget] = useState("");
   const [progressTextbookId, setProgressTextbookId] = useState<string | null>(null);
   const [progressPages, setProgressPages] = useState("");
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [editingHabitName, setEditingHabitName] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -205,6 +207,19 @@ export default function TasksClient({
     setHabits(prev => prev.filter(h => h.id !== id));
     setLogs(prev => prev.filter(l => l.habit_id !== id));
     addToast("削除しました");
+  };
+
+  const startEditHabit = (habit: Habit) => {
+    setEditingHabitId(habit.id);
+    setEditingHabitName(habit.name);
+  };
+
+  const saveEditHabit = async (id: string) => {
+    if (!editingHabitName.trim()) return;
+    await supabase.from("habits").update({ name: editingHabitName.trim() }).eq("id", id);
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, name: editingHabitName.trim() } : h));
+    setEditingHabitId(null);
+    addToast("編集しました");
   };
 
   const dayLogs = (date: string) => {
@@ -336,19 +351,36 @@ export default function TasksClient({
               追加
             </button>
           </div>
-          <div className="space-y-1 max-h-40 overflow-y-auto">
+          <div className="space-y-1 max-h-48 overflow-y-auto">
             {habits.map((h, i) => (
               <div key={h.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-300 text-xs w-4">{i + 1}.</span>
-                  <span>{h.name}</span>
-                  {DEFAULT_HABITS.includes(h.name) && <span className="text-[10px] text-gray-400">(初期)</span>}
-                </div>
-                {!DEFAULT_HABITS.includes(h.name) && (
-                  <button onClick={() => deleteHabit(h.id)}
-                    className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
-                    <i className="fas fa-times" />
-                  </button>
+                {editingHabitId === h.id ? (
+                  <div className="flex gap-1 items-center w-full">
+                    <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
+                      className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
+                      onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
+                    <button onClick={() => saveEditHabit(h.id)}
+                      className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
+                    <button onClick={() => setEditingHabitId(null)}
+                      className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-300 text-xs w-4">{i + 1}.</span>
+                      <span>{h.name}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => startEditHabit(h)}
+                        className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
+                        <i className="fas fa-pen" />
+                      </button>
+                      <button onClick={() => deleteHabit(h.id)}
+                        className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             ))}
