@@ -170,7 +170,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="科目名 例: 数学, 英語"
+            placeholder="科目名"
             list="subjects"
             required
             className="w-full mt-2.5 p-2.5 border border-gray-200 rounded-lg text-sm"
@@ -178,6 +178,20 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           <datalist id="subjects">
             {subjectOptions.map(s => <option key={s} value={s} />)}
           </datalist>
+          {textbooks.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {textbooks.map(t =>
+                <button key={t.id} type="button" onClick={() => setSubject(t.title)}
+                  className={`text-xs px-2.5 py-1 rounded-full border cursor-pointer transition ${
+                    subject === t.title
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
+                  }`}>
+                  {t.title}
+                </button>
+              )}
+            </div>
+          )}
 
           {matchedTextbook && (
             <div className="mt-2.5 flex gap-2 items-center">
