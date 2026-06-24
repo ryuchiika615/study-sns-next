@@ -197,6 +197,8 @@ export default function TasksClient({
   const [newHabitDays, setNewHabitDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editDays, setEditDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [activeTab, setActiveTab] = useState<"records" | "edit">("records");
+  const [newHabitNotify, setNewHabitNotify] = useState(false);
+  const [newHabitNotifyTime, setNewHabitNotifyTime] = useState("21:00");
   const [editNotify, setEditNotify] = useState(false);
   const [editNotifyTime, setEditNotifyTime] = useState("21:00");
 
@@ -237,12 +239,14 @@ export default function TasksClient({
     const maxOrder = habits.reduce((m, h) => Math.max(m, h.sort_order), 0);
     const { data, error } = await supabase.from("habits").insert({
       user_id: userId, name: newHabitName.trim(), sort_order: maxOrder + 1, days: newHabitDays,
-      notify_enabled: false, notify_time: "21:00",
+      notify_enabled: newHabitNotify, notify_time: newHabitNotifyTime,
     }).select().single();
     if (error) { addToast(error.message); return; }
     setHabits(prev => [...prev, data]);
     setNewHabitName("");
     setNewHabitDays([0, 1, 2, 3, 4, 5, 6]);
+    setNewHabitNotify(false);
+    setNewHabitNotifyTime("21:00");
     addToast("習慣を追加しました");
   };
 
@@ -481,6 +485,17 @@ export default function TasksClient({
                     className="w-full rounded-lg border-gray-300 text-sm py-1.5"
                     onKeyDown={(e) => e.key === "Enter" && addHabit()} />
                   <DaySelector value={newHabitDays} onChange={setNewHabitDays} />
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                      <input type="checkbox" checked={newHabitNotify} onChange={(e) => setNewHabitNotify(e.target.checked)}
+                        className="rounded border-gray-300 text-primary" />
+                      通知
+                    </label>
+                    {newHabitNotify && (
+                      <input type="time" value={newHabitNotifyTime} onChange={(e) => setNewHabitNotifyTime(e.target.value)}
+                        className="rounded border-gray-300 text-xs py-0.5 px-1" />
+                    )}
+                  </div>
                 </div>
                 <button onClick={addHabit}
                   className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0 self-start mt-1">
