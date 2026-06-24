@@ -173,10 +173,10 @@ function HabitCalendar({ logs, habits: allHabits, year, month }: { logs: HabitLo
 }
 
 export default function TasksClient({
-  userId, initialHabits, initialLogs, initialTextbooks, textbookLogs, calendarData,
+  userId, initialHabits, initialLogs, initialTextbooks, textbookLogs, calendarData, initialTodos,
 }: {
   userId: string; initialHabits: Habit[]; initialLogs: HabitLog[]; initialTextbooks: Textbook[];
-  textbookLogs: TextbookLog[]; calendarData: CalendarDay[];
+  textbookLogs: TextbookLog[]; calendarData: CalendarDay[]; initialTodos: Todo[];
 }) {
   const supabase = createClient();
   const [habits, setHabits] = useState<Habit[]>(initialHabits);
@@ -202,7 +202,7 @@ export default function TasksClient({
   const [newHabitNotifyTime, setNewHabitNotifyTime] = useState("21:00");
   const [editNotify, setEditNotify] = useState(false);
   const [editNotifyTime, setEditNotifyTime] = useState("21:00");
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoDue, setNewTodoDue] = useState("");
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
