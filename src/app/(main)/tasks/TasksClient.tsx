@@ -196,8 +196,7 @@ export default function TasksClient({
   const [editingHabitName, setEditingHabitName] = useState("");
   const [newHabitDays, setNewHabitDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editDays, setEditDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
-  const [showHabitEdit, setShowHabitEdit] = useState(false);
-  const [showTextbookEdit, setShowTextbookEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState<"records" | "edit">("records");
   const [editNotify, setEditNotify] = useState(false);
   const [editNotifyTime, setEditNotifyTime] = useState("21:00");
 
@@ -361,234 +360,243 @@ export default function TasksClient({
         </div>
       )}
 
-      {sectionCard("今日の習慣", "fa-check-circle",
-        <>
-          <div className="space-y-1">
-            {habits.filter(h => isScheduledToday(h.days)).map(h => {
-              const dl = logs.find(l => l.habit_id === h.id && l.date === today);
-              const done = dl?.achieved ?? false;
-              return (
-                <button key={h.id} onClick={() => toggleHabit(h.id)}
-                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition text-left ${
-                    done ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200 hover:border-primary/30"
-                  }`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-sm ${
-                    done ? "bg-green-500 text-white" : "bg-white border-2 border-gray-300"
-                  }`}>
-                    {done && <i className="fas fa-check" />}
-                  </div>
-                  <span className={`text-sm font-medium ${done ? "text-green-700 line-through" : "text-gray-700"}`}>
-                    {h.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="bg-gray-50 rounded-xl p-3 text-center">
-            <p className="text-xs text-gray-500">{DAY_LABELS[new Date().getDay()]}曜日 - 今日の達成率</p>
-            <p className="text-2xl font-bold text-primary">{achievementRate(today)}%</p>
-            <p className="text-xs text-gray-400">{logs.filter(l => l.date === today && l.achieved && habits.some(h => h.id === l.habit_id && isScheduledToday(h.days))).length}/{habits.filter(h => isScheduledToday(h.days)).length}項目</p>
-          </div>
-        </>
-      )}
-
-      {sectionCard("達成率の推移", "fa-chart-line",
-        <TrendChart logs={logs} habits={habits} />
-      )}
-
-      {sectionCard("カレンダー", "fa-calendar-alt",
-        <>
-          <div className="flex items-center justify-between mb-2">
-            <button onClick={() => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); }}
-              className="text-gray-400 hover:text-gray-600 bg-none border-none cursor-pointer text-sm">
-              <i className="fas fa-chevron-left" />
-            </button>
-            <span className="text-sm font-bold">{calYear}年{calMonth + 1}月</span>
-            <button onClick={() => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); }}
-              className="text-gray-400 hover:text-gray-600 bg-none border-none cursor-pointer text-sm">
-              <i className="fas fa-chevron-right" />
-            </button>
-          </div>
-          <HabitCalendar logs={logs} habits={habits} year={calYear} month={calMonth} />
-        </>
-      )}
-
-      {dates.length > 0 && sectionCard("習慣ログ一覧", "fa-list",
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-1 sticky left-0 bg-white whitespace-nowrap">日付</th>
-                {habits.map(h => <th key={h.id} className="py-2 px-1 text-center whitespace-nowrap">{h.name}</th>)}
-                <th className="py-2 px-1 text-center whitespace-nowrap">達成率</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dates.slice(0, 31).map(date => {
-                const dayHabits = scheduledHabits(habits, date);
-                return (
-                <tr key={date} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-2 px-1 sticky left-0 bg-white text-gray-500 whitespace-nowrap">{date} ({DAY_LABELS[new Date(date).getDay()]})</td>
-                  {habits.map(h => {
-                    const scheduled = !h.days || h.days.includes(new Date(date).getDay());
-                    const l = logs.find(li => li.habit_id === h.id && li.date === date);
-                    return (
-                      <td key={h.id} className="py-2 px-1 text-center">
-                        {scheduled ? (l?.achieved ? <span className="text-green-500">✅</span> : <span className="text-gray-300">❌</span>) : <span className="text-gray-200">-</span>}
-                      </td>
-                    );
-                  })}
-                  <td className="py-2 px-1 text-center font-bold">{achievementRate(date)}%</td>
-                </tr>
-              );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="flex gap-2 justify-center">
-        <button onClick={() => setShowHabitEdit(v => !v)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold cursor-pointer transition ${
-            showHabitEdit ? "bg-primary text-white border-primary" : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
+      <div className="flex gap-2">
+        <button onClick={() => setActiveTab("records")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border text-sm font-bold cursor-pointer transition ${
+            activeTab === "records"
+              ? "bg-primary text-white border-primary shadow-md"
+              : "bg-white text-gray-500 border-gray-200 hover:border-primary/30"
           }`}>
-          <i className={`fas fa-${showHabitEdit ? "chevron-up" : "gear"}`} />
-          習慣の編集・追加
-          <span className="text-[10px] opacity-70">({habits.length})</span>
+          <i className="fas fa-chart-simple" />
+          記録をみる
         </button>
-        <button onClick={() => setShowTextbookEdit(v => !v)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold cursor-pointer transition ${
-            showTextbookEdit ? "bg-primary text-white border-primary" : "bg-white text-gray-600 border-gray-200 hover:border-primary/30"
+        <button onClick={() => setActiveTab("edit")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border text-sm font-bold cursor-pointer transition ${
+            activeTab === "edit"
+              ? "bg-primary text-white border-primary shadow-md"
+              : "bg-white text-gray-500 border-gray-200 hover:border-primary/30"
           }`}>
-          <i className={`fas fa-${showTextbookEdit ? "chevron-up" : "book"}`} />
-          テキスト編集・追加
-          <span className="text-[10px] opacity-70">({textbooks.length})</span>
+          <i className="fas fa-pen-to-square" />
+          編集・追加
         </button>
       </div>
 
-      {showHabitEdit && sectionCard(null, null,
+      {activeTab === "records" && (
         <>
-          <div className="flex gap-2">
-            <div className="flex-1 space-y-1">
-              <input type="text" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)}
-                placeholder="新しい習慣"
-                className="w-full rounded-lg border-gray-300 text-sm py-1.5"
-                onKeyDown={(e) => e.key === "Enter" && addHabit()} />
-              <DaySelector value={newHabitDays} onChange={setNewHabitDays} />
-            </div>
-            <button onClick={addHabit}
-              className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0 self-start mt-1">
-              追加
-            </button>
-          </div>
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            {habits.map((h, i) => (
-              <div key={h.id} className="border border-gray-100 rounded-lg p-2 space-y-1">
-                {editingHabitId === h.id ? (
-                  <div className="space-y-1.5">
-                    <div className="flex gap-1 items-center">
-                      <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
-                        className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
-                        onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
-                      <button onClick={() => saveEditHabit(h.id)}
-                        className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
-                      <button onClick={() => setEditingHabitId(null)}
-                        className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
-                    </div>
-                    <DaySelector value={editDays} onChange={setEditDays} />
-                    <div className="flex items-center gap-3 pt-1">
-                      <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                        <input type="checkbox" checked={editNotify} onChange={(e) => setEditNotify(e.target.checked)}
-                          className="rounded border-gray-300 text-primary" />
-                        通知
-                      </label>
-                      {editNotify && (
-                        <input type="time" value={editNotifyTime} onChange={(e) => setEditNotifyTime(e.target.value)}
-                          className="rounded border-gray-300 text-xs py-0.5 px-1" />
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm min-w-0">
-                      <span className="text-gray-300 text-xs w-4 shrink-0">{i + 1}.</span>
-                      <span className="truncate">{h.name}</span>
-                      {h.notify_enabled && <i className="fas fa-bell text-[10px] text-amber-400" />}
-                      <span className="text-[10px] text-gray-400 shrink-0">{daySummary(h.days)}</span>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => startEditHabit(h)}
-                        className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
-                        <i className="fas fa-pen" />
-                      </button>
-                      <button onClick={() => deleteHabit(h.id)}
-                        className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
-                        <i className="fas fa-times" />
-                      </button>
-                    </div>
-                  </div>
-                )}
+          {sectionCard("今日の習慣", "fa-check-circle",
+            <>
+              <div className="space-y-1">
+                {habits.filter(h => isScheduledToday(h.days)).map(h => {
+                  const dl = logs.find(l => l.habit_id === h.id && l.date === today);
+                  const done = dl?.achieved ?? false;
+                  return (
+                    <button key={h.id} onClick={() => toggleHabit(h.id)}
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition text-left ${
+                        done ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200 hover:border-primary/30"
+                      }`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-sm ${
+                        done ? "bg-green-500 text-white" : "bg-white border-2 border-gray-300"
+                      }`}>
+                        {done && <i className="fas fa-check" />}
+                      </div>
+                      <span className={`text-sm font-medium ${done ? "text-green-700 line-through" : "text-gray-700"}`}>
+                        {h.name}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-xs text-gray-500">{DAY_LABELS[new Date().getDay()]}曜日 - 今日の達成率</p>
+                <p className="text-2xl font-bold text-primary">{achievementRate(today)}%</p>
+                <p className="text-xs text-gray-400">{logs.filter(l => l.date === today && l.achieved && habits.some(h => h.id === l.habit_id && isScheduledToday(h.days))).length}/{habits.filter(h => isScheduledToday(h.days)).length}項目</p>
+              </div>
+            </>
+          )}
+
+          {sectionCard("達成率の推移", "fa-chart-line",
+            <TrendChart logs={logs} habits={habits} />
+          )}
+
+          {sectionCard("カレンダー", "fa-calendar-alt",
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <button onClick={() => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); }}
+                  className="text-gray-400 hover:text-gray-600 bg-none border-none cursor-pointer text-sm">
+                  <i className="fas fa-chevron-left" />
+                </button>
+                <span className="text-sm font-bold">{calYear}年{calMonth + 1}月</span>
+                <button onClick={() => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); }}
+                  className="text-gray-400 hover:text-gray-600 bg-none border-none cursor-pointer text-sm">
+                  <i className="fas fa-chevron-right" />
+                </button>
+              </div>
+              <HabitCalendar logs={logs} habits={habits} year={calYear} month={calMonth} />
+            </>
+          )}
+
+          {dates.length > 0 && sectionCard("習慣ログ一覧", "fa-list",
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 px-1 sticky left-0 bg-white whitespace-nowrap">日付</th>
+                    {habits.map(h => <th key={h.id} className="py-2 px-1 text-center whitespace-nowrap">{h.name}</th>)}
+                    <th className="py-2 px-1 text-center whitespace-nowrap">達成率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dates.slice(0, 31).map(date => {
+                    return (
+                    <tr key={date} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-2 px-1 sticky left-0 bg-white text-gray-500 whitespace-nowrap">{date} ({DAY_LABELS[new Date(date).getDay()]})</td>
+                      {habits.map(h => {
+                        const scheduled = !h.days || h.days.includes(new Date(date).getDay());
+                        const l = logs.find(li => li.habit_id === h.id && li.date === date);
+                        return (
+                          <td key={h.id} className="py-2 px-1 text-center">
+                            {scheduled ? (l?.achieved ? <span className="text-green-500">✅</span> : <span className="text-gray-300">❌</span>) : <span className="text-gray-200">-</span>}
+                          </td>
+                        );
+                      })}
+                      <td className="py-2 px-1 text-center font-bold">{achievementRate(date)}%</td>
+                    </tr>
+                  );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
 
-      {showTextbookEdit && sectionCard(null, null,
+      {activeTab === "edit" && (
         <>
-          {textbooks.length === 0 && (
-            <p className="text-gray-400 text-sm text-center py-4">テキストが登録されていません</p>
-          )}
-          {textbooks.map(t => {
-            const pct = t.total_pages > 0 ? Math.round((t.pages_completed / t.total_pages) * 100) : 0;
-            return (
-              <div key={t.id} className="border border-gray-200 rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm truncate">{t.title}</span>
-                  <span className={`text-xs font-bold shrink-0 ${pct >= 100 ? "text-green-500" : "text-primary"}`}>{pct}%</span>
+          {sectionCard("習慣の編集・追加", "fa-gear",
+            <>
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-1">
+                  <input type="text" value={newHabitName} onChange={(e) => setNewHabitName(e.target.value)}
+                    placeholder="新しい習慣"
+                    className="w-full rounded-lg border-gray-300 text-sm py-1.5"
+                    onKeyDown={(e) => e.key === "Enter" && addHabit()} />
+                  <DaySelector value={newHabitDays} onChange={setNewHabitDays} />
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
-                </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>{t.pages_completed}/{t.total_pages}ページ</span>
-                  {t.target_end_date && <span>目標: {t.target_end_date}</span>}
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button onClick={() => { setProgressTextbookId(progressTextbookId === t.id ? null : t.id); setProgressPages(""); }}
-                    className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border-none cursor-pointer hover:bg-primary/20">
-                    <i className="fas fa-plus mr-1" />進捗追加
-                  </button>
-                  <button onClick={() => openEditTextbook(t)}
-                    className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-full border-none cursor-pointer hover:bg-gray-200">
-                    <i className="fas fa-pen mr-1" />編集
-                  </button>
-                  <button onClick={() => handleDeleteTextbook(t.id)}
-                    className="text-xs px-3 py-1 bg-red-50 text-red-500 rounded-full border-none cursor-pointer hover:bg-red-100">
-                    <i className="fas fa-trash mr-1" />
-                  </button>
-                </div>
-                {progressTextbookId === t.id && (
-                  <form onSubmit={(e) => { e.preventDefault(); handleTextbookProgress(t); }}
-                    className="flex gap-2 items-center pt-1 border-t border-gray-100 mt-2">
-                    <span className="text-xs text-gray-500 whitespace-nowrap">今日 +</span>
-                    <input type="number" value={progressPages} onChange={(e) => setProgressPages(e.target.value)}
-                      min={1} max={t.total_pages - t.pages_completed} placeholder="ページ数"
-                      className="w-20 rounded-lg border-gray-300 text-sm py-1" autoFocus />
-                    <span className="text-xs text-gray-500">ページ</span>
-                    <button type="submit"
-                      className="text-xs px-3 py-1 bg-primary text-white rounded-full border-none cursor-pointer">
-                      記録
-                    </button>
-                  </form>
-                )}
+                <button onClick={addHabit}
+                  className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer shrink-0 self-start mt-1">
+                  追加
+                </button>
               </div>
-            );
-          })}
-          <button onClick={openAddTextbook}
-            className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 cursor-pointer hover:border-primary hover:text-primary transition bg-transparent">
-            <i className="fas fa-plus mr-1" /> 新しいテキストを追加
-          </button>
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {habits.map((h, i) => (
+                  <div key={h.id} className="border border-gray-100 rounded-lg p-2 space-y-1">
+                    {editingHabitId === h.id ? (
+                      <div className="space-y-1.5">
+                        <div className="flex gap-1 items-center">
+                          <input type="text" value={editingHabitName} onChange={(e) => setEditingHabitName(e.target.value)}
+                            className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
+                            onKeyDown={(e) => e.key === "Enter" && saveEditHabit(h.id)} />
+                          <button onClick={() => saveEditHabit(h.id)}
+                            className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
+                          <button onClick={() => setEditingHabitId(null)}
+                            className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
+                        </div>
+                        <DaySelector value={editDays} onChange={setEditDays} />
+                        <div className="flex items-center gap-3 pt-1">
+                          <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                            <input type="checkbox" checked={editNotify} onChange={(e) => setEditNotify(e.target.checked)}
+                              className="rounded border-gray-300 text-primary" />
+                            通知
+                          </label>
+                          {editNotify && (
+                            <input type="time" value={editNotifyTime} onChange={(e) => setEditNotifyTime(e.target.value)}
+                              className="rounded border-gray-300 text-xs py-0.5 px-1" />
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm min-w-0">
+                          <span className="text-gray-300 text-xs w-4 shrink-0">{i + 1}.</span>
+                          <span className="truncate">{h.name}</span>
+                          {h.notify_enabled && <i className="fas fa-bell text-[10px] text-amber-400" />}
+                          <span className="text-[10px] text-gray-400 shrink-0">{daySummary(h.days)}</span>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => startEditHabit(h)}
+                            className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
+                            <i className="fas fa-pen" />
+                          </button>
+                          <button onClick={() => deleteHabit(h.id)}
+                            className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
+                            <i className="fas fa-times" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {sectionCard("テキスト編集・追加", "fa-book",
+            <>
+              {textbooks.length === 0 && (
+                <p className="text-gray-400 text-sm text-center py-4">テキストが登録されていません</p>
+              )}
+              {textbooks.map(t => {
+                const pct = t.total_pages > 0 ? Math.round((t.pages_completed / t.total_pages) * 100) : 0;
+                return (
+                  <div key={t.id} className="border border-gray-200 rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm truncate">{t.title}</span>
+                      <span className={`text-xs font-bold shrink-0 ${pct >= 100 ? "text-green-500" : "text-primary"}`}>{pct}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{t.pages_completed}/{t.total_pages}ページ</span>
+                      {t.target_end_date && <span>目標: {t.target_end_date}</span>}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => { setProgressTextbookId(progressTextbookId === t.id ? null : t.id); setProgressPages(""); }}
+                        className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full border-none cursor-pointer hover:bg-primary/20">
+                        <i className="fas fa-plus mr-1" />進捗追加
+                      </button>
+                      <button onClick={() => openEditTextbook(t)}
+                        className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-full border-none cursor-pointer hover:bg-gray-200">
+                        <i className="fas fa-pen mr-1" />編集
+                      </button>
+                      <button onClick={() => handleDeleteTextbook(t.id)}
+                        className="text-xs px-3 py-1 bg-red-50 text-red-500 rounded-full border-none cursor-pointer hover:bg-red-100">
+                        <i className="fas fa-trash mr-1" />
+                      </button>
+                    </div>
+                    {progressTextbookId === t.id && (
+                      <form onSubmit={(e) => { e.preventDefault(); handleTextbookProgress(t); }}
+                        className="flex gap-2 items-center pt-1 border-t border-gray-100 mt-2">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">今日 +</span>
+                        <input type="number" value={progressPages} onChange={(e) => setProgressPages(e.target.value)}
+                          min={1} max={t.total_pages - t.pages_completed} placeholder="ページ数"
+                          className="w-20 rounded-lg border-gray-300 text-sm py-1" autoFocus />
+                        <span className="text-xs text-gray-500">ページ</span>
+                        <button type="submit"
+                          className="text-xs px-3 py-1 bg-primary text-white rounded-full border-none cursor-pointer">
+                          記録
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
+              <button onClick={openAddTextbook}
+                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 cursor-pointer hover:border-primary hover:text-primary transition bg-transparent">
+                <i className="fas fa-plus mr-1" /> 新しいテキストを追加
+              </button>
+            </>
+          )}
         </>
       )}
 
