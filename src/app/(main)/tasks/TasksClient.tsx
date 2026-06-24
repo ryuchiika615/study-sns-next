@@ -44,6 +44,7 @@ type HabitLog = { id: string; habit_id: string; date: string; achieved: boolean 
 type Textbook = { id: string; title: string; total_pages: number; pages_completed: number; target_end_date: string | null };
 type CalendarDay = { date: string; minutes: number };
 type TextbookLog = { date: string; pages_completed: number };
+type Todo = { id: string; title: string; due_date: string; completed: boolean; sort_order: number };
 
 const DEFAULT_HABITS = ["8時間睡眠", "運動", "読書", "スマホ制限", "禁酒"];
 
@@ -201,6 +202,12 @@ export default function TasksClient({
   const [newHabitNotifyTime, setNewHabitNotifyTime] = useState("21:00");
   const [editNotify, setEditNotify] = useState(false);
   const [editNotifyTime, setEditNotifyTime] = useState("21:00");
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [newTodoTitle, setNewTodoTitle] = useState("");
+  const [newTodoDue, setNewTodoDue] = useState("");
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [editingTodoTitle, setEditingTodoTitle] = useState("");
+  const [editingTodoDue, setEditingTodoDue] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -352,6 +359,51 @@ export default function TasksClient({
     setShowTextbookForm(true);
   };
 
+  useEffect(() => {
+    supabase.from("todos").select("*").eq("user_id", userId).order("due_date").then(({ data }) => {
+      if (data) setTodos(data);
+    });
+  }, [userId]);
+
+  const addTodo = async () => {
+    if (!newTodoTitle.trim() || !newTodoDue) return;
+    const maxOrder = todos.reduce((m, t) => Math.max(m, t.sort_order), 0);
+    const { data } = await supabase.from("todos").insert({
+      user_id: userId, title: newTodoTitle.trim(), due_date: newTodoDue, sort_order: maxOrder + 1,
+    }).select().single();
+    if (data) setTodos(prev => [...prev, data]);
+    setNewTodoTitle("");
+    setNewTodoDue("");
+  };
+
+  const toggleTodo = async (id: string, completed: boolean) => {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t));
+    await supabase.from("todos").update({ completed: !completed }).eq("id", id);
+  };
+
+  const deleteTodo = async (id: string) => {
+    setTodos(prev => prev.filter(t => t.id !== id));
+    await supabase.from("todos").delete().eq("id", id);
+  };
+
+  const startEditTodo = (t: Todo) => {
+    setEditingTodoId(t.id);
+    setEditingTodoTitle(t.title);
+    setEditingTodoDue(t.due_date);
+  };
+
+  const saveEditTodo = async (id: string) => {
+    if (!editingTodoTitle.trim() || !editingTodoDue) return;
+    await supabase.from("todos").update({ title: editingTodoTitle.trim(), due_date: editingTodoDue }).eq("id", id);
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, title: editingTodoTitle.trim(), due_date: editingTodoDue } : t));
+    setEditingTodoId(null);
+  };
+
+  const todayStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const todayDate = todayStr(new Date());
+  const overdueTodos = todos.filter(t => !t.completed && t.due_date < todayDate);
+  const dueSoonTodos = todos.filter(t => !t.completed && t.due_date >= todayDate);
+
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-4">
       <h1 className="text-lg font-bold flex items-center gap-2">
@@ -387,6 +439,46 @@ export default function TasksClient({
 
       {activeTab === "records" && (
         <>
+          {todos.length > 0 && sectionCard("タスク一覧", "fa-list-check",
+            <>
+              {overdueTodos.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-red-500 flex items-center gap-1">
+                    <i className="fas fa-exclamation-circle" />期限超過 ({overdueTodos.length})
+                  </p>
+                  {overdueTodos.map(t => (
+                    <div key={t.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-red-50 border border-red-200">
+                      <input type="checkbox" checked={t.completed} onChange={() => toggleTodo(t.id, t.completed)}
+                        className="rounded border-gray-300 text-primary shrink-0" />
+                      <span className="flex-1 text-sm text-red-700 line-through decoration-red-400">{t.title}</span>
+                      <span className="text-[10px] text-red-500 shrink-0">{t.due_date}</span>
+                      <button onClick={() => deleteTodo(t.id)}
+                        className="text-[10px] text-red-400 hover:text-red-600 bg-none border-none cursor-pointer shrink-0">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {dueSoonTodos.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-gray-500">残り {dueSoonTodos.length} 件</p>
+                  {dueSoonTodos.map(t => (
+                    <div key={t.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg border border-gray-100 hover:bg-gray-50">
+                      <input type="checkbox" checked={t.completed} onChange={() => toggleTodo(t.id, t.completed)}
+                        className="rounded border-gray-300 text-primary shrink-0" />
+                      <span className="flex-1 text-sm">{t.title}</span>
+                      <span className="text-[10px] text-gray-400 shrink-0">{t.due_date}</span>
+                      <button onClick={() => deleteTodo(t.id)}
+                        className="text-[10px] text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer shrink-0">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
           {sectionCard("今日の習慣", "fa-check-circle",
             <>
               <div className="space-y-1">
@@ -610,6 +702,61 @@ export default function TasksClient({
                 className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 cursor-pointer hover:border-primary hover:text-primary transition bg-transparent">
                 <i className="fas fa-plus mr-1" /> 新しいテキストを追加
               </button>
+            </>
+          )}
+
+          {sectionCard("タスク編集・追加", "fa-list-check",
+            <>
+              <div className="flex gap-2">
+                <input type="text" value={newTodoTitle} onChange={(e) => setNewTodoTitle(e.target.value)}
+                  placeholder="やること"
+                  className="flex-1 rounded-lg border-gray-300 text-sm py-1.5"
+                  onKeyDown={(e) => e.key === "Enter" && addTodo()} />
+                <input type="date" value={newTodoDue} onChange={(e) => setNewTodoDue(e.target.value)}
+                  className="w-36 rounded-lg border-gray-300 text-sm py-1.5" />
+                <button onClick={addTodo}
+                  className="bg-primary text-white rounded-full px-3 text-sm font-bold border-none cursor-pointer shrink-0">
+                  追加
+                </button>
+              </div>
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {todos.map(t => (
+                  <div key={t.id} className="border border-gray-100 rounded-lg p-2">
+                    {editingTodoId === t.id ? (
+                      <div className="flex gap-1 items-center">
+                        <input type="text" value={editingTodoTitle} onChange={(e) => setEditingTodoTitle(e.target.value)}
+                          className="flex-1 rounded-lg border-gray-300 text-sm py-0.5 px-1.5" autoFocus
+                          onKeyDown={(e) => e.key === "Enter" && saveEditTodo(t.id)} />
+                        <input type="date" value={editingTodoDue} onChange={(e) => setEditingTodoDue(e.target.value)}
+                          className="w-28 rounded-lg border-gray-300 text-xs py-0.5 px-1" />
+                        <button onClick={() => saveEditTodo(t.id)}
+                          className="text-xs px-2 py-0.5 bg-primary text-white rounded-full border-none cursor-pointer">保存</button>
+                        <button onClick={() => setEditingTodoId(null)}
+                          className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full border-none cursor-pointer">取消</button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm min-w-0">
+                          <input type="checkbox" checked={t.completed} onChange={() => toggleTodo(t.id, t.completed)}
+                            className="rounded border-gray-300 text-primary shrink-0" />
+                          <span className={`truncate ${t.completed ? "line-through text-gray-400" : ""}`}>{t.title}</span>
+                          <span className={`text-[10px] shrink-0 ${t.due_date < todayDate ? "text-red-500 font-bold" : "text-gray-400"}`}>{t.due_date}</span>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => startEditTodo(t)}
+                            className="text-xs text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer">
+                            <i className="fas fa-pen" />
+                          </button>
+                          <button onClick={() => deleteTodo(t.id)}
+                            className="text-xs text-red-400 hover:text-red-600 bg-none border-none cursor-pointer">
+                            <i className="fas fa-times" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </>
