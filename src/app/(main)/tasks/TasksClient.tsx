@@ -512,6 +512,26 @@ export default function TasksClient({
             </>
           )}
 
+          {textbooks.length > 0 && sectionCard("テキスト進捗", "fa-book",
+            <div className="space-y-2">
+              {textbooks.map(t => {
+                const pct = t.total_pages > 0 ? Math.round((t.pages_completed / t.total_pages) * 100) : 0;
+                return (
+                  <div key={t.id} className="border border-gray-100 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-bold text-sm truncate">{t.title}</span>
+                      <span className={`text-xs font-bold shrink-0 ${pct >= 100 ? "text-green-500" : "text-primary"}`}>{pct}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 mb-1.5">
+                      <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-xs text-gray-500">{t.pages_completed}/{t.total_pages}ページ</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {sectionCard("達成率の推移", "fa-chart-line",
             <TrendChart logs={logs} habits={habits} />
           )}
