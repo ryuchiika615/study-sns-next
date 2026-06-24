@@ -368,12 +368,14 @@ export default function TasksClient({
   const addTodo = async () => {
     if (!newTodoTitle.trim() || !newTodoDue) return;
     const maxOrder = todos.reduce((m, t) => Math.max(m, t.sort_order), 0);
-    const { data } = await supabase.from("todos").insert({
+    const { data, error } = await supabase.from("todos").insert({
       user_id: userId, title: newTodoTitle.trim(), due_date: newTodoDue, sort_order: maxOrder + 1,
     }).select().single();
+    if (error) { console.error("addTodo error:", error); addToast("タスクの追加に失敗しました"); return; }
     if (data) setTodos(prev => [...prev, data]);
     setNewTodoTitle("");
     setNewTodoDue("");
+    addToast("タスクを追加しました");
   };
 
   const toggleTodo = async (id: string, completed: boolean) => {
