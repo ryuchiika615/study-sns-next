@@ -19,15 +19,24 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+  const status = searchParams.get("status") || "unresolved";
   const limit = 5;
   const offset = (page - 1) * limit;
 
   const admin = createAdminClient();
-  const { data, error, count } = await admin
+  let query = admin
     .from("user_feedback")
     .select("*", { count: "estimated" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (status === "resolved") {
+    query = query.eq("resolved", true);
+  } else {
+    query = query.eq("resolved", false);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

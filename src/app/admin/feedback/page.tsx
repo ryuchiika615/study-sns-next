@@ -22,6 +22,7 @@ const typeColors: Record<string, string> = {
 const PER_PAGE = 5;
 
 export default function AdminFeedbackPage() {
+  const [tab, setTab] = useState<"unresolved" | "resolved">("unresolved");
   const [feedbacks, setFeedbacks] = useState<UserFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,9 +35,10 @@ export default function AdminFeedbackPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const loadPage = useCallback(async (p: number) => {
+  const loadPage = useCallback(async (p: number, s: string) => {
     setLoading(true);
-    const res = await fetch(`/api/admin/feedback?page=${p}`);
+    setError("");
+    const res = await fetch(`/api/admin/feedback?page=${p}&status=${s}`);
     if (res.ok) {
       const json = await res.json();
       setFeedbacks(json.data || []);
@@ -53,9 +55,14 @@ export default function AdminFeedbackPage() {
       const { data: profile } = await supabase
         .from("profiles").select("is_admin").eq("id", data.user.id).single();
       if (!profile?.is_admin) { setError("管理者のみアクセスできます"); setLoading(false); return; }
-      loadPage(1);
+      loadPage(1, tab);
     });
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+    loadPage(1, tab);
+  }, [tab]);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
@@ -69,6 +76,25 @@ export default function AdminFeedbackPage() {
       </div>
 
       <div className="max-w-2xl mx-auto p-4">
+        <div className="flex gap-2 mb-4">
+          <button onClick={() => setTab("unresolved")}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border cursor-pointer transition ${
+              tab === "unresolved"
+                ? "bg-primary text-white border-primary shadow-md"
+                : "bg-white text-gray-500 border-gray-200 hover:border-primary/30"
+            }`}>
+            未対応
+          </button>
+          <button onClick={() => setTab("resolved")}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border cursor-pointer transition ${
+              tab === "resolved"
+                ? "bg-primary text-white border-primary shadow-md"
+                : "bg-white text-gray-500 border-gray-200 hover:border-primary/30"
+            }`}>
+            対応済み
+          </button>
+        </div>
+
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center mb-4">{error}</div>
         )}
@@ -135,7 +161,7 @@ export default function AdminFeedbackPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-4 mt-6">
             <button
-              onClick={() => { setPage((p) => { const np = p - 1; loadPage(np); return np; }); }}
+              onClick={() => { setPage((p) => { const np = p - 1; loadPage(np, tab); return np; }); }}
               disabled={page <= 1}
               className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-300 bg-white disabled:opacity-30 cursor-pointer disabled:cursor-default"
             >
@@ -143,7 +169,7 @@ export default function AdminFeedbackPage() {
             </button>
             <span className="text-sm text-gray-500">{page} / {totalPages}</span>
             <button
-              onClick={() => { setPage((p) => { const np = p + 1; loadPage(np); return np; }); }}
+              onClick={() => { setPage((p) => { const np = p + 1; loadPage(np, tab); return np; }); }}
               disabled={page >= totalPages}
               className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-300 bg-white disabled:opacity-30 cursor-pointer disabled:cursor-default"
             >
@@ -176,7 +202,8 @@ export default function AdminFeedbackPage() {
                 });
                 setResolving(false);
                 if (res.ok) {
-                  setFeedbacks(prev => prev.map(f => f.id === resolveTarget.id ? { ...f, resolved: true } : f));
+                  setFeedbacks(prev => prev.filter(f => f.id !== resolveTarget.id));
+                  setTotal(prev => prev - 1);
                   setResolveTarget(null);
                 } else {
                   const err = await res.json();
