@@ -9,12 +9,17 @@ import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOpti
 import type { PostWithDetails } from "@/lib/types";
 
 function highlightMentions(text: string) {
-  const parts = text.split(/(@[\w.-]+)/g);
-  return parts.map((part, i) =>
-    part.startsWith("@")
-      ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
-      : part
-  );
+  const parts: (string | JSX.Element)[] = [];
+  let last = 0;
+  const regex = /@[\w.-]+/g;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(<span key={m.index} className="text-blue-500 font-semibold">{m[0]}</span>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length > 0 ? parts : text;
 }
 
 const PostCard = memo(function PostCard({
