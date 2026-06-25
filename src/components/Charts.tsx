@@ -57,6 +57,14 @@ export function BarChart({ labels, data }: { labels: string; data: string }) {
   const parsedLabels = JSON.parse(labels || "[]");
   const parsedData = JSON.parse(data || "[]");
 
+  const fmt = (m: number) => {
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    if (h > 0 && r > 0) return `${h}時間${r}分`;
+    if (h > 0) return `${h}時間`;
+    return `${r}分`;
+  };
+
   useEffect(() => {
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
@@ -75,8 +83,22 @@ export function BarChart({ labels, data }: { labels: string; data: string }) {
       },
       options: {
         responsive: true,
-        scales: { y: { beginAtZero: true } },
-        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (value: any) => fmt(value),
+            },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx: any) => fmt(ctx.parsed.y ?? ctx.parsed),
+            },
+          },
+        },
       },
     });
 
