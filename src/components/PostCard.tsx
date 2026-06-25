@@ -194,14 +194,14 @@ const PostCard = memo(function PostCard({
     const res = await fetch("/api/posts/update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId: post.id, content: editContent.trim(), study_minutes: minutes, subject: editSubject.trim() || "その他", study_date: editDate || null }),
+      body: JSON.stringify({ postId: post.id, content: editContent.trim(), study_minutes: minutes, subject: editSubject.trim() || "その他" }),
     });
     if (!res.ok) {
       alert("保存に失敗しました。もう一度お試しください。");
       return;
     }
     setEditedLocally(true);
-    onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes, subject: editSubject.trim() || "その他", study_date: editDate || null });
+    onUpdate?.(post.id, { content: editContent.trim(), study_minutes: minutes, subject: editSubject.trim() || "その他" });
     setEditing(false);
   };
 
@@ -209,7 +209,6 @@ const PostCard = memo(function PostCard({
     setEditContent(post.content);
     setEditMinutes(String(post.study_minutes));
     setEditSubject(post.subject);
-    setEditDate(post.study_date || "");
     setEditing(false);
   };
 
@@ -291,15 +290,6 @@ const PostCard = memo(function PostCard({
               <datalist id="edit-subjects">
                 {subjectOptions.map(s => <option key={s} value={s} />)}
               </datalist>
-            </div>
-            <div className="flex gap-2 items-center">
-              <span className="text-sm text-gray-500">日付:</span>
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
-              />
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-sm text-gray-500">勉強時間（分）:</span>
