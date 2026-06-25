@@ -26,6 +26,14 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
+  const { data: adminProfile } = await admin
+    .from("profiles")
+    .select("display_name, username")
+    .eq("id", user.id)
+    .single();
+
+  const adminName = adminProfile?.display_name || adminProfile?.username || "管理者";
+
   const { data: fb, error: fbError } = await admin
     .from("user_feedback")
     .select("content, type, resolved")
@@ -36,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (fb.resolved) return NextResponse.json({ error: "Already resolved" }, { status: 400 });
 
   const typeLabel = fb.type === "bug" ? "不具合報告" : fb.type === "question" ? "質問" : "要望";
-  const announcementContent = `✅ 「${fb.content.length > 30 ? fb.content.slice(0, 30) + "…" : fb.content}」が解決されました${customMessage ? `\n\n${customMessage}` : ""}`;
+  const announcementContent = `✅ ${typeLabel}が解決されました\n\n「${fb.content}」${customMessage ? `\n\n${customMessage}` : ""}\n\n— ${adminName}`;
 
   const { error: updateError } = await admin
     .from("user_feedback")
@@ -76,7 +84,7 @@ export async function POST(request: NextRequest) {
             keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
           }, JSON.stringify({
             title: "リュッター",
-            body: announcementContent.length > 100 ? announcementContent.slice(0, 100) + "…" : announcementContent,
+            body: announcementContent.length > 200 ? announcementContent.slice(0, 200) + "…" : announcementContent,
             url: "/",
             vibrate,
           }));
