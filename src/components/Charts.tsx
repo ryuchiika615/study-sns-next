@@ -22,7 +22,21 @@ export function PieChart({ labels, data, colors }: { labels: string; data: strin
       },
       options: {
         responsive: true,
-        plugins: { legend: { position: "bottom" } },
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: {
+            callbacks: {
+              label: (ctx: any) => {
+                const m = ctx.parsed as number;
+                const h = Math.floor(m / 60);
+                const r = m % 60;
+                if (h > 0 && r > 0) return `${h}時間${r}分`;
+                if (h > 0) return `${h}時間`;
+                return `${r}分`;
+              },
+            },
+          },
+        },
       },
     });
 

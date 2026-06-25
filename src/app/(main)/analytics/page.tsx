@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
     setData({
       start: startStr,
       end: endStr,
-      pie_labels: JSON.stringify(subjectRows.map((s) => s.subject)),
+      pie_labels: JSON.stringify(subjectRows.map((s) => `${s.subject} (${s.display_time})`)),
       pie_data: JSON.stringify(subjectRows.map((s) => s.total)),
       pie_colors: JSON.stringify(subjectRows.map((s) => s.color)),
       bar_labels: JSON.stringify(dayLabels),
