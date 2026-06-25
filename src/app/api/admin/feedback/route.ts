@@ -25,13 +25,22 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   const { data, error, count } = await admin
     .from("user_feedback")
-    .select(`
-      *,
-      user:user_id(id, display_name, username, icon_url)
-    `, { count: "estimated" })
+    .select("*", { count: "estimated" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ data, total: count });
+
+  const userIds = [...new Set((data || []).map(f => f.user_id))];
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("id, display_name, username, icon_url")
+    .in("id", userIds);
+
+  const merged = (data || []).map(f => ({
+    ...f,
+    user: (profiles || []).find(p => p.id === f.user_id) || null,
+  }));
+
+  return NextResponse.json({ data: merged, total: count });
 }
