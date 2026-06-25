@@ -360,7 +360,7 @@ export default function TasksClient({
   };
 
   useEffect(() => {
-    supabase.from("todos").select("*").eq("user_id", userId).order("due_date").then(({ data }) => {
+    supabase.from("todos").select("*").eq("user_id", userId).order("due_date", { ascending: true }).then(({ data }) => {
       if (data) setTodos(data);
     });
   }, [userId]);

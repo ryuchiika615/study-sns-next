@@ -21,7 +21,7 @@ export default async function TasksPage() {
     supabase.from("textbooks").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("textbook_progress_logs").select("date, pages_completed").eq("user_id", user.id).gte("date", yearStart).lte("date", yearEnd),
     supabase.from("posts").select("created_at, study_minutes").eq("user_id", user.id).gte("created_at", yearStart).lte("created_at", yearEnd + "T23:59:59Z").gt("study_minutes", 0),
-    supabase.from("todos").select("*").eq("user_id", user.id).order("due_date"),
+    supabase.from("todos").select("*").eq("user_id", user.id).order("due_date", { ascending: true }),
   ]);
 
   const calendarData = (postsResult.data || []).map((p: any) => ({
