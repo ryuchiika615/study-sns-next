@@ -49,6 +49,17 @@ export default function AdminFeedbackPage() {
     setLoading(false);
   }, []);
 
+  const deleteFeedback = async (id: number) => {
+    if (!confirm("このフィードバックを削除しますか？")) return;
+    const res = await fetch(`/api/admin/feedback?id=${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setFeedbacks(prev => prev.filter(f => f.id !== id));
+      setTotal(prev => prev - 1);
+    } else {
+      alert("削除に失敗しました");
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
@@ -145,12 +156,18 @@ export default function AdminFeedbackPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <i className={`fas fa-chevron-${expandedId === fb.id ? "up" : "down"} text-gray-300`} />
-                    {!fb.resolved && (
-                      <button onClick={(e) => { e.stopPropagation(); setResolveTarget(fb); setResolveMessage(""); }}
-                        className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold border-none cursor-pointer hover:bg-green-600">
-                        解決
+                    <div className="flex gap-1">
+                      {!fb.resolved && (
+                        <button onClick={(e) => { e.stopPropagation(); setResolveTarget(fb); setResolveMessage(""); }}
+                          className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold border-none cursor-pointer hover:bg-green-600">
+                          解決
+                        </button>
+                      )}
+                      <button onClick={(e) => { e.stopPropagation(); deleteFeedback(fb.id); }}
+                        className="text-[10px] px-2 py-0.5 bg-red-400 text-white rounded-full font-bold border-none cursor-pointer hover:bg-red-500">
+                        削除
                       </button>
-                    )}
+                    </div>
                   </div>
                 </button>
               </div>

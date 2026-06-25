@@ -461,7 +461,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {popupAnnouncement.image_url && (
                   <img src={popupAnnouncement.image_url} alt="" loading="lazy" className="w-full rounded-lg mb-3 max-h-60 object-cover" />
                 )}
-                <p className="text-sm whitespace-pre-wrap">{popupAnnouncement.content}</p>
+                {popupAnnouncement.content.startsWith("✅") ? (
+                  <RenderResolutionAnnouncement content={popupAnnouncement.content} />
+                ) : (
+                  <p className="text-sm whitespace-pre-wrap">{popupAnnouncement.content}</p>
+                )}
                 <p className="text-xs text-gray-400 mt-3">{new Date(popupAnnouncement.created_at).toLocaleString("ja-JP")}</p>
               </div>
               <div className="px-4 pb-4 space-y-2">
@@ -538,5 +542,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
     </>
+  );
+}
+
+function RenderResolutionAnnouncement({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const titleLine = lines[0] || "";
+  const feedbackLine = lines[2] || "";
+  const customLines = lines.slice(4, -1).filter(l => l.trim());
+  const senderLine = lines[lines.length - 1] || "";
+
+  return (
+    <div>
+      <p className="text-lg font-bold text-green-600 mb-3">{titleLine}</p>
+      {feedbackLine && (
+        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-3">
+          <p className="text-xs text-gray-500 mb-1">ユーザーからのフィードバック</p>
+          <p className="text-sm whitespace-pre-wrap text-gray-800">{feedbackLine}</p>
+        </div>
+      )}
+      {customLines.length > 0 && (
+        <p className="text-sm whitespace-pre-wrap text-gray-700 mb-3">{customLines.join("\n")}</p>
+      )}
+      <p className="text-xs text-right text-gray-400">{senderLine}</p>
+    </div>
   );
 }
