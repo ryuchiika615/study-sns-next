@@ -28,6 +28,9 @@ export default function AdminFeedbackPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [resolveTarget, setResolveTarget] = useState<UserFeedback | null>(null);
+  const [resolveMessage, setResolveMessage] = useState("");
+  const [resolving, setResolving] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -77,7 +80,7 @@ export default function AdminFeedbackPage() {
         ) : (
           <div className="space-y-3">
             {feedbacks.map((fb) => (
-              <div key={fb.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div key={fb.id} className={`bg-white rounded-xl border overflow-hidden ${fb.resolved ? "border-green-200 opacity-70" : "border-gray-200"}`}>
                 <button
                   onClick={() => setExpandedId(expandedId === fb.id ? null : fb.id)}
                   className="w-full flex items-start gap-3 p-4 text-left cursor-pointer border-none bg-transparent"
@@ -95,6 +98,7 @@ export default function AdminFeedbackPage() {
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${typeColors[fb.type] || typeColors.other}`}>
                         {typeLabels[fb.type] || fb.type}
                       </span>
+                      {fb.resolved && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700">解決済み</span>}
                     </div>
                     {expandedId === fb.id ? (
                       <div className="mt-1 space-y-2">
@@ -113,7 +117,15 @@ export default function AdminFeedbackPage() {
                       })}
                     </p>
                   </div>
-                  <i className={`fas fa-chevron-${expandedId === fb.id ? "up" : "down"} text-gray-300 mt-1.5`} />
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <i className={`fas fa-chevron-${expandedId === fb.id ? "up" : "down"} text-gray-300`} />
+                    {!fb.resolved && (
+                      <button onClick={(e) => { e.stopPropagation(); setResolveTarget(fb); setResolveMessage(""); }}
+                        className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold border-none cursor-pointer hover:bg-green-600">
+                        解決
+                      </button>
+                    )}
+                  </div>
                 </button>
               </div>
             ))}
@@ -144,6 +156,45 @@ export default function AdminFeedbackPage() {
           <a href="/admin" className="text-sm text-blue-500 hover:underline">← 管理者ダッシュボードに戻る</a>
         </div>
       </div>
+
+      {resolveTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { if (!resolving) setResolveTarget(null); }}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-sm mb-2">このフィードバックを解決済みにする</h3>
+            <p className="text-xs text-gray-500 mb-4 break-words">"{resolveTarget.content.slice(0, 60)}{resolveTarget.content.length > 60 ? "…" : ""}"</p>
+            <textarea value={resolveMessage} onChange={(e) => setResolveMessage(e.target.value)}
+              placeholder="ユーザーへの追加メッセージ（任意）"
+              className="w-full rounded-lg border-gray-300 text-sm resize-none h-20 mb-4" />
+            <div className="flex gap-2">
+              <button onClick={async () => {
+                if (resolving) return;
+                setResolving(true);
+                const res = await fetch("/api/admin/feedback/resolve", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ feedbackId: resolveTarget.id, customMessage: resolveMessage.trim() || null }),
+                });
+                setResolving(false);
+                if (res.ok) {
+                  setFeedbacks(prev => prev.map(f => f.id === resolveTarget.id ? { ...f, resolved: true } : f));
+                  setResolveTarget(null);
+                } else {
+                  const err = await res.json();
+                  alert(err.error || "失敗しました");
+                }
+              }}
+                className="flex-1 bg-green-500 text-white font-bold rounded-full py-1.5 text-sm cursor-pointer disabled:opacity-50"
+                disabled={resolving}>
+                {resolving ? "送信中..." : "解決して通知する"}
+              </button>
+              <button onClick={() => setResolveTarget(null)}
+                className="flex-1 bg-gray-100 text-gray-600 font-bold rounded-full py-1.5 text-sm cursor-pointer">
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

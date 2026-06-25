@@ -140,6 +140,7 @@ export interface UserFeedback {
   content: string;
   type: string;
   image_url: string | null;
+  resolved: boolean;
   created_at: string;
   user: {
     id: string;
