@@ -36,15 +36,23 @@ export async function POST(request: NextRequest) {
 
   const { data: fb, error: fbError } = await admin
     .from("user_feedback")
-    .select("content, type, resolved")
+    .select("content, type, resolved, user_id")
     .eq("id", feedbackId)
     .single();
 
   if (fbError || !fb) return NextResponse.json({ error: "Feedback not found" }, { status: 404 });
   if (fb.resolved) return NextResponse.json({ error: "Already resolved" }, { status: 400 });
 
+  const { data: submitterProfile } = await admin
+    .from("profiles")
+    .select("display_name, username")
+    .eq("id", fb.user_id)
+    .single();
+
+  const submitterName = submitterProfile?.display_name || submitterProfile?.username || "ユーザー";
+
   const typeLabel = fb.type === "bug" ? "不具合報告" : fb.type === "question" ? "質問" : "要望";
-  const announcementContent = `✅ ${typeLabel}が解決されました\n\n「${fb.content}」${customMessage ? `\n\n${customMessage}` : ""}\n\n— ${adminName}`;
+  const announcementContent = `✅ ${typeLabel}が解決されました\n\n「${fb.content}」${customMessage ? `\n\n${customMessage}` : ""}\n\n— ${submitterName} → ${adminName}`;
 
   const { error: updateError } = await admin
     .from("user_feedback")
