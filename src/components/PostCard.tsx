@@ -426,24 +426,44 @@ const PostCard = memo(function PostCard({
             const allUsers = reactions.flatMap(r =>
               (r.users || []).map(u => ({ ...u, reaction: r.reaction }))
             );
-            const maxVisible = 8;
-            const visible = allUsers.slice(0, maxVisible);
-            const remaining = allUsers.length - maxVisible;
-            return (
-              <>
-                {visible.map((u, i) => (
-                  <div key={`${u.id}-${u.reaction}`} className="relative w-7 h-7 shrink-0"
-                    title={`${u.display_name}: ${u.reaction}`}>
-                    <img src={u.icon_url || "/default-icon.png"} alt=""
-                      className="w-7 h-7 rounded-full object-cover border border-gray-200" />
-                    <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none drop-shadow">{u.reaction}</span>
-                  </div>
-                ))}
-                {remaining > 0 && (
-                  <span className="text-[10px] text-gray-400 font-bold shrink-0">+{remaining}</span>
-                )}
-              </>
-            );
+            if (allUsers.length > 0) {
+              const maxVisible = 8;
+              const visible = allUsers.slice(0, maxVisible);
+              const remaining = allUsers.length - maxVisible;
+              return (
+                <>
+                  {visible.map((u, i) => (
+                    <div key={`${u.id}-${u.reaction}`} className="relative w-7 h-7 shrink-0"
+                      title={`${u.display_name}: ${u.reaction}`}>
+                      <img src={u.icon_url || "/default-icon.png"} alt=""
+                        className="w-7 h-7 rounded-full object-cover border border-gray-200" />
+                      <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none drop-shadow bg-white rounded-full">{u.reaction}</span>
+                    </div>
+                  ))}
+                  {remaining > 0 && (
+                    <span className="text-[10px] text-gray-400 font-bold shrink-0">+{remaining}</span>
+                  )}
+                  {reactions.filter(r => (r.users || []).length === 0).map(r => (
+                    <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
+                      className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
+                        myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                      }`}>
+                      <span>{r.reaction}</span>
+                      <span className="text-xs font-medium">{r.count}</span>
+                    </button>
+                  ))}
+                </>
+              );
+            }
+            return reactions.map(r => (
+              <button key={r.reaction} onClick={() => handleReaction(r.reaction)}
+                className={`text-sm px-2 py-0.5 rounded-full border cursor-pointer transition flex items-center gap-1 ${
+                  myReaction === r.reaction ? "bg-primary/10 border-primary text-primary" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                }`}>
+                <span>{r.reaction}</span>
+                <span className="text-xs font-medium">{r.count}</span>
+              </button>
+            ));
           })()}
         </div>
       </div>
