@@ -47,7 +47,7 @@ export interface PostWithDetails {
   likes_count: number;
   is_liked: boolean;
   comments_count: number;
-  reactions_count: { reaction: string; count: number }[];
+  reactions_count: { reaction: string; count: number; users: { id: string; icon_url: string | null; display_name: string }[] }[];
   my_reaction: string | null;
   display_study_time: string;
   subject_color: string;

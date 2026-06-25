@@ -64,7 +64,7 @@ export async function PUT(request: NextRequest) {
             admin.from("profiles").select("display_name, username").eq("id", user.id).single(),
           ]);
           const senderName = senderResult.data?.display_name || senderResult.data?.username || "誰か";
-          const body = `${senderName}がリアクションしました`;
+          const body = `${senderName}が${reaction}のリアクションをしました`;
           if (subResult.data) {
             for (const sub of subResult.data) {
               try {
