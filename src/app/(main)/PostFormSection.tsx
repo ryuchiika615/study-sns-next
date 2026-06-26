@@ -105,16 +105,19 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
 
     if (matchedTextbook && tbPages) {
       const pages = parseInt(tbPages) || 0;
-      if (pages > 0) {
-        await supabase.from("textbook_progress_logs").insert({
-          textbook_id: matchedTextbook.id, user_id: userId,
-          pages_completed: pages, date: studyDateVal,
-        });
+      if (pages > 0 && pages <= matchedTextbook.total_pages) {
+        const added = pages - matchedTextbook.pages_completed;
+        if (added > 0) {
+          await supabase.from("textbook_progress_logs").insert({
+            textbook_id: matchedTextbook.id, user_id: userId,
+            pages_completed: added, date: studyDateVal,
+          });
+        }
         await supabase.from("textbooks").update({
-          pages_completed: matchedTextbook.pages_completed + pages,
+          pages_completed: pages,
         }).eq("id", matchedTextbook.id).eq("user_id", userId);
         setTextbooks(prev => prev.map(t =>
-          t.id === matchedTextbook.id ? { ...t, pages_completed: t.pages_completed + pages } : t
+          t.id === matchedTextbook.id ? { ...t, pages_completed: pages } : t
         ));
       }
     }
@@ -219,8 +222,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
                 type="number"
                 value={tbPages}
                 onChange={(e) => setTbPages(e.target.value)}
-                min={1} max={matchedTextbook.total_pages - matchedTextbook.pages_completed}
-                placeholder="読了ページ"
+                min={matchedTextbook.pages_completed + 1} max={matchedTextbook.total_pages}
+                placeholder="現在のページ数"
                 className="flex-1 p-2 border border-gray-200 rounded-lg text-sm"
               />
             </div>

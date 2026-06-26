@@ -333,11 +333,13 @@ export default function TasksClient({
 
   const handleTextbookProgress = async (textbook: Textbook) => {
     const pages = parseInt(progressPages);
-    if (!pages || pages <= 0) return;
-    const newCompleted = Math.min(textbook.pages_completed + pages, textbook.total_pages);
-    await supabase.from("textbooks").update({ pages_completed: newCompleted }).eq("id", textbook.id);
-    await supabase.from("textbook_progress_logs").insert({ textbook_id: textbook.id, user_id: userId, pages_completed: pages, date: today });
-    setTextbooks(prev => prev.map(t => t.id === textbook.id ? { ...t, pages_completed: newCompleted } : t));
+    if (!pages || pages <= 0 || pages > textbook.total_pages) return;
+    const added = pages - textbook.pages_completed;
+    if (added > 0) {
+      await supabase.from("textbook_progress_logs").insert({ textbook_id: textbook.id, user_id: userId, pages_completed: added, date: today });
+    }
+    await supabase.from("textbooks").update({ pages_completed: pages }).eq("id", textbook.id);
+    setTextbooks(prev => prev.map(t => t.id === textbook.id ? { ...t, pages_completed: pages } : t));
     setProgressTextbookId(null);
     setProgressPages("");
     addToast("進捗を記録しました");
@@ -706,9 +708,9 @@ export default function TasksClient({
                     {progressTextbookId === t.id && (
                       <form onSubmit={(e) => { e.preventDefault(); handleTextbookProgress(t); }}
                         className="flex gap-2 items-center pt-1 border-t border-gray-100 mt-2">
-                        <span className="text-xs text-gray-500 whitespace-nowrap">今日 +</span>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">今のページ</span>
                         <input type="number" value={progressPages} onChange={(e) => setProgressPages(e.target.value)}
-                          min={1} max={t.total_pages - t.pages_completed} placeholder="ページ数"
+                          min={t.pages_completed + 1} max={t.total_pages} placeholder="ページ"
                           className="w-20 rounded-lg border-gray-300 text-sm py-1" autoFocus />
                         <span className="text-xs text-gray-500">ページ</span>
                         <button type="submit"
