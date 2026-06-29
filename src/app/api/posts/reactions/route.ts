@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest) {
   const { post_id, reaction } = await request.json();
   if (!post_id || !reaction) return NextResponse.json({ error: "post_id and reaction required" }, { status: 400 });
 
-  const validReactions = ["👍", "🔥", "💯", "🎉", "❤️", "😢"];
+  const validReactions = ["😄", "😠", "😢", "😆", "❤️", "😲"];
   if (!validReactions.includes(reaction)) return NextResponse.json({ error: "invalid reaction" }, { status: 400 });
 
   const { data: existing } = await supabase

@@ -102,7 +102,7 @@ const PostCard = memo(function PostCard({
     }
   };
 
-  const reactionEmojis = ["👍", "🔥", "💯", "🎉", "❤️", "😢"];
+  const reactionEmojis = ["😄", "😠", "😢", "😆", "❤️", "😲"];
 
   const toggleComments = async () => {
     if (!showComments && !commentsLoaded) {
