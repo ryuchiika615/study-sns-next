@@ -20,6 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsPage, setSettingsPage] = useState<string | null>(null);
   const [pushMsg, setPushMsg] = useState("");
+  const [weeklyReportHidden, setWeeklyReportHidden] = useState(false);
   const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
   const [quietHoursStart, setQuietHoursStart] = useState("");
   const [quietHoursEnd, setQuietHoursEnd] = useState("");
@@ -79,6 +80,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       if (count !== null) setUnreadCount(count);
     };
     fetchInitialUnread();
+  }, []);
+
+  useEffect(() => {
+    setWeeklyReportHidden(localStorage.getItem("weekly_report_dismissed") === "1");
+    const handler = () => setWeeklyReportHidden(localStorage.getItem("weekly_report_dismissed") === "1");
+    window.addEventListener("storage", handler);
+    window.addEventListener("restore-weekly-report", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("restore-weekly-report", handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -277,6 +289,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <i className="fas fa-envelope text-primary w-5 text-center" />
                         <span>要望・報告</span>
                       </Link>
+                      {weeklyReportHidden && (
+                        <button onClick={() => {
+                          localStorage.removeItem("weekly_report_dismissed");
+                          setWeeklyReportHidden(false);
+                          setSettingsOpen(false);
+                          window.dispatchEvent(new CustomEvent("restore-weekly-report"));
+                        }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 cursor-pointer">
+                          <i className="fas fa-chart-line text-indigo-400 w-5 text-center" />
+                          <span>今週のレポートを再表示</span>
+                        </button>
+                      )}
                     </>
                   ) : settingsPage === "push" ? (
                     <>

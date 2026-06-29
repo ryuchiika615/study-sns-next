@@ -58,7 +58,6 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
-  const [showGearMenu, setShowGearMenu] = useState(false);
   const [newAchievements, setNewAchievements] = useState<any[]>([]);
   const [showAchievementPopup, setShowAchievementPopup] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -247,6 +246,11 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     };
     fetchActive();
     fetch("/api/weekly-report").then(r => r.ok && r.json()).then(d => { if (d) setWeeklyReport(d); });
+    // Listen for restore event from AppShell gear menu
+    const restoreHandler = () => {
+      setShowWeeklyReport(true);
+    };
+    window.addEventListener("restore-weekly-report", restoreHandler);
     // Check for newly earned achievements
     const seenKey = "seen_achievements";
     fetch("/api/achievements/check").then(r => r.ok && r.json()).then(d => {
@@ -261,7 +265,10 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       }
     });
     const iv = setInterval(fetchActive, 30000);
-    return () => clearInterval(iv);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener("restore-weekly-report", restoreHandler);
+    };
   }, []);
 
   const handleSurveySubmit = async () => {
@@ -539,32 +546,6 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
         </div>
       )}
 
-      {/* 設定ギア（画面右下固定） */}
-      <div className="fixed bottom-20 right-4 z-40">
-        <button onClick={() => setShowGearMenu(!showGearMenu)}
-          className="w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:shadow-xl cursor-pointer transition">
-          <i className="fas fa-cog" />
-        </button>
-        {showGearMenu && (
-          <div className="absolute bottom-12 right-0 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[200px]">
-            {!showWeeklyReport && weeklyReport && (
-              <button onClick={() => {
-                localStorage.removeItem("weekly_report_dismissed");
-                setShowWeeklyReport(true);
-                setShowGearMenu(false);
-              }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center gap-2">
-                <i className="fas fa-chart-line text-indigo-400" /> 今週のレポートを再表示
-              </button>
-            )}
-            {!showWeeklyReport && !weeklyReport && (
-              <p className="px-4 py-2.5 text-xs text-gray-400">今週のレポートはデータがありません</p>
-            )}
-            {showWeeklyReport && (
-              <p className="px-4 py-2.5 text-xs text-gray-400">今週のレポートは表示中です</p>
-            )}
-          </div>
-        )}
-      </div>
     </>
   );
 }
