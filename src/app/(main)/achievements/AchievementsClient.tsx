@@ -31,7 +31,7 @@ const categoryLabels: Record<string, string> = {
 export default function AchievementsClient({ userId }: { userId: string }) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [category, setCategory] = useState<string>("all");
-  const [tab, setTab] = useState<"all" | "earned">("all");
+  const [tab, setTab] = useState<"all" | "earned" | "unearned">("all");
 
   useEffect(() => {
     fetch("/api/achievements").then(r => r.json()).then(d => {
@@ -56,6 +56,7 @@ export default function AchievementsClient({ userId }: { userId: string }) {
   let filtered = achievements;
   if (category !== "all") filtered = filtered.filter(a => a.category === category);
   if (tab === "earned") filtered = filtered.filter(a => a.earned);
+  if (tab === "unearned") filtered = filtered.filter(a => !a.earned);
 
   const grouped = filtered.reduce((acc, a) => {
     const cat = a.category;
@@ -75,6 +76,10 @@ export default function AchievementsClient({ userId }: { userId: string }) {
         <button onClick={() => setTab("earned")}
           className={`px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer whitespace-nowrap transition ${tab === "earned" ? "bg-primary text-white" : "bg-gray-100 text-gray-600"}`}>
           獲得済み
+        </button>
+        <button onClick={() => setTab("unearned")}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer whitespace-nowrap transition ${tab === "unearned" ? "bg-primary text-white" : "bg-gray-100 text-gray-600"}`}>
+          未獲得
         </button>
         <button onClick={() => setCategory("all")}
           className={`px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer whitespace-nowrap transition ${category === "all" ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-600"}`}>
