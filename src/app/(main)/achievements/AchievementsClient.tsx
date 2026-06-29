@@ -96,9 +96,10 @@ export default function AchievementsClient({ userId }: { userId: string }) {
               const progressPct = Math.min(100, Math.round((a.progress / a.condition_value) * 100));
               const isComplete = a.progress >= a.condition_value;
               return (
-                <div key={a.id} className={`bg-white rounded-xl border p-4 transition ${a.earned ? "border-yellow-400 bg-yellow-50/30" : "border-gray-100"}`}>
+                <div key={a.id} className={`relative rounded-xl border p-4 transition ${a.earned ? "bg-yellow-50/30 border-yellow-400" : "bg-gray-50 border-gray-200 opacity-60"}`}>
+                  {!a.earned && <span className="absolute top-2 right-2 text-sm">🔒</span>}
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">{a.icon}</span>
+                    <span className={`text-2xl ${!a.earned ? "grayscale" : ""}`}>{a.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-sm">{a.title}</h3>
