@@ -40,7 +40,7 @@ export function Sidebar() {
         <i className="fas fa-bars" />
       </button>
 
-      <div id="sidebar" className="fixed top-0 left-0 h-full w-0 z-[10000] bg-dark overflow-hidden transition-all duration-300 pt-16 shadow-lg">
+      <div id="sidebar" className="fixed top-0 left-0 h-full w-0 z-[10000] bg-dark overflow-y-auto transition-all duration-300 pt-16 shadow-lg">
         <a href="javascript:void(0)" className="closebtn absolute top-0 right-4 text-4xl text-white no-underline p-2.5"
           onClick={closeSidebar}>
           &times;

@@ -266,7 +266,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   return (
     <>
-      {weeklyReport && weeklyReport.totalMinutes > 0 && (
+      {weeklyReport && (
         <div className="mx-4 mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-bold"><i className="fas fa-chart-line mr-1.5" />今週のレポート</h3>
@@ -274,7 +274,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
           <div className="grid grid-cols-4 gap-2 text-center mb-2">
             <div>
-              <p className="text-lg font-bold">{Math.floor(weeklyReport.totalMinutes / 60)}h{weeklyReport.totalMinutes % 60}m</p>
+              <p className="text-lg font-bold">{weeklyReport.totalMinutes > 0 ? `${Math.floor(weeklyReport.totalMinutes / 60)}h${weeklyReport.totalMinutes % 60}m` : "0m"}</p>
               <p className="text-[10px] text-indigo-200">勉強時間</p>
             </div>
             <div>
@@ -290,7 +290,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
               <p className="text-[10px] text-indigo-200">進捗P</p>
             </div>
           </div>
-          {weeklyReport.subjects.length > 0 && (
+          {weeklyReport.subjects?.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {weeklyReport.subjects.slice(0, 4).map((s: any) => (
                 <span key={s.subject} className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
