@@ -57,7 +57,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
-  const [justDismissed, setJustDismissed] = useState(false);
+  const [showDismissConfirm, setShowDismissConfirm] = useState(false);
+  const [showGearMenu, setShowGearMenu] = useState(false);
   const [newAchievements, setNewAchievements] = useState<any[]>([]);
   const [showAchievementPopup, setShowAchievementPopup] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -285,12 +286,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     <>
       {showWeeklyReport && weeklyReport && (
         <div className="mx-4 mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-sm relative">
-          <button onClick={() => {
-            localStorage.setItem("weekly_report_dismissed", "1");
-            setShowWeeklyReport(false);
-            setJustDismissed(true);
-            setTimeout(() => setJustDismissed(false), 3000);
-          }} className="absolute top-2 right-2 text-white/60 hover:text-white text-sm w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer">
+          <button onClick={() => setShowDismissConfirm(true)}
+            className="absolute top-2 right-2 text-white/60 hover:text-white text-sm w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer">
             <i className="fas fa-times" />
           </button>
           <div className="flex items-center justify-between mb-2">
@@ -324,20 +321,6 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
               ))}
             </div>
           )}
-        </div>
-      )}
-      {!showWeeklyReport && weeklyReport && (
-        <div className="mx-4 mb-3">
-          {justDismissed && (
-            <p className="text-xs text-gray-400 mb-1 text-center"><i className="fas fa-info-circle mr-1" />右下の ⚙ 設定から再表示できます</p>
-          )}
-          <button onClick={() => {
-            localStorage.removeItem("weekly_report_dismissed");
-            setShowWeeklyReport(true);
-            setJustDismissed(false);
-          }} className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-400 text-xs font-bold hover:bg-gray-50 hover:text-gray-600 cursor-pointer transition flex items-center justify-center gap-1">
-            <i className="fas fa-chart-line" /> 今週のレポートを表示
-          </button>
         </div>
       )}
       {activeUsers.length > 0 && (
@@ -533,6 +516,55 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
         </div>
       )}
+
+      {/* 非表示確認ダイアログ */}
+      {showDismissConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDismissConfirm(false)}>
+          <div className="bg-white rounded-2xl max-w-xs w-full p-6 shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm text-gray-700 mb-4">今週のレポートを非表示にしますか？<br /><span className="text-xs text-gray-400">画面右下の ⚙ から再表示できます</span></p>
+            <div className="flex gap-2">
+              <button onClick={() => {
+                localStorage.setItem("weekly_report_dismissed", "1");
+                setShowWeeklyReport(false);
+                setShowDismissConfirm(false);
+              }} className="flex-1 bg-red-500 text-white font-bold rounded-full py-2 text-sm cursor-pointer hover:bg-red-600 transition">
+                はい、非表示にする
+              </button>
+              <button onClick={() => setShowDismissConfirm(false)}
+                className="flex-1 bg-gray-100 text-gray-600 font-bold rounded-full py-2 text-sm cursor-pointer hover:bg-gray-200 transition">
+                いいえ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 設定ギア（画面右下固定） */}
+      <div className="fixed bottom-20 right-4 z-40">
+        <button onClick={() => setShowGearMenu(!showGearMenu)}
+          className="w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:shadow-xl cursor-pointer transition">
+          <i className="fas fa-cog" />
+        </button>
+        {showGearMenu && (
+          <div className="absolute bottom-12 right-0 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[200px]">
+            {!showWeeklyReport && weeklyReport && (
+              <button onClick={() => {
+                localStorage.removeItem("weekly_report_dismissed");
+                setShowWeeklyReport(true);
+                setShowGearMenu(false);
+              }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center gap-2">
+                <i className="fas fa-chart-line text-indigo-400" /> 今週のレポートを再表示
+              </button>
+            )}
+            {!showWeeklyReport && !weeklyReport && (
+              <p className="px-4 py-2.5 text-xs text-gray-400">今週のレポートはデータがありません</p>
+            )}
+            {showWeeklyReport && (
+              <p className="px-4 py-2.5 text-xs text-gray-400">今週のレポートは表示中です</p>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }
