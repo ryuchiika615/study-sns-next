@@ -55,6 +55,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
@@ -240,6 +241,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       if (res.ok) setActiveUsers(await res.json());
     };
     fetchActive();
+    fetch("/api/weekly-report").then(r => r.ok && r.json()).then(d => { if (d) setWeeklyReport(d); });
     const iv = setInterval(fetchActive, 30000);
     return () => clearInterval(iv);
   }, []);
@@ -264,6 +266,41 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   return (
     <>
+      {weeklyReport && weeklyReport.totalMinutes > 0 && (
+        <div className="mx-4 mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-bold"><i className="fas fa-chart-line mr-1.5" />今週のレポート</h3>
+            <span className="text-xs text-indigo-200">{weeklyReport.weekStart}〜</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2 text-center mb-2">
+            <div>
+              <p className="text-lg font-bold">{Math.floor(weeklyReport.totalMinutes / 60)}h{weeklyReport.totalMinutes % 60}m</p>
+              <p className="text-[10px] text-indigo-200">勉強時間</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold">{weeklyReport.postCount}</p>
+              <p className="text-[10px] text-indigo-200">投稿数</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold">{weeklyReport.habitRate}%</p>
+              <p className="text-[10px] text-indigo-200">習慣達成</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold">{weeklyReport.textbookPages}</p>
+              <p className="text-[10px] text-indigo-200">進捗P</p>
+            </div>
+          </div>
+          {weeklyReport.subjects.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {weeklyReport.subjects.slice(0, 4).map((s: any) => (
+                <span key={s.subject} className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
+                  {s.subject} {Math.floor(s.minutes / 60)}h{s.minutes % 60}m
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {activeUsers.length > 0 && (
         <div className="mx-4 mb-3 bg-blue-50 rounded-xl p-3 border border-blue-100">
           <p className="text-xs font-bold text-blue-600 mb-2"><i className="fas fa-book-open mr-1" />勉強中のユーザー</p>

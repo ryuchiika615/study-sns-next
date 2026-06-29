@@ -48,6 +48,9 @@ export function Sidebar() {
         <Link href="/" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-home w-6 text-center mr-3" /> ホーム
         </Link>
+        <Link href="/achievements" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
+          <i className="fas fa-trophy w-6 text-center mr-3" style={{ color: "#facc15" }} /> 実績
+        </Link>
         <Link href="/rankings" onClick={closeSidebar} className="block text-lg text-gray-300 no-underline py-4 px-6 hover:bg-gray-800 hover:text-white font-bold">
           <i className="fas fa-trophy w-6 text-center mr-3" /> ランキング
         </Link>

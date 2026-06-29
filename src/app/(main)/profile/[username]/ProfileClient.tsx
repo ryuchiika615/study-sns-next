@@ -40,10 +40,12 @@ export default function ProfileClient({
   const [isFollowing, setIsFollowing] = useState(initialFollow);
   const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
   const [badges, setBadges] = useState<any[]>([]);
+  const [focusScore, setFocusScore] = useState<any>(null);
 
   useEffect(() => {
     if (user.id === profile.id) {
       fetch("/api/study/weekly-badge").then(r => r.ok && r.json()).then(d => { if (d) setBadges(d.badges || []); });
+      fetch("/api/focus-score").then(r => r.ok && r.json()).then(d => { if (d) setFocusScore(d); });
     } else {
       supabase.from("weekly_badges").select("*").eq("user_id", profile.id).order("week_start", { ascending: false }).then(({ data }) => { if (data) setBadges(data); });
     }
@@ -402,6 +404,28 @@ export default function ProfileClient({
             </div>
           )}
         </div>
+
+        {focusScore && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-sm text-gray-500"><i className="fas fa-brain mr-1.5" />集中度スコア</h3>
+              <span className={`text-lg font-bold ${focusScore.level === "S" ? "text-yellow-500" : focusScore.level === "A" ? "text-green-500" : focusScore.level === "B" ? "text-blue-500" : "text-gray-400"}`}>
+                {focusScore.level} <span className="text-sm text-gray-400">{focusScore.total}</span>
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {Object.values(focusScore.breakdown).map((b: any) => (
+                <div key={b.label} className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-16">{b.label}</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-indigo-400" style={{ width: `${(b.score / b.max) * 100}%` }} />
+                  </div>
+                  <span className="text-xs text-gray-400 w-10 text-right">{b.score}/{b.max}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {badges.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
