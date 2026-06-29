@@ -109,6 +109,8 @@ export async function PUT(request: NextRequest) {
     }
 
     case "delete_user": {
+      await admin.from("user_items").delete().eq("user_id", userId);
+      await admin.from("user_achievements").delete().eq("user_id", userId);
       await admin.from("profiles").update({ is_banned: true, display_name: null, username: null }).eq("id", userId);
       await admin.from("profiles").delete().eq("id", userId);
       await admin.auth.admin.deleteUser(userId);
