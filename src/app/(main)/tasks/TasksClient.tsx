@@ -191,6 +191,7 @@ export default function TasksClient({
   const [formTitle, setFormTitle] = useState("");
   const [formPages, setFormPages] = useState("");
   const [formTarget, setFormTarget] = useState("");
+  const [formProgress, setFormProgress] = useState("");
   const [progressTextbookId, setProgressTextbookId] = useState<string | null>(null);
   const [progressPages, setProgressPages] = useState("");
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
@@ -306,9 +307,9 @@ export default function TasksClient({
     const total = parseInt(formPages) || 0;
     if (total <= 0) return;
     if (editTextbookId) {
-      const { error } = await supabase.from("textbooks").update({ title: formTitle.trim(), total_pages: total, target_end_date: formTarget || null }).eq("id", editTextbookId);
+      const { error } = await supabase.from("textbooks").update({ title: formTitle.trim(), total_pages: total, pages_completed: Math.min(parseInt(formProgress) || 0, total), target_end_date: formTarget || null }).eq("id", editTextbookId);
       if (error) { addToast(error.message); return; }
-      setTextbooks(prev => prev.map(t => t.id === editTextbookId ? { ...t, title: formTitle.trim(), total_pages: total, target_end_date: formTarget || null } : t));
+      setTextbooks(prev => prev.map(t => t.id === editTextbookId ? { ...t, title: formTitle.trim(), total_pages: total, pages_completed: Math.min(parseInt(formProgress) || 0, total), target_end_date: formTarget || null } : t));
       addToast("更新しました");
     } else {
       const { data, error } = await supabase.from("textbooks").insert({ user_id: userId, title: formTitle.trim(), total_pages: total, pages_completed: 0, target_end_date: formTarget || null }).select().single();
@@ -321,6 +322,7 @@ export default function TasksClient({
     setFormTitle("");
     setFormPages("");
     setFormTarget("");
+    setFormProgress("");
   };
 
   const handleDeleteTextbook = async (id: string) => {
@@ -349,6 +351,7 @@ export default function TasksClient({
     setFormTitle(t.title);
     setFormPages(String(t.total_pages));
     setFormTarget(t.target_end_date || "");
+    setFormProgress(String(t.pages_completed));
     setEditTextbookId(t.id);
     setShowTextbookForm(true);
   };
@@ -357,6 +360,7 @@ export default function TasksClient({
     setFormTitle("");
     setFormPages("");
     setFormTarget("");
+    setFormProgress("");
     setEditTextbookId(null);
     setShowTextbookForm(true);
   };
@@ -801,6 +805,13 @@ export default function TasksClient({
                 <input type="number" value={formPages} onChange={(e) => setFormPages(e.target.value)}
                   className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={1} required />
               </div>
+              {editTextbookId && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">現在のページ数</label>
+                  <input type="number" value={formProgress} onChange={(e) => setFormProgress(e.target.value)}
+                    className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={0} />
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-gray-700">目標完了日（任意）</label>
                 <input type="date" value={formTarget} onChange={(e) => setFormTarget(e.target.value)}
