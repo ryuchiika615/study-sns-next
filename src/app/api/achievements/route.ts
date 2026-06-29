@@ -4,38 +4,21 @@ import { createAdminClient } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  const admin = createAdminClient();
-
-  const [defsResult, userResult] = await Promise.all([
-    admin.from("achievement_definitions").select("*").order("sort_order", { ascending: true }),
-    admin.from("user_achievements").select("*").eq("user_id", user.id),
-  ]);
-
-  const defs = defsResult.data || [];
-  const userAchievements = userResult.data || [];
-
-  // Calculate current progress for each achievement
-  const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", user.id);
+async function calcProgress(userId: string, admin: ReturnType<typeof createAdminClient>) {
+  const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", userId);
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
 
-  const { data: profile } = await admin.from("profiles").select("consecutive_post_days").eq("id", user.id).single();
+  const { data: profile } = await admin.from("profiles").select("consecutive_post_days").eq("id", userId).single();
   const consecutiveDays = profile?.consecutive_post_days || 0;
 
-  const { data: postCountData } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-  const postCount = postCountData?.length || 0;
+  const { data: postCountData, count: postCount } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", userId);
 
-  const { data: challengeWins } = await admin.from("challenges").select("id", { count: "exact", head: true }).eq("winner_id", user.id);
-  const challengeWinCount = challengeWins?.length || 0;
+  const { data: challengeWins, count: challengeWinCount } = await admin.from("challenges").select("id", { count: "exact", head: true }).eq("winner_id", userId);
 
-  const { data: distinctSubjects } = await admin.rpc("get_distinct_subjects", { p_user_id: user.id });
+  const { data: distinctSubjects } = await admin.rpc("get_distinct_subjects", { p_user_id: userId });
   const subjectCount = distinctSubjects || 0;
 
-  const { data: habitLogs } = await admin.from("habit_logs").select("date, achieved").eq("user_id", user.id).order("date", { ascending: false }).limit(60);
+  const { data: habitLogs } = await admin.from("habit_logs").select("date, achieved").eq("user_id", userId).order("date", { ascending: false }).limit(60);
   let maxHabitStreak = 0;
   if (habitLogs) {
     let current = 0;
@@ -52,41 +35,73 @@ export async function GET() {
     maxHabitStreak = Math.max(maxHabitStreak, current);
   }
 
-  const result = defs.map((def: any) => {
+  return { totalMinutes, consecutiveDays, postCount: postCount || 0, challengeWinCount: challengeWinCount || 0, subjectCount, maxHabitStreak };
+}
+
+export async function GET() {
+  const supabase = createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const admin = createAdminClient();
+
+  const [defsResult, userResult, progress] = await Promise.all([
+    admin.from("achievement_definitions").select("*").order("sort_order", { ascending: true }),
+    admin.from("user_achievements").select("*").eq("user_id", user.id),
+    calcProgress(user.id, admin),
+  ]);
+
+  const defs = defsResult.data || [];
+  const userAchievements = userResult.data || [];
+  const { totalMinutes, consecutiveDays, postCount, challengeWinCount, subjectCount, maxHabitStreak } = progress;
+
+  const newlyEarned: string[] = [];
+
+  const result = await Promise.all(defs.map(async (def: any) => {
     const ua = userAchievements.find((u: any) => u.achievement_id === def.id);
 
-    let progress = ua?.progress || 0;
+    let currentProgress = ua?.progress || 0;
     switch (def.condition_type) {
-      case "study_minutes":
-        progress = totalMinutes;
-        break;
-      case "consecutive_days":
-        progress = consecutiveDays;
-        break;
-      case "post_count":
-        progress = postCount;
-        break;
-      case "challenge_wins":
-        progress = challengeWinCount;
-        break;
-      case "subject_count":
-        progress = subjectCount;
-        break;
-      case "habit_rate":
-        progress = maxHabitStreak;
-        break;
+      case "study_minutes": currentProgress = totalMinutes; break;
+      case "consecutive_days": currentProgress = consecutiveDays; break;
+      case "post_count": currentProgress = postCount; break;
+      case "challenge_wins": currentProgress = challengeWinCount; break;
+      case "subject_count": currentProgress = subjectCount; break;
+      case "habit_rate": currentProgress = maxHabitStreak; break;
+    }
+
+    const isComplete = currentProgress >= def.condition_value;
+    const alreadyEarned = !!ua?.earned_at;
+
+    // Auto-earn if condition met but not yet earned
+    if (isComplete && !alreadyEarned) {
+      await admin.from("user_achievements").upsert({
+        user_id: user.id,
+        achievement_id: def.id,
+        progress: currentProgress,
+        earned_at: new Date().toISOString(),
+        claimed: false,
+      }, { onConflict: "user_id, achievement_id" });
+      newlyEarned.push(def.id);
+    } else if (ua && !alreadyEarned) {
+      // Update progress only
+      await admin.from("user_achievements").upsert({
+        user_id: user.id,
+        achievement_id: def.id,
+        progress: currentProgress,
+      }, { onConflict: "user_id, achievement_id" });
     }
 
     return {
       ...def,
-      progress,
-      earned: !!ua?.earned_at,
-      earned_at: ua?.earned_at || null,
+      progress: currentProgress,
+      earned: alreadyEarned || isComplete,
+      earned_at: ua?.earned_at || (isComplete ? new Date().toISOString() : null),
       claimed: ua?.claimed || false,
     };
-  });
+  }));
 
-  return NextResponse.json({ achievements: result });
+  return NextResponse.json({ achievements: result, newlyEarned });
 }
 
 export async function POST(req: NextRequest) {
@@ -123,7 +138,6 @@ export async function POST(req: NextRequest) {
       "subjects_10": "オールラウンダー",
     };
     const titleName = titleNames[achievement_id] || def.title;
-    // Check if user already has this title
     const { data: existingItems } = await admin.from("user_items").select("id").eq("user_id", user.id).eq("item_name", titleName).maybeSingle();
     if (!existingItems) {
       await admin.from("user_items").insert({

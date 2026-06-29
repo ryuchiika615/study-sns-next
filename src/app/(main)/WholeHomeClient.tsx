@@ -58,6 +58,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
   const [justDismissed, setJustDismissed] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<any[]>([]);
+  const [showAchievementPopup, setShowAchievementPopup] = useState(false);
   const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
@@ -244,6 +246,19 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     };
     fetchActive();
     fetch("/api/weekly-report").then(r => r.ok && r.json()).then(d => { if (d) setWeeklyReport(d); });
+    // Check for newly earned achievements
+    const seenKey = "seen_achievements";
+    fetch("/api/achievements/check").then(r => r.ok && r.json()).then(d => {
+      if (d && d.newlyEarned && d.newlyEarned.length > 0) {
+        const seen = new Set(JSON.parse(localStorage.getItem(seenKey) || "[]"));
+        const unseen = d.newlyEarned.filter((id: string) => !seen.has(id));
+        if (unseen.length > 0) {
+          setNewAchievements((d.achievements || []).filter((a: any) => unseen.includes(a.id)));
+          setShowAchievementPopup(true);
+          localStorage.setItem(seenKey, JSON.stringify([...seen, ...unseen]));
+        }
+      }
+    });
     const iv = setInterval(fetchActive, 30000);
     return () => clearInterval(iv);
   }, []);
@@ -488,6 +503,35 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
             setIncomingChallenge(null);
           }}
         />
+      )}
+
+      {showAchievementPopup && newAchievements.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAchievementPopup(false)}>
+          <div className="bg-gradient-to-br from-yellow-300 via-yellow-200 to-orange-100 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-5xl mb-3">🏅</div>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">実績解除！！</h2>
+            <p className="text-sm text-gray-600 mb-4">新しい実績を達成しました！</p>
+            <div className="space-y-2 mb-4">
+              {newAchievements.map((a: any) => (
+                <div key={a.id} className="bg-white/70 rounded-xl p-3 flex items-center gap-3">
+                  <span className="text-2xl">{a.icon}</span>
+                  <div className="text-left">
+                    <p className="font-bold text-sm text-gray-800">{a.title}</p>
+                    <p className="text-xs text-gray-500">{a.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <a href="/achievements"
+              className="block w-full bg-white text-gray-800 font-bold rounded-full py-2.5 text-sm shadow-md cursor-pointer hover:bg-gray-100 transition text-center no-underline mb-2">
+              受け取る！
+            </a>
+            <button onClick={() => setShowAchievementPopup(false)}
+              className="w-full text-gray-500 text-xs font-bold py-1.5 cursor-pointer hover:text-gray-700 transition">
+              あとで
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
