@@ -109,6 +109,7 @@ export async function PUT(request: NextRequest) {
     }
 
     case "delete_user": {
+      await admin.from("profiles").update({ is_banned: true, display_name: null, username: null }).eq("id", userId);
       await admin.from("profiles").delete().eq("id", userId);
       await admin.auth.admin.deleteUser(userId);
       return NextResponse.json({ success: true, message: "ユーザーを削除しました" });

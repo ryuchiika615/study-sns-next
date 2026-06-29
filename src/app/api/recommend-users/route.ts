@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     .from("profiles")
     .select("id, display_name, username, icon_url")
     .is("is_banned", false)
+    .or("display_name.not.is.null,username.not.is.null")
     .order("created_at", { ascending: false });
 
   const { data: following } = await supabase.from("follows").select("following_id").eq("follower_id", userId);
