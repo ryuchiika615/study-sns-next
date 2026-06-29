@@ -56,6 +56,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
+  const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
+  const [justDismissed, setJustDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
@@ -266,8 +268,16 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   return (
     <>
-      {weeklyReport && (
-        <div className="mx-4 mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-sm">
+      {showWeeklyReport && weeklyReport && (
+        <div className="mx-4 mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-sm relative">
+          <button onClick={() => {
+            localStorage.setItem("weekly_report_dismissed", "1");
+            setShowWeeklyReport(false);
+            setJustDismissed(true);
+            setTimeout(() => setJustDismissed(false), 3000);
+          }} className="absolute top-2 right-2 text-white/60 hover:text-white text-sm w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer">
+            <i className="fas fa-times" />
+          </button>
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-bold"><i className="fas fa-chart-line mr-1.5" />今週のレポート</h3>
             <span className="text-xs text-indigo-200">{weeklyReport.weekStart}〜</span>
@@ -299,6 +309,20 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
               ))}
             </div>
           )}
+        </div>
+      )}
+      {!showWeeklyReport && weeklyReport && (
+        <div className="mx-4 mb-3">
+          {justDismissed && (
+            <p className="text-xs text-gray-400 mb-1 text-center"><i className="fas fa-info-circle mr-1" />右下の ⚙ 設定から再表示できます</p>
+          )}
+          <button onClick={() => {
+            localStorage.removeItem("weekly_report_dismissed");
+            setShowWeeklyReport(true);
+            setJustDismissed(false);
+          }} className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-400 text-xs font-bold hover:bg-gray-50 hover:text-gray-600 cursor-pointer transition flex items-center justify-center gap-1">
+            <i className="fas fa-chart-line" /> 今週のレポートを表示
+          </button>
         </div>
       )}
       {activeUsers.length > 0 && (
