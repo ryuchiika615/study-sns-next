@@ -11,7 +11,7 @@ import type { PostWithDetails } from "@/lib/types";
 function highlightMentions(text: string) {
   const parts: (string | JSX.Element)[] = [];
   let last = 0;
-  const regex = /@[\w.-]+/g;
+  const regex = /@[\p{L}\p{N}._-]+/gu;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
