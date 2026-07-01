@@ -9,7 +9,7 @@ import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isRefinedItem, item
 import RefineParts from "@/components/RefineParts";
 import { getOptimizedIconUrl, rarityClass } from "@/lib/utils";
 
-const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR", "XR"];
+const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
 
 export default function ShopClient() {
   const [userId, setUserId] = useState<string | null>(null);

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { formatStudyTime, subjectColor } from "@/lib/utils";
 import ProfileHeader from "./ProfileHeader";
 import TitleManager from "./TitleManager";
+import IconManager from "./IconManager";
 import FollowRecommendations from "@/components/FollowRecommendations";
 
 export default function EditProfilePage() {
@@ -203,6 +204,7 @@ export default function EditProfilePage() {
           </button>
 
           <TitleManager items={items} profile={profile} onRefresh={loadData} onMessage={setMessage} />
+          <IconManager items={items} profile={profile} onRefresh={loadData} onMessage={setMessage} />
         </>)
       }
 
