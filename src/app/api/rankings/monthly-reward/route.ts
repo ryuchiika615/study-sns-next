@@ -112,3 +112,5 @@ export async function POST(request: NextRequest) {
     items: [titleId, iconId],
   });
 }
+
+export const GET = POST;
