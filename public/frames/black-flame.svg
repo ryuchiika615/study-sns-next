@@ -1,25 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
   <defs>
-    <linearGradient id="flameL" x1="0" y1="1" x2="0" y2="0">
+    <linearGradient id="flameOuter" x1="0.5" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#450a0a" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#991b1b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#450a0a" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="flameMain" x1="0.5" y1="1" x2="0.5" y2="0">
       <stop offset="0%" stop-color="#991b1b"/>
       <stop offset="40%" stop-color="#dc2626"/>
-      <stop offset="70%" stop-color="#fbbf24"/>
+      <stop offset="80%" stop-color="#991b1b"/>
       <stop offset="100%" stop-color="#450a0a"/>
     </linearGradient>
-    <linearGradient id="flameR" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#991b1b"/>
-      <stop offset="40%" stop-color="#dc2626"/>
-      <stop offset="70%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#450a0a"/>
+    <linearGradient id="flameInner" x1="0.5" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+    <linearGradient id="flameGradL" x1="0" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#450a0a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#991b1b" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="flameGradR" x1="1" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#450a0a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#991b1b" stop-opacity="0.1"/>
     </linearGradient>
   </defs>
-  <path d="M12 90 Q8 70 14 55 Q18 42 12 30 Q10 24 14 18 L20 22 Q18 35 22 48 Q26 58 20 72 Q16 82 18 90 Z" fill="url(#flameL)" opacity="0.9"/>
-  <path d="M88 90 Q92 70 86 55 Q82 42 88 30 Q90 24 86 18 L80 22 Q82 35 78 48 Q74 58 80 72 Q84 82 82 90 Z" fill="url(#flameR)" opacity="0.9"/>
-  <path d="M8 90 Q4 60 10 40 L16 38 Q12 60 16 90 Z" fill="#dc2626" opacity="0.5"/>
-  <path d="M92 90 Q96 60 90 40 L84 38 Q88 60 84 90 Z" fill="#dc2626" opacity="0.5"/>
-  <path d="M18 90 Q14 65 20 50 L24 48 Q20 65 24 90 Z" fill="#fbbf24" opacity="0.3"/>
-  <path d="M82 90 Q86 65 80 50 L76 48 Q80 65 76 90 Z" fill="#fbbf24" opacity="0.3"/>
-  <rect x="12" y="90" width="76" height="4" rx="2" fill="#450a0a"/>
-  <path d="M25 90 Q28 80 32 75 L36 78 Q30 85 30 90 Z" fill="#dc2626" opacity="0.4"/>
-  <path d="M75 90 Q72 80 68 75 L64 78 Q70 85 70 90 Z" fill="#dc2626" opacity="0.4"/>
+  <!-- Left flame - outer glow -->
+  <path d="M20 90 Q15 60 25 35 Q30 20 35 30 Q40 45 38 60 Q36 75 35 90 Z" fill="url(#flameOuter)" opacity="0.6"/>
+  <!-- Left flame - main -->
+  <path d="M22 88 Q18 62 26 40 Q30 25 34 35 Q38 48 36 62 Q34 76 33 88 Z" fill="url(#flameMain)" opacity="0.85"/>
+  <!-- Left flame - inner bright -->
+  <path d="M24 86 Q21 65 28 45 Q31 32 33 40 Q35 52 34 65 Q33 76 32 86 Z" fill="url(#flameInner)" opacity="0.9"/>
+  <!-- Right flame - outer glow -->
+  <path d="M80 90 Q85 60 75 35 Q70 20 65 30 Q60 45 62 60 Q64 75 65 90 Z" fill="url(#flameOuter)" opacity="0.6"/>
+  <!-- Right flame - main -->
+  <path d="M78 88 Q82 62 74 40 Q70 25 66 35 Q62 48 64 62 Q66 76 67 88 Z" fill="url(#flameMain)" opacity="0.85"/>
+  <!-- Right flame - inner bright -->
+  <path d="M76 86 Q79 65 72 45 Q69 32 67 40 Q65 52 66 65 Q67 76 68 86 Z" fill="url(#flameInner)" opacity="0.9"/>
+  <!-- Center base glow -->
+  <ellipse cx="50" cy="88" rx="18" ry="6" fill="#991b1b" opacity="0.3"/>
+  <ellipse cx="50" cy="86" rx="12" ry="4" fill="#dc2626" opacity="0.2"/>
+  <!-- Ember particles -->
+  <circle cx="18" cy="50" r="1.5" fill="#dc2626" opacity="0.6"/>
+  <circle cx="82" cy="48" r="1.5" fill="#dc2626" opacity="0.6"/>
+  <circle cx="30" cy="28" r="1" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="70" cy="26" r="1" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="15" cy="70" r="1" fill="#991b1b" opacity="0.4"/>
+  <circle cx="85" cy="72" r="1" fill="#991b1b" opacity="0.4"/>
 </svg>

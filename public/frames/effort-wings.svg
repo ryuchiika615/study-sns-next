@@ -1,8 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" overflow="visible">
   <!-- Left wing -->
-  <path d="M10 30 Q-5 40 5 55 Q-2 50 8 60 Q2 55 12 65 Q8 60 15 70 Q15 60 20 55 Q22 45 18 35 Z" fill="#d1d5db" opacity="0.9"/>
-  <path d="M14 35 Q2 43 10 55 Q6 50 14 58 Q10 54 16 62 Q14 56 18 52 Q20 44 16 36 Z" fill="#9ca3af" opacity="0.7"/>
+  <path d="M18 35 Q8 28 2 18 Q6 30 10 42 Q14 34 18 30 Z" fill="#d1d5db" opacity="0.9"/>
+  <path d="M16 40 Q6 34 1 24 Q5 34 10 46 Q14 38 18 34 Z" fill="#9ca3af" opacity="0.7"/>
+  <path d="M14 46 Q5 40 2 32 Q6 40 10 50 Q13 44 16 40 Z" fill="#d1d5db" opacity="0.6"/>
   <!-- Right wing -->
-  <path d="M90 30 Q105 40 95 55 Q102 50 92 60 Q98 55 88 65 Q92 60 85 70 Q85 60 80 55 Q78 45 82 35 Z" fill="#d1d5db" opacity="0.9"/>
-  <path d="M86 35 Q98 43 90 55 Q94 50 86 58 Q90 54 84 62 Q86 56 82 52 Q80 44 84 36 Z" fill="#9ca3af" opacity="0.7"/>
+  <path d="M82 35 Q92 28 98 18 Q94 30 90 42 Q86 34 82 30 Z" fill="#d1d5db" opacity="0.9"/>
+  <path d="M84 40 Q94 34 99 24 Q95 34 90 46 Q86 38 82 34 Z" fill="#9ca3af" opacity="0.7"/>
+  <path d="M86 46 Q95 40 98 32 Q94 40 90 50 Q87 44 84 40 Z" fill="#d1d5db" opacity="0.6"/>
 </svg>

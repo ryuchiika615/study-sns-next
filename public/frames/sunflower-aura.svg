@@ -1,40 +1,93 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
   <defs>
-    <path id="petal" d="M0,0 C-8,-12 -6,-28 0,-35 C6,-28 8,-12 0,0Z"/>
+    <linearGradient id="petalGrad1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="petalGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <linearGradient id="petalGrad3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="50%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="60%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </radialGradient>
+    <filter id="sunGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="warmGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <path id="petalLg" d="M0,0 C-10,-15 -8,-35 0,-42 C8,-35 10,-15 0,0Z"/>
+    <path id="petalMd" d="M0,0 C-7,-10 -5,-25 0,-30 C5,-25 7,-10 0,0Z"/>
+    <path id="petalSm" d="M0,0 C-5,-7 -4,-18 0,-22 C4,-18 5,-7 0,0Z"/>
   </defs>
-  <g opacity="0.3" fill="none" stroke="#fbbf24" stroke-width="0.5">
-    <circle cx="50" cy="10" r="45"/>
-    <circle cx="50" cy="10" r="35"/>
+  <g filter="url(#warmGlow)">
+    <g transform="translate(50,8)">
+      <use href="#petalLg" transform="rotate(0)" fill="url(#petalGrad1)" opacity="0.9"/>
+      <use href="#petalMd" transform="rotate(30)" fill="url(#petalGrad2)" opacity="0.85"/>
+      <use href="#petalSm" transform="rotate(60)" fill="url(#petalGrad3)" opacity="0.8"/>
+      <use href="#petalLg" transform="rotate(90)" fill="url(#petalGrad1)" opacity="0.9"/>
+      <use href="#petalMd" transform="rotate(120)" fill="url(#petalGrad2)" opacity="0.85"/>
+      <use href="#petalSm" transform="rotate(150)" fill="url(#petalGrad3)" opacity="0.8"/>
+      <use href="#petalLg" transform="rotate(180)" fill="url(#petalGrad1)" opacity="0.9"/>
+      <use href="#petalMd" transform="rotate(210)" fill="url(#petalGrad2)" opacity="0.85"/>
+      <use href="#petalSm" transform="rotate(240)" fill="url(#petalGrad3)" opacity="0.8"/>
+      <use href="#petalLg" transform="rotate(270)" fill="url(#petalGrad1)" opacity="0.9"/>
+      <use href="#petalMd" transform="rotate(300)" fill="url(#petalGrad2)" opacity="0.85"/>
+      <use href="#petalSm" transform="rotate(330)" fill="url(#petalGrad3)" opacity="0.8"/>
+    </g>
   </g>
-  <g transform="translate(50,10)">
-    <use href="#petal" transform="rotate(0)" fill="#92400e" opacity="0.5"/>
-    <use href="#petal" transform="rotate(30)" fill="#d97706" opacity="0.6"/>
-    <use href="#petal" transform="rotate(60)" fill="#f59e0b" opacity="0.7"/>
-    <use href="#petal" transform="rotate(90)" fill="#fbbf24" opacity="0.8"/>
-    <use href="#petal" transform="rotate(120)" fill="#92400e" opacity="0.5"/>
-    <use href="#petal" transform="rotate(150)" fill="#d97706" opacity="0.6"/>
-    <use href="#petal" transform="rotate(180)" fill="#f59e0b" opacity="0.7"/>
-    <use href="#petal" transform="rotate(210)" fill="#fbbf24" opacity="0.8"/>
-    <use href="#petal" transform="rotate(240)" fill="#92400e" opacity="0.5"/>
-    <use href="#petal" transform="rotate(270)" fill="#d97706" opacity="0.6"/>
-    <use href="#petal" transform="rotate(300)" fill="#f59e0b" opacity="0.7"/>
-    <use href="#petal" transform="rotate(330)" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="50" cy="8" r="10" fill="url(#centerGlow)" opacity="0.95"/>
+  <circle cx="50" cy="8" r="6" fill="#92400e" opacity="0.7"/>
+  <circle cx="50" cy="8" r="3" fill="#d97706" opacity="0.8"/>
+  <circle cx="50" cy="8" r="1.5" fill="#fbbf24" opacity="0.9"/>
+  <g filter="url(#sunGlow)" fill="#fbbf24" opacity="0.6">
+    <use href="#petalSm" x="12" y="25" transform="rotate(25 12 25)"/>
+    <use href="#petalSm" x="88" y="25" transform="rotate(155 88 25)"/>
+    <use href="#petalSm" x="8" y="75" transform="rotate(-15 8 75)"/>
+    <use href="#petalSm" x="92" y="75" transform="rotate(195 92 75)"/>
+    <use href="#petalSm" x="50" y="92" transform="rotate(180 50 92)"/>
   </g>
-  <circle cx="50" cy="10" r="8" fill="#92400e" opacity="0.8"/>
-  <circle cx="50" cy="10" r="4" fill="#d97706" opacity="0.9"/>
-  <g fill="#fbbf24" opacity="0.6">
-    <circle cx="15" cy="30" r="2"/><circle cx="20" cy="45" r="1.5"/>
-    <circle cx="10" cy="55" r="2.5"/><circle cx="18" cy="70" r="1.5"/>
-    <circle cx="12" cy="85" r="2"/><circle cx="25" cy="90" r="1.5"/>
-    <circle cx="50" cy="95" r="2"/><circle cx="75" cy="90" r="1.5"/>
-    <circle cx="88" cy="85" r="2"/><circle cx="82" cy="70" r="1.5"/>
-    <circle cx="90" cy="55" r="2.5"/><circle cx="80" cy="45" r="1.5"/>
-    <circle cx="85" cy="30" r="2"/>
+  <g filter="url(#sunGlow)" fill="#f59e0b" opacity="0.5">
+    <use href="#petalSm" x="18" y="12" transform="rotate(40 18 12) scale(0.7)"/>
+    <use href="#petalSm" x="82" y="12" transform="rotate(140 82 12) scale(0.7)"/>
+    <use href="#petalSm" x="5" y="50" transform="rotate(80 5 50) scale(0.6)"/>
+    <use href="#petalSm" x="95" y="50" transform="rotate(100 95 50) scale(0.6)"/>
   </g>
-  <g fill="#f59e0b" opacity="0.4">
-    <path d="M0 20 Q5 18 10 20 Q5 22 0 20Z"/>
-    <path d="M90 20 Q95 18 100 20 Q95 22 90 20Z"/>
-    <path d="M5 25 Q10 23 15 25 Q10 27 5 25Z"/>
-    <path d="M85 25 Q90 23 95 25 Q90 27 85 25Z"/>
+  <g fill="#d97706" opacity="0.5">
+    <circle cx="10" cy="35" r="2"/>
+    <circle cx="90" cy="35" r="2"/>
+    <circle cx="15" cy="65" r="1.5"/>
+    <circle cx="85" cy="65" r="1.5"/>
   </g>
+  <g fill="#fbbf24" opacity="0.4">
+    <circle cx="20" cy="18" r="1.2"/>
+    <circle cx="80" cy="18" r="1.2"/>
+    <circle cx="30" cy="8" r="0.8"/>
+    <circle cx="70" cy="8" r="0.8"/>
+    <circle cx="5" cy="15" r="1"/>
+    <circle cx="95" cy="15" r="1"/>
+  </g>
+  <path d="M10 20 Q15 15 20 20 Q15 25 10 20Z" fill="#92400e" opacity="0.4"/>
+  <path d="M80 20 Q85 15 90 20 Q85 25 80 20Z" fill="#92400e" opacity="0.4"/>
+  <path d="M8 28 Q13 24 18 28 Q13 32 8 28Z" fill="#d97706" opacity="0.35"/>
+  <path d="M82 28 Q87 24 92 28 Q87 32 82 28Z" fill="#d97706" opacity="0.35"/>
 </svg>

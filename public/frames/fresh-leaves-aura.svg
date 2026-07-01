@@ -1,42 +1,127 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
   <defs>
-    <path id="leaf1" d="M0 0 C-8 -6 -14 -18 -8 -26 C-2 -34 10 -28 12 -18 C14 -8 6 -2 0 0Z"/>
-    <path id="leaf2" d="M0 0 C-6 -4 -10 -12 -6 -18 C-2 -24 6 -22 8 -16 C10 -10 6 -4 0 0Z"/>
-    <path id="vine" d="M0 0 Q5 -10 0 -20 Q-5 -10 0 0Z"/>
+    <linearGradient id="leafGrad1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="50%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+    <linearGradient id="leafGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="50%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <linearGradient id="leafGrad3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#dcfce7"/>
+      <stop offset="50%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <radialGradient id="leafGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4ade80" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#166534" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="freshGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="leafFilter" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <path id="leafLg" d="M0 0 C-10 -7 -16 -20 -10 -30 C-4 -38 12 -34 14 -22 C16 -12 8 -4 0 0Z"/>
+    <path id="leafMd" d="M0 0 C-7 -5 -11 -14 -7 -21 C-3 -27 8 -24 10 -16 C12 -8 6 -3 0 0Z"/>
+    <path id="leafSm" d="M0 0 C-5 -3 -7 -9 -5 -14 C-1 -18 6 -16 7 -10 C8 -6 4 -2 0 0Z"/>
+    <path id="vine" d="M0 0 Q6 -12 0 -24 Q-6 -12 0 0Z"/>
   </defs>
-  <g opacity="0.3" fill="none" stroke="#86efac" stroke-width="0.5">
-    <circle cx="50" cy="10" r="42"/>
-    <circle cx="50" cy="90" r="42"/>
+  <g filter="url(#leafFilter)">
+    <g transform="translate(6,14)">
+      <use href="#leafLg" transform="rotate(-30) scale(0.8)" fill="url(#leafGrad1)" opacity="0.9"/>
+    </g>
+    <g transform="translate(94,86)">
+      <use href="#leafLg" transform="rotate(150) scale(0.8)" fill="url(#leafGrad2)" opacity="0.9"/>
+    </g>
+    <g transform="translate(94,14)">
+      <use href="#leafMd" transform="rotate(30) scale(0.75)" fill="url(#leafGrad1)" opacity="0.85"/>
+    </g>
+    <g transform="translate(6,86)">
+      <use href="#leafMd" transform="rotate(210) scale(0.75)" fill="url(#leafGrad2)" opacity="0.85"/>
+    </g>
   </g>
-  <g fill="#166534" opacity="0.5">
-    <use href="#leaf1" x="8" y="15" transform="rotate(-30 8 15) scale(0.7)"/>
-    <use href="#leaf1" x="92" y="85" transform="rotate(150 92 85) scale(0.7)"/>
+  <g filter="url(#freshGlow)">
+    <g transform="translate(4,38)">
+      <use href="#leafMd" transform="rotate(20) scale(0.9)" fill="url(#leafGrad3)" opacity="0.85"/>
+    </g>
+    <g transform="translate(96,62)">
+      <use href="#leafMd" transform="rotate(200) scale(0.9)" fill="url(#leafGrad1)" opacity="0.85"/>
+    </g>
+    <g transform="translate(94,24)">
+      <use href="#leafSm" transform="rotate(160) scale(0.8)" fill="url(#leafGrad2)" opacity="0.8"/>
+    </g>
+    <g transform="translate(6,76)">
+      <use href="#leafSm" transform="rotate(40) scale(0.8)" fill="url(#leafGrad1)" opacity="0.8"/>
+    </g>
   </g>
-  <g fill="#22c55e" opacity="0.6">
-    <use href="#leaf2" x="5" y="40" transform="rotate(20 5 40) scale(0.9)"/>
-    <use href="#leaf2" x="95" y="60" transform="rotate(200 95 60) scale(0.9)"/>
-    <use href="#leaf2" x="92" y="25" transform="rotate(160 92 25) scale(0.7)"/>
-    <use href="#leaf2" x="8" y="70" transform="rotate(40 8 70) scale(0.7)"/>
+  <g filter="url(#freshGlow)" opacity="0.75">
+    <g transform="translate(10,55)">
+      <use href="#leafMd" transform="rotate(50) scale(0.85)" fill="url(#leafGrad2)"/>
+    </g>
+    <g transform="translate(90,45)">
+      <use href="#leafMd" transform="rotate(230) scale(0.85)" fill="url(#leafGrad1)"/>
+    </g>
+    <g transform="translate(14,86)">
+      <use href="#leafSm" transform="rotate(15) scale(0.7)" fill="url(#leafGrad3)"/>
+    </g>
+    <g transform="translate(86,14)">
+      <use href="#leafSm" transform="rotate(195) scale(0.7)" fill="url(#leafGrad3)"/>
+    </g>
   </g>
-  <g fill="#4ade80" opacity="0.7">
-    <use href="#leaf2" x="10" y="55" transform="rotate(50 10 55) scale(0.8)"/>
-    <use href="#leaf2" x="90" y="45" transform="rotate(230 90 45) scale(0.8)"/>
-    <use href="#leaf2" x="15" y="85" transform="rotate(15 15 85) scale(0.6)"/>
-    <use href="#leaf2" x="85" y="12" transform="rotate(195 85 12) scale(0.6)"/>
+  <g filter="url(#freshGlow)" opacity="0.65">
+    <g transform="translate(4,30)">
+      <use href="#vine" transform="rotate(0) scale(0.8)" fill="url(#leafGrad3)"/>
+    </g>
+    <g transform="translate(96,70)">
+      <use href="#vine" transform="rotate(180) scale(0.8)" fill="url(#leafGrad3)"/>
+    </g>
+    <g transform="translate(4,75)">
+      <use href="#vine" transform="rotate(0) scale(0.6)" fill="url(#leafGrad1)"/>
+    </g>
+    <g transform="translate(96,25)">
+      <use href="#vine" transform="rotate(180) scale(0.6)" fill="url(#leafGrad2)"/>
+    </g>
+    <g transform="translate(50,96)">
+      <use href="#leafSm" transform="rotate(90) scale(0.55)" fill="url(#leafGrad2)"/>
+    </g>
+    <g transform="translate(30,4)">
+      <use href="#leafSm" transform="rotate(0) scale(0.5)" fill="url(#leafGrad1)"/>
+    </g>
+    <g transform="translate(70,4)">
+      <use href="#leafSm" transform="rotate(0) scale(0.5)" fill="url(#leafGrad2)"/>
+    </g>
   </g>
-  <g fill="#86efac" opacity="0.4">
-    <use href="#vine" x="5" y="30" transform="rotate(0 5 30) scale(0.8)"/>
-    <use href="#vine" x="95" y="70" transform="rotate(180 95 70) scale(0.8)"/>
-    <use href="#vine" x="5" y="75" transform="rotate(0 5 75) scale(0.6)"/>
-    <use href="#vine" x="95" y="30" transform="rotate(180 95 30) scale(0.6)"/>
-    <use href="#leaf2" x="50" y="96" transform="rotate(90 50 96) scale(0.5)"/>
-    <use href="#leaf2" x="30" y="5" transform="rotate(0 30 5) scale(0.5)"/>
-    <use href="#leaf2" x="70" y="5" transform="rotate(0 70 5) scale(0.5)"/>
+  <g fill="#166534" opacity="0.4">
+    <circle cx="18" cy="10" r="1.2"/>
+    <circle cx="82" cy="10" r="1.2"/>
+    <circle cx="10" cy="18" r="1.2"/>
+    <circle cx="90" cy="18" r="1.2"/>
+    <circle cx="10" cy="82" r="1.2"/>
+    <circle cx="90" cy="82" r="1.2"/>
+    <circle cx="18" cy="90" r="1.2"/>
+    <circle cx="82" cy="90" r="1.2"/>
   </g>
-  <g fill="#166534" opacity="0.3">
-    <circle cx="18" cy="10" r="1"/><circle cx="82" cy="10" r="1"/>
-    <circle cx="10" cy="18" r="1"/><circle cx="90" cy="18" r="1"/>
-    <circle cx="10" cy="82" r="1"/><circle cx="90" cy="82" r="1"/>
-    <circle cx="18" cy="90" r="1"/><circle cx="82" cy="90" r="1"/>
+  <g fill="#22c55e" opacity="0.3">
+    <circle cx="28" cy="6" r="0.8"/>
+    <circle cx="72" cy="6" r="0.8"/>
+    <circle cx="6" cy="28" r="0.8"/>
+    <circle cx="94" cy="28" r="0.8"/>
+    <circle cx="6" cy="72" r="0.8"/>
+    <circle cx="94" cy="72" r="0.8"/>
+    <circle cx="28" cy="94" r="0.8"/>
+    <circle cx="72" cy="94" r="0.8"/>
   </g>
 </svg>

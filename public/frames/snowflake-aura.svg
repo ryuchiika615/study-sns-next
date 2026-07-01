@@ -1,46 +1,134 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
   <defs>
-    <polygon id="crystal" points="0,-12 3,-4 12,0 3,4 0,12 -3,4 -12,0 -3,-4"/>
-    <polygon id="star" points="0,-8 2,-3 8,0 2,3 0,8 -2,3 -8,0 -2,-3"/>
+    <linearGradient id="iceGrad1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <linearGradient id="iceGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <radialGradient id="crystalGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#1e3a5f" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="iceGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="frostGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <g id="snowflake6">
+      <line x1="0" y1="-14" x2="0" y2="14" stroke-width="1.5"/>
+      <line x1="-12.1" y1="-7" x2="12.1" y2="7" stroke-width="1.5"/>
+      <line x1="-12.1" y1="7" x2="12.1" y2="-7" stroke-width="1.5"/>
+      <line x1="0" y1="-10" x2="3" y2="-13" stroke-width="1"/>
+      <line x1="0" y1="-10" x2="-3" y2="-13" stroke-width="1"/>
+      <line x1="0" y1="10" x2="3" y2="13" stroke-width="1"/>
+      <line x1="0" y1="10" x2="-3" y2="13" stroke-width="1"/>
+      <line x1="-8.6" y1="-5" x2="-11" y2="-8" stroke-width="1"/>
+      <line x1="-8.6" y1="-5" x2="-12" y2="-3" stroke-width="1"/>
+      <line x1="8.6" y1="5" x2="11" y2="8" stroke-width="1"/>
+      <line x1="8.6" y1="5" x2="12" y2="3" stroke-width="1"/>
+      <line x1="-8.6" y1="5" x2="-11" y2="8" stroke-width="1"/>
+      <line x1="-8.6" y1="5" x2="-12" y2="3" stroke-width="1"/>
+      <line x1="8.6" y1="-5" x2="11" y2="-8" stroke-width="1"/>
+      <line x1="8.6" y1="-5" x2="12" y2="-3" stroke-width="1"/>
+      <circle cx="0" cy="0" r="2.5" fill-opacity="0.5"/>
+    </g>
+    <g id="snowflake4">
+      <line x1="0" y1="-10" x2="0" y2="10" stroke-width="1.2"/>
+      <line x1="-10" y1="0" x2="10" y2="0" stroke-width="1.2"/>
+      <line x1="-7" y1="-7" x2="7" y2="7" stroke-width="0.8"/>
+      <line x1="-7" y1="7" x2="7" y2="-7" stroke-width="0.8"/>
+      <line x1="0" y1="-7" x2="2" y2="-9" stroke-width="0.8"/>
+      <line x1="0" y1="-7" x2="-2" y2="-9" stroke-width="0.8"/>
+      <circle cx="0" cy="0" r="1.8" fill-opacity="0.4"/>
+    </g>
   </defs>
-  <g opacity="0.3" fill="none" stroke="#93c5fd" stroke-width="0.5">
-    <circle cx="50" cy="50" r="38"/>
-    <circle cx="50" cy="50" r="28"/>
+  <g filter="url(#frostGlow)">
+    <g transform="translate(10,10)">
+      <use href="#snowflake6" stroke="url(#iceGrad1)" fill="url(#iceGrad1)" opacity="0.9"/>
+    </g>
+    <g transform="translate(90,10)">
+      <use href="#snowflake6" stroke="url(#iceGrad2)" fill="url(#iceGrad2)" opacity="0.9"/>
+    </g>
+    <g transform="translate(10,90)">
+      <use href="#snowflake6" stroke="url(#iceGrad2)" fill="url(#iceGrad2)" opacity="0.9"/>
+    </g>
+    <g transform="translate(90,90)">
+      <use href="#snowflake6" stroke="url(#iceGrad1)" fill="url(#iceGrad1)" opacity="0.9"/>
+    </g>
   </g>
-  <g fill="#1e3a5f" opacity="0.5">
-    <use href="#crystal" x="10" y="10" transform="rotate(0 10 10) scale(0.9)"/>
-    <use href="#crystal" x="90" y="10" transform="rotate(90 90 10) scale(0.9)"/>
-    <use href="#crystal" x="10" y="90" transform="rotate(270 10 90) scale(0.9)"/>
-    <use href="#crystal" x="90" y="90" transform="rotate(180 90 90) scale(0.9)"/>
+  <g filter="url(#iceGlow)">
+    <g transform="translate(50,5)">
+      <use href="#snowflake4" stroke="#60a5fa" fill="#60a5fa" opacity="0.8"/>
+    </g>
+    <g transform="translate(5,50)">
+      <use href="#snowflake4" stroke="#93c5fd" fill="#93c5fd" opacity="0.8"/>
+    </g>
+    <g transform="translate(95,50)">
+      <use href="#snowflake4" stroke="#93c5fd" fill="#93c5fd" opacity="0.8"/>
+    </g>
+    <g transform="translate(50,95)">
+      <use href="#snowflake4" stroke="#60a5fa" fill="#60a5fa" opacity="0.8"/>
+    </g>
   </g>
-  <g fill="#3b82f6" opacity="0.6">
-    <use href="#star" x="50" y="5" transform="scale(0.8)"/>
-    <use href="#star" x="5" y="50" transform="scale(0.8)"/>
-    <use href="#star" x="95" y="50" transform="scale(0.8)"/>
-    <use href="#star" x="50" y="95" transform="scale(0.8)"/>
+  <g filter="url(#iceGlow)" opacity="0.7">
+    <g transform="translate(25,6)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(75,6)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(6,25)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(94,25)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(6,75)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(94,75)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(25,94)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
+    <g transform="translate(75,94)">
+      <use href="#snowflake4" stroke="#3b82f6" fill="#3b82f6" scale(0.6)"/>
+    </g>
   </g>
-  <g fill="#60a5fa" opacity="0.7">
-    <use href="#star" x="25" y="5" transform="scale(0.6)"/>
-    <use href="#star" x="75" y="5" transform="scale(0.6)"/>
-    <use href="#star" x="5" y="25" transform="scale(0.6)"/>
-    <use href="#star" x="95" y="25" transform="scale(0.6)"/>
-    <use href="#star" x="5" y="75" transform="scale(0.6)"/>
-    <use href="#star" x="95" y="75" transform="scale(0.6)"/>
-    <use href="#star" x="25" y="95" transform="scale(0.6)"/>
-    <use href="#star" x="75" y="95" transform="scale(0.6)"/>
+  <g fill="#93c5fd" opacity="0.5">
+    <circle cx="10" cy="30" r="1.5"/>
+    <circle cx="90" cy="30" r="1.5"/>
+    <circle cx="10" cy="70" r="1.5"/>
+    <circle cx="90" cy="70" r="1.5"/>
+    <circle cx="30" cy="10" r="1.2"/>
+    <circle cx="70" cy="10" r="1.2"/>
+    <circle cx="30" cy="90" r="1.2"/>
+    <circle cx="70" cy="90" r="1.2"/>
   </g>
-  <g fill="#93c5fd" opacity="0.4">
-    <circle cx="10" cy="30" r="1.5"/><circle cx="90" cy="30" r="1.5"/>
-    <circle cx="10" cy="70" r="1.5"/><circle cx="90" cy="70" r="1.5"/>
-    <circle cx="30" cy="10" r="1.5"/><circle cx="70" cy="10" r="1.5"/>
-    <circle cx="30" cy="90" r="1.5"/><circle cx="70" cy="90" r="1.5"/>
-    <circle cx="50" cy="10" r="1"/><circle cx="10" cy="50" r="1"/>
-    <circle cx="90" cy="50" r="1"/><circle cx="50" cy="90" r="1"/>
-  </g>
-  <g fill="none" stroke="#93c5fd" stroke-width="0.8" opacity="0.3">
-    <line x1="5" y1="15" x2="15" y2="5"/>
-    <line x1="95" y1="15" x2="85" y2="5"/>
-    <line x1="5" y1="85" x2="15" y2="95"/>
-    <line x1="95" y1="85" x2="85" y2="95"/>
+  <g fill="#60a5fa" opacity="0.3">
+    <circle cx="18" cy="18" r="0.8"/>
+    <circle cx="82" cy="18" r="0.8"/>
+    <circle cx="18" cy="82" r="0.8"/>
+    <circle cx="82" cy="82" r="0.8"/>
+    <circle cx="50" cy="15" r="0.6"/>
+    <circle cx="15" cy="50" r="0.6"/>
+    <circle cx="85" cy="50" r="0.6"/>
+    <circle cx="50" cy="85" r="0.6"/>
   </g>
 </svg>

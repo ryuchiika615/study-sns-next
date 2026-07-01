@@ -1,52 +1,167 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
   <defs>
-    <polygon id="frost1" points="0,-12 3,-5 10,-2 3,1 0,8 -3,1 -10,-2 -3,-5"/>
-    <polygon id="frost2" points="0,-8 2,-3 7,0 2,3 0,8 -2,3 -7,0 -2,-3"/>
-    <path id="branch" d="M0 0 L-4 -6 L-2 -8 L0 -4 L2 -8 L4 -6 Z"/>
-    <path id="needle" d="M0 0 L-2 -8 L0 -12 L2 -8 Z"/>
+    <linearGradient id="frostGrad1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="frostGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="50%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="frostGrad3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <radialGradient id="frostGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#94a3b8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#334155" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="crystalGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="iceGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <polygon id="frostCrystal" points="0,-14 3,-6 10,-3 5,1 7,8 0,4 -7,8 -5,1 -10,-3 -3,-6"/>
+    <polygon id="frostStar" points="0,-10 2,-4 8,0 2,4 0,10 -2,4 -8,0 -2,-4"/>
+    <polygon id="frostSm" points="0,-7 2,-3 5,0 2,3 0,7 -2,3 -5,0 -2,-3"/>
+    <path id="branch" d="M0 0 L-4 -7 L-2 -9 L0 -5 L2 -9 L4 -7 Z"/>
+    <path id="needle" d="M0 0 L-2 -10 L0 -14 L2 -10 Z"/>
   </defs>
-  <g opacity="0.3" fill="none" stroke="#cbd5e1" stroke-width="0.5">
-    <circle cx="50" cy="50" r="38"/>
-    <circle cx="50" cy="50" r="28"/>
+  <g filter="url(#iceGlow)">
+    <g transform="translate(12,12)">
+      <use href="#frostCrystal" transform="rotate(0) scale(0.9)" fill="url(#frostGrad1)" opacity="0.9"/>
+    </g>
+    <g transform="translate(88,12)">
+      <use href="#frostCrystal" transform="rotate(90) scale(0.9)" fill="url(#frostGrad2)" opacity="0.9"/>
+    </g>
+    <g transform="translate(12,88)">
+      <use href="#frostCrystal" transform="rotate(270) scale(0.9)" fill="url(#frostGrad2)" opacity="0.9"/>
+    </g>
+    <g transform="translate(88,88)">
+      <use href="#frostCrystal" transform="rotate(180) scale(0.9)" fill="url(#frostGrad1)" opacity="0.9"/>
+    </g>
   </g>
-  <g fill="#334155" opacity="0.5">
-    <use href="#frost1" x="12" y="12" transform="rotate(0 12 12) scale(0.9)"/>
-    <use href="#frost1" x="88" y="12" transform="rotate(90 88 12) scale(0.9)"/>
-    <use href="#frost1" x="12" y="88" transform="rotate(270 12 88) scale(0.9)"/>
-    <use href="#frost1" x="88" y="88" transform="rotate(180 88 88) scale(0.9)"/>
+  <g filter="url(#crystalGlow)">
+    <g transform="translate(50,6)">
+      <use href="#frostStar" transform="rotate(0) scale(0.9)" fill="url(#frostGrad3)" opacity="0.85"/>
+    </g>
+    <g transform="translate(6,50)">
+      <use href="#frostStar" transform="rotate(90) scale(0.9)" fill="url(#frostGrad1)" opacity="0.85"/>
+    </g>
+    <g transform="translate(94,50)">
+      <use href="#frostStar" transform="rotate(270) scale(0.9)" fill="url(#frostGrad1)" opacity="0.85"/>
+    </g>
+    <g transform="translate(50,94)">
+      <use href="#frostStar" transform="rotate(180) scale(0.9)" fill="url(#frostGrad3)" opacity="0.85"/>
+    </g>
   </g>
-  <g fill="#64748b" opacity="0.6">
-    <use href="#frost2" x="50" y="6" transform="scale(0.9)"/>
-    <use href="#frost2" x="6" y="50" transform="scale(0.9)"/>
-    <use href="#frost2" x="94" y="50" transform="scale(0.9)"/>
-    <use href="#frost2" x="50" y="94" transform="scale(0.9)"/>
+  <g filter="url(#crystalGlow)" opacity="0.8">
+    <g transform="translate(8,26)">
+      <use href="#needle" transform="rotate(25) scale(0.8)" fill="url(#frostGrad2)"/>
+    </g>
+    <g transform="translate(92,26)">
+      <use href="#needle" transform="rotate(155) scale(0.8)" fill="url(#frostGrad1)"/>
+    </g>
+    <g transform="translate(8,74)">
+      <use href="#needle" transform="rotate(-25) scale(0.8)" fill="url(#frostGrad1)"/>
+    </g>
+    <g transform="translate(92,74)">
+      <use href="#needle" transform="rotate(205) scale(0.8)" fill="url(#frostGrad2)"/>
+    </g>
+    <g transform="translate(26,8)">
+      <use href="#needle" transform="rotate(65) scale(0.8)" fill="url(#frostGrad3)"/>
+    </g>
+    <g transform="translate(74,8)">
+      <use href="#needle" transform="rotate(115) scale(0.8)" fill="url(#frostGrad3)"/>
+    </g>
+    <g transform="translate(26,92)">
+      <use href="#needle" transform="rotate(245) scale(0.8)" fill="url(#frostGrad2)"/>
+    </g>
+    <g transform="translate(74,92)">
+      <use href="#needle" transform="rotate(295) scale(0.8)" fill="url(#frostGrad2)"/>
+    </g>
   </g>
-  <g fill="#94a3b8" opacity="0.7">
-    <use href="#needle" x="8" y="25" transform="rotate(25 8 25) scale(0.8)"/>
-    <use href="#needle" x="92" y="25" transform="rotate(155 92 25) scale(0.8)"/>
-    <use href="#needle" x="8" y="75" transform="rotate(-25 8 75) scale(0.8)"/>
-    <use href="#needle" x="92" y="75" transform="rotate(205 92 75) scale(0.8)"/>
-    <use href="#needle" x="25" y="8" transform="rotate(65 25 8) scale(0.8)"/>
-    <use href="#needle" x="75" y="8" transform="rotate(115 75 8) scale(0.8)"/>
-    <use href="#needle" x="25" y="92" transform="rotate(245 25 92) scale(0.8)"/>
-    <use href="#needle" x="75" y="92" transform="rotate(295 75 92) scale(0.8)"/>
+  <g filter="url(#crystalGlow)" opacity="0.7">
+    <g transform="translate(10,40)">
+      <use href="#branch" transform="rotate(10) scale(0.75)" fill="url(#frostGrad3)"/>
+    </g>
+    <g transform="translate(90,40)">
+      <use href="#branch" transform="rotate(190) scale(0.75)" fill="url(#frostGrad3)"/>
+    </g>
+    <g transform="translate(10,60)">
+      <use href="#branch" transform="rotate(-10) scale(0.75)" fill="url(#frostGrad1)"/>
+    </g>
+    <g transform="translate(90,60)">
+      <use href="#branch" transform="rotate(170) scale(0.75)" fill="url(#frostGrad1)"/>
+    </g>
+    <g transform="translate(40,8)">
+      <use href="#branch" transform="rotate(80) scale(0.75)" fill="url(#frostGrad2)"/>
+    </g>
+    <g transform="translate(60,8)">
+      <use href="#branch" transform="rotate(100) scale(0.75)" fill="url(#frostGrad2)"/>
+    </g>
+    <g transform="translate(40,92)">
+      <use href="#branch" transform="rotate(260) scale(0.75)" fill="url(#frostGrad3)"/>
+    </g>
+    <g transform="translate(60,92)">
+      <use href="#branch" transform="rotate(280) scale(0.75)" fill="url(#frostGrad3)"/>
+    </g>
   </g>
-  <g fill="#cbd5e1" opacity="0.4">
-    <use href="#branch" x="10" y="40" transform="rotate(10 10 40) scale(0.7)"/>
-    <use href="#branch" x="90" y="40" transform="rotate(190 90 40) scale(0.7)"/>
-    <use href="#branch" x="10" y="60" transform="rotate(-10 10 60) scale(0.7)"/>
-    <use href="#branch" x="90" y="60" transform="rotate(170 90 60) scale(0.7)"/>
-    <use href="#branch" x="40" y="8" transform="rotate(80 40 8) scale(0.7)"/>
-    <use href="#branch" x="60" y="8" transform="rotate(100 60 8) scale(0.7)"/>
-    <use href="#branch" x="40" y="92" transform="rotate(260 40 92) scale(0.7)"/>
-    <use href="#branch" x="60" y="92" transform="rotate(280 60 92) scale(0.7)"/>
+  <g filter="url(#crystalGlow)" opacity="0.6">
+    <g transform="translate(18,16)">
+      <use href="#frostSm" transform="rotate(0) scale(0.6)" fill="#94a3b8"/>
+    </g>
+    <g transform="translate(82,16)">
+      <use href="#frostSm" transform="rotate(72) scale(0.6)" fill="#94a3b8"/>
+    </g>
+    <g transform="translate(18,84)">
+      <use href="#frostSm" transform="rotate(288) scale(0.6)" fill="#cbd5e1"/>
+    </g>
+    <g transform="translate(82,84)">
+      <use href="#frostSm" transform="rotate(216) scale(0.6)" fill="#cbd5e1"/>
+    </g>
+    <g transform="translate(50,12)">
+      <use href="#frostSm" transform="rotate(36) scale(0.5)" fill="#64748b"/>
+    </g>
+    <g transform="translate(50,88)">
+      <use href="#frostSm" transform="rotate(252) scale(0.5)" fill="#64748b"/>
+    </g>
   </g>
-  <g fill="#334155" opacity="0.3">
-    <circle cx="15" cy="15" r="1"/><circle cx="85" cy="15" r="1"/>
-    <circle cx="15" cy="85" r="1"/><circle cx="85" cy="85" r="1"/>
-    <circle cx="35" cy="5" r="0.8"/><circle cx="65" cy="5" r="0.8"/>
-    <circle cx="5" cy="35" r="0.8"/><circle cx="95" cy="35" r="0.8"/>
-    <circle cx="5" cy="65" r="0.8"/><circle cx="95" cy="65" r="0.8"/>
-    <circle cx="35" cy="95" r="0.8"/><circle cx="65" cy="95" r="0.8"/>
+  <g fill="#334155" opacity="0.4">
+    <circle cx="15" cy="15" r="1.2"/>
+    <circle cx="85" cy="15" r="1.2"/>
+    <circle cx="15" cy="85" r="1.2"/>
+    <circle cx="85" cy="85" r="1.2"/>
+    <circle cx="35" cy="5" r="0.8"/>
+    <circle cx="65" cy="5" r="0.8"/>
+    <circle cx="5" cy="35" r="0.8"/>
+    <circle cx="95" cy="35" r="0.8"/>
+    <circle cx="5" cy="65" r="0.8"/>
+    <circle cx="95" cy="65" r="0.8"/>
+    <circle cx="35" cy="95" r="0.8"/>
+    <circle cx="65" cy="95" r="0.8"/>
+  </g>
+  <g fill="#94a3b8" opacity="0.3">
+    <circle cx="25" cy="10" r="0.6"/>
+    <circle cx="75" cy="10" r="0.6"/>
+    <circle cx="10" cy="25" r="0.6"/>
+    <circle cx="90" cy="25" r="0.6"/>
+    <circle cx="10" cy="75" r="0.6"/>
+    <circle cx="90" cy="75" r="0.6"/>
+    <circle cx="25" cy="90" r="0.6"/>
+    <circle cx="75" cy="90" r="0.6"/>
   </g>
 </svg>

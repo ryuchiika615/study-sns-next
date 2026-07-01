@@ -1,18 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" overflow="visible">
   <!-- Sparkle at top -->
-  <path d="M50 5 L52 15 L62 17 L52 19 L50 29 L48 19 L38 17 L48 15 Z" fill="#60a5fa"/>
-  <circle cx="50" cy="17" r="3" fill="#3b82f6" opacity="0.5"/>
+  <path d="M50 4 L52 14 L62 16 L52 18 L50 28 L48 18 L38 16 L48 14 Z" fill="#60a5fa"/>
+  <path d="M50 8 L51 14 L57 15 L51 16 L50 22 L49 16 L43 15 L49 14 Z" fill="#3b82f6" opacity="0.7"/>
   <!-- Open book at bottom -->
-  <path d="M20 78 L20 92 Q20 95 23 95 L50 90 L77 95 Q80 95 80 92 L80 78 Z" fill="#1d4ed8"/>
-  <path d="M20 78 L20 92 Q20 95 23 95 L50 90 L50 76 Z" fill="#1d4ed8" opacity="0.8"/>
-  <path d="M80 78 L80 92 Q80 95 77 95 L50 90 L50 76 Z" fill="#3b82f6" opacity="0.8"/>
+  <path d="M18 76 L18 90 Q18 94 22 94 L50 88 L78 94 Q82 94 82 90 L82 76 Z" fill="#1d4ed8"/>
+  <path d="M18 76 L18 90 Q18 94 22 94 L50 88 L50 74 Z" fill="#1d4ed8" opacity="0.85"/>
+  <path d="M82 76 L82 90 Q82 94 78 94 L50 88 L50 74 Z" fill="#3b82f6" opacity="0.85"/>
   <!-- Book spine -->
-  <line x1="50" y1="76" x2="50" y2="90" stroke="#60a5fa" stroke-width="1.5"/>
-  <!-- Pages -->
-  <path d="M22 80 L50 76 L78 80" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.6"/>
-  <!-- Decorative page lines -->
-  <line x1="28" y1="83" x2="47" y2="80" stroke="#60a5fa" stroke-width="0.8" opacity="0.5"/>
-  <line x1="53" y1="80" x2="72" y2="83" stroke="#60a5fa" stroke-width="0.8" opacity="0.5"/>
-  <line x1="27" y1="86" x2="47" y2="83" stroke="#60a5fa" stroke-width="0.8" opacity="0.4"/>
-  <line x1="53" y1="83" x2="73" y2="86" stroke="#60a5fa" stroke-width="0.8" opacity="0.4"/>
+  <line x1="50" y1="74" x2="50" y2="88" stroke="#60a5fa" stroke-width="1.5"/>
+  <!-- Page lines left -->
+  <line x1="24" y1="80" x2="47" y2="77" stroke="#60a5fa" stroke-width="0.8" opacity="0.5"/>
+  <line x1="23" y1="83" x2="47" y2="80" stroke="#60a5fa" stroke-width="0.8" opacity="0.4"/>
+  <line x1="22" y1="86" x2="47" y2="83" stroke="#60a5fa" stroke-width="0.8" opacity="0.3"/>
+  <!-- Page lines right -->
+  <line x1="53" y1="77" x2="76" y2="80" stroke="#60a5fa" stroke-width="0.8" opacity="0.5"/>
+  <line x1="53" y1="80" x2="77" y2="83" stroke="#60a5fa" stroke-width="0.8" opacity="0.4"/>
+  <line x1="53" y1="83" x2="78" y2="86" stroke="#60a5fa" stroke-width="0.8" opacity="0.3"/>
+  <!-- Small sparkle accents -->
+  <circle cx="30" cy="10" r="1.2" fill="#60a5fa" opacity="0.5"/>
+  <circle cx="70" cy="10" r="1.2" fill="#60a5fa" opacity="0.5"/>
 </svg>
