@@ -155,9 +155,7 @@ html.dark input[type="file"] {
 .avatar-frame[data-icon]::after {
   content: '';
   position: absolute;
-  inset: -50%;
-  width: 200%;
-  height: 200%;
+  inset: -25%;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
