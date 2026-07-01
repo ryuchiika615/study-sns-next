@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <linearGradient id="wingL" x1="1" y1="0.5" x2="0" y2="0.5">
+      <stop offset="0%" stop-color="rgba(148,163,184,0)" />
+      <stop offset="30%" stop-color="rgba(203,213,225,0.2)" />
+      <stop offset="70%" stop-color="rgba(148,163,184,0.3)" />
+      <stop offset="100%" stop-color="rgba(203,213,225,0.1)" />
+    </linearGradient>
+    <linearGradient id="wingR" x1="0" y1="0.5" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="rgba(148,163,184,0)" />
+      <stop offset="30%" stop-color="rgba(203,213,225,0.2)" />
+      <stop offset="70%" stop-color="rgba(148,163,184,0.3)" />
+      <stop offset="100%" stop-color="rgba(203,213,225,0.1)" />
+    </linearGradient>
+  </defs>
+  <g fill="rgba(148,163,184,0.3)" stroke="rgba(203,213,225,0.2)" stroke-width="0.3">
+    <path d="M25 20 C20 15 12 18 10 25 C8 32 14 38 18 40 C12 38 6 42 5 50 C4 58 10 62 16 60 C12 64 10 70 14 76 C18 82 24 80 25 75 C24 70 22 65 22 60 C22 55 24 50 25 45 Z" fill="url(#wingL)"/>
+    <path d="M25 22 C22 18 16 20 14 26 C12 32 16 36 19 38 C14 37 10 40 9 47 C8 54 12 57 16 55 C14 58 12 64 15 70 C18 76 22 74 23 70 C22 66 20 62 20 58 C20 53 22 49 23 45 Z" fill="rgba(203,213,225,0.15)" opacity="0.6"/>
+  </g>
+  <g fill="rgba(148,163,184,0.3)" stroke="rgba(203,213,225,0.2)" stroke-width="0.3">
+    <path d="M75 20 C80 15 88 18 90 25 C92 32 86 38 82 40 C88 38 94 42 95 50 C96 58 90 62 84 60 C88 64 90 70 86 76 C82 82 76 80 75 75 C76 70 78 65 78 60 C78 55 76 50 75 45 Z" fill="url(#wingR)"/>
+    <path d="M75 22 C78 18 84 20 86 26 C88 32 84 36 81 38 C86 37 90 40 91 47 C92 54 88 57 84 55 C86 58 88 64 85 70 C82 76 78 74 77 70 C78 66 80 62 80 58 C80 53 78 49 77 45 Z" fill="rgba(203,213,225,0.15)" opacity="0.6"/>
+  </g>
+  <g fill="none" stroke="rgba(148,163,184,0.25)" stroke-width="0.4">
+    <path d="M25 35 C18 30 8 34 6 42"/>
+    <path d="M25 45 C16 42 6 48 5 56"/>
+    <path d="M25 55 C18 54 8 60 8 68"/>
+    <path d="M25 65 C20 66 14 72 16 78"/>
+    <path d="M75 35 C82 30 92 34 94 42"/>
+    <path d="M75 45 C84 42 94 48 95 56"/>
+    <path d="M75 55 C82 54 92 60 92 68"/>
+    <path d="M75 65 C80 66 86 72 84 78"/>
+  </g>
+  <g fill="none" stroke="rgba(203,213,225,0.15)" stroke-width="0.3">
+    <path d="M25 30 C20 26 10 28 8 36"/>
+    <path d="M25 40 C16 36 4 40 3 50"/>
+    <path d="M25 50 C16 48 4 54 4 62"/>
+    <path d="M25 60 C18 60 10 66 12 74"/>
+    <path d="M75 30 C80 26 90 28 92 36"/>
+    <path d="M75 40 C84 36 96 40 97 50"/>
+    <path d="M75 50 C84 48 96 54 96 62"/>
+    <path d="M75 60 C82 60 90 66 88 74"/>
+  </g>
+  <g fill="rgba(203,213,225,0.08)" stroke="rgba(148,163,184,0.1)" stroke-width="0.2">
+    <path d="M25 28 C22 24 14 24 12 30 L16 34 C18 30 22 28 25 28 Z"/>
+    <path d="M25 68 C22 72 14 74 14 68 L18 64 C20 68 22 70 25 68 Z"/>
+    <path d="M75 28 C78 24 86 24 88 30 L84 34 C82 30 78 28 75 28 Z"/>
+    <path d="M75 68 C78 72 86 74 86 68 L82 64 C80 68 78 70 75 68 Z"/>
+  </g>
+</svg>

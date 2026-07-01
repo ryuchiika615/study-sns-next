@@ -137,10 +137,10 @@ html.dark input[type="file"] {
   @apply relative flex items-center justify-center w-12 h-12 min-w-[48px] rounded-full flex-shrink-0;
   z-index: 0;
 }
-.avatar-frame[data-icon] > img,
-.avatar-frame[data-icon] > svg {
-  width: calc(100% - 6px);
-  height: calc(100% - 6px);
+.avatar-frame > img,
+.avatar-frame > svg {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
 }
 .avatar-frame.N   { box-shadow: 0 0 0 2px #6b7280; }
@@ -151,530 +151,48 @@ html.dark input[type="file"] {
 .avatar-frame.LR  { box-shadow: 0 0 0 4px #f43f5e, 0 0 16px 9px rgba(244,63,94,0.5), 0 0 32px 16px rgba(253,224,71,0.2); animation: avatarPulse 1.8s ease-in-out infinite alternate; }
 .avatar-frame.XR  { box-shadow: 0 0 0 4px #c084fc, 0 0 16px 9px rgba(192,132,252,0.5), 0 0 32px 16px rgba(251,191,36,0.2), 0 0 48px 24px rgba(244,63,94,0.1); animation: xrFramePulse 2s ease-in-out infinite alternate; }
 
-/* ===== アイコン個別フレーム（装飾的デザイン）===== */
-.avatar-frame[data-icon]::before,
+/* ===== SVGフレームオーバーレイ（data-icon）===== */
 .avatar-frame[data-icon]::after {
-  position: absolute; pointer-events: none;
+  content: '';
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: 2;
 }
 
-/* --- N: 努力の羽根（左右に小さな羽）--- */
-.avatar-frame[data-icon="努力の羽根"] {
-  background: radial-gradient(circle, #f9fafb 60%, transparent 61%),
-              conic-gradient(from 0deg, #d1d5db, #9ca3af, #d1d5db);
-  padding: 3px;
-}
-.avatar-frame[data-icon="努力の羽根"]::before {
-  content: ''; left: -7px; top: 50%; margin-top: -10px;
-  width: 12px; height: 20px;
-  background: linear-gradient(135deg, transparent 30%, #9ca3af 30%, #9ca3af 35%, transparent 35%),
-              linear-gradient(225deg, transparent 30%, #9ca3af 30%, #9ca3af 35%, transparent 35%);
-  clip-path: polygon(100% 0%, 100% 100%, 0% 50%);
-}
-.avatar-frame[data-icon="努力の羽根"]::after {
-  content: ''; right: -7px; top: 50%; margin-top: -10px;
-  width: 12px; height: 20px;
-  background: linear-gradient(315deg, transparent 30%, #9ca3af 30%, #9ca3af 35%, transparent 35%),
-              linear-gradient(45deg, transparent 30%, #9ca3af 30%, #9ca3af 35%, transparent 35%);
-  clip-path: polygon(0% 0%, 0% 100%, 100% 50%);
-}
+.avatar-frame[data-icon="努力の羽根"]::after { background-image: url('/frames/effort-wings.svg'); }
+.avatar-frame[data-icon="ノートの星"]::after { background-image: url('/frames/notebook-star.svg'); }
+.avatar-frame[data-icon="集中リング"]::after { background-image: url('/frames/focus-ring.svg'); }
+.avatar-frame[data-icon="夜更けの翼"]::after { background-image: url('/frames/night-wings.svg'); }
+.avatar-frame[data-icon="青い魔導書"]::after { background-image: url('/frames/blue-grimoire.svg'); }
+.avatar-frame[data-icon="覚醒バッジ"]::after { background-image: url('/frames/awakening-badge.svg'); }
+.avatar-frame[data-icon="黒鉄の王冠"]::after { background-image: url('/frames/iron-crown.svg'); }
+.avatar-frame[data-icon="星屑のオーラ"]::after { background-image: url('/frames/stardust-aura.svg'); }
+.avatar-frame[data-icon="透明な守護印"]::after { background-image: url('/frames/crystal-seal.svg'); }
+.avatar-frame[data-icon="黄金の集中冠"]::after { background-image: url('/frames/golden-crown.svg'); }
+.avatar-frame[data-icon="黒炎の紋章"]::after { background-image: url('/frames/black-flame.svg'); }
+.avatar-frame[data-icon="疾走する魔導書"]::after { background-image: url('/frames/racing-grimoire.svg'); }
+.avatar-frame[data-icon="天空の観測輪"]::after { background-image: url('/frames/sky-observatory.svg'); }
+.avatar-frame[data-icon="終焉のオーラ"]::after { background-image: url('/frames/apocalypse-aura.svg'); }
+.avatar-frame[data-icon="不可視の翼"]::after { background-image: url('/frames/ethereal-wings.svg'); }
+.avatar-frame[data-icon="星海を裂く王冠"]::after { background-image: url('/frames/stellar-crown.svg'); }
+.avatar-frame[data-icon="黒炎の神印"]::after { background-image: url('/frames/divine-seal.svg'); }
+.avatar-frame[data-icon="答案破壊の光輪"]::after { background-image: url('/frames/destroyer-halo.svg'); }
 
-/* --- N: ノートの星（上下に星）--- */
-.avatar-frame[data-icon="ノートの星"] {
-  background: radial-gradient(circle, #f9fafb 62%, transparent 63%),
-              linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
-  padding: 3px;
-}
-.avatar-frame[data-icon="ノートの星"]::before {
-  content: '★'; top: -10px; left: 50%; margin-left: -7px;
-  font-size: 14px; color: #6b7280;
-  filter: drop-shadow(0 0 3px rgba(107,114,128,0.5));
-  animation: twinkle 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="ノートの星"]::after {
-  content: '★'; bottom: -10px; left: 50%; margin-left: -5px;
-  font-size: 10px; color: #9ca3af;
-  animation: twinkle 2s ease-in-out infinite alternate-reverse;
-}
-
-/* --- N: 集中リング（精密な照準リング）--- */
-.avatar-frame[data-icon="集中リング"] {
-  background: radial-gradient(circle, #f9fafb 58%, transparent 59%),
-              conic-gradient(from 0deg, #9ca3af, #6b7280, #9ca3af, #6b7280, #9ca3af);
-  padding: 3px;
-}
-.avatar-frame[data-icon="集中リング"]::before {
-  content: ''; top: 50%; left: -4px; right: -4px; height: 1px;
-  margin-top: 0px; background: #6b7280;
-}
-.avatar-frame[data-icon="集中リング"]::after {
-  content: ''; left: 50%; top: -4px; bottom: -4px; width: 1px;
-  margin-left: 0px; background: #6b7280;
-}
-
-/* --- R: 夜更けの翼（大きな蝙蝠の翼）--- */
-.avatar-frame[data-icon="夜更けの翼"] {
-  background: radial-gradient(circle, #1e1b4b 60%, transparent 61%),
-              conic-gradient(from 0deg, #4338ca, #6366f1, #4338ca, #312e81, #4338ca);
-  padding: 3px;
-  box-shadow: 0 0 0 2px #4338ca, 0 0 12px 6px rgba(99,102,241,0.3);
-}
-.avatar-frame[data-icon="夜更けの翼"]::before {
-  content: ''; left: -12px; top: 50%; margin-top: -14px;
-  width: 16px; height: 28px;
-  background: linear-gradient(180deg, #312e81, #4338ca, #312e81);
-  clip-path: polygon(100% 0%, 100% 100%, 30% 80%, 0% 50%, 30% 20%);
-}
-.avatar-frame[data-icon="夜更けの翼"]::after {
-  content: ''; right: -12px; top: 50%; margin-top: -14px;
-  width: 16px; height: 28px;
-  background: linear-gradient(180deg, #312e81, #4338ca, #312e81);
-  clip-path: polygon(0% 0%, 0% 100%, 70% 80%, 100% 50%, 70% 20%);
-}
-
-/* --- R: 青い魔導書（本の形）--- */
-.avatar-frame[data-icon="青い魔導書"] {
-  background: radial-gradient(circle, #dbeafe 60%, transparent 61%),
-              conic-gradient(from 0deg, #1d4ed8, #3b82f6, #60a5fa, #3b82f6, #1d4ed8);
-  padding: 3px;
-  box-shadow: 0 0 0 2px #1d4ed8, 0 0 10px 5px rgba(59,130,246,0.3);
-}
-.avatar-frame[data-icon="青い魔導書"]::before {
-  content: ''; bottom: -8px; left: 50%; margin-left: -12px;
-  width: 24px; height: 10px;
-  background: linear-gradient(90deg, #1e3a5f, #1d4ed8, #2563eb, #1d4ed8, #1e3a5f);
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-.avatar-frame[data-icon="青い魔導書"]::after {
-  content: '✦'; top: -8px; left: 50%; margin-left: -5px;
-  font-size: 10px; color: #60a5fa;
-  filter: drop-shadow(0 0 4px #3b82f6);
-  animation: twinkle 2s ease-in-out infinite alternate;
-}
-
-/* --- R: 覚醒バッジ（盾の形）--- */
-.avatar-frame[data-icon="覚醒バッジ"] {
-  background: radial-gradient(circle, #eff6ff 55%, transparent 56%),
-              conic-gradient(from 0deg, #1e40af, #3b82f6, #60a5fa, #3b82f6, #1e40af);
-  padding: 3px;
-  box-shadow: 0 0 0 2px #1e40af, 0 0 10px 5px rgba(59,130,246,0.25);
-}
-.avatar-frame[data-icon="覚醒バッジ"]::before {
-  content: '◆'; top: 50%; left: 50%; margin: -8px 0 0 -8px;
-  font-size: 16px; color: #60a5fa;
-  filter: drop-shadow(0 0 6px rgba(96,165,250,0.6));
-  animation: sparkle 2s ease-in-out infinite alternate;
-}
-
-/* --- SR: 黒鉄の王冠（鉄の冠）--- */
-.avatar-frame[data-icon="黒鉄の王冠"] {
-  background: radial-gradient(circle, #374151 55%, transparent 56%),
-              conic-gradient(from 0deg, #1f2937, #4b5563, #6b7280, #4b5563, #1f2937);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #374151, 0 0 12px 6px rgba(75,85,99,0.4),
-              inset 0 0 8px rgba(0,0,0,0.3);
-}
-.avatar-frame[data-icon="黒鉄の王冠"]::before {
-  content: ''; top: -10px; left: 50%; margin-left: -14px;
-  width: 28px; height: 14px;
-  background: linear-gradient(180deg, #374151, #6b7280, #374151);
-  clip-path: polygon(0% 100%, 15% 0%, 30% 60%, 50% 0%, 70% 60%, 85% 0%, 100% 100%);
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
-}
-.avatar-frame[data-icon="黒鉄の王冠"]::after {
-  content: '◆'; top: -6px; left: 50%; margin-left: -4px;
-  font-size: 8px; color: #9ca3af;
-}
-
-/* --- SR: 星屑のオーラ（星の粒子）--- */
-.avatar-frame[data-icon="星屑のオーラ"] {
-  background: radial-gradient(circle, #2e1065 55%, transparent 56%),
-              conic-gradient(from 0deg, #6d28d9, #8b5cf6, #a78bfa, #8b5cf6, #6d28d9);
-  padding: 3px;
-  box-shadow: 0 0 0 2px #7c3aed, 0 0 14px 7px rgba(139,92,246,0.3),
-              0 0 28px 14px rgba(139,92,246,0.1);
-}
-.avatar-frame[data-icon="星屑のオーラ"]::before {
-  content: ''; top: -6px; left: -6px; right: -6px; bottom: -6px;
-  border-radius: 9999px;
-  background:
-    radial-gradient(2px 2px at 15% 25%, #c4b5fd, transparent),
-    radial-gradient(2px 2px at 85% 15%, #ddd6fe, transparent),
-    radial-gradient(2px 2px at 25% 85%, #c4b5fd, transparent),
-    radial-gradient(3px 3px at 75% 75%, #a78bfa, transparent),
-    radial-gradient(2px 2px at 50% 10%, #e9d5ff, transparent),
-    radial-gradient(2px 2px at 10% 60%, #c4b5fd, transparent);
-  animation: twinkle 3s ease-in-out infinite alternate;
-}
-
-/* --- SR: 透明な守護印（幾何学模様）--- */
-.avatar-frame[data-icon="透明な守護印"] {
-  background: radial-gradient(circle, rgba(167,139,250,0.1) 55%, transparent 56%),
-              conic-gradient(from 0deg, rgba(167,139,250,0.3), rgba(139,92,246,0.5), rgba(167,139,250,0.3));
-  padding: 3px;
-  box-shadow: 0 0 0 2px rgba(167,139,250,0.4), 0 0 10px 5px rgba(167,139,250,0.2);
-}
-.avatar-frame[data-icon="透明な守護印"]::before {
-  content: '◇'; top: 50%; left: 50%; margin: -8px 0 0 -8px;
-  font-size: 16px; color: rgba(167,139,250,0.3);
-  animation: sparkle 3s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="透明な守護印"]::after {
-  content: '◇'; top: -5px; right: -5px; font-size: 8px; color: rgba(167,139,250,0.25);
-}
-
-/* --- SSR: 黄金の集中冠（黄金の王冠）--- */
-.avatar-frame[data-icon="黄金の集中冠"] {
-  background: radial-gradient(circle, #451a03 55%, transparent 56%),
-              conic-gradient(from 0deg, #92400e, #d97706, #fbbf24, #f59e0b, #d97706, #92400e);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #d97706, 0 0 16px 8px rgba(251,191,36,0.4),
-              0 0 32px 16px rgba(251,191,36,0.15);
-}
-.avatar-frame[data-icon="黄金の集中冠"]::before {
-  content: ''; top: -12px; left: 50%; margin-left: -16px;
-  width: 32px; height: 16px;
-  background: linear-gradient(180deg, #fbbf24, #f59e0b, #d97706, #92400e);
-  clip-path: polygon(0% 100%, 10% 0%, 25% 55%, 40% 0%, 50% 40%, 60% 0%, 75% 55%, 90% 0%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(251,191,36,0.5));
-  animation: crownBounce 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="黄金の集中冠"]::after {
-  content: '◆'; top: -5px; left: 50%; margin-left: -4px;
-  font-size: 8px; color: #fbbf24;
-  filter: drop-shadow(0 0 4px #f59e0b);
-}
-
-/* --- SSR: 黒炎の紋章（炎の紋章）--- */
-.avatar-frame[data-icon="黒炎の紋章"] {
-  background: radial-gradient(circle, #1c1917 55%, transparent 56%),
-              conic-gradient(from 0deg, #450a0a, #991b1b, #dc2626, #b91c1c, #7f1d1d, #450a0a);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #991b1b, 0 0 14px 7px rgba(220,38,38,0.4),
-              0 0 28px 14px rgba(239,68,68,0.15);
-}
-.avatar-frame[data-icon="黒炎の紋章"]::before {
-  content: ''; bottom: -10px; left: 50%; margin-left: -14px;
-  width: 28px; height: 14px;
-  background: linear-gradient(0deg, transparent, #dc2626, #fbbf24, #dc2626, transparent);
-  clip-path: polygon(50% 0%, 0% 100%, 20% 80%, 40% 100%, 60% 80%, 80% 100%, 100% 100%);
-  animation: flameFlicker 0.5s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="黒炎の紋章"]::after {
-  content: '◆'; top: 50%; left: 50%; margin: -5px 0 0 -5px;
-  font-size: 10px; color: #dc2626;
-  filter: drop-shadow(0 0 6px #ef4444);
-}
-
-/* --- SSR: 疾走する魔導書（高速回転する本）--- */
-.avatar-frame[data-icon="疾走する魔導書"] {
-  background: radial-gradient(circle, #1e3a5f 55%, transparent 56%),
-              conic-gradient(from 0deg, #1e40af, #3b82f6, #60a5fa, #93c5fd, #60a5fa, #3b82f6, #1e40af);
-  padding: 3px;
-  box-shadow: 0 0 0 2px #2563eb, 0 0 12px 6px rgba(59,130,246,0.35),
-              0 0 24px 12px rgba(59,130,246,0.1);
-}
-.avatar-frame[data-icon="疾走する魔導書"]::before {
-  content: ''; top: -10px; left: 50%; margin-left: -12px;
-  width: 24px; height: 12px;
-  background: linear-gradient(90deg, transparent, #dbeafe, #bfdbfe, #dbeafe, transparent);
-  border-radius: 2px;
-  animation: dodge 1.5s ease-in-out infinite;
-}
-.avatar-frame[data-icon="疾走する魔導書"]::after {
-  content: ''; bottom: -8px; left: 50%; margin-left: -10px;
-  width: 20px; height: 8px;
-  background: linear-gradient(90deg, transparent, #93c5fd, transparent);
-  border-radius: 2px;
-}
-
-/* --- UR: 天空の観測輪（天文台の輪）--- */
-.avatar-frame[data-icon="天空の観測輪"] {
-  background: radial-gradient(circle, #0c4a6e 55%, transparent 56%),
-              conic-gradient(from 0deg, #0369a1, #0ea5e9, #38bdf8, #7dd3fc, #38bdf8, #0ea5e9, #0369a1);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #0ea5e9, 0 0 16px 8px rgba(56,189,248,0.4),
-              0 0 32px 16px rgba(56,189,248,0.15);
-}
-.avatar-frame[data-icon="天空の観測輪"]::before {
-  content: ''; top: -10px; left: -10px; right: -10px; bottom: -10px;
-  border-radius: 9999px;
-  border: 2px solid rgba(56,189,248,0.3);
-  animation: spinCw 8s linear infinite;
-}
-.avatar-frame[data-icon="天空の観測輪"]::after {
-  content: '✦'; top: -12px; left: 50%; margin-left: -6px;
-  font-size: 12px; color: #38bdf8;
-  filter: drop-shadow(0 0 6px #0ea5e9);
-  animation: sparkle 1.5s ease-in-out infinite alternate;
-}
-
-/* --- UR: 終焉のオーラ（終末のオーラ）--- */
-.avatar-frame[data-icon="終焉のオーラ"] {
-  background: radial-gradient(circle, #1c0a0a 55%, transparent 56%),
-              conic-gradient(from 0deg, #450a0a, #7f1d1d, #991b1b, #b91c1c, #7f1d1d, #450a0a);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #991b1b, 0 0 16px 8px rgba(185,28,28,0.45),
-              0 0 32px 16px rgba(185,28,28,0.15);
-}
-.avatar-frame[data-icon="終焉のオーラ"]::before {
-  content: ''; top: -8px; left: -8px; right: -8px; bottom: -8px;
-  border-radius: 9999px;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(239,68,68,0.3) 0%, transparent 15%),
-    radial-gradient(circle at 80% 20%, rgba(220,38,38,0.25) 0%, transparent 12%),
-    radial-gradient(circle at 30% 70%, rgba(239,68,68,0.2) 0%, transparent 18%),
-    radial-gradient(circle at 70% 80%, rgba(220,38,38,0.3) 0%, transparent 10%);
-  animation: flameFlicker 0.3s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="終焉のオーラ"]::after {
-  content: '◆'; top: -8px; left: 50%; margin-left: -5px;
-  font-size: 10px; color: #991b1b;
-  filter: drop-shadow(0 0 6px #dc2626);
-  animation: twinkle 1.5s ease-in-out infinite alternate;
-}
-
-/* --- UR: 不可視の翼（透き通った翼）--- */
-.avatar-frame[data-icon="不可視の翼"] {
-  background: radial-gradient(circle, rgba(226,232,240,0.1) 55%, transparent 56%),
-              conic-gradient(from 0deg, rgba(148,163,184,0.2), rgba(203,213,225,0.4), rgba(148,163,184,0.2));
-  padding: 3px;
-  box-shadow: 0 0 0 2px rgba(148,163,184,0.3), 0 0 10px 5px rgba(148,163,184,0.15);
-}
-.avatar-frame[data-icon="不可視の翼"]::before {
-  content: ''; left: -14px; top: 50%; margin-top: -16px;
-  width: 18px; height: 32px;
-  background: linear-gradient(180deg, rgba(203,213,225,0.1), rgba(148,163,184,0.3), rgba(203,213,225,0.1));
-  clip-path: polygon(100% 0%, 100% 100%, 20% 75%, 0% 50%, 20% 25%);
-  animation: shimmer 3s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="不可視の翼"]::after {
-  content: ''; right: -14px; top: 50%; margin-top: -16px;
-  width: 18px; height: 32px;
-  background: linear-gradient(180deg, rgba(203,213,225,0.1), rgba(148,163,184,0.3), rgba(203,213,225,0.1));
-  clip-path: polygon(0% 0%, 0% 100%, 80% 75%, 100% 50%, 80% 25%);
-  animation: shimmer 3s ease-in-out infinite alternate-reverse;
-}
-
-/* --- LR: 星海を裂く王冠（宇宙の王冠）--- */
-.avatar-frame[data-icon="星海を裂く王冠"] {
-  background: radial-gradient(circle, #1a0533 55%, transparent 56%),
-              conic-gradient(from 0deg, #4c1d95, #7c3aed, #a78bfa, #c4b5fd, #a78bfa, #7c3aed, #4c1d95);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #7c3aed, 0 0 16px 8px rgba(139,92,246,0.45),
-              0 0 32px 16px rgba(251,191,36,0.15);
-}
-.avatar-frame[data-icon="星海を裂く王冠"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #c4b5fd, #a78bfa, #7c3aed, #4c1d95);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(139,92,246,0.5));
-  animation: crownBounce 1.8s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="星海を裂く王冠"]::after {
-  content: ''; top: -8px; left: 50%; margin-left: -8px;
-  width: 16px; height: 16px;
-  background: radial-gradient(circle, #fbbf24 30%, #f59e0b 50%, transparent 70%);
-  border-radius: 50%;
-  filter: drop-shadow(0 0 6px #fbbf24);
-  animation: twinkle 1.5s ease-in-out infinite alternate;
-}
-
-/* --- LR: 黒炎の神印（神の印章）--- */
-.avatar-frame[data-icon="黒炎の神印"] {
-  background: radial-gradient(circle, #1c0a0a 55%, transparent 56%),
-              conic-gradient(from 0deg, #450a0a, #991b1b, #dc2626, #fbbf24, #dc2626, #991b1b, #450a0a);
-  padding: 3px;
-  box-shadow: 0 0 0 3px #dc2626, 0 0 16px 8px rgba(220,38,38,0.45),
-              0 0 32px 16px rgba(251,191,36,0.15);
-}
-.avatar-frame[data-icon="黒炎の神印"]::before {
-  content: ''; top: -12px; left: -12px; right: -12px; bottom: -12px;
-  border-radius: 9999px;
-  border: 2px dashed rgba(251,191,36,0.3);
-  animation: spinCcw 4s linear infinite;
-}
-.avatar-frame[data-icon="黒炎の神印"]::after {
-  content: '◈'; top: 50%; left: 50%; margin: -8px 0 0 -8px;
-  font-size: 16px; color: #dc2626;
-  filter: drop-shadow(0 0 8px #ef4444) drop-shadow(0 0 16px #fbbf24);
-  animation: sparkle 2s ease-in-out infinite alternate;
-}
-
-/* --- LR: 答案破壊の光輪（破壊の光輪）--- */
-.avatar-frame[data-icon="答案破壊の光輪"] {
-  background: radial-gradient(circle, #1c1917 55%, transparent 56%),
-              conic-gradient(from 0deg, #fbbf24, #f59e0b, #dc2626, #f43f5e, #dc2626, #f59e0b, #fbbf24);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #f43f5e, 0 0 16px 9px rgba(244,63,94,0.5),
-              0 0 32px 16px rgba(251,191,36,0.2);
-  animation: avatarPulse 1.8s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="答案破壊の光輪"]::before {
-  content: ''; top: -12px; left: -12px; right: -12px; bottom: -12px;
-  border-radius: 9999px;
-  border: 2px solid rgba(251,191,36,0.3);
-  animation: spinCw 3s linear infinite;
-}
-.avatar-frame[data-icon="答案破壊の光輪"]::after {
-  content: ''; top: -16px; left: -16px; right: -16px; bottom: -16px;
-  border-radius: 9999px;
-  background: radial-gradient(circle, transparent 40%, rgba(251,191,36,0.06) 42%, transparent 48%);
-  animation: spinCcw 5s linear infinite;
-}
-
-/* --- XR: 月間王者（雨雫＋王冠）--- */
-.avatar-frame[data-icon="雨雫オーラ"] {
-  background: radial-gradient(circle, #0c1445 55%, transparent 56%),
-              conic-gradient(from 0deg, #4338ca, #6366f1, #818cf8, #a5b4fc, #818cf8, #6366f1, #4338ca);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #6366f1, 0 0 16px 8px rgba(99,102,241,0.45),
-              0 0 32px 16px rgba(147,197,253,0.2), 0 0 48px 24px rgba(251,191,36,0.1);
-  animation: xrFramePulse 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="雨雫オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #fbbf24, #f59e0b, #d97706, #92400e);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(251,191,36,0.5));
-  animation: crownBounce 1.8s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon="雨雫オーラ"]::after {
-  content: '💧'; bottom: -10px; right: -6px; font-size: 10px;
-  animation: raindrop 1.5s ease-in-out infinite;
-}
-
-/* --- XR: 季節オーラ（各季節のモチーフ）--- */
-.avatar-frame[data-icon^="向日葵オーラ"] {
-  background: radial-gradient(circle, #422006 55%, transparent 56%),
-              conic-gradient(from 0deg, #92400e, #d97706, #fbbf24, #f59e0b, #d97706, #92400e);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #d97706, 0 0 16px 8px rgba(251,191,36,0.4),
-              0 0 32px 16px rgba(245,158,11,0.15);
-}
-.avatar-frame[data-icon^="向日葵オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #fbbf24, #f59e0b, #d97706, #92400e);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(251,191,36,0.5));
-}
-.avatar-frame[data-icon^="向日葵オーラ"]::after {
-  content: '🌻'; bottom: -10px; left: 50%; margin-left: -7px; font-size: 12px;
-  animation: crownBounce 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon^="紅葉オーラ"] {
-  background: radial-gradient(circle, #450a0a 55%, transparent 56%),
-              conic-gradient(from 0deg, #7f1d1d, #b91c1c, #dc2626, #ef4444, #dc2626, #b91c1c, #7f1d1d);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #b91c1c, 0 0 16px 8px rgba(220,38,38,0.4),
-              0 0 32px 16px rgba(239,68,68,0.15);
-}
-.avatar-frame[data-icon^="紅葉オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #ef4444, #dc2626, #b91c1c, #7f1d1d);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(220,38,38,0.5));
-}
-.avatar-frame[data-icon^="紅葉オーラ"]::after {
-  content: '🍁'; bottom: -10px; left: 50%; margin-left: -7px; font-size: 12px;
-  animation: spinCw 4s linear infinite;
-}
-.avatar-frame[data-icon^="雪華オーラ"] {
-  background: radial-gradient(circle, #0c1445 55%, transparent 56%),
-              conic-gradient(from 0deg, #1e3a5f, #3b82f6, #60a5fa, #93c5fd, #60a5fa, #3b82f6, #1e3a5f);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #3b82f6, 0 0 16px 8px rgba(59,130,246,0.4),
-              0 0 32px 16px rgba(147,197,253,0.2);
-}
-.avatar-frame[data-icon^="雪華オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #93c5fd, #60a5fa, #3b82f6, #1e40af);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(59,130,246,0.5));
-}
-.avatar-frame[data-icon^="雪華オーラ"]::after {
-  content: '❄'; bottom: -10px; left: 50%; margin-left: -6px; font-size: 12px; color: #bfdbfe;
-  filter: drop-shadow(0 0 4px #93c5fd);
-  animation: sparkle 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon^="氷晶オーラ"] {
-  background: radial-gradient(circle, #0c1445 55%, transparent 56%),
-              conic-gradient(from 0deg, #0369a1, #0ea5e9, #7dd3fc, #bae6fd, #7dd3fc, #0ea5e9, #0369a1);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #0ea5e9, 0 0 16px 8px rgba(14,165,233,0.4),
-              0 0 32px 16px rgba(125,211,252,0.2);
-}
-.avatar-frame[data-icon^="氷晶オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #bae6fd, #7dd3fc, #0ea5e9, #0369a1);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(14,165,233,0.5));
-}
-.avatar-frame[data-icon^="氷晶オーラ"]::after {
-  content: '❄'; bottom: -10px; left: 50%; margin-left: -6px; font-size: 12px; color: #7dd3fc;
-  filter: drop-shadow(0 0 4px #0ea5e9);
-  animation: twinkle 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon^="桜花オーラ"] {
-  background: radial-gradient(circle, #500724 55%, transparent 56%),
-              conic-gradient(from 0deg, #9d174d, #db2777, #ec4899, #f472b6, #ec4899, #db2777, #9d174d);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #db2777, 0 0 16px 8px rgba(219,39,119,0.4),
-              0 0 32px 16px rgba(244,114,182,0.2);
-}
-.avatar-frame[data-icon^="桜花オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #f472b6, #ec4899, #db2777, #9d174d);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(219,39,119,0.5));
-}
-.avatar-frame[data-icon^="桜花オーラ"]::after {
-  content: '🌸'; bottom: -10px; right: -6px; font-size: 12px;
-  animation: crownBounce 2.5s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon^="若葉オーラ"] {
-  background: radial-gradient(circle, #052e16 55%, transparent 56%),
-              conic-gradient(from 0deg, #166534, #22c55e, #4ade80, #86efac, #4ade80, #22c55e, #166534);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #22c55e, 0 0 16px 8px rgba(34,197,94,0.4),
-              0 0 32px 16px rgba(74,222,128,0.2);
-}
-.avatar-frame[data-icon^="若葉オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #86efac, #4ade80, #22c55e, #166534);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(34,197,94,0.5));
-}
-.avatar-frame[data-icon^="若葉オーラ"]::after {
-  content: '🌱'; bottom: -10px; left: 50%; margin-left: -6px; font-size: 12px;
-  animation: sparkle 2s ease-in-out infinite alternate;
-}
-.avatar-frame[data-icon^="霜華オーラ"] {
-  background: radial-gradient(circle, #0f172a 55%, transparent 56%),
-              conic-gradient(from 0deg, #334155, #64748b, #94a3b8, #cbd5e1, #94a3b8, #64748b, #334155);
-  padding: 3px;
-  box-shadow: 0 0 0 4px #64748b, 0 0 16px 8px rgba(100,116,139,0.4),
-              0 0 32px 16px rgba(148,163,184,0.2);
-}
-.avatar-frame[data-icon^="霜華オーラ"]::before {
-  content: ''; top: -14px; left: 50%; margin-left: -18px;
-  width: 36px; height: 18px;
-  background: linear-gradient(180deg, #cbd5e1, #94a3b8, #64748b, #334155);
-  clip-path: polygon(0% 100%, 8% 20%, 20% 60%, 35% 0%, 50% 45%, 65% 0%, 80% 60%, 92% 20%, 100% 100%);
-  filter: drop-shadow(0 2px 4px rgba(100,116,139,0.5));
-}
-.avatar-frame[data-icon^="霜華オーラ"]::after {
-  content: '❄'; bottom: -10px; left: 50%; margin-left: -6px; font-size: 12px; color: #e2e8f0;
-  filter: drop-shadow(0 0 4px #94a3b8);
-}
+/* XR: 季節オーラ */
+.avatar-frame[data-icon="雨雫オーラ"]::after { background-image: url('/frames/raindrop-aura.svg'); }
+.avatar-frame[data-icon^="向日葵オーラ"]::after { background-image: url('/frames/sunflower-aura.svg'); }
+.avatar-frame[data-icon^="紅葉オーラ"]::after { background-image: url('/frames/autumn-leaves-aura.svg'); }
+.avatar-frame[data-icon^="雪華オーラ"]::after { background-image: url('/frames/snowflake-aura.svg'); }
+.avatar-frame[data-icon^="氷晶オーラ"]::after { background-image: url('/frames/ice-crystal-aura.svg'); }
+.avatar-frame[data-icon^="桜花オーラ"]::after { background-image: url('/frames/cherry-blossom-aura.svg'); }
+.avatar-frame[data-icon^="若葉オーラ"]::after { background-image: url('/frames/fresh-leaves-aura.svg'); }
+.avatar-frame[data-icon^="霜華オーラ"]::after { background-image: url('/frames/frost-aura.svg'); }
 
 /* ===== 全アイコン共通アニメーション ===== */
 @keyframes avatarPulse {

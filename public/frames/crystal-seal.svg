@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <polygon points="50,2 85,15 98,50 85,85 50,98 15,85 2,50 15,15" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="2"/>
+  <polygon points="50,6 80,17 92,50 80,83 50,94 20,83 8,50 20,17" fill="none" stroke="rgba(139,92,246,0.5)" stroke-width="1.5"/>
+  <polygon points="50,10 76,20 88,50 76,80 50,90 24,80 12,50 24,20" fill="none" stroke="rgba(167,139,250,0.2)" stroke-width="1" stroke-dasharray="3,3"/>
+  <polygon points="50,14 25,75 75,75" fill="rgba(167,139,250,0.08)" stroke="none"/>
+  <polygon points="50,86 25,25 75,25" fill="rgba(167,139,250,0.08)" stroke="none"/>
+  <line x1="15" y1="15" x2="50" y2="50" stroke="rgba(167,139,250,0.15)" stroke-width="1"/>
+  <line x1="85" y1="15" x2="50" y2="50" stroke="rgba(167,139,250,0.15)" stroke-width="1"/>
+  <line x1="15" y1="85" x2="50" y2="50" stroke="rgba(167,139,250,0.15)" stroke-width="1"/>
+  <line x1="85" y1="85" x2="50" y2="50" stroke="rgba(167,139,250,0.15)" stroke-width="1"/>
+</svg>

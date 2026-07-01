@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <radialGradient id="jewelGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="60%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </radialGradient>
+  </defs>
+  <path d="M10 35 L10 16 L24 28 L34 6 L42 22 L50 4 L58 22 L66 6 L76 28 L90 16 L90 35 Z" fill="url(#goldGrad)" stroke="#92400e" stroke-width="1.5"/>
+  <circle cx="50" cy="30" r="5" fill="url(#jewelGrad)" stroke="#92400e" stroke-width="1"/>
+  <path d="M15 40 L20 35 L80 35 L85 40 Z" fill="#fbbf24" stroke="#d97706" stroke-width="0.5"/>
+  <rect x="15" y="45" width="70" height="3" rx="1.5" fill="#d97706"/>
+  <path d="M8 50 L15 48 L15 50 Z" fill="#f59e0b"/>
+  <path d="M85 48 L92 50 L85 50 Z" fill="#f59e0b"/>
+  <rect x="10" y="55" width="4" height="30" rx="2" fill="#d97706"/>
+  <rect x="86" y="55" width="4" height="30" rx="2" fill="#d97706"/>
+  <rect x="14" y="80" width="72" height="5" rx="2.5" fill="url(#goldGrad)" stroke="#92400e" stroke-width="0.5"/>
+  <circle cx="28" cy="82" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="72" cy="82" r="2" fill="#fbbf24" opacity="0.6"/>
+</svg>

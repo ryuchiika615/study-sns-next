@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <linearGradient id="ironGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b7280"/>
+      <stop offset="50%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+  </defs>
+  <path d="M15 35 L15 18 L28 30 L35 10 L42 30 L50 8 L58 30 L65 10 L72 30 L85 18 L85 35 Z" fill="url(#ironGrad)" stroke="#374151" stroke-width="1.5"/>
+  <polygon points="50,40 54,48 50,46 46,48" fill="#6b7280"/>
+  <path d="M10 45 L15 40 L25 40 L25 45 Z" fill="#4b5563"/>
+  <path d="M75 40 L85 40 L90 45 L75 45 Z" fill="#4b5563"/>
+  <rect x="10" y="55" width="4" height="30" rx="2" fill="#374151"/>
+  <rect x="86" y="55" width="4" height="30" rx="2" fill="#374151"/>
+  <rect x="14" y="80" width="72" height="4" rx="2" fill="#4b5563"/>
+  <line x1="50" y1="50" x2="50" y2="75" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="3,3"/>
+</svg>

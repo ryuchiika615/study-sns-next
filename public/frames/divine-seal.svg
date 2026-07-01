@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="0.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g fill="none" stroke="#dc2626" stroke-width="1.2">
+    <rect x="8" y="8" width="84" height="84" rx="4" stroke="#991b1b"/>
+    <rect x="12" y="12" width="76" height="76" rx="3" stroke="#450a0a" stroke-width="0.8"/>
+    <rect x="16" y="16" width="68" height="68" rx="2" stroke="#dc2626" stroke-width="0.6"/>
+  </g>
+  <g fill="none">
+    <circle cx="50" cy="50" r="32" stroke="#fbbf24" stroke-width="0.8" stroke-dasharray="3 3" filter="url(#glow)"/>
+    <circle cx="50" cy="50" r="28" stroke="#dc2626" stroke-width="0.5"/>
+    <circle cx="50" cy="50" r="24" stroke="#991b1b" stroke-width="0.6" stroke-dasharray="2 4"/>
+    <circle cx="50" cy="50" r="20" stroke="#450a0a" stroke-width="0.5"/>
+  </g>
+  <g stroke="#dc2626" stroke-width="0.6" fill="none">
+    <polygon points="50,18 55,30 68,30 58,38 62,50 50,42 38,50 42,38 32,30 45,30" stroke="#fbbf24" stroke-width="0.4" opacity="0.7"/>
+    <polygon points="50,22 54,31 64,31 57,37 60,48 50,42 40,48 43,37 36,31 46,31" stroke="#dc2626" stroke-width="0.3" opacity="0.5"/>
+  </g>
+  <g stroke="#fbbf24" stroke-width="0.4" fill="none" opacity="0.6" filter="url(#glow)">
+    <line x1="50" y1="8" x2="50" y2="18"/>
+    <line x1="50" y1="82" x2="50" y2="92"/>
+    <line x1="8" y1="50" x2="18" y2="50"/>
+    <line x1="82" y1="50" x2="92" y2="50"/>
+    <line x1="20" y1="20" x2="27" y2="27"/>
+    <line x1="73" y1="73" x2="80" y2="80"/>
+    <line x1="80" y1="20" x2="73" y2="27"/>
+    <line x1="20" y1="80" x2="27" y2="73"/>
+  </g>
+  <g fill="#fbbf24" opacity="0.3" filter="url(#glow)">
+    <rect x="23" y="23" width="4" height="4" transform="rotate(45 25 25)"/>
+    <rect x="73" y="23" width="4" height="4" transform="rotate(45 75 25)"/>
+    <rect x="23" y="73" width="4" height="4" transform="rotate(45 25 75)"/>
+    <rect x="73" y="73" width="4" height="4" transform="rotate(45 75 75)"/>
+  </g>
+  <g fill="none" stroke="#dc2626" stroke-width="0.3" opacity="0.3">
+    <path d="M50 18 L50 82 M18 50 L82 50"/>
+    <path d="M27 27 L73 73 M73 27 L27 73"/>
+  </g>
+  <g fill="#991b1b" opacity="0.15">
+    <circle cx="50" cy="50" r="8"/>
+    <circle cx="50" cy="50" r="4" fill="#fbbf24" opacity="0.2"/>
+  </g>
+</svg>

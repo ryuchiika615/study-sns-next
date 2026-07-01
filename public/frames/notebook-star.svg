@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" overflow="visible">
+  <!-- Top star -->
+  <polygon points="50,5 53,18 66,18 56,27 59,40 50,32 41,40 44,27 34,18 47,18" fill="#6b7280"/>
+  <polygon points="50,10 52,19 61,19 55,25 57,34 50,29 43,34 45,25 39,19 48,19" fill="#9ca3af"/>
+  <!-- Bottom star -->
+  <polygon points="50,60 53,73 66,73 56,82 59,95 50,87 41,95 44,82 34,73 47,73" fill="#6b7280"/>
+  <polygon points="50,65 52,74 61,74 55,80 57,89 50,84 43,89 45,80 39,74 48,74" fill="#9ca3af"/>
+</svg>
