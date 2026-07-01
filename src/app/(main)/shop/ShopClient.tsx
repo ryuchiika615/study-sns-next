@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase";
 import StudyBGMRecorder from "@/components/StudyBGMRecorder";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 import RefineParts from "@/components/RefineParts";
-import { getOptimizedIconUrl } from "@/lib/utils";
+import { getOptimizedIconUrl, rarityClass } from "@/lib/utils";
 
 const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
 
@@ -21,6 +21,7 @@ export default function ShopClient() {
   const [selectedSell, setSelectedSell] = useState<Set<string>>(new Set());
   const [bgmUserId, setBgmUserId] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [previewItemId, setPreviewItemId] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -337,18 +338,50 @@ export default function ShopClient() {
               {/* アバター一覧 */}
               <div>
                 <h3 className="text-xs font-bold mb-2">所持アバター ({icons.length})</h3>
+
+                {/* 試し付けプレビュー */}
+                {previewItemId && (() => {
+                  const previewItem = icons.find((i: any) => i.id === previewItemId);
+                  if (!previewItem) return null;
+                  return (
+                    <div className="mb-3 p-3 rounded-lg border-2 border-dashed border-primary bg-blue-50/50 text-center">
+                      <p className="text-xs font-bold text-primary mb-2">試着中</p>
+                      <div className={`avatar-frame ${rarityClass(previewItem.rarity)} w-20 h-20 min-w-[80px] mx-auto`}>
+                        {profile?.icon_url ? (
+                          <Image src={getOptimizedIconUrl(profile.icon_url, 256)} width={80} height={80} className="rounded-full object-cover border-2 border-white" alt="" />
+                        ) : (
+                          <i className="fas fa-user-circle text-6xl text-gray-300" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">{itemDisplayName(previewItem).replace("【アイコン】", "")}</p>
+                      <button onClick={() => setPreviewItemId(null)}
+                        className="mt-1 text-xs text-gray-400 hover:text-gray-600 underline">
+                        プレビューを閉じる
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 <div className="grid grid-cols-2 gap-2">
                   {icons.map((item: any) => {
                     const isEquipped = profile.current_avatar_id === item.id;
+                    const isPreviewing = previewItemId === item.id;
                     const sellable = canSell(item);
                     return (
-                      <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-                        <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
-                        <span className="ml-1">{itemDisplayName(item).replace("【アイコン】", "")}</span>
+                      <div key={item.id} className={`p-2 rounded-lg border text-sm ${isEquipped ? 'border-primary bg-blue-50' : isPreviewing ? 'border-dashed border-primary bg-blue-50/30' : 'border-gray-200'}`}>
+                        <div className="flex items-center gap-1">
+                          <span className={`title-badge ${item.rarity} text-xs`}>{item.rarity}</span>
+                          {isPreviewing && <span className="text-[10px] text-primary font-bold">試着中</span>}
+                        </div>
+                        <span className="ml-1 text-sm">{itemDisplayName(item).replace("【アイコン】", "")}</span>
                         <div className="flex gap-1 mt-1">
                           <button onClick={() => handleEquip(item.id, "current_avatar_id")}
                             className="flex-1 text-xs text-primary hover:underline py-0.5">
                             {isEquipped ? "装備中" : "装備"}
+                          </button>
+                          <button onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
+                            className="flex-1 text-xs text-orange-500 hover:underline py-0.5">
+                            {isPreviewing ? "閉じる" : "試着"}
                           </button>
                           {sellable && (
                             <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">

@@ -31,7 +31,13 @@ export async function POST(request: NextRequest) {
   const now = new Date();
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const yearMonth = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
-  const monthName = `${prevMonth.getMonth() + 1}月`;
+
+  const OLD_MONTH_NAMES = ["睦月", "如月", "弥生", "卯月", "皐月", "水無月", "文月", "葉月", "長月", "神無月", "霜月", "師走"];
+  const ICON_FRAMES = ["氷晶オーラ", "氷晶オーラ", "桜花オーラ", "桜花オーラ", "若葉オーラ", "雨雫オーラ", "向日葵オーラ", "向日葵オーラ", "紅葉オーラ", "紅葉オーラ", "霜華オーラ", "雪華オーラ"];
+
+  const monthIdx = prevMonth.getMonth();
+  const titleName = `${OLD_MONTH_NAMES[monthIdx]}の覇者`;
+  const iconName = ICON_FRAMES[monthIdx];
 
   // Check if already awarded
   const { data: existingReward } = await admin
@@ -66,8 +72,8 @@ export async function POST(request: NextRequest) {
   const winner = sorted[0];
 
   // Create special gacha items if not exist
-  const titleId = await ensureSpecialItem(admin, `${monthName}の勉強王`, "title", "LR");
-  const iconId = await ensureSpecialItem(admin, "王冠", "icon", "LR");
+  const titleId = await ensureSpecialItem(admin, titleName, "title", "LR");
+  const iconId = await ensureSpecialItem(admin, iconName, "icon", "LR");
 
   // Award items to winner
   for (const itemId of [titleId, iconId]) {
