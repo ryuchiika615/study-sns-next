@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <radialGradient id="codeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="15%" stop-color="#22c55e" stop-opacity="0.12"/>
+      <stop offset="50%" stop-color="#15803d" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#052e16" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="matrixGlow">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#codeGlow)"/>
+  <g fill="#22c55e" font-family="monospace" font-size="5" opacity="0.5" filter="url(#matrixGlow)">
+    <text x="10" y="15">01101</text>
+    <text x="55" y="12">10010</text>
+    <text x="5" y="28">10110</text>
+    <text x="60" y="25">01001</text>
+    <text x="8" y="41">11001</text>
+    <text x="58" y="38">00110</text>
+    <text x="12" y="54">01011</text>
+    <text x="56" y="51">10101</text>
+    <text x="6" y="67">10011</text>
+    <text x="62" y="64">01100</text>
+    <text x="10" y="80">00101</text>
+    <text x="58" y="77">11010</text>
+    <text x="14" y="93">10100</text>
+    <text x="54" y="90">01011</text>
+  </g>
+  <g fill="none" stroke="#22c55e" stroke-width="0.6" opacity="0.35">
+    <rect x="15" y="18" width="70" height="64" rx="3" stroke-dasharray="3 4"/>
+    <rect x="22" y="25" width="56" height="50" rx="2" stroke-dasharray="2 5"/>
+  </g>
+  <g fill="#4ade80" opacity="0.4" filter="url(#matrixGlow)">
+    <polygon points="50,30 53,36 57,36 54,39 55,45 50,42 45,45 46,39 43,36 47,36"/>
+    <polygon points="30,60 32,64 36,64 33,66 34,70 30,68 26,70 27,66 24,64 28,64"/>
+    <polygon points="70,60 72,64 76,64 73,66 74,70 70,68 66,70 67,66 64,64 68,64"/>
+  </g>
+  <g fill="#22c55e" opacity="0.25">
+    <circle cx="20" cy="20" r="0.8"/>
+    <circle cx="80" cy="20" r="0.8"/>
+    <circle cx="20" cy="80" r="0.8"/>
+    <circle cx="80" cy="80" r="0.8"/>
+    <circle cx="50" cy="10" r="0.6"/>
+    <circle cx="50" cy="90" r="0.6"/>
+  </g>
+</svg>

@@ -148,7 +148,7 @@ html.dark input[type="file"] {
 .avatar-frame.SR  { box-shadow: 0 0 8px 3px rgba(167,139,250,0.35); }
 .avatar-frame.SSR { box-shadow: 0 0 10px 4px rgba(251,191,36,0.35); }
 .avatar-frame.UR  { box-shadow: 0 0 12px 5px rgba(56,189,248,0.35); }
-.avatar-frame.LR  { box-shadow: 0 0 14px 6px rgba(244,63,94,0.4); animation: avatarPulse 1.8s ease-in-out infinite alternate; }
+.avatar-frame.LR  { box-shadow: 0 0 14px 6px rgba(244,63,94,0.4); }
 .avatar-frame.XR  { box-shadow: 0 0 16px 7px rgba(192,132,252,0.4), 0 0 24px 10px rgba(251,191,36,0.2); animation: xrFramePulse 2s ease-in-out infinite alternate; }
 
 /* ===== SVGフレームオーバーレイ（data-icon）===== */
@@ -192,49 +192,33 @@ html.dark input[type="file"] {
 .avatar-frame[data-icon^="若葉オーラ"]::after { background-image: url('/frames/fresh-leaves-aura.svg'); }
 .avatar-frame[data-icon^="霜華オーラ"]::after { background-image: url('/frames/frost-aura.svg'); }
 
-/* ===== レアリティ別アニメーション ===== */
-.avatar-frame.N[data-icon]::after   { animation: frameFade 3s ease-in-out infinite alternate; }
-.avatar-frame.R[data-icon]::after   { animation: frameFade 2.5s ease-in-out infinite alternate; }
-.avatar-frame.SR[data-icon]::after  { animation: framePulse 2.2s ease-in-out infinite alternate; }
-.avatar-frame.SSR[data-icon]::after { animation: framePulse 1.8s ease-in-out infinite alternate; }
-.avatar-frame.UR[data-icon]::after  { animation: frameGlow 1.6s ease-in-out infinite alternate; }
-.avatar-frame.LR[data-icon]::after  { animation: frameGlow 1.3s ease-in-out infinite alternate; }
-.avatar-frame.XR[data-icon]::after  { animation: frameGlow 1s ease-in-out infinite alternate; }
+/* ===== ガチャ由来アイテム（$= サフィックスマッチ）===== */
+.avatar-frame[data-icon$="混沌のオーラ"]::after { background-image: url('/frames/chaos-aura.svg'); }
+.avatar-frame[data-icon$="業火の盾"]::after { background-image: url('/frames/hellfire-shield.svg'); }
+.avatar-frame[data-icon$="聖剣"]::after { background-image: url('/frames/holy-sword.svg'); }
+.avatar-frame[data-icon$="堕天使の翼"]::after { background-image: url('/frames/fallen-angel-wings.svg'); }
+.avatar-frame[data-icon$="不死鳥の羽"]::after { background-image: url('/frames/phoenix-feather.svg'); }
+.avatar-frame[data-icon$="暗黒龍"]::after { background-image: url('/frames/dark-dragon.svg'); }
+.avatar-frame[data-icon$="絶対障壁"]::after { background-image: url('/frames/absolute-barrier.svg'); }
+.avatar-frame[data-icon$="邪王真眼"]::after { background-image: url('/frames/demon-eye.svg'); }
+.avatar-frame[data-icon$="裏コード"]::after { background-image: url('/frames/reverse-code.svg'); }
+.avatar-frame[data-icon$="異界の門"]::after { background-image: url('/frames/otherworld-gate.svg'); }
+.avatar-frame[data-icon$="幻影の残像"]::after { background-image: url('/frames/phantom-afterimage.svg'); }
+.avatar-frame[data-icon$="破壊神の眼光"]::after { background-image: url('/frames/destruction-god-gaze.svg'); }
+.avatar-frame[data-icon$="魔導書"]::after { background-image: url('/frames/grimoire.svg'); }
+.avatar-frame[data-icon$="神の加護"]::after { background-image: url('/frames/divine-protection.svg'); }
+.avatar-frame[data-icon$="守護獣"]::after { background-image: url('/frames/guardian-beast.svg'); }
+.avatar-frame[data-icon$="守護印"]::after { background-image: url('/frames/guardian-seal.svg'); }
 
-/* ===== 全アイコン共通アニメーション ===== */
-@keyframes frameFade {
-  from { opacity: 0.5; }
-  to { opacity: 1; }
-}
-@keyframes framePulse {
-  from { opacity: 0.6; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1.03); }
-}
+/* ===== レアリティ別アニメーション（XRのみ）===== */
+.avatar-frame.XR[data-icon]::after  { animation: frameGlow 1s ease-in-out infinite alternate; }
 @keyframes frameGlow {
   from { opacity: 0.7; transform: scale(0.96); filter: brightness(0.85); }
   to { opacity: 1; transform: scale(1.04); filter: brightness(1.2); }
 }
-@keyframes avatarPulse {
-  from { transform: scale(0.96); }
-  to { transform: scale(1.04); }
-}
 @keyframes xrFramePulse {
   from { box-shadow: 0 0 12px 5px rgba(192,132,252,0.35), 0 0 20px 8px rgba(251,191,36,0.15); }
   to   { box-shadow: 0 0 18px 8px rgba(192,132,252,0.45), 0 0 28px 12px rgba(251,191,36,0.25); }
-}
-@keyframes sparkle {
-  from { opacity: 0.3; transform: scale(0.7) rotate(-15deg); }
-  to { opacity: 1; transform: scale(1.1) rotate(15deg); }
-}
-@keyframes crownBounce {
-  from { transform: translateY(0) scale(1); }
-  to { transform: translateY(-4px) scale(1.15); }
-}
-@keyframes spinCw {
-  to { transform: rotate(360deg); }
-}
-@keyframes spinCcw {
-  to { transform: rotate(-360deg); }
 }
 @keyframes twinkle {
   from { opacity: 0.3; transform: scale(0.8); }

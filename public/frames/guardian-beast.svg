@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <radialGradient id="beastGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="15%" stop-color="#fbbf24" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#d97706" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beastGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <filter id="beastBlur">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#beastGlow)"/>
+  <g filter="url(#beastBlur)">
+    <path d="M50 15 Q65 20 72 35 Q78 50 72 65 Q65 78 50 85 Q35 78 28 65 Q22 50 28 35 Q35 20 50 15 Z" fill="url(#beastGrad)" stroke="#92400e" stroke-width="1" opacity="0.7"/>
+  </g>
+  <g fill="none" stroke="#fbbf24" stroke-width="1" opacity="0.5">
+    <path d="M35 30 Q42 25 50 30 Q58 25 65 30"/>
+    <path d="M30 45 Q40 38 50 45 Q60 38 70 45"/>
+    <path d="M32 60 Q42 53 50 60 Q58 53 68 60"/>
+  </g>
+  <g fill="#fef3c7" opacity="0.5">
+    <circle cx="40" cy="38" r="3" fill="none" stroke="#fbbf24" stroke-width="1"/>
+    <circle cx="40" cy="38" r="1.2" fill="#fbbf24"/>
+    <circle cx="60" cy="38" r="3" fill="none" stroke="#fbbf24" stroke-width="1"/>
+    <circle cx="60" cy="38" r="1.2" fill="#fbbf24"/>
+  </g>
+  <path d="M45 50 L50 55 L55 50" fill="none" stroke="#92400e" stroke-width="1.2" opacity="0.5"/>
+  <g fill="none" stroke="#d97706" stroke-width="0.4" opacity="0.3">
+    <circle cx="50" cy="50" r="38" stroke-dasharray="4 5"/>
+    <circle cx="50" cy="50" r="32" stroke-dasharray="2 7"/>
+  </g>
+  <g fill="#fbbf24" opacity="0.3">
+    <circle cx="25" cy="30" r="1"/>
+    <circle cx="75" cy="30" r="1"/>
+    <circle cx="20" cy="55" r="0.8"/>
+    <circle cx="80" cy="55" r="0.8"/>
+    <circle cx="50" cy="12" r="0.6"/>
+    <circle cx="50" cy="88" r="0.6"/>
+  </g>
+</svg>

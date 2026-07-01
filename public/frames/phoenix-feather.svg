@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <linearGradient id="featherGrad" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="30%" stop-color="#f97316"/>
+      <stop offset="60%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <radialGradient id="phoenixGlow" cx="50%" cy="40%" r="55%">
+      <stop offset="15%" stop-color="#fef3c7" stop-opacity="0.2"/>
+      <stop offset="45%" stop-color="#f97316" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#991b1b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="featherGlow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#phoenixGlow)"/>
+  <g filter="url(#featherGlow)">
+    <path d="M50 8 Q55 25 52 45 Q50 55 48 45 Q45 25 50 8 Z" fill="url(#featherGrad)" opacity="0.9"/>
+    <path d="M50 8 Q60 20 56 40 Q53 50 50 42 Q47 30 50 8 Z" fill="#fbbf24" opacity="0.25"/>
+  </g>
+  <g fill="none" stroke="#f97316" stroke-width="0.8" opacity="0.5">
+    <path d="M50 12 L42 30"/>
+    <path d="M50 12 L58 30"/>
+    <path d="M50 18 L38 38"/>
+    <path d="M50 18 L62 38"/>
+    <path d="M50 25 L35 45"/>
+    <path d="M50 25 L65 45"/>
+  </g>
+  <g fill="none" stroke="#dc2626" stroke-width="0.5" opacity="0.35">
+    <path d="M50 30 Q40 40 35 55"/>
+    <path d="M50 30 Q60 40 65 55"/>
+    <path d="M50 35 Q42 48 38 60"/>
+    <path d="M50 35 Q58 48 62 60"/>
+  </g>
+  <g fill="#fbbf24" opacity="0.4" filter="url(#featherGlow)">
+    <circle cx="50" cy="10" r="2"/>
+    <circle cx="42" cy="25" r="1"/>
+    <circle cx="58" cy="25" r="1"/>
+    <circle cx="35" cy="40" r="0.8"/>
+    <circle cx="65" cy="40" r="0.8"/>
+  </g>
+  <g fill="#dc2626" opacity="0.3">
+    <circle cx="30" cy="55" r="0.8"/>
+    <circle cx="70" cy="55" r="0.8"/>
+    <circle cx="40" cy="65" r="0.6"/>
+    <circle cx="60" cy="65" r="0.6"/>
+    <circle cx="50" cy="75" r="0.5"/>
+  </g>
+  <g fill="none" stroke="#fbbf24" stroke-width="0.3" opacity="0.25" stroke-dasharray="2 5">
+    <circle cx="50" cy="40" r="38"/>
+    <circle cx="50" cy="40" r="32"/>
+  </g>
+</svg>

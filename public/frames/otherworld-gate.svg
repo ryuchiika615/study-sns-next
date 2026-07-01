@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <radialGradient id="gateGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="10%" stop-color="#a855f7" stop-opacity="0.2"/>
+      <stop offset="40%" stop-color="#7c3aed" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pillarGrad2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="50%" stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+    <filter id="portalGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#gateGlow)"/>
+  <rect x="18" y="15" width="6" height="70" rx="3" fill="url(#pillarGrad2)" stroke="#7c3aed" stroke-width="0.8" opacity="0.8"/>
+  <rect x="76" y="15" width="6" height="70" rx="3" fill="url(#pillarGrad2)" stroke="#7c3aed" stroke-width="0.8" opacity="0.8"/>
+  <path d="M24 15 Q50 5 76 15" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.7"/>
+  <path d="M24 85 Q50 95 76 85" fill="none" stroke="#a855f7" stroke-width="1.5" opacity="0.5"/>
+  <g filter="url(#portalGlow)">
+    <ellipse cx="50" cy="50" rx="24" ry="30" fill="none" stroke="#a855f7" stroke-width="1.5" opacity="0.6"/>
+    <ellipse cx="50" cy="50" rx="18" ry="24" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.4"/>
+    <ellipse cx="50" cy="50" rx="12" ry="18" fill="none" stroke="#e9d5ff" stroke-width="0.6" opacity="0.3"/>
+  </g>
+  <g fill="none" stroke="#7c3aed" stroke-width="0.4" opacity="0.3">
+    <ellipse cx="50" cy="50" rx="28" ry="34" stroke-dasharray="3 5"/>
+    <ellipse cx="50" cy="50" rx="32" ry="38" stroke-dasharray="1 7"/>
+  </g>
+  <g fill="#a855f7" opacity="0.4" filter="url(#portalGlow)">
+    <circle cx="50" cy="20" r="1.5"/>
+    <circle cx="50" cy="80" r="1.5"/>
+    <circle cx="28" cy="50" r="1.2"/>
+    <circle cx="72" cy="50" r="1.2"/>
+  </g>
+  <g fill="#c084fc" opacity="0.3">
+    <circle cx="35" cy="30" r="0.8"/>
+    <circle cx="65" cy="30" r="0.8"/>
+    <circle cx="35" cy="70" r="0.8"/>
+    <circle cx="65" cy="70" r="0.8"/>
+  </g>
+  <g fill="none" stroke="#4c1d95" stroke-width="0.3" opacity="0.2">
+    <line x1="21" y1="15" x2="21" y2="85"/>
+    <line x1="79" y1="15" x2="79" y2="85"/>
+  </g>
+</svg>

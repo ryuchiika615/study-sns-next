@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <radialGradient id="sealGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="15%" stop-color="#06b6d4" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#0891b2" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#164e63" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sealGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0e7490"/>
+    </linearGradient>
+    <filter id="sealBlur">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#sealGlow)"/>
+  <g filter="url(#sealBlur)">
+    <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="none" stroke="url(#sealGrad)" stroke-width="2" opacity="0.7"/>
+    <polygon points="50,20 80,35 80,65 50,80 20,65 20,35" fill="none" stroke="#06b6d4" stroke-width="1" opacity="0.45"/>
+  </g>
+  <g fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.35">
+    <polygon points="50,28 72,40 72,60 50,72 28,60 28,40"/>
+    <polygon points="50,35 62,43 62,57 50,65 38,57 38,43"/>
+  </g>
+  <g fill="#22d3ee" opacity="0.45" filter="url(#sealBlur)">
+    <circle cx="50" cy="50" r="6" fill="none" stroke="#22d3ee" stroke-width="1.2"/>
+    <circle cx="50" cy="50" r="3" fill="#67e8f9" opacity="0.5"/>
+  </g>
+  <g fill="#06b6d4" opacity="0.3">
+    <circle cx="50" cy="12" r="1.5"/>
+    <circle cx="50" cy="88" r="1.5"/>
+    <circle cx="12" cy="30" r="1.2"/>
+    <circle cx="88" cy="30" r="1.2"/>
+    <circle cx="12" cy="70" r="1.2"/>
+    <circle cx="88" cy="70" r="1.2"/>
+  </g>
+  <g fill="none" stroke="#0e7490" stroke-width="0.3" opacity="0.2" stroke-dasharray="2 5">
+    <circle cx="50" cy="50" r="42"/>
+    <circle cx="50" cy="50" r="36"/>
+  </g>
+</svg>

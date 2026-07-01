@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="40%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </linearGradient>
+    <radialGradient id="fireGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="20%" stop-color="#fbbf24" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#f97316" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="flameGlow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#fireGlow)"/>
+  <path d="M50 8 L85 25 L85 55 Q85 80 50 95 Q15 80 15 55 L15 25 Z" fill="url(#shieldGrad)" stroke="#92400e" stroke-width="1.5" opacity="0.85"/>
+  <path d="M50 8 L85 25 L85 55 Q85 80 50 95 Q15 80 15 55 L15 25 Z" fill="none" stroke="#fbbf24" stroke-width="0.8" opacity="0.5"/>
+  <g fill="none" stroke="#fbbf24" stroke-width="1.2" filter="url(#flameGlow)" opacity="0.7">
+    <path d="M35 30 Q38 20 42 30 Q45 22 48 32 Q50 24 52 32 Q55 22 58 30 Q62 20 65 30"/>
+    <path d="M30 45 Q34 35 38 45 Q42 37 46 47 Q50 38 54 47 Q58 37 62 45 Q66 35 70 45"/>
+  </g>
+  <g fill="none" stroke="#f97316" stroke-width="0.6" opacity="0.4">
+    <path d="M50 15 L50 25"/>
+    <path d="M35 20 L40 28"/>
+    <path d="M65 20 L60 28"/>
+    <path d="M25 35 L33 40"/>
+    <path d="M75 35 L67 40"/>
+  </g>
+  <circle cx="50" cy="50" r="12" fill="none" stroke="#fbbf24" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="50" cy="50" r="8" fill="#fbbf24" opacity="0.3"/>
+  <circle cx="50" cy="50" r="4" fill="#fde68a" opacity="0.5"/>
+  <g fill="#fbbf24" opacity="0.4">
+    <circle cx="30" cy="60" r="1"/>
+    <circle cx="70" cy="60" r="1"/>
+    <circle cx="50" cy="75" r="0.8"/>
+    <circle cx="38" cy="70" r="0.6"/>
+    <circle cx="62" cy="70" r="0.6"/>
+  </g>
+</svg>

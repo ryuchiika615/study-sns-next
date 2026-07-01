@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible">
+  <defs>
+    <radialGradient id="barrierGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="10%" stop-color="#06b6d4" stop-opacity="0.15"/>
+      <stop offset="40%" stop-color="#0891b2" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#164e63" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shieldBlur">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="innerGlow">
+      <feGaussianBlur stdDeviation="0.8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#barrierGlow)"/>
+  <g filter="url(#shieldBlur)">
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0.7"/>
+    <circle cx="50" cy="50" r="36" fill="none" stroke="#0891b2" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="50" cy="50" r="32" fill="none" stroke="#06b6d4" stroke-width="0.8" opacity="0.35"/>
+  </g>
+  <g fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.4" filter="url(#innerGlow)">
+    <circle cx="50" cy="50" r="28" stroke-dasharray="4 3"/>
+    <circle cx="50" cy="50" r="24" stroke-dasharray="2 5"/>
+  </g>
+  <g fill="none" stroke="#06b6d4" stroke-width="0.4" opacity="0.3">
+    <line x1="50" y1="10" x2="50" y2="90"/>
+    <line x1="10" y1="50" x2="90" y2="50"/>
+    <line x1="22" y1="22" x2="78" y2="78"/>
+    <line x1="78" y1="22" x2="22" y2="78"/>
+  </g>
+  <g fill="#22d3ee" opacity="0.45" filter="url(#innerGlow)">
+    <polygon points="50,14 52,18 56,18 53,21 54,25 50,22 46,25 47,21 44,18 48,18"/>
+    <polygon points="50,75 52,79 56,79 53,82 54,86 50,83 46,86 47,82 44,79 48,79"/>
+    <polygon points="14,50 18,52 18,56 21,53 25,54 22,50 25,46 21,47 18,44 18,48"/>
+    <polygon points="75,50 79,52 79,56 82,53 86,54 83,50 86,46 82,47 79,44 79,48"/>
+  </g>
+  <g fill="#06b6d4" opacity="0.3">
+    <circle cx="28" cy="28" r="1.2"/>
+    <circle cx="72" cy="28" r="1.2"/>
+    <circle cx="28" cy="72" r="1.2"/>
+    <circle cx="72" cy="72" r="1.2"/>
+    <circle cx="50" cy="8" r="0.8"/>
+    <circle cx="50" cy="92" r="0.8"/>
+    <circle cx="8" cy="50" r="0.8"/>
+    <circle cx="92" cy="50" r="0.8"/>
+  </g>
+</svg>
