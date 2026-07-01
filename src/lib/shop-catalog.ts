@@ -1,21 +1,21 @@
 export const RARITY_ORDER: Record<string, number> = {
-  N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6,
+  N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6, XR: 7,
 };
 
 export const RARITY_BY_VALUE: Record<number, string> = {
-  1: "N", 2: "R", 3: "SR", 4: "SSR", 5: "UR", 6: "LR",
+  1: "N", 2: "R", 3: "SR", 4: "SSR", 5: "UR", 6: "LR", 7: "XR",
 };
 
 export const SELL_VALUES: Record<string, number> = {
-  N: 1, R: 4, SR: 15, SSR: 60, UR: 180, LR: 650,
+  N: 1, R: 4, SR: 15, SSR: 60, UR: 180, LR: 650, XR: 9999,
 };
 
 export const BUY_COSTS: Record<string, number> = {
-  N: 5, R: 15, SR: 60, SSR: 240, UR: 720, LR: 2600,
+  N: 5, R: 15, SR: 60, SSR: 240, UR: 720, LR: 2600, XR: 99999,
 };
 
 export const RARITY_LABELS: Record<string, string> = {
-  N: "N", R: "R", SR: "SR", SSR: "SSR", UR: "UR", LR: "LR",
+  N: "N", R: "R", SR: "SR", SSR: "SSR", UR: "UR", LR: "LR", XR: "XR",
 };
 
 const NAMES_LIST = [

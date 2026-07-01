@@ -9,7 +9,7 @@ import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isRefinedItem, item
 import RefineParts from "@/components/RefineParts";
 import { getOptimizedIconUrl, rarityClass } from "@/lib/utils";
 
-const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR"];
+const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR", "XR"];
 
 export default function ShopClient() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -346,7 +346,7 @@ export default function ShopClient() {
                   return (
                     <div className="mb-3 p-3 rounded-lg border-2 border-dashed border-primary bg-blue-50/50 text-center">
                       <p className="text-xs font-bold text-primary mb-2">試着中</p>
-                      <div className={`avatar-frame ${rarityClass(previewItem.rarity)} w-20 h-20 min-w-[80px] mx-auto`}>
+                      <div className={`avatar-frame ${rarityClass(previewItem.rarity)} w-20 h-20 min-w-[80px] mx-auto`} data-icon={itemDisplayName(previewItem).replace("【アイコン】", "")}>
                         {profile?.icon_url ? (
                           <Image src={getOptimizedIconUrl(profile.icon_url, 256)} width={80} height={80} className="rounded-full object-cover border-2 border-white" alt="" />
                         ) : (

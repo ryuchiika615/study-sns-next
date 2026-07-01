@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
   const winner = sorted[0];
 
   // Create special gacha items if not exist
-  const titleId = await ensureSpecialItem(admin, titleName, "title", "LR");
-  const iconId = await ensureSpecialItem(admin, iconName, "icon", "LR");
+  const titleId = await ensureSpecialItem(admin, titleName, "title", "XR");
+  const iconId = await ensureSpecialItem(admin, iconName, "icon", "XR");
 
   // Award items to winner
   for (const itemId of [titleId, iconId]) {

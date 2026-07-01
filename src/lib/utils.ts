@@ -7,19 +7,19 @@ export const SUBJECT_COLORS = [
 ];
 
 export const RARITY_ORDER: Record<Rarity, number> = {
-  N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6,
+  N: 1, R: 2, SR: 3, SSR: 4, UR: 5, LR: 6, XR: 7,
 };
 
 export const RARITY_LABELS: Record<Rarity, string> = {
-  N: "N", R: "R", SR: "SR", SSR: "SSR", UR: "UR", LR: "LR",
+  N: "N", R: "R", SR: "SR", SSR: "SSR", UR: "UR", LR: "LR", XR: "XR",
 };
 
 export const SELL_VALUES: Record<Rarity, number> = {
-  N: 1, R: 4, SR: 15, SSR: 60, UR: 180, LR: 650,
+  N: 1, R: 4, SR: 15, SSR: 60, UR: 180, LR: 650, XR: 9999,
 };
 
 export const BUY_COSTS: Record<Rarity, number> = {
-  N: 5, R: 15, SR: 60, SSR: 240, UR: 720, LR: 2600,
+  N: 5, R: 15, SR: 60, SSR: 240, UR: 720, LR: 2600, XR: 99999,
 };
 
 export function formatStudyTime(minutes: number | null | undefined): string {

@@ -98,7 +98,7 @@ export interface NotificationWithSender {
   sender: Profile;
 }
 
-export type Rarity = "N" | "R" | "SR" | "SSR" | "UR" | "LR";
+export type Rarity = "N" | "R" | "SR" | "SSR" | "UR" | "LR" | "XR";
 
 export interface RankingEntry {
   rank: number;

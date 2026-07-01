@@ -225,7 +225,7 @@ const PostCard = memo(function PostCard({
     <div className={`post-card ${isOwn ? "border-l-4 border-l-primary" : ""}`}>
       <div className="flex px-4 pt-1">
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
-          <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`}>
+          <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`} data-icon={post.current_avatar?.name?.replace("【アイコン】", "") || ""}>
             {post.user?.icon_url ? (
               <Image src={getOptimizedIconUrl(post.user.icon_url, 256)} width={48} height={48} className="rounded-full object-cover border-2 border-white" alt="" />
             ) : (
