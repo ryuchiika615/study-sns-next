@@ -7,11 +7,16 @@ export const maxDuration = 60;
 async function ensureSpecialItem(admin: any, name: string, category: string, rarity: string) {
   const { data: existing } = await admin
     .from("gacha_items")
-    .select("id")
+    .select("id, rarity")
     .eq("name", name)
     .eq("category", category)
     .maybeSingle();
-  if (existing) return existing.id;
+  if (existing) {
+    if (existing.rarity !== rarity) {
+      await admin.from("gacha_items").update({ rarity }).eq("id", existing.id);
+    }
+    return existing.id;
+  }
 
   const { data } = await admin
     .from("gacha_items")
