@@ -143,13 +143,13 @@ html.dark input[type="file"] {
   z-index: 1;
   flex-shrink: 0;
 }
-.avatar-frame.N   { box-shadow: 0 0 0 2px #6b7280; }
-.avatar-frame.R   { box-shadow: 0 0 0 2px #60a5fa, 0 0 8px 5px rgba(96,165,250,0.25); }
-.avatar-frame.SR  { box-shadow: 0 0 0 3px #a78bfa, 0 0 10px 6px rgba(167,139,250,0.3), inset 0 0 6px rgba(167,139,250,0.2); }
-.avatar-frame.SSR { box-shadow: 0 0 0 2px #fbbf24, 0 0 0 7px rgba(251,191,36,0.08), 0 0 0 8px #fbbf24, 0 0 12px 8px rgba(251,191,36,0.3); }
-.avatar-frame.UR  { box-shadow: 0 0 0 3px #38bdf8, 0 0 14px 7px rgba(56,189,248,0.35), 0 0 24px 12px rgba(56,189,248,0.1); }
-.avatar-frame.LR  { box-shadow: 0 0 0 4px #f43f5e, 0 0 16px 9px rgba(244,63,94,0.5), 0 0 32px 16px rgba(253,224,71,0.2); animation: avatarPulse 1.8s ease-in-out infinite alternate; }
-.avatar-frame.XR  { box-shadow: 0 0 0 4px #c084fc, 0 0 16px 9px rgba(192,132,252,0.5), 0 0 32px 16px rgba(251,191,36,0.2), 0 0 48px 24px rgba(244,63,94,0.1); animation: xrFramePulse 2s ease-in-out infinite alternate; }
+.avatar-frame.N   { box-shadow: none; }
+.avatar-frame.R   { box-shadow: 0 0 6px 2px rgba(96,165,250,0.3); }
+.avatar-frame.SR  { box-shadow: 0 0 8px 3px rgba(167,139,250,0.35); }
+.avatar-frame.SSR { box-shadow: 0 0 10px 4px rgba(251,191,36,0.35); }
+.avatar-frame.UR  { box-shadow: 0 0 12px 5px rgba(56,189,248,0.35); }
+.avatar-frame.LR  { box-shadow: 0 0 14px 6px rgba(244,63,94,0.4); animation: avatarPulse 1.8s ease-in-out infinite alternate; }
+.avatar-frame.XR  { box-shadow: 0 0 16px 7px rgba(192,132,252,0.4), 0 0 24px 10px rgba(251,191,36,0.2); animation: xrFramePulse 2s ease-in-out infinite alternate; }
 
 /* ===== SVGフレームオーバーレイ（data-icon）===== */
 .avatar-frame[data-icon]::after {
@@ -198,8 +198,8 @@ html.dark input[type="file"] {
   to { transform: scale(1.04); }
 }
 @keyframes xrFramePulse {
-  from { transform: scale(0.97); box-shadow: 0 0 0 4px #c084fc, 0 0 16px 9px rgba(192,132,252,0.5), 0 0 32px 16px rgba(251,191,36,0.2); }
-  to   { transform: scale(1.03); box-shadow: 0 0 0 5px #c084fc, 0 0 20px 12px rgba(192,132,252,0.6), 0 0 40px 20px rgba(251,191,36,0.25), 0 0 48px 24px rgba(244,63,94,0.15); }
+  from { box-shadow: 0 0 12px 5px rgba(192,132,252,0.35), 0 0 20px 8px rgba(251,191,36,0.15); }
+  to   { box-shadow: 0 0 18px 8px rgba(192,132,252,0.45), 0 0 28px 12px rgba(251,191,36,0.25); }
 }
 @keyframes sparkle {
   from { opacity: 0.3; transform: scale(0.7) rotate(-15deg); }
