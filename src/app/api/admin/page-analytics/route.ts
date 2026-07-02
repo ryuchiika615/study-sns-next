@@ -55,13 +55,14 @@ export async function GET(request: NextRequest) {
   } else if (range === "month") {
     since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   }
+  const sinceStr = since?.toISOString();
 
   try {
     let query = admin
       .from("page_visits")
       .select("id, user_id, path, created_at");
 
-    if (since) query = query.gte("created_at", since.toISOString());
+    if (sinceStr) query = query.gte("created_at", sinceStr);
     if (userIdFilter) query = query.eq("user_id", userIdFilter);
 
     query = query.order("created_at", { ascending: false }).limit(50000);
@@ -73,11 +74,27 @@ export async function GET(request: NextRequest) {
     }
 
     const uids = [...new Set(visits.map(v => v.user_id))];
+
+    // Batch-fetch profiles
     const { data: profiles } = await admin
       .from("profiles")
       .select("id, display_name, username")
       .in("id", uids);
     const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    // Batch-fetch latest login sessions for last-visit dwell estimation
+    const { data: sessions } = await admin
+      .from("login_sessions")
+      .select("user_id, login_at, last_seen_at, logout_at")
+      .in("user_id", uids)
+      .order("login_at", { ascending: false })
+      .limit(500);
+    const latestSessionByUser = new Map<string, { login_at: string; last_seen_at: string; logout_at: string | null }>();
+    for (const s of sessions || []) {
+      if (!latestSessionByUser.has(s.user_id)) {
+        latestSessionByUser.set(s.user_id, s);
+      }
+    }
 
     function groupPath(path: string): string {
       const clean = path.replace(/\/+$/, "") || "/";
@@ -99,6 +116,8 @@ export async function GET(request: NextRequest) {
       if (clean.startsWith("/admin")) return "管理";
       return clean;
     }
+
+    const CAP_SEC = 3600; // max 1h per page view (beyond that = abandoned tab)
 
     const visitsByUser = new Map<string, { path: string; created_at: string }[]>();
     for (const v of visits) {
@@ -125,14 +144,34 @@ export async function GET(request: NextRequest) {
       };
       userAgg.set(uid, entry);
 
+      // Calculate dwell from next visit (all visits except the last)
       for (let i = 0; i < us.length - 1; i++) {
         const dwell = Math.round(
           (new Date(us[i + 1].created_at).getTime() - new Date(us[i].created_at).getTime()) / 1000
         );
-        if (dwell < 0 || dwell > 3600) continue;
+        if (dwell < 0 || dwell > CAP_SEC) continue;
         const label = groupPath(us[i].path);
         entry.paths[label] = (entry.paths[label] || 0) + dwell;
         entry.total_seconds += dwell;
+      }
+
+      // Calculate dwell for the LAST visit using login_session.last_seen_at
+      const last = us[us.length - 1];
+      const lastVisitMs = new Date(last.created_at).getTime();
+      const session = latestSessionByUser.get(uid);
+      if (session) {
+        const sessionLoginMs = new Date(session.login_at).getTime();
+        if (sessionLoginMs <= lastVisitMs) {
+          const endMs = session.logout_at
+            ? new Date(session.logout_at).getTime()
+            : new Date(session.last_seen_at).getTime();
+          let dwell = Math.round((endMs - lastVisitMs) / 1000);
+          if (dwell > 0 && dwell <= CAP_SEC) {
+            const label = groupPath(last.path);
+            entry.paths[label] = (entry.paths[label] || 0) + dwell;
+            entry.total_seconds += dwell;
+          }
+        }
       }
     }
 
