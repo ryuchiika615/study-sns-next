@@ -136,6 +136,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       }).catch(() => {});
     }
 
+    window.dispatchEvent(new CustomEvent("post-created"));
+
     router.refresh();
   };
 

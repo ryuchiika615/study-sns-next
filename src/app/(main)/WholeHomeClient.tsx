@@ -248,6 +248,11 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     // Listen for restore event from AppShell gear menu
     const restoreHandler = () => setShowWeeklyReport(true);
     window.addEventListener("restore-weekly-report", restoreHandler);
+    // Listen for post-created event to refresh weekly report
+    const postHandler = () => {
+      fetch("/api/weekly-report").then(r => r.ok && r.json()).then(d => { if (d) setWeeklyReport(d); });
+    };
+    window.addEventListener("post-created", postHandler);
     // Check for newly earned achievements
     const seenKey = "seen_achievements";
     fetch("/api/achievements/check").then(r => r.ok && r.json()).then(d => {
@@ -265,6 +270,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     return () => {
       clearInterval(iv);
       window.removeEventListener("restore-weekly-report", restoreHandler);
+      window.removeEventListener("post-created", postHandler);
     };
   }, []);
 
