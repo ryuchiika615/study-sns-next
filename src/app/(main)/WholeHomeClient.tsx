@@ -245,11 +245,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       if (res.ok) setActiveUsers(await res.json());
     };
     fetchActive();
-    fetch("/api/weekly-report").then(r => r.ok && r.json()).then(d => { if (d) setWeeklyReport(d); });
     // Listen for restore event from AppShell gear menu
-    const restoreHandler = () => {
-      setShowWeeklyReport(true);
-    };
+    const restoreHandler = () => setShowWeeklyReport(true);
     window.addEventListener("restore-weekly-report", restoreHandler);
     // Check for newly earned achievements
     const seenKey = "seen_achievements";
@@ -288,6 +285,12 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     }
     setSurveySubmitting(false);
   };
+
+  useEffect(() => {
+    if (showWeeklyReport) {
+      fetch("/api/weekly-report").then(r => r.ok && r.json()).then(d => { if (d) setWeeklyReport(d); });
+    }
+  }, [showWeeklyReport]);
 
   return (
     <>
