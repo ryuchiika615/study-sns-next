@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const searchParams = request.nextUrl.searchParams;
-  const range = searchParams.get("range") || "all"; // today, week, month, all
+  const range = searchParams.get("range") || "all";
   const userIdFilter = searchParams.get("user_id") || null;
 
   const admin = createAdminClient();
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   try {
     let query = admin
       .from("page_visits")
-      .select("id, user_id, path, created_at, profiles!inner(display_name, username, avatar_url)");
+      .select("id, user_id, path, created_at");
 
     if (since) {
       query = query.gte("created_at", since.toISOString());
@@ -55,9 +55,19 @@ export async function GET(request: NextRequest) {
 
     const { data: visits, error } = await query;
     if (error) throw error;
-    if (!visits) return NextResponse.json({ visits: [], users: [], total_visits: 0 });
+    if (!visits || visits.length === 0) {
+      return NextResponse.json({ total_visits: 0, overall: [], users: [] });
+    }
 
-    // path grouping for friendly labels
+    // Batch-fetch profiles for all unique user_ids
+    const uids = [...new Set(visits.map(v => v.user_id))];
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, display_name, username")
+      .in("id", uids);
+
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
     function groupPath(path: string): string {
       const clean = path.replace(/\/+$/, "") || "/";
       if (clean === "/") return "ホーム";
@@ -90,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     for (const v of visits) {
       const uid = v.user_id;
-      const p = v.profiles as any;
+      const p = profileMap.get(uid);
       if (!userMap.has(uid)) {
         userMap.set(uid, {
           user_id: uid,
@@ -111,10 +121,7 @@ export async function GET(request: NextRequest) {
       for (const [path, count] of Object.entries(u.paths)) {
         percentages[path] = Math.round((count / u.total) * 10000) / 100;
       }
-      return {
-        ...u,
-        percentages,
-      };
+      return { ...u, percentages };
     }).sort((a, b) => b.total - a.total);
 
     // Overall aggregation
