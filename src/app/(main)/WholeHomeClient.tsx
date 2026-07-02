@@ -320,12 +320,18 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
             </div>
           </div>
           {weeklyReport.subjects?.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 mb-2">
               {weeklyReport.subjects.slice(0, 4).map((s: any) => (
                 <span key={s.subject} className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
                   {s.subject} {Math.floor(s.minutes / 60)}h{s.minutes % 60}m
                 </span>
               ))}
+            </div>
+          )}
+          {weeklyReport.aiComment && (
+            <div className="mt-2 bg-white/10 rounded-lg p-3 text-sm leading-relaxed">
+              <i className="fas fa-robot mr-1.5 text-indigo-200" />
+              {weeklyReport.aiComment}
             </div>
           )}
         </div>

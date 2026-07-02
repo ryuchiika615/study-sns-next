@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { geminiGenerate } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,9 @@ export async function GET() {
   const weekStart = monday.toISOString().split("T")[0];
   const weekEnd = new Date(monday.getTime() + 7 * 86400000).toISOString().split("T")[0];
 
+  const prevWeekStartDate = new Date(monday.getTime() - 7 * 86400000);
+  const prevWeekStart = prevWeekStartDate.toISOString().split("T")[0];
+
   const { data: posts } = await admin
     .from("posts")
     .select("study_minutes, subject, study_date, created_at")
@@ -27,7 +31,16 @@ export async function GET() {
     .lt("study_date", weekEnd)
     .order("study_date", { ascending: true });
 
+  const { data: prevPosts } = await admin
+    .from("posts")
+    .select("study_minutes, subject, study_date, created_at")
+    .eq("user_id", user.id)
+    .gte("study_date", prevWeekStart)
+    .lt("study_date", weekStart)
+    .order("study_date", { ascending: true });
+
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
+  const prevTotalMinutes = (prevPosts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
   const postCount = (posts || []).length;
 
   const subjectMap: Record<string, number> = {};
@@ -38,6 +51,14 @@ export async function GET() {
   const subjects = Object.entries(subjectMap)
     .map(([subject, minutes]) => ({ subject, minutes }))
     .sort((a, b) => b.minutes - a.minutes);
+
+  // Hourly breakdown for best time analysis
+  const hourlyMap: Record<string, number> = {};
+  for (const p of posts || []) {
+    const hour = p.created_at ? new Date(p.created_at).getHours() + "時" : "不明";
+    hourlyMap[hour] = (hourlyMap[hour] || 0) + (p.study_minutes || 0);
+  }
+  const bestHour = Object.entries(hourlyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
   // Daily breakdown
   const dailyMap: Record<string, number> = {};
@@ -63,7 +84,7 @@ export async function GET() {
       .gte("date", weekStart)
       .lt("date", weekEnd);
     const uniqueDates = new Set((habitLogs || []).filter(l => l.achieved).map(l => l.date));
-    const weekDays = Math.min(7, (new Date().getDay() || 7)); // Mon=1..Sun=7
+    const weekDays = Math.min(7, (new Date().getDay() || 7));
     const totalHabitDays = weekDays;
     habitRate = totalHabitDays > 0 ? Math.round((uniqueDates.size / totalHabitDays) * 100) : 0;
   }
@@ -78,26 +99,55 @@ export async function GET() {
     .order("date", { ascending: true });
 
   const totalPages = (textbookLogs || []).reduce((s, l) => s + (l.pages_completed || 0), 0);
-  const textbookEntries = (textbookLogs || []).map((l: any) => ({
-    title: l.textbooks?.title || "不明",
-    pages: l.pages_completed,
-    date: l.date,
-  }));
 
   // Consecutive days this week
   const { data: profile } = await admin.from("profiles").select("consecutive_post_days").eq("id", user.id).single();
   const consecutiveDays = profile?.consecutive_post_days || 0;
 
+  // AI coaching comment
+  let aiComment: string | null = null;
+  try {
+    const diff = totalMinutes - prevTotalMinutes;
+    const diffText = diff >= 0 ? `先週より${Math.floor(diff / 60)}時間${diff % 60}分増えました` : `先週より${Math.floor(Math.abs(diff) / 60)}時間${Math.abs(diff) % 60}分減りました`;
+    const subjectText = subjects.slice(0, 3).map(s => `${s.subject} ${Math.floor(s.minutes / 60)}h${s.minutes % 60}m`).join("、");
+    const bestTimeText = bestHour ? `${bestHour}台` : "不明";
+
+    const prompt = `あなたは勉強コーチです。以下のユーザーの週間データを元に、日本語で2〜3文の励ましとアドバイスを書いてください。
+
+【週間データ】
+- 今週の合計勉強時間: ${Math.floor(totalMinutes / 60)}時間${totalMinutes % 60}分
+- ${diffText}
+- 投稿数: ${postCount}
+- 主要科目: ${subjectText || "なし"}
+- 習慣達成率: ${habitRate}%
+- 最も集中している時間帯: ${bestTimeText}
+- 連続学習日数: ${consecutiveDays}日
+- テキスト進捗: ${totalPages}ページ
+
+【条件】
+- 「お疲れ様です」などの決まり文句は不要
+- 具体的な数字に触れる
+- 改善点がある場合は優しく提案
+- 2〜3文で簡潔に`;
+
+    aiComment = await geminiGenerate(prompt);
+  } catch (e) {
+    console.error("Gemini weekly report error:", e);
+    aiComment = null;
+  }
+
   return NextResponse.json({
     weekStart,
     weekEnd,
     totalMinutes,
+    prevTotalMinutes,
     postCount,
     subjects,
     dailyBreakdown: Object.entries(dailyMap).map(([date, minutes]) => ({ date, minutes })),
     habitRate,
     textbookPages: totalPages,
-    textbookEntries,
     consecutiveDays,
+    bestHour,
+    aiComment,
   });
 }
