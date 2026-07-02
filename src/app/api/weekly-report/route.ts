@@ -30,7 +30,7 @@ export async function GET() {
 
   const { data: posts } = await admin
     .from("posts")
-    .select("study_minutes, subject, study_date, created_at")
+    .select("study_minutes, subject, created_at")
     .eq("user_id", user.id)
     .gte("created_at", weekStartISO)
     .lt("created_at", weekEndISO)
@@ -51,13 +51,13 @@ export async function GET() {
     postsFound: posts?.length || 0,
     totalUserPosts: allUserPostsCount || 0,
     recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
-    posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, study_minutes_type: typeof p.study_minutes, study_date: p.study_date, created_at: p.created_at })),
+    posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, subject: p.subject, created_at: p.created_at })),
   });
 
   const prevWeekStartISO = prevWeekStartDate.toISOString();
   const { data: prevPosts } = await admin
     .from("posts")
-    .select("study_minutes, subject, study_date, created_at")
+    .select("study_minutes, subject, created_at")
     .eq("user_id", user.id)
     .gte("created_at", prevWeekStartISO)
     .lt("created_at", weekStartISO)
@@ -92,7 +92,7 @@ export async function GET() {
     dailyMap[key] = 0;
   }
   for (const p of posts || []) {
-    const date = p.study_date || p.created_at?.split("T")[0];
+    const date = p.created_at?.split("T")[0];
     if (date && dailyMap[date] !== undefined) dailyMap[date] += p.study_minutes || 0;
   }
 
@@ -181,7 +181,7 @@ export async function GET() {
     _debug: {
       allUserPostsCount: allUserPostsCount,
       recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
-      firstFewPosts: posts?.slice(0, 3).map(p => ({ study_minutes: p.study_minutes, subject: p.subject, study_date: p.study_date, created_at: p.created_at })),
+      firstFewPosts: posts?.slice(0, 3).map(p => ({ study_minutes: p.study_minutes, subject: p.subject, created_at: p.created_at })),
     },
   });
 }
