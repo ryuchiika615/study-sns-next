@@ -391,7 +391,7 @@ export default function ProfileClient({
               <p className="text-lg font-bold text-green-700">{monthStudyDisplay}</p>
             </div>
           </div>
-          {profile?.target_date && profile?.target_minutes > 0 && (
+          {profile?.target_date && profile?.target_minutes > 0 && new Date(profile.target_date + "T23:59:59") >= new Date() && (
             <div className="mt-3 text-sm text-center py-2 rounded-lg bg-yellow-50 text-yellow-800 font-bold">
               <i className="fas fa-bullseye mr-1" />
               目標 {profile.target_date} まであと{(() => {
