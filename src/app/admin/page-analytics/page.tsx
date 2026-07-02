@@ -9,21 +9,25 @@ type UserAnalytics = {
   user_id: string;
   display_name: string;
   username: string;
-  total: number;
+  total_seconds: number;
   percentages: Record<string, number>;
+  formatted_time: string;
+  short_time: string;
 };
 
 type OverallStat = {
   path: string;
-  count: number;
+  seconds: number;
   percentage: number;
+  formatted_time: string;
 };
 
 export default function PageAnalyticsPage() {
   const [profile, setProfile] = useState<any>(null);
   const [overall, setOverall] = useState<OverallStat[]>([]);
   const [users, setUsers] = useState<UserAnalytics[]>([]);
-  const [totalVisits, setTotalVisits] = useState(0);
+  const [totalSeconds, setTotalSeconds] = useState(0);
+  const [formattedTotal, setFormattedTotal] = useState("");
   const [range, setRange] = useState("all");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,7 +42,8 @@ export default function PageAnalyticsPage() {
       const data = await res.json();
       setOverall(data.overall || []);
       setUsers(data.users || []);
-      setTotalVisits(data.total_visits || 0);
+      setTotalSeconds(data.total_seconds || 0);
+      setFormattedTotal(data.formatted_total || "");
     } catch (e: any) {
       setError(e.message);
     }
@@ -131,7 +136,6 @@ export default function PageAnalyticsPage() {
       </div>
 
       <div className="max-w-5xl mx-auto p-4 space-y-6">
-        {/* Range filter */}
         <div className="flex items-center gap-2 flex-wrap">
           {Object.entries(rangeLabels).map(([key, label]) => (
             <button
@@ -147,13 +151,13 @@ export default function PageAnalyticsPage() {
             </button>
           ))}
           <span className="text-xs text-gray-400 ml-auto">
-            計 {totalVisits.toLocaleString()} ビュー
+            総滞在 {formattedTotal}
           </span>
         </div>
 
         {loading ? (
           <div className="text-center py-12 text-gray-500">読み込み中...</div>
-        ) : totalVisits === 0 ? (
+        ) : totalSeconds === 0 ? (
           <div className="text-center py-12 text-gray-400">
             <div className="text-4xl mb-2">📭</div>
             <p>まだページビューデータがありません</p>
@@ -161,9 +165,8 @@ export default function PageAnalyticsPage() {
           </div>
         ) : (
           <>
-            {/* Overall stats */}
             <div className="bg-white rounded-2xl shadow p-6">
-              <h2 className="font-bold text-lg mb-4">📊 全体のページ分布</h2>
+              <h2 className="font-bold text-lg mb-4">📊 全体のページ滞在時間分布</h2>
               <div className="space-y-2">
                 {overall.map((o) => (
                   <div key={o.path} className="flex items-center gap-3">
@@ -178,26 +181,25 @@ export default function PageAnalyticsPage() {
                     <span className="w-20 text-right text-sm text-gray-500">
                       {o.percentage}%
                     </span>
-                    <span className="w-16 text-right text-xs text-gray-400">
-                      {o.count.toLocaleString()}
+                    <span className="w-24 text-right text-xs text-gray-400">
+                      {o.formatted_time}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Per-user table */}
             <div className="bg-white rounded-2xl shadow overflow-hidden">
               <div className="p-4 border-b border-gray-100">
-                <h2 className="font-bold text-lg">👥 ユーザー別ページ割合</h2>
-                <p className="text-xs text-gray-400 mt-0.5">各ユーザーの閲覧割合（%）</p>
+                <h2 className="font-bold text-lg">👥 ユーザー別ページ滞在割合</h2>
+                <p className="text-xs text-gray-400 mt-0.5">各ユーザーの滞在時間の割合（%）</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 text-xs text-gray-500">
                       <th className="p-3 text-left whitespace-nowrap min-w-[140px]">ユーザー</th>
-                      <th className="p-3 text-right whitespace-nowrap">ビュー数</th>
+                      <th className="p-3 text-right whitespace-nowrap">滞在時間</th>
                       {allPaths.map(p => (
                         <th key={p} className="p-3 text-center whitespace-nowrap">{pathIcons[p] || "🔗"}</th>
                       ))}
@@ -218,7 +220,7 @@ export default function PageAnalyticsPage() {
                           </div>
                         </td>
                         <td className="p-3 text-right text-xs text-gray-500 whitespace-nowrap">
-                          {u.total.toLocaleString()}
+                          {u.short_time}
                         </td>
                         {allPaths.map(p => (
                           <td key={p} className="p-3 text-center whitespace-nowrap">

@@ -2,6 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
+function formatDuration(totalSec: number): string {
+  if (totalSec < 60) return `${totalSec}秒`;
+  const m = Math.floor(totalSec / 60);
+  if (m < 60) return `${m}分`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem > 0 ? `${h}時間${rem}分` : `${h}時間`;
+}
+
+function formatShort(totalSec: number): string {
+  if (totalSec < 60) return `${totalSec}s`;
+  const m = Math.floor(totalSec / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return `${h}h${m % 60}m`;
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,28 +61,22 @@ export async function GET(request: NextRequest) {
       .from("page_visits")
       .select("id, user_id, path, created_at");
 
-    if (since) {
-      query = query.gte("created_at", since.toISOString());
-    }
-    if (userIdFilter) {
-      query = query.eq("user_id", userIdFilter);
-    }
+    if (since) query = query.gte("created_at", since.toISOString());
+    if (userIdFilter) query = query.eq("user_id", userIdFilter);
 
     query = query.order("created_at", { ascending: false }).limit(50000);
 
     const { data: visits, error } = await query;
     if (error) throw error;
     if (!visits || visits.length === 0) {
-      return NextResponse.json({ total_visits: 0, overall: [], users: [] });
+      return NextResponse.json({ total_visits: 0, total_seconds: 0, overall: [], users: [] });
     }
 
-    // Batch-fetch profiles for all unique user_ids
     const uids = [...new Set(visits.map(v => v.user_id))];
     const { data: profiles } = await admin
       .from("profiles")
       .select("id, display_name, username")
       .in("id", uids);
-
     const profileMap = new Map((profiles || []).map(p => [p.id, p]));
 
     function groupPath(path: string): string {
@@ -89,61 +100,73 @@ export async function GET(request: NextRequest) {
       return clean;
     }
 
-    // Per-user aggregation
-    const userMap = new Map<string, {
-      user_id: string;
-      display_name: string;
-      username: string;
-      total: number;
-      paths: Record<string, number>;
+    const visitsByUser = new Map<string, { path: string; created_at: string }[]>();
+    for (const v of visits) {
+      if (!visitsByUser.has(v.user_id)) visitsByUser.set(v.user_id, []);
+      visitsByUser.get(v.user_id)!.push({ path: v.path, created_at: v.created_at });
+    }
+    for (const [, us] of visitsByUser) {
+      us.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    }
+
+    const userAgg = new Map<string, {
+      user_id: string; display_name: string; username: string;
+      total_seconds: number; paths: Record<string, number>;
     }>();
 
-    for (const v of visits) {
-      const uid = v.user_id;
+    for (const [uid, us] of visitsByUser) {
       const p = profileMap.get(uid);
-      if (!userMap.has(uid)) {
-        userMap.set(uid, {
-          user_id: uid,
-          display_name: p?.display_name || p?.username || "不明",
-          username: p?.username || "不明",
-          total: 0,
-          paths: {},
-        });
+      const entry = {
+        user_id: uid,
+        display_name: p?.display_name || p?.username || "不明",
+        username: p?.username || "不明",
+        total_seconds: 0,
+        paths: {} as Record<string, number>,
+      };
+      userAgg.set(uid, entry);
+
+      for (let i = 0; i < us.length - 1; i++) {
+        const dwell = Math.round(
+          (new Date(us[i + 1].created_at).getTime() - new Date(us[i].created_at).getTime()) / 1000
+        );
+        if (dwell < 0 || dwell > 3600) continue;
+        const label = groupPath(us[i].path);
+        entry.paths[label] = (entry.paths[label] || 0) + dwell;
+        entry.total_seconds += dwell;
       }
-      const entry = userMap.get(uid)!;
-      entry.total++;
-      const label = groupPath(v.path);
-      entry.paths[label] = (entry.paths[label] || 0) + 1;
     }
 
-    const users = Array.from(userMap.values()).map(u => {
+    const users = Array.from(userAgg.values()).map(u => {
       const percentages: Record<string, number> = {};
-      for (const [path, count] of Object.entries(u.paths)) {
-        percentages[path] = Math.round((count / u.total) * 10000) / 100;
+      for (const [path, sec] of Object.entries(u.paths)) {
+        percentages[path] = u.total_seconds > 0
+          ? Math.round((sec / u.total_seconds) * 10000) / 100 : 0;
       }
-      return { ...u, percentages };
-    }).sort((a, b) => b.total - a.total);
+      return { ...u, percentages, formatted_time: formatDuration(u.total_seconds), short_time: formatShort(u.total_seconds) };
+    }).sort((a, b) => b.total_seconds - a.total_seconds);
 
-    // Overall aggregation
     const overallMap = new Map<string, number>();
-    let overallTotal = 0;
-    for (const v of visits) {
-      const label = groupPath(v.path);
-      overallMap.set(label, (overallMap.get(label) || 0) + 1);
-      overallTotal++;
+    let overallSeconds = 0;
+    for (const [, entry] of userAgg) {
+      for (const [path, sec] of Object.entries(entry.paths)) {
+        overallMap.set(path, (overallMap.get(path) || 0) + sec);
+        overallSeconds += sec;
+      }
     }
     const overall = Array.from(overallMap.entries())
-      .map(([path, count]) => ({
-        path,
-        count,
-        percentage: Math.round((count / overallTotal) * 10000) / 100,
+      .map(([path, seconds]) => ({
+        path, seconds,
+        percentage: overallSeconds > 0 ? Math.round((seconds / overallSeconds) * 10000) / 100 : 0,
+        formatted_time: formatDuration(seconds),
+        short_time: formatShort(seconds),
       }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => b.seconds - a.seconds);
 
     return NextResponse.json({
       total_visits: visits.length,
-      overall,
-      users,
+      total_seconds: overallSeconds,
+      formatted_total: formatDuration(overallSeconds),
+      overall, users,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
