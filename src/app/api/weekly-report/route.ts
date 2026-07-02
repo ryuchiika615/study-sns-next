@@ -141,8 +141,8 @@ export async function GET() {
 - 2〜3文で簡潔に`;
 
     aiComment = await geminiGenerate(prompt);
-  } catch (e) {
-    console.error("Gemini weekly report error:", e);
+  } catch (e: any) {
+    console.error("Gemini weekly report error:", e?.message || e);
     aiComment = null;
   }
 

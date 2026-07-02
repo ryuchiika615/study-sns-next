@@ -394,6 +394,7 @@ const PostCard = memo(function PostCard({
                           body: JSON.stringify({ post_id: data.post_id }),
                         }).catch(() => {});
                       }
+                      window.dispatchEvent(new CustomEvent("post-created"));
                       router.refresh();
                     }
                   }} className="bg-primary text-white rounded-full px-4 py-1 text-xs font-bold cursor-pointer">
