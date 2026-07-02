@@ -39,9 +39,11 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [urlName, setUrlName] = useState("");
   const [urlValue, setUrlValue] = useState("");
   const [ytUrl, setYtUrl] = useState("");
+  const [localBgms, setLocalBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const localInputRef = useRef<HTMLInputElement | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -234,6 +236,16 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     setUploading(false);
   };
 
+  const handleLocalFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const blobUrl = URL.createObjectURL(file);
+    const name = file.name.replace(/\.[^/.]+$/, "").slice(0, 50);
+    const id = `local-${Date.now()}`;
+    setLocalBgms((prev) => [...prev, { id, name, audio_url: blobUrl }]);
+    setBgmId(id);
+  };
+
   const fmt = (s: number) => {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
@@ -287,15 +299,28 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
             ))}
           </optgroup>
           {userBgms.length > 0 && (
-            <optgroup label="あなたのBGM">
+            <optgroup label="あなたのBGM（オンライン）">
               {userBgms.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </optgroup>
+          )}
+          {localBgms.length > 0 && (
+            <optgroup label="ローカル（オフライン）">
+              {localBgms.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </optgroup>
           )}
         </select>
         <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={handleFileUpload} />
+        <input ref={localInputRef} type="file" accept="audio/*" className="hidden" onChange={handleLocalFile} />
         <div className="flex gap-1 shrink-0">
+          <button onClick={() => localInputRef.current?.click()}
+            className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200"
+            title="ローカルファイルを開く（オフライン・アップロードなし）">
+            <i className="fas fa-folder-open" />
+          </button>
           <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
             className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200 disabled:opacity-40"
             title="ファイルをアップロード">
