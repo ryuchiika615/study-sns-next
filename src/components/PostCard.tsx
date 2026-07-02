@@ -339,6 +339,33 @@ const PostCard = memo(function PostCard({
               </div>
             )}
 
+            {/* Audio player */}
+            {post.audio_url && (
+              <div className="mt-3 flex items-center gap-2 bg-gray-50 rounded-xl p-2 border border-gray-200">
+                <i className="fas fa-music text-gray-400" />
+                <span className="text-xs text-gray-600 truncate flex-1">{post.audio_name || "音声"}</span>
+                <audio src={post.audio_url} controls className="h-8 w-40" preload="none" />
+                <button onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  const { data: existing } = await supabase.from("audio_bgm")
+                    .select("id").eq("user_id", user.id).eq("audio_url", post.audio_url!).maybeSingle();
+                  if (existing) return;
+                  await supabase.from("audio_bgm").insert({
+                    user_id: user.id,
+                    name: post.audio_name || "共有BGM",
+                    duration_seconds: 0,
+                    audio_url: post.audio_url,
+                    price: 0,
+                  });
+                  window.dispatchEvent(new CustomEvent("bgm-added"));
+                  alert("BGMに追加しました！");
+                }} className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none shrink-0">
+                  BGMに追加
+                </button>
+              </div>
+            )}
+
             {/* Quoted post embed */}
             {post.quoted_post && (
               <Link href={`/post/${post.quoted_post.id}`} className="block mt-3 border border-gray-200 rounded-xl p-3 hover:bg-gray-50 no-underline text-inherit">
@@ -382,6 +409,8 @@ const PostCard = memo(function PostCard({
                       p_study_date: null,
                       p_quote_post_id: post.id,
                       p_silent: quoteSilent,
+                      p_audio_url: null,
+                      p_audio_name: null,
                     });
                     if (!error && data?.post_id) {
                       setShowQuoteForm(false);

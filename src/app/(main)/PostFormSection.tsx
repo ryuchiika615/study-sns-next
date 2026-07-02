@@ -29,6 +29,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [tbPages, setTbPages] = useState("");
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
   const [silentPost, setSilentPost] = useState(false);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const subjectRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +79,25 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       }
     }
 
+    let audioUrl = "";
+    let audioName = "";
+    if (audioFile) {
+      setUploadingAudio(true);
+      const fileExt = audioFile.name.split(".").pop() || "mp3";
+      const fileName = `post/${userId}/${Date.now()}.${fileExt}`;
+      const { error: auErr } = await supabase.storage
+        .from("audio-bgm")
+        .upload(fileName, audioFile);
+      if (!auErr) {
+        const { data: urlData } = supabase.storage.from("audio-bgm").getPublicUrl(fileName);
+        if (urlData?.publicUrl) {
+          audioUrl = urlData.publicUrl;
+          audioName = audioFile.name.replace(/\.[^/.]+$/, "").slice(0, 50);
+        }
+      }
+      setUploadingAudio(false);
+    }
+
     const jstNow = new Date();
     jstNow.setHours(jstNow.getHours() + 9);
     const studyDateVal = studyDate || jstNow.toISOString().split("T")[0];
@@ -90,6 +111,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       p_study_date: studyDateVal,
       p_quote_post_id: null,
       p_silent: silentPost,
+      p_audio_url: audioUrl || null,
+      p_audio_name: audioName || null,
     });
 
     setIsSubmitting(false);
@@ -130,6 +153,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setTbPages("");
     setBeeryualResult(null);
     setSilentPost(false);
+    setAudioFile(null);
 
     if (data?.post_id && !silentPost) {
       fetch("/api/push/follow-post", {
@@ -252,6 +276,22 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           </div>
 
           <input type="file" name="image" accept="image/*" multiple className="mt-2.5 text-sm" />
+
+          <div className="mt-2.5 flex items-center gap-2">
+            <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100">
+              <i className="fas fa-music" />
+              音声ファイルを添付
+              <input type="file" accept="audio/*" className="hidden"
+                onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
+            </label>
+            {audioFile && (
+              <span className="text-xs text-green-600 flex items-center gap-1">
+                <i className="fas fa-check-circle" /> {audioFile.name}
+                <button type="button" onClick={() => setAudioFile(null)} className="text-gray-400 hover:text-red-500 ml-1">&times;</button>
+              </span>
+            )}
+            {uploadingAudio && <span className="text-xs text-gray-400">アップロード中...</span>}
+          </div>
 
           <div className="flex items-center gap-2 mt-2.5">
             <BeeryualCamera userId={userId} supabase={supabase} onResult={setBeeryualResult} />

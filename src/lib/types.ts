@@ -37,6 +37,8 @@ export interface PostWithDetails {
   subject: string;
   study_minutes: number;
   study_date: string | null;
+  audio_url: string | null;
+  audio_name: string | null;
   reply_to_id: string | null;
   quote_post_id: string | null;
   created_at: string;
