@@ -31,13 +31,21 @@ export async function GET() {
     .lte("created_at", weekEnd + "T23:59:59Z")
     .order("created_at", { ascending: true });
 
-  // Debug: log query parameters and results
+  // Debug: total posts for this user (no date filter)
+  const { data: allUserPosts, count: allUserPostsCount } = await admin
+    .from("posts")
+    .select("id, created_at", { count: "exact", head: false })
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(5);
   console.log("[weekly-report debug]", {
     userId: user.id,
     weekStart, weekEnd,
     queryStart: weekStart,
     queryEnd: weekEnd + "T23:59:59Z",
     postsFound: posts?.length || 0,
+    totalUserPosts: allUserPostsCount || 0,
+    recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
     posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, study_minutes_type: typeof p.study_minutes, study_date: p.study_date, created_at: p.created_at })),
   });
 
@@ -164,5 +172,10 @@ export async function GET() {
     aiComment,
     aiError,
     hasGeminiKey,
+    _debug: {
+      allUserPostsCount: allUserPostsCount,
+      recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
+      firstFewPosts: posts?.slice(0, 3).map(p => ({ study_minutes: p.study_minutes, subject: p.subject, study_date: p.study_date, created_at: p.created_at })),
+    },
   });
 }
