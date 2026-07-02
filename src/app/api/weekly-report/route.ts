@@ -129,7 +129,7 @@ export async function GET() {
   const consecutiveDays = profile?.consecutive_post_days || 0;
 
   // AI coaching comment
-  const hasGeminiKey = !!process.env.GEMINI_API_KEY;
+  const hasGeminiKey = !!process.env.GROQ_API_KEY;
   let aiComment: string | null = null;
   let aiError: string | null = null;
   try {
@@ -158,7 +158,7 @@ export async function GET() {
 
     aiComment = await geminiGenerate(prompt);
   } catch (e: any) {
-    console.error("Gemini weekly report error:", e?.message || e);
+    console.error("AI weekly report error:", e?.message || e);
     aiError = e?.message || String(e);
     aiComment = null;
   }
