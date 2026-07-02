@@ -103,10 +103,12 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         return;
       }
       const userBgm = userBgms.find((b) => b.id === bgmId);
-      if (userBgm?.audio_url) {
-        const embed = toYtEmbed(userBgm.audio_url);
+      const localBgm = localBgms.find((b) => b.id === bgmId);
+      const target = userBgm ?? localBgm;
+      if (target?.audio_url) {
+        const embed = toYtEmbed(target.audio_url);
         if (embed) { setYtUrl(embed); return; }
-        const audio = new Audio(userBgm.audio_url);
+        const audio = new Audio(target.audio_url);
         audio.loop = true;
         audio.volume = 0.3;
         audioRef.current = audio;
@@ -120,7 +122,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       }
       setYtUrl("");
     };
-  }, [bgmId]);
+  }, [bgmId, localBgms]);
 
   useEffect(() => {
     if (status === "running" && startTimeRef.current) {
