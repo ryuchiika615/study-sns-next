@@ -35,6 +35,9 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [bgmId, setBgmId] = useState("none");
   const [userBgms, setUserBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlName, setUrlName] = useState("");
+  const [urlValue, setUrlValue] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const supabase = createClient();
@@ -154,6 +157,31 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     setStatus("running");
   }, []);
 
+  const refreshBgms = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const [ownRes, purchasedRes] = await Promise.all([
+      supabase.from("audio_bgm").select("id, name, audio_url").eq("user_id", user.id),
+      supabase.from("purchased_bgm").select("bgm:bgm_id(id, name, audio_url)").eq("user_id", user.id),
+    ]);
+    const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
+    const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
+    setUserBgms([...own, ...purchased]);
+  };
+
+  const addUrlBgm = async () => {
+    if (!urlName.trim() || !urlValue.trim()) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("audio_bgm").insert({
+      user_id: user.id, name: urlName.trim(), duration_seconds: 0, audio_url: urlValue.trim(), price: 0,
+    });
+    setUrlName("");
+    setUrlValue("");
+    setShowUrlInput(false);
+    await refreshBgms();
+  };
+
   const handleStop = useCallback(() => {
     const totalElapsed = pausedElapsedRef.current + (startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0);
     const minutes = Math.floor(totalElapsed / 60);
@@ -185,13 +213,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     await supabase.from("audio_bgm").insert({
       user_id: user.id, name, duration_seconds: 0, audio_url: urlData.publicUrl, price: 0,
     });
-    const [ownRes, purchasedRes] = await Promise.all([
-      supabase.from("audio_bgm").select("id, name, audio_url").eq("user_id", user.id),
-      supabase.from("purchased_bgm").select("bgm:bgm_id(id, name, audio_url)").eq("user_id", user.id),
-    ]);
-    const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
-    const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
-    setUserBgms([...own, ...purchased]);
+    await refreshBgms();
     setUploading(false);
   };
 
@@ -256,11 +278,35 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
           )}
         </select>
         <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={handleFileUpload} />
-        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-          className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200 disabled:opacity-40 shrink-0">
-          {uploading ? "..." : <i className="fas fa-plus" />}
-        </button>
+        <div className="flex gap-1 shrink-0">
+          <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200 disabled:opacity-40"
+            title="ファイルをアップロード">
+            {uploading ? "..." : <i className="fas fa-upload" />}
+          </button>
+          <button onClick={() => setShowUrlInput(true)}
+            className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200"
+            title="URLを追加">
+            <i className="fas fa-link" />
+          </button>
+        </div>
       </div>
+      {showUrlInput && (
+        <div className="flex items-center gap-2 px-1">
+          <input type="text" value={urlName} onChange={(e) => setUrlName(e.target.value)}
+            placeholder="名前" className="flex-1 rounded-lg border-gray-300 text-xs py-1 px-2 w-20" />
+          <input type="url" value={urlValue} onChange={(e) => setUrlValue(e.target.value)}
+            placeholder="音声ファイルのURL" className="flex-[3] rounded-lg border-gray-300 text-xs py-1 px-2" />
+          <button onClick={addUrlBgm} disabled={!urlName.trim() || !urlValue.trim()}
+            className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer disabled:opacity-40">
+            追加
+          </button>
+          <button onClick={() => setShowUrlInput(false)}
+            className="text-xs text-gray-500 cursor-pointer">
+            取消
+          </button>
+        </div>
+      )}
     </div>
   );
 }
