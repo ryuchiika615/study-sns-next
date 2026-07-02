@@ -85,6 +85,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [urlName, setUrlName] = useState("");
   const [urlValue, setUrlValue] = useState("");
   const [ytUrl, setYtUrl] = useState("");
+  const [pendingYtUrl, setPendingYtUrl] = useState("");
   const [localBgms, setLocalBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
@@ -141,18 +142,19 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     const videoId = match[1];
     const listMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     const listParam = listMatch ? `&list=${listMatch[1]}` : "";
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}${listParam}&controls=0&playsinline=1`;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}${listParam}&controls=1&playsinline=1&modestbranding=1`;
   };
 
   useEffect(() => {
     setYtUrl("");
+    setPendingYtUrl("");
     const el = audioElRef.current;
     if (el) { el.pause(); el.src = ""; }
     if (bgmId && bgmId !== "none") {
       const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
       if (preset?.url) {
         const embed = toYtEmbed(preset.url);
-        if (embed) { setYtUrl(embed); return; }
+        if (embed) { setPendingYtUrl(embed); return; }
         if (el) { el.src = preset.url; el.loop = true; el.volume = 0.3; el.play().catch(() => {}); }
         return;
       }
@@ -161,7 +163,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       const target = userBgm ?? localBgm;
       if (target?.audio_url && el) {
         const embed = toYtEmbed(target.audio_url);
-        if (embed) { setYtUrl(embed); return; }
+        if (embed) { setPendingYtUrl(embed); return; }
         el.src = target.audio_url;
         el.loop = true;
         el.volume = 0.3;
@@ -171,6 +173,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     return () => {
       if (el) { el.pause(); el.src = ""; }
       setYtUrl("");
+      setPendingYtUrl("");
     };
   }, [bgmId, localBgms]);
 
@@ -426,10 +429,21 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         </div>
       )}
       <audio ref={audioElRef} className="hidden" />
+      {pendingYtUrl && (
+        <div className="flex items-center gap-2 px-1">
+          <button onClick={() => { setYtUrl(pendingYtUrl); setPendingYtUrl(""); }}
+            className="text-xs bg-red-500 text-white rounded-full px-3 py-1 cursor-pointer hover:bg-red-600 border-none flex items-center gap-1">
+            <i className="fas fa-play" /> YouTube
+          </button>
+          <span className="text-[10px] text-gray-400">タップで再生（🔊オフライン非対応）</span>
+        </div>
+      )}
       {ytUrl && (
-        <iframe ref={iframeRef} src={ytUrl}
-          className="fixed -top-96 left-0 w-[400px] h-[300px] opacity-0 pointer-events-none"
-          allow="autoplay" />
+        <div className="w-full mt-2 px-1">
+          <iframe ref={iframeRef} src={ytUrl}
+            className="w-full rounded-lg border-0" style={{ height: 70 }}
+            allow="autoplay" />
+        </div>
       )}
     </div>
   );
