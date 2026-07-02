@@ -27,26 +27,26 @@ export async function GET() {
     .from("posts")
     .select("study_minutes, subject, study_date, created_at")
     .eq("user_id", user.id)
-    .gte("created_at", weekStart + "T00:00:00Z")
-    .lt("created_at", weekEnd + "T00:00:00Z")
+    .gte("created_at", weekStart)
+    .lte("created_at", weekEnd + "T23:59:59Z")
     .order("created_at", { ascending: true });
 
   // Debug: log query parameters and results
   console.log("[weekly-report debug]", {
     userId: user.id,
     weekStart, weekEnd,
-    queryStart: weekStart + "T00:00:00Z",
-    queryEnd: weekEnd + "T00:00:00Z",
+    queryStart: weekStart,
+    queryEnd: weekEnd + "T23:59:59Z",
     postsFound: posts?.length || 0,
-    posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, study_date: p.study_date, created_at: p.created_at })),
+    posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, study_minutes_type: typeof p.study_minutes, study_date: p.study_date, created_at: p.created_at })),
   });
 
   const { data: prevPosts } = await admin
     .from("posts")
     .select("study_minutes, subject, study_date, created_at")
     .eq("user_id", user.id)
-    .gte("created_at", prevWeekStart + "T00:00:00Z")
-    .lt("created_at", weekStart + "T00:00:00Z")
+    .gte("created_at", prevWeekStart)
+    .lte("created_at", weekStart + "T23:59:59Z")
     .order("created_at", { ascending: true });
 
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
