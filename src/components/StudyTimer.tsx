@@ -84,12 +84,15 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlName, setUrlName] = useState("");
   const [urlValue, setUrlValue] = useState("");
-  const [ytUrl, setYtUrl] = useState("");
-  const [pendingYtUrl, setPendingYtUrl] = useState("");
+  const [ytVideoId, setYtVideoId] = useState("");
+  const [ytPlaylistId, setYtPlaylistId] = useState("");
+  const [ytPlaying, setYtPlaying] = useState(false);
   const [localBgms, setLocalBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const ytPlayerRef = useRef<any>(null);
+  const ytApiReadyRef = useRef(false);
+  const ytContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const localInputRef = useRef<HTMLInputElement | null>(null);
   const supabase = createClient();
@@ -136,25 +139,48 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     })();
   }, []);
 
-  const toYtEmbed = (url: string) => {
-    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|m\.youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if (!match) return null;
-    const videoId = match[1];
-    const listMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    const listParam = listMatch ? `&list=${listMatch[1]}` : "";
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}${listParam}&controls=1&playsinline=1&modestbranding=1`;
+  const extractYtId = (url: string) => {
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|m\.youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (!m) return null;
+    const listM = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    return { videoId: m[1], playlistId: listM ? listM[1] : "" };
   };
 
+  // Load YouTube IFrame API
   useEffect(() => {
-    setYtUrl("");
-    setPendingYtUrl("");
+    if (typeof window !== "undefined" && !document.querySelector("#yt-api-script")) {
+      const tag = document.createElement("script");
+      tag.id = "yt-api-script";
+      tag.src = "https://www.youtube.com/iframe_api";
+      (window as any).onYouTubeIframeAPIReady = () => {
+        ytApiReadyRef.current = true;
+      };
+      document.head.appendChild(tag);
+    }
+  }, []);
+
+  // Play audio or YouTube based on bgmId
+  useEffect(() => {
     const el = audioElRef.current;
     if (el) { el.pause(); el.src = ""; }
+    // Destroy YouTube player
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.destroy(); } catch {}
+      ytPlayerRef.current = null;
+    }
+    if (ytContainerRef.current) {
+      ytContainerRef.current.remove();
+      ytContainerRef.current = null;
+    }
+    setYtVideoId("");
+    setYtPlaylistId("");
+    setYtPlaying(false);
+
     if (bgmId && bgmId !== "none") {
       const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
       if (preset?.url) {
-        const embed = toYtEmbed(preset.url);
-        if (embed) { setPendingYtUrl(embed); return; }
+        const yt = extractYtId(preset.url);
+        if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
         if (el) { el.src = preset.url; el.loop = true; el.volume = 0.3; el.play().catch(() => {}); }
         return;
       }
@@ -162,8 +188,8 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       const localBgm = localBgms.find((b) => b.id === bgmId);
       const target = userBgm ?? localBgm;
       if (target?.audio_url && el) {
-        const embed = toYtEmbed(target.audio_url);
-        if (embed) { setPendingYtUrl(embed); return; }
+        const yt = extractYtId(target.audio_url);
+        if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
         el.src = target.audio_url;
         el.loop = true;
         el.volume = 0.3;
@@ -172,8 +198,14 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     }
     return () => {
       if (el) { el.pause(); el.src = ""; }
-      setYtUrl("");
-      setPendingYtUrl("");
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy(); } catch {}
+        ytPlayerRef.current = null;
+      }
+      if (ytContainerRef.current) {
+        ytContainerRef.current.remove();
+        ytContainerRef.current = null;
+      }
     };
   }, [bgmId, localBgms]);
 
@@ -268,6 +300,39 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     setStatus("idle");
     setDisplay(0);
   }, [onStop]);
+
+  const playYt = () => {
+    if (!ytVideoId) return;
+    setYtPlaying(true);
+    if (ytPlayerRef.current) {
+      ytPlayerRef.current.playVideo();
+      return;
+    }
+    const container = document.createElement("div");
+    container.style.cssText = "position:fixed;top:-9999px;left:0;width:400px;height:300px;opacity:0;pointer-events:none";
+    container.id = "yt-bgm-player";
+    document.body.appendChild(container);
+    ytContainerRef.current = container;
+    const tryCreate = () => {
+      if (!(window as any).YT?.Player) { setTimeout(tryCreate, 200); return; }
+      ytPlayerRef.current = new (window as any).YT.Player("yt-bgm-player", {
+        videoId: ytVideoId,
+        height: 300, width: 400,
+        playerVars: {
+          autoplay: 1, mute: 1, loop: 1,
+          playlist: ytVideoId,
+          controls: 0, playsinline: 1,
+        },
+        events: {
+          onReady: (e: any) => { e.target.mute(); e.target.playVideo(); },
+          onStateChange: (e: any) => {
+            if (e.data === 0) e.target.playVideo(); // loop
+          },
+        },
+      });
+    };
+    tryCreate();
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -429,20 +494,13 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         </div>
       )}
       <audio ref={audioElRef} className="hidden" />
-      {pendingYtUrl && (
-        <div className="flex items-center gap-2 px-1">
-          <button onClick={() => { setYtUrl(pendingYtUrl); setPendingYtUrl(""); }}
+      {ytVideoId && !ytPlaying && (
+        <div className="flex items-center gap-2 px-1 mt-1">
+          <button onClick={playYt}
             className="text-xs bg-red-500 text-white rounded-full px-3 py-1 cursor-pointer hover:bg-red-600 border-none flex items-center gap-1">
-            <i className="fas fa-play" /> YouTube
+            <i className="fas fa-play" /> YouTube BGM
           </button>
-          <span className="text-[10px] text-gray-400">タップで再生（🔊オフライン非対応）</span>
-        </div>
-      )}
-      {ytUrl && (
-        <div className="w-full mt-2 px-1">
-          <iframe ref={iframeRef} src={ytUrl}
-            className="w-full rounded-lg border-0" style={{ height: 70 }}
-            allow="autoplay" />
+          <span className="text-[10px] text-gray-400">タップで再生</span>
         </div>
       )}
     </div>
