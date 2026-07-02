@@ -34,7 +34,9 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [bgmId, setBgmId] = useState("none");
   const [userBgms, setUserBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -165,6 +167,34 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     setDisplay(0);
   }, [onStop]);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setUploading(false); return; }
+    const fileExt = file.name.split(".").pop() || "mp3";
+    const fileName = `bgm/${user.id}/${Date.now()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
+      .from("audio-bgm")
+      .upload(fileName, file);
+    if (uploadError) { setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("audio-bgm").getPublicUrl(fileName);
+    if (!urlData?.publicUrl) { setUploading(false); return; }
+    const name = file.name.replace(/\.[^/.]+$/, "").slice(0, 50);
+    await supabase.from("audio_bgm").insert({
+      user_id: user.id, name, duration_seconds: 0, audio_url: urlData.publicUrl, price: 0,
+    });
+    const [ownRes, purchasedRes] = await Promise.all([
+      supabase.from("audio_bgm").select("id, name, audio_url").eq("user_id", user.id),
+      supabase.from("purchased_bgm").select("bgm:bgm_id(id, name, audio_url)").eq("user_id", user.id),
+    ]);
+    const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
+    const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
+    setUserBgms([...own, ...purchased]);
+    setUploading(false);
+  };
+
   const fmt = (s: number) => {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
@@ -225,6 +255,11 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
             </optgroup>
           )}
         </select>
+        <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={handleFileUpload} />
+        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+          className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200 disabled:opacity-40 shrink-0">
+          {uploading ? "..." : <i className="fas fa-plus" />}
+        </button>
       </div>
     </div>
   );
