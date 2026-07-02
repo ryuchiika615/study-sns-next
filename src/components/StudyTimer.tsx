@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase";
 
 const STORAGE_KEY = "ryutter_timer_start";
 const STORAGE_PAUSED_KEY = "ryutter_timer_paused";
+
+const PRESET_TRACKS = [
+  { id: "none", label: "なし", url: "" },
+  { id: "lofi", label: "Lo-fi", url: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1" },
+  { id: "rain", label: "雨の音", url: "https://www.youtube.com/embed/mPZkdNFk_b4?autoplay=1&loop=1" },
+  { id: "nature", label: "自然", url: "https://www.youtube.com/embed/eKFTSSKCzWA?autoplay=1&loop=1" },
+];
 
 function getStartTime(): number | null {
   if (typeof window === "undefined") return null;
@@ -24,6 +32,10 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const pausedElapsedRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [bgmId, setBgmId] = useState("none");
+  const [userBgms, setUserBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
     const saved = getStartTime();
@@ -38,6 +50,53 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       setStatus("paused");
     }
   }, []);
+
+  useEffect(() => {
+    const loadUserBgms = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const [ownRes, purchasedRes] = await Promise.all([
+        supabase.from("audio_bgm").select("id, name, audio_url").eq("user_id", user.id),
+        supabase.from("purchased_bgm").select("bgm:bgm_id(id, name, audio_url)").eq("user_id", user.id),
+      ]);
+      const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
+      const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
+      setUserBgms([...own, ...purchased]);
+    };
+    loadUserBgms();
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (bgmId && bgmId !== "none") {
+      const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
+      if (preset?.url) {
+        const audio = new Audio(preset.url);
+        audio.loop = true;
+        audio.volume = 0.3;
+        audioRef.current = audio;
+        audio.play().catch(() => {});
+        return;
+      }
+      const userBgm = userBgms.find((b) => b.id === bgmId);
+      if (userBgm?.audio_url) {
+        const audio = new Audio(userBgm.audio_url);
+        audio.loop = true;
+        audio.volume = 0.3;
+        audioRef.current = audio;
+        audio.play().catch(() => {});
+      }
+    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [bgmId]);
 
   useEffect(() => {
     if (status === "running" && startTimeRef.current) {
@@ -114,38 +173,59 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   };
 
   return (
-    <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
-      <span className="text-2xl font-mono font-bold tabular-nums">{fmt(display)}</span>
-      {status === "idle" && (
-        <button onClick={handleStart}
-          className="bg-green-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-green-600">
-          <i className="fas fa-play mr-1" /> 開始
-        </button>
-      )}
-      {status === "running" && (
-        <>
-          <button onClick={handlePause}
-            className="bg-yellow-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-yellow-600">
-            <i className="fas fa-pause mr-1" /> 一時停止
-          </button>
-          <button onClick={handleStop}
-            className="bg-red-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-red-600">
-            <i className="fas fa-stop mr-1" /> 停止
-          </button>
-        </>
-      )}
-      {status === "paused" && (
-        <>
-          <button onClick={handleResume}
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
+        <span className="text-2xl font-mono font-bold tabular-nums">{fmt(display)}</span>
+        {status === "idle" && (
+          <button onClick={handleStart}
             className="bg-green-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-green-600">
-            <i className="fas fa-play mr-1" /> 再開
+            <i className="fas fa-play mr-1" /> 開始
           </button>
-          <button onClick={handleStop}
-            className="bg-red-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-red-600">
-            <i className="fas fa-stop mr-1" /> 停止
-          </button>
-        </>
-      )}
+        )}
+        {status === "running" && (
+          <>
+            <button onClick={handlePause}
+              className="bg-yellow-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-yellow-600">
+              <i className="fas fa-pause mr-1" /> 一時停止
+            </button>
+            <button onClick={handleStop}
+              className="bg-red-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-red-600">
+              <i className="fas fa-stop mr-1" /> 停止
+            </button>
+          </>
+        )}
+        {status === "paused" && (
+          <>
+            <button onClick={handleResume}
+              className="bg-green-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-green-600">
+              <i className="fas fa-play mr-1" /> 再開
+            </button>
+            <button onClick={handleStop}
+              className="bg-red-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-red-600">
+              <i className="fas fa-stop mr-1" /> 停止
+            </button>
+          </>
+        )}
+      </div>
+      {/* BGM */}
+      <div className="flex items-center gap-2 px-1">
+        <i className="fas fa-music text-xs text-gray-400" />
+        <select value={bgmId} onChange={(e) => setBgmId(e.target.value)}
+          className="flex-1 rounded-lg border-gray-300 text-xs py-1">
+          <optgroup label="プリセット">
+            {PRESET_TRACKS.map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </optgroup>
+          {userBgms.length > 0 && (
+            <optgroup label="あなたのBGM">
+              {userBgms.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+      </div>
     </div>
   );
 }
