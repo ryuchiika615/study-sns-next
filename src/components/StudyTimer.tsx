@@ -57,6 +57,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      fetch("/api/study/heartbeat", { method: "DELETE" }).catch(() => {});
     };
   }, [status]);
 
