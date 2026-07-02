@@ -124,9 +124,11 @@ export async function GET() {
 
   const totalPages = (textbookLogs || []).reduce((s, l) => s + (l.pages_completed || 0), 0);
 
-  // Consecutive days this week
-  const { data: profile } = await admin.from("profiles").select("consecutive_post_days").eq("id", user.id).single();
+  // Consecutive days this week & target info
+  const { data: profile } = await admin.from("profiles").select("consecutive_post_days, target_minutes, target_date").eq("id", user.id).single();
   const consecutiveDays = profile?.consecutive_post_days || 0;
+  const targetMinutes = profile?.target_minutes || 0;
+  const targetDate = profile?.target_date || null;
 
   // AI coaching comment
   const hasGeminiKey = !!process.env.GROQ_API_KEY;
@@ -138,7 +140,14 @@ export async function GET() {
     const subjectText = subjects.slice(0, 3).map(s => `${s.subject} ${Math.floor(s.minutes / 60)}h${s.minutes % 60}m`).join("、");
     const bestTimeText = bestHour ? `${bestHour}台` : "不明";
 
-    const prompt = `あなたは勉強コーチです。以下のユーザーの週間データを元に、日本語で2〜3文の励ましとアドバイスを書いてください。
+    const targetText = targetMinutes > 0 && targetDate
+      ? `【目標】${targetDate}までに合計${Math.floor(targetMinutes / 60)}時間${targetMinutes % 60}分`
+      : "【目標】なし";
+    const targetProgress = targetMinutes > 0
+      ? `目標に対する進捗: ${Math.floor(totalMinutes / targetMinutes * 100)}%（残り${Math.floor(Math.max(targetMinutes - totalMinutes, 0) / 60)}時間${Math.max(targetMinutes - totalMinutes, 0) % 60}分）`
+      : "";
+
+    const prompt = `あなたは熱血勉強コーチです。以下のユーザーの週間データを見て、その人だけのオーダーメイドアドバイスを書いてください。テンプレート文章ではなく、この数字に基づいた具体的な改善策を提案してください。もし目標が設定されていたら、目標達成のために今週やるべき具体的な勉強スケジュールを提案してください。マークダウンは使わず、4〜5文程度で。
 
 【週間データ】
 - 今週の合計勉強時間: ${Math.floor(totalMinutes / 60)}時間${totalMinutes % 60}分
@@ -149,12 +158,14 @@ export async function GET() {
 - 最も集中している時間帯: ${bestTimeText}
 - 連続学習日数: ${consecutiveDays}日
 - テキスト進捗: ${totalPages}ページ
+${targetText}
+${targetProgress}
 
 【条件】
-- 「お疲れ様です」などの決まり文句は不要
-- 具体的な数字に触れる
-- 改善点がある場合は優しく提案
-- 2〜3文で簡潔に`;
+- 「お疲れ様です」などの決まり文句は絶対に使わない
+- 必ず具体的な数字に触れること
+- 目標があるなら、「○曜日に△時間やろう」など具体的なスケジュール案を入れる
+- ユーザーにだけ届く特別なアドバイスであること`;
 
     aiComment = await geminiGenerate(prompt);
   } catch (e: any) {
@@ -178,10 +189,5 @@ export async function GET() {
     aiComment,
     aiError,
     hasGeminiKey,
-    _debug: {
-      allUserPostsCount: allUserPostsCount,
-      recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
-      firstFewPosts: posts?.slice(0, 3).map(p => ({ study_minutes: p.study_minutes, subject: p.subject, created_at: p.created_at })),
-    },
   });
 }
