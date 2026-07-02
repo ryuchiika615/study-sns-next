@@ -33,7 +33,7 @@ export default function SignupPage() {
 
     const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "_")}@study-sns.com`;
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data: signUpData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -45,6 +45,34 @@ export default function SignupPage() {
       setError(authError.message);
       setLoading(false);
       return;
+    }
+
+    if (signUpData?.user?.identities?.length === 0) {
+      setError("このユーザーIDは既に使われています");
+      setLoading(false);
+      return;
+    }
+
+    // 自動確認（メール確認がONでも強制確認）
+    if (signUpData?.user) {
+      await fetch("/api/auth/confirm-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: signUpData.user.id }),
+      }).catch(() => {});
+    }
+
+    // メール確認がONの場合、セッションがないので改めてログイン
+    if (!signUpData?.session) {
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (loginError) {
+        setError(loginError.message);
+        setLoading(false);
+        return;
+      }
     }
 
     router.push("/");
