@@ -17,18 +17,23 @@ export async function GET() {
   const monday = new Date(now);
   monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
   monday.setHours(0, 0, 0, 0);
-  const weekStart = monday.toISOString().split("T")[0];
-  const weekEnd = new Date(monday.getTime() + 7 * 86400000).toISOString().split("T")[0];
+  const weekStartStr = monday.toISOString().split("T")[0];
+  const weekEndDate = new Date(monday.getTime() + 7 * 86400000);
+  const weekEndStr = weekEndDate.toISOString().split("T")[0];
 
   const prevWeekStartDate = new Date(monday.getTime() - 7 * 86400000);
-  const prevWeekStart = prevWeekStartDate.toISOString().split("T")[0];
+  const prevWeekStartStr = prevWeekStartDate.toISOString().split("T")[0];
+
+  // Use Date objects instead of strings for reliable timestamptz comparison
+  const weekStartISO = monday.toISOString();
+  const weekEndISO = weekEndDate.toISOString();
 
   const { data: posts } = await admin
     .from("posts")
     .select("study_minutes, subject, study_date, created_at")
     .eq("user_id", user.id)
-    .gte("created_at", weekStart)
-    .lte("created_at", weekEnd + "T23:59:59Z")
+    .gte("created_at", weekStartISO)
+    .lt("created_at", weekEndISO)
     .order("created_at", { ascending: true });
 
   // Debug: total posts for this user (no date filter)
@@ -40,21 +45,22 @@ export async function GET() {
     .limit(5);
   console.log("[weekly-report debug]", {
     userId: user.id,
-    weekStart, weekEnd,
-    queryStart: weekStart,
-    queryEnd: weekEnd + "T23:59:59Z",
+    weekStart: weekStartStr, weekEnd: weekEndStr,
+    queryStart: weekStartISO,
+    queryEnd: weekEndISO,
     postsFound: posts?.length || 0,
     totalUserPosts: allUserPostsCount || 0,
     recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
     posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, study_minutes_type: typeof p.study_minutes, study_date: p.study_date, created_at: p.created_at })),
   });
 
+  const prevWeekStartISO = prevWeekStartDate.toISOString();
   const { data: prevPosts } = await admin
     .from("posts")
     .select("study_minutes, subject, study_date, created_at")
     .eq("user_id", user.id)
-    .gte("created_at", prevWeekStart)
-    .lte("created_at", weekStart + "T23:59:59Z")
+    .gte("created_at", prevWeekStartISO)
+    .lt("created_at", weekStartISO)
     .order("created_at", { ascending: true });
 
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
@@ -99,8 +105,8 @@ export async function GET() {
       .from("habit_logs")
       .select("date, achieved")
       .eq("user_id", user.id)
-      .gte("date", weekStart)
-      .lt("date", weekEnd);
+      .gte("date", weekStartStr)
+      .lt("date", weekEndStr);
     const uniqueDates = new Set((habitLogs || []).filter(l => l.achieved).map(l => l.date));
     const weekDays = Math.min(7, (new Date().getDay() || 7));
     const totalHabitDays = weekDays;
@@ -112,8 +118,8 @@ export async function GET() {
     .from("textbook_progress_logs")
     .select("textbook_id, pages_completed, date, textbooks(title)")
     .eq("user_id", user.id)
-    .gte("date", weekStart)
-    .lt("date", weekEnd)
+    .gte("date", weekStartStr)
+    .lt("date", weekEndStr)
     .order("date", { ascending: true });
 
   const totalPages = (textbookLogs || []).reduce((s, l) => s + (l.pages_completed || 0), 0);
@@ -158,8 +164,8 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    weekStart,
-    weekEnd,
+    weekStart: weekStartStr,
+    weekEnd: weekEndStr,
     totalMinutes,
     prevTotalMinutes,
     postCount,
