@@ -41,7 +41,7 @@ export default function LoginPage() {
       });
 
       if (authError) {
-        setError("ログインに失敗しました。IDかパスワードが違います。");
+        setError(authError.message);
         setLoading(false);
         return;
       }
