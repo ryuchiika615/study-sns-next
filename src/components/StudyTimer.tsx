@@ -38,7 +38,9 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlName, setUrlName] = useState("");
   const [urlValue, setUrlValue] = useState("");
+  const [ytUrl, setYtUrl] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const supabase = createClient();
 
@@ -71,7 +73,17 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     loadUserBgms();
   }, []);
 
+  const toYtEmbed = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (!match) return null;
+    const videoId = match[1];
+    const listMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    const listParam = listMatch ? `&list=${listMatch[1]}` : "";
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}${listParam}&controls=0`;
+  };
+
   useEffect(() => {
+    setYtUrl("");
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -79,6 +91,8 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     if (bgmId && bgmId !== "none") {
       const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
       if (preset?.url) {
+        const embed = toYtEmbed(preset.url);
+        if (embed) { setYtUrl(embed); return; }
         const audio = new Audio(preset.url);
         audio.loop = true;
         audio.volume = 0.3;
@@ -88,6 +102,8 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       }
       const userBgm = userBgms.find((b) => b.id === bgmId);
       if (userBgm?.audio_url) {
+        const embed = toYtEmbed(userBgm.audio_url);
+        if (embed) { setYtUrl(embed); return; }
         const audio = new Audio(userBgm.audio_url);
         audio.loop = true;
         audio.volume = 0.3;
@@ -100,6 +116,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         audioRef.current.pause();
         audioRef.current = null;
       }
+      setYtUrl("");
     };
   }, [bgmId]);
 
@@ -292,20 +309,27 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         </div>
       </div>
       {showUrlInput && (
-        <div className="flex items-center gap-2 px-1">
-          <input type="text" value={urlName} onChange={(e) => setUrlName(e.target.value)}
-            placeholder="名前" className="flex-1 rounded-lg border-gray-300 text-xs py-1 px-2 w-20" />
-          <input type="url" value={urlValue} onChange={(e) => setUrlValue(e.target.value)}
-            placeholder="音声ファイルのURL" className="flex-[3] rounded-lg border-gray-300 text-xs py-1 px-2" />
-          <button onClick={addUrlBgm} disabled={!urlName.trim() || !urlValue.trim()}
-            className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer disabled:opacity-40">
-            追加
-          </button>
-          <button onClick={() => setShowUrlInput(false)}
-            className="text-xs text-gray-500 cursor-pointer">
-            取消
-          </button>
+        <div className="flex flex-col gap-1 px-1">
+          <div className="flex items-center gap-2">
+            <input type="text" value={urlName} onChange={(e) => setUrlName(e.target.value)}
+              placeholder="名前" className="flex-1 rounded-lg border-gray-300 text-xs py-1 px-2" />
+            <input type="url" value={urlValue} onChange={(e) => setUrlValue(e.target.value)}
+              placeholder="YouTubeのURLまたは音声ファイルの直リンク" className="flex-[3] rounded-lg border-gray-300 text-xs py-1 px-2" />
+            <button onClick={addUrlBgm} disabled={!urlName.trim() || !urlValue.trim()}
+              className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer disabled:opacity-40">
+              追加
+            </button>
+            <button onClick={() => setShowUrlInput(false)}
+              className="text-xs text-gray-500 cursor-pointer">
+              取消
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400">YouTubeのURLをそのまま貼れば再生できます（ストレージ消費ゼロ）</p>
         </div>
+      )}
+      {ytUrl && (
+        <iframe ref={iframeRef} src={ytUrl}
+          className="hidden" allow="autoplay" />
       )}
     </div>
   );
