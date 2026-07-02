@@ -87,6 +87,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [ytUrl, setYtUrl] = useState("");
   const [localBgms, setLocalBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const localInputRef = useRef<HTMLInputElement | null>(null);
@@ -135,50 +136,40 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   }, []);
 
   const toYtEmbed = (url: string) => {
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|m\.youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     if (!match) return null;
     const videoId = match[1];
     const listMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     const listParam = listMatch ? `&list=${listMatch[1]}` : "";
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}${listParam}&controls=0`;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}${listParam}&controls=0&playsinline=1`;
   };
 
   useEffect(() => {
     setYtUrl("");
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    const el = audioElRef.current;
+    if (el) { el.pause(); el.src = ""; }
     if (bgmId && bgmId !== "none") {
       const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
       if (preset?.url) {
         const embed = toYtEmbed(preset.url);
         if (embed) { setYtUrl(embed); return; }
-        const audio = new Audio(preset.url);
-        audio.loop = true;
-        audio.volume = 0.3;
-        audioRef.current = audio;
-        audio.play().catch(() => {});
+        if (el) { el.src = preset.url; el.loop = true; el.volume = 0.3; el.play().catch(() => {}); }
         return;
       }
       const userBgm = userBgms.find((b) => b.id === bgmId);
       const localBgm = localBgms.find((b) => b.id === bgmId);
       const target = userBgm ?? localBgm;
-      if (target?.audio_url) {
+      if (target?.audio_url && el) {
         const embed = toYtEmbed(target.audio_url);
         if (embed) { setYtUrl(embed); return; }
-        const audio = new Audio(target.audio_url);
-        audio.loop = true;
-        audio.volume = 0.3;
-        audioRef.current = audio;
-        audio.play().catch(() => {});
+        el.src = target.audio_url;
+        el.loop = true;
+        el.volume = 0.3;
+        el.play().catch(() => {});
       }
     }
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      if (el) { el.pause(); el.src = ""; }
       setYtUrl("");
     };
   }, [bgmId, localBgms]);
@@ -434,9 +425,11 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
           <p className="text-[10px] text-gray-400">YouTubeのURLをそのまま貼れば再生できます（ストレージ消費ゼロ）</p>
         </div>
       )}
+      <audio ref={audioElRef} className="hidden" />
       {ytUrl && (
         <iframe ref={iframeRef} src={ytUrl}
-          className="hidden" allow="autoplay" />
+          className="fixed -top-96 left-0 w-[400px] h-[300px] opacity-0 pointer-events-none"
+          allow="autoplay" />
       )}
     </div>
   );
