@@ -6,6 +6,52 @@ import { createClient } from "@/lib/supabase";
 const STORAGE_KEY = "ryutter_timer_start";
 const STORAGE_PAUSED_KEY = "ryutter_timer_paused";
 
+const DB_NAME = "ryutter-bgm";
+const DB_VER = 1;
+
+function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains("files")) db.createObjectStore("files");
+      if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta");
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSave(id: string, value: unknown, store = "files") {
+  const db = await openDb();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).put(value, id);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function idbGet<T>(id: string, store = "files"): Promise<T | undefined> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readonly");
+    const req = tx.objectStore(store).get(id);
+    req.onsuccess = () => { db.close(); resolve(req.result ?? undefined); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+
+async function idbDel(id: string, store = "files") {
+  const db = await openDb();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).delete(id);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
 const PRESET_TRACKS = [
   { id: "none", label: "なし", url: "" },
   { id: "lofi", label: "Lo-fi", url: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1" },
@@ -73,6 +119,19 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       setUserBgms([...own, ...purchased]);
     };
     loadUserBgms();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const meta = await idbGet<{ id: string; name: string }[]>("list", "meta");
+      if (!meta) return;
+      const entries = await Promise.all(meta.map(async (m) => {
+        const blob = await idbGet<Blob>(m.id);
+        if (!blob) return null;
+        return { id: m.id, name: m.name, audio_url: URL.createObjectURL(blob) };
+      }));
+      setLocalBgms(entries.filter(Boolean) as { id: string; name: string; audio_url: string }[]);
+    })();
   }, []);
 
   const toYtEmbed = (url: string) => {
@@ -238,14 +297,18 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     setUploading(false);
   };
 
-  const handleLocalFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLocalFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const blobUrl = URL.createObjectURL(file);
     const name = file.name.replace(/\.[^/.]+$/, "").slice(0, 50);
     const id = `local-${Date.now()}`;
+    const blobUrl = URL.createObjectURL(file);
     setLocalBgms((prev) => [...prev, { id, name, audio_url: blobUrl }]);
     setBgmId(id);
+    await idbSave(id, file);
+    const meta = (await idbGet<{ id: string; name: string }[]>("list", "meta")) || [];
+    meta.push({ id, name });
+    await idbSave("list", meta, "meta");
   };
 
   const fmt = (s: number) => {
@@ -313,6 +376,23 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </optgroup>
+          )}
+          {localBgms.length > 0 && (
+            <div className="flex flex-wrap gap-1 px-1 pt-1">
+              {localBgms.map((b) => (
+                <span key={b.id} className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-0.5 text-[10px]">
+                  {b.name}
+                  <button onClick={async () => {
+                    URL.revokeObjectURL(b.audio_url);
+                    const meta = (await idbGet<{ id: string; name: string }[]>("list", "meta")) || [];
+                    await idbSave("list", meta.filter((m) => m.id !== b.id), "meta");
+                    await idbDel(b.id);
+                    setLocalBgms((prev) => prev.filter((x) => x.id !== b.id));
+                    if (bgmId === b.id) setBgmId("none");
+                  }} className="text-gray-400 hover:text-red-500 cursor-pointer leading-none">&times;</button>
+                </span>
+              ))}
+            </div>
           )}
         </select>
         <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={handleFileUpload} />
