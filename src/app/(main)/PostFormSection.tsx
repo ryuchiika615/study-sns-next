@@ -28,6 +28,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [textbooks, setTextbooks] = useState<{ id: string; title: string; total_pages: number; pages_completed: number }[]>([]);
   const [tbPages, setTbPages] = useState("");
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+  const [silentPost, setSilentPost] = useState(false);
   const subjectRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +89,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       p_image_urls: imageUrls.length > 0 ? imageUrls : null,
       p_study_date: studyDateVal,
       p_quote_post_id: null,
+      p_silent: silentPost,
     });
 
     setIsSubmitting(false);
@@ -127,8 +129,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setStudyMinutes("");
     setTbPages("");
     setBeeryualResult(null);
+    setSilentPost(false);
 
-    if (data?.post_id) {
+    if (data?.post_id && !silentPost) {
       fetch("/api/push/follow-post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -257,7 +260,12 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             )}
           </div>
 
-          <div className="text-right mt-2.5">
+          <div className="flex items-center justify-between mt-2.5">
+            <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer select-none">
+              <input type="checkbox" checked={silentPost} onChange={(e) => setSilentPost(e.target.checked)}
+                className="accent-gray-400 w-3.5 h-3.5" />
+              通知を送らない
+            </label>
             <button type="submit" disabled={isSubmitting} className="bg-primary text-white font-bold rounded-full px-5 py-2 border-none cursor-pointer text-base disabled:opacity-50">
               リュイートする
             </button>

@@ -57,6 +57,7 @@ const PostCard = memo(function PostCard({
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteContent, setQuoteContent] = useState("");
+  const [quoteSilent, setQuoteSilent] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const swipeStartY = useRef(0);
   const swipeDist = useRef(0);
@@ -362,6 +363,11 @@ const PostCard = memo(function PostCard({
                 <p className="text-xs font-bold text-gray-600 mb-2">引用してリュイート</p>
                 <textarea value={quoteContent} onChange={(e) => setQuoteContent(e.target.value)}
                   className="w-full rounded-lg border-gray-300 text-sm resize-none" rows={2} placeholder="コメントを入力（任意）" />
+                <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer select-none">
+                  <input type="checkbox" checked={quoteSilent} onChange={(e) => setQuoteSilent(e.target.checked)}
+                    className="accent-gray-400 w-3.5 h-3.5" />
+                  通知を送らない
+                </label>
                 <div className="flex gap-2 mt-2">
                   <button onClick={async () => {
                     if (!quoteContent.trim()) return;
@@ -375,21 +381,25 @@ const PostCard = memo(function PostCard({
                       p_image_urls: null,
                       p_study_date: null,
                       p_quote_post_id: post.id,
+                      p_silent: quoteSilent,
                     });
                     if (!error && data?.post_id) {
                       setShowQuoteForm(false);
                       setQuoteContent("");
-                      fetch("/api/push/follow-post", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ post_id: data.post_id }),
-                      }).catch(() => {});
+                      setQuoteSilent(false);
+                      if (!quoteSilent) {
+                        fetch("/api/push/follow-post", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ post_id: data.post_id }),
+                        }).catch(() => {});
+                      }
                       router.refresh();
                     }
                   }} className="bg-primary text-white rounded-full px-4 py-1 text-xs font-bold cursor-pointer">
                     引用リュイート
                   </button>
-                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); }}
+                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); setQuoteSilent(false); }}
                     className="text-gray-500 text-xs bg-none border-none cursor-pointer">
                     キャンセル
                   </button>
