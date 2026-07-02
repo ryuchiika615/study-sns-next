@@ -115,7 +115,9 @@ export async function GET() {
   const consecutiveDays = profile?.consecutive_post_days || 0;
 
   // AI coaching comment
+  const hasGeminiKey = !!process.env.GEMINI_API_KEY;
   let aiComment: string | null = null;
+  let aiError: string | null = null;
   try {
     const diff = totalMinutes - prevTotalMinutes;
     const diffText = diff >= 0 ? `先週より${Math.floor(diff / 60)}時間${diff % 60}分増えました` : `先週より${Math.floor(Math.abs(diff) / 60)}時間${Math.abs(diff) % 60}分減りました`;
@@ -143,6 +145,7 @@ export async function GET() {
     aiComment = await geminiGenerate(prompt);
   } catch (e: any) {
     console.error("Gemini weekly report error:", e?.message || e);
+    aiError = e?.message || String(e);
     aiComment = null;
   }
 
@@ -159,5 +162,7 @@ export async function GET() {
     consecutiveDays,
     bestHour,
     aiComment,
+    aiError,
+    hasGeminiKey,
   });
 }
