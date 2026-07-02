@@ -111,6 +111,12 @@ export default function AdminDashboard() {
             <div className="font-bold text-sm">要望・報告</div>
             <div className="text-xs text-gray-500 mt-1">ユーザーからのフィードバック</div>
           </Link>
+
+          <Link href="/admin/page-analytics" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">📈</div>
+            <div className="font-bold text-sm">ページ分析</div>
+            <div className="text-xs text-gray-500 mt-1">画面遷移を可視化</div>
+          </Link>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
@@ -235,6 +236,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       subscribe();
     }
   }, []);
+
+  // Track page views
+  const pathname = usePathname();
+  const lastPathRef = useRef("");
+
+  useEffect(() => {
+    if (pathname.startsWith("/admin") || pathname.startsWith("/auth") || pathname.startsWith("/api")) return;
+    if (pathname === lastPathRef.current) return;
+    lastPathRef.current = pathname;
+    navigator.sendBeacon("/api/page-visit", JSON.stringify({
+      path: pathname,
+      referrer: document.referrer || null,
+    }));
+  }, [pathname]);
 
   const totalUnread = unreadAnnouncements.length + pendingGifts.length;
 
