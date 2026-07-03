@@ -112,6 +112,12 @@ export default function AdminDashboard() {
             <div className="text-xs text-gray-500 mt-1">ユーザーからのフィードバック</div>
           </Link>
 
+          <Link href="/admin/bgm" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">🎵</div>
+            <div className="font-bold text-sm">BGM管理</div>
+            <div className="text-xs text-gray-500 mt-1">YouTubeリクエスト・プレゼント</div>
+          </Link>
+
           <Link href="/admin/page-analytics" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
             <div className="text-2xl mb-1">📈</div>
             <div className="font-bold text-sm">ページ分析</div>

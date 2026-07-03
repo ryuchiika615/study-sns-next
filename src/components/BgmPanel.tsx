@@ -63,6 +63,9 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [bgms, setBgms] = useState<BgmItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [ytRequestUrl, setYtRequestUrl] = useState("");
+  const [ytRequesting, setYtRequesting] = useState(false);
+  const [ytRequestDone, setYtRequestDone] = useState(false);
   const localInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -214,6 +217,40 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
             {uploading ? "アップロード中..." : <><i className="fas fa-upload" /> アップロード</>}
           </button>
         </div>
+        {!ytRequestUrl && !ytRequestDone && (
+          <button onClick={() => { setYtRequestUrl("dummy"); }}
+            className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 border-none flex items-center justify-center gap-1 w-full">
+            <i className="fab fa-youtube text-red-500" /> YouTubeをリクエスト
+          </button>
+        )}
+        {ytRequestUrl && !ytRequestDone && (
+          <div className="flex items-center gap-2">
+            <input type="url" value={ytRequestUrl === "dummy" ? "" : ytRequestUrl}
+              onChange={(e) => setYtRequestUrl(e.target.value)}
+              placeholder="YouTubeのURLを貼り付け" className="flex-1 rounded-lg border-gray-300 text-xs py-1.5 px-2" />
+            <button onClick={async () => {
+              if (!ytRequestUrl || ytRequestUrl === "dummy") return;
+              setYtRequesting(true);
+              try {
+                await fetch("/api/bgm/request", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
+                });
+                setYtRequestDone(true);
+              } catch {}
+              setYtRequesting(false);
+            }} disabled={ytRequesting || !ytRequestUrl || ytRequestUrl === "dummy"}
+              className="text-xs bg-red-500 text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
+              {ytRequesting ? "送信中..." : "リクエスト"}
+            </button>
+          </div>
+        )}
+        {ytRequestDone && (
+          <p className="text-xs text-green-600 flex items-center gap-1">
+            <i className="fas fa-check-circle" /> 管理者に送信しました。変換されるまでお待ちください。
+          </p>
+        )}
         <Link href="/shop"
           className="block text-center text-xs bg-primary/10 text-primary rounded-full px-3 py-2 hover:bg-primary/20 no-underline">
           <i className="fas fa-shopping-cart mr-1" /> みんなのBGMを探す（ショップへ）
