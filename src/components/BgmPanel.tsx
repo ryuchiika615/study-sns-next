@@ -163,7 +163,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-white">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
         <h2 className="text-base font-bold flex items-center gap-2">
           <i className="fas fa-music text-primary" /> マイBGM
         </h2>
@@ -172,89 +172,91 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
-        {bgms.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">BGMがありません</p>
-        )}
-        {bgms.map((item) => (
-          <div key={item.id} className={`flex items-center gap-3 p-2 rounded-xl ${
-            activeId === item.id ? "bg-primary/10 border border-primary/30" : "hover:bg-gray-50"
-          }`}>
-            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
-              <i className="fas fa-music" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{item.name}</p>
-              <p className="text-[10px] text-gray-400">{sourceLabel(item.source)}</p>
-            </div>
-            <div className="flex gap-1 shrink-0">
-              <button onClick={() => selectBgm(item)}
-                className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none">
-                {activeId === item.id ? "使用中" : "使う"}
-              </button>
-              {(item.source === "own" || item.source === "local") && (
-                <button onClick={() => deleteBgm(item)}
-                  className="text-xs text-red-500 hover:bg-red-50 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
-                  title="削除">
-                  <i className="fas fa-trash-alt" />
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-4 space-y-1">
+          {bgms.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-8">BGMがありません</p>
+          )}
+          {bgms.map((item) => (
+            <div key={item.id} className={`flex items-center gap-3 p-2 rounded-xl ${
+              activeId === item.id ? "bg-primary/10 border border-primary/30" : "hover:bg-gray-50"
+            }`}>
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+                <i className="fas fa-music" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{item.name}</p>
+                <p className="text-[10px] text-gray-400">{sourceLabel(item.source)}</p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <button onClick={() => selectBgm(item)}
+                  className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none">
+                  {activeId === item.id ? "使用中" : "使う"}
                 </button>
-              )}
+                {(item.source === "own" || item.source === "local") && (
+                  <button onClick={() => deleteBgm(item)}
+                    className="text-xs text-red-500 hover:bg-red-50 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
+                    title="削除">
+                    <i className="fas fa-trash-alt" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="border-t border-gray-200 p-4 space-y-2">
-        <div className="flex gap-2">
-          <input ref={localInputRef} type="file" accept="audio/*" className="hidden" onChange={handleLocalFile} />
-          <button onClick={() => localInputRef.current?.click()}
-            className="flex-1 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 border-none flex items-center justify-center gap-1">
-            <i className="fas fa-folder-open" /> ローカルファイル
-          </button>
-          <input ref={uploadInputRef} type="file" accept="audio/*" className="hidden" onChange={handleUpload} />
-          <button onClick={() => uploadInputRef.current?.click()} disabled={uploading}
-            className="flex-1 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 disabled:opacity-40 border-none flex items-center justify-center gap-1">
-            {uploading ? "アップロード中..." : <><i className="fas fa-upload" /> アップロード</>}
-          </button>
+          ))}
         </div>
-        {!ytRequestUrl && !ytRequestDone && (
-          <button onClick={() => { setYtRequestUrl("dummy"); }}
-            className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 border-none flex items-center justify-center gap-1 w-full">
-            <i className="fab fa-youtube text-red-500" /> YouTubeをリクエスト
-          </button>
-        )}
-        {ytRequestUrl && !ytRequestDone && (
-          <div className="flex items-center gap-2">
-            <input type="url" value={ytRequestUrl === "dummy" ? "" : ytRequestUrl}
-              onChange={(e) => setYtRequestUrl(e.target.value)}
-              placeholder="YouTubeのURLを貼り付け" className="flex-1 rounded-lg border-gray-300 text-xs py-1.5 px-2" />
-            <button onClick={async () => {
-              if (!ytRequestUrl || ytRequestUrl === "dummy") return;
-              setYtRequesting(true);
-              try {
-                await fetch("/api/bgm/request", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
-                });
-                setYtRequestDone(true);
-              } catch {}
-              setYtRequesting(false);
-            }} disabled={ytRequesting || !ytRequestUrl || ytRequestUrl === "dummy"}
-              className="text-xs bg-red-500 text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
-              {ytRequesting ? "送信中..." : "リクエスト"}
+
+        <div className="border-t border-gray-200 p-4 space-y-2">
+          <div className="flex gap-2">
+            <input ref={localInputRef} type="file" accept="audio/*" className="hidden" onChange={handleLocalFile} />
+            <button onClick={() => localInputRef.current?.click()}
+              className="flex-1 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 border-none flex items-center justify-center gap-1">
+              <i className="fas fa-folder-open" /> ローカルファイル
+            </button>
+            <input ref={uploadInputRef} type="file" accept="audio/*" className="hidden" onChange={handleUpload} />
+            <button onClick={() => uploadInputRef.current?.click()} disabled={uploading}
+              className="flex-1 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 disabled:opacity-40 border-none flex items-center justify-center gap-1">
+              {uploading ? "アップロード中..." : <><i className="fas fa-upload" /> アップロード</>}
             </button>
           </div>
-        )}
-        {ytRequestDone && (
-          <p className="text-xs text-green-600 flex items-center gap-1">
-            <i className="fas fa-check-circle" /> 管理者に送信しました。変換されるまでお待ちください。
-          </p>
-        )}
-        <Link href="/shop"
-          className="block text-center text-xs bg-primary/10 text-primary rounded-full px-3 py-2 hover:bg-primary/20 no-underline">
-          <i className="fas fa-shopping-cart mr-1" /> みんなのBGMを探す（ショップへ）
-        </Link>
+          {!ytRequestUrl && !ytRequestDone && (
+            <button onClick={() => { setYtRequestUrl("dummy"); }}
+              className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 border-none flex items-center justify-center gap-1 w-full">
+              <i className="fab fa-youtube text-red-500" /> YouTubeをリクエスト
+            </button>
+          )}
+          {ytRequestUrl && !ytRequestDone && (
+            <div className="flex items-center gap-2">
+              <input type="url" value={ytRequestUrl === "dummy" ? "" : ytRequestUrl}
+                onChange={(e) => setYtRequestUrl(e.target.value)}
+                placeholder="YouTubeのURLを貼り付け" className="flex-1 rounded-lg border-gray-300 text-xs py-1.5 px-2" />
+              <button onClick={async () => {
+                if (!ytRequestUrl || ytRequestUrl === "dummy") return;
+                setYtRequesting(true);
+                try {
+                  await fetch("/api/bgm/request", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
+                  });
+                  setYtRequestDone(true);
+                } catch {}
+                setYtRequesting(false);
+              }} disabled={ytRequesting || !ytRequestUrl || ytRequestUrl === "dummy"}
+                className="text-xs bg-red-500 text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
+                {ytRequesting ? "送信中..." : "リクエスト"}
+              </button>
+            </div>
+          )}
+          {ytRequestDone && (
+            <p className="text-xs text-green-600 flex items-center gap-1">
+              <i className="fas fa-check-circle" /> 管理者に送信しました。変換されるまでお待ちください。
+            </p>
+          )}
+          <Link href="/shop"
+            className="block text-center text-xs bg-primary/10 text-primary rounded-full px-3 py-2 hover:bg-primary/20 no-underline">
+            <i className="fas fa-shopping-cart mr-1" /> みんなのBGMを探す（ショップへ）
+          </Link>
+        </div>
       </div>
     </div>
   );
