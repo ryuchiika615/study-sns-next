@@ -64,6 +64,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [ytRequestUrl, setYtRequestUrl] = useState("");
+  const [ytRequestTitle, setYtRequestTitle] = useState("");
   const [ytRequesting, setYtRequesting] = useState(false);
   const [ytRequestDone, setYtRequestDone] = useState(false);
   const [ytError, setYtError] = useState("");
@@ -277,7 +278,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
           {!ytRequestUrl && !ytRequestDone && (
-            <button onClick={() => { setYtRequestUrl("dummy"); }}
+            <button onClick={() => { setYtRequestUrl("dummy"); setYtRequestTitle(""); }}
               className="text-xs bg-red-50 text-red-600 rounded-full px-3 py-2 cursor-pointer hover:bg-red-100 border-none flex items-center justify-center gap-1 w-full">
               <i className="fab fa-youtube" /> YouTubeのURLから追加
             </button>
@@ -287,6 +288,9 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
               <input type="url" value={ytRequestUrl === "dummy" ? "" : ytRequestUrl}
                 onChange={(e) => { setYtRequestUrl(e.target.value); setYtError(""); }}
                 placeholder="YouTubeのURLを貼り付け" className="w-full rounded-lg border-gray-300 text-xs py-1.5 px-2" />
+              <input type="text" value={ytRequestTitle}
+                onChange={(e) => setYtRequestTitle(e.target.value)}
+                placeholder="曲名（省略可）" className="w-full rounded-lg border-gray-300 text-xs py-1.5 px-2" />
               <div className="flex gap-2">
                 <button onClick={async () => {
                   if (!ytRequestUrl || ytRequestUrl === "dummy") return;
@@ -296,7 +300,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                     const res = await fetch("/api/bgm/youtube-convert", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
+                      body: JSON.stringify({ youtubeUrl: ytRequestUrl, title: ytRequestTitle || undefined }),
                     });
                     const data = await res.json();
                     if (!res.ok) { setYtError(data.error || "変換失敗"); setYtRequesting(false); return; }
@@ -317,7 +321,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                     const res = await fetch("/api/bgm/request", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
+                      body: JSON.stringify({ youtubeUrl: ytRequestUrl, title: ytRequestTitle || undefined }),
                     });
                     if (!res.ok) { setYtError("送信失敗"); setYtRequesting(false); return; }
                     setYtRequestDone(true);
@@ -336,7 +340,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
               <p className="flex-1 text-xs text-green-600 flex items-center gap-1">
                 <i className="fas fa-check-circle" /> マイBGMに追加しました！
               </p>
-              <button onClick={() => { setYtRequestUrl("dummy"); setYtRequestDone(false); setYtError(""); }}
+              <button onClick={() => { setYtRequestUrl("dummy"); setYtRequestTitle(""); setYtRequestDone(false); setYtError(""); }}
                 className="text-xs text-gray-500 cursor-pointer bg-transparent border-none hover:text-gray-700">
                 他のURL
               </button>

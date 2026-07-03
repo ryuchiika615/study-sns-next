@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { youtubeUrl } = await request.json();
+    const { youtubeUrl, title: customTitle } = await request.json();
     if (!youtubeUrl || (!youtubeUrl.includes("youtube.com") && !youtubeUrl.includes("youtu.be"))) {
       return NextResponse.json({ error: "有効なYouTubeのURLを入力してください" }, { status: 400 });
     }
@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
     const videoId = new URL(youtubeUrl).searchParams.get("v") || youtubeUrl.split("youtu.be/")[1]?.split("?")[0];
     if (!videoId) return NextResponse.json({ error: "動画IDが見つかりません" }, { status: 400 });
 
-    const { buffer, title, duration } = await tryDownload(videoId);
+    const { buffer, title: extractedTitle, duration } = await tryDownload(videoId);
+    const title = customTitle || extractedTitle;
 
     const fileName = `bgm/${user.id}/youtube-${Date.now()}.mp3`;
 
