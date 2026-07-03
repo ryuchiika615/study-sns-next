@@ -89,11 +89,20 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [ytPlaying, setYtPlaying] = useState(false);
   const [localBgms, setLocalBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const [cachedBgms, setCachedBgms] = useState<Set<string>>(new Set());
+  const [albumMode, setAlbumMode] = useState(false);
+  const [albumTracks, setAlbumTracks] = useState<any[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [albumShuffle, setAlbumShuffle] = useState(false);
+  const [albumName, setAlbumName] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const ytPlayerRef = useRef<any>(null);
   const ytApiReadyRef = useRef(false);
   const ytContainerRef = useRef<HTMLDivElement | null>(null);
+  const currentTrackIndexRef = useRef(0);
+  const albumTracksRef = useRef<any[]>([]);
+  const albumShuffleRef = useRef(false);
+  const albumModeRef = useRef(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -150,7 +159,36 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   useEffect(() => {
     const onSelect = (e: Event) => {
       const id = (e as CustomEvent).detail;
+      setAlbumMode(false);
+      setAlbumTracks([]);
       setBgmId(id);
+    };
+    const onAlbumPlay = async (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const { id: albumId, shuffle } = detail;
+      setAlbumMode(false);
+      setAlbumTracks([]);
+      setBgmId("none");
+      try {
+        const res = await fetch(`/api/bgm/albums/${albumId}`);
+        if (!res.ok) return;
+        const albumData = await res.json();
+        setAlbumName(albumData.name || "");
+      } catch {}
+      const itemsRes = await fetch(`/api/bgm/albums/${albumId}/items`);
+      if (!itemsRes.ok) return;
+      const { data: items } = await itemsRes.json();
+      if (!items?.length) return;
+      setAlbumTracks(items);
+      albumTracksRef.current = items;
+      setAlbumShuffle(shuffle);
+      albumShuffleRef.current = shuffle;
+      const startIdx = shuffle ? Math.floor(Math.random() * items.length) : 0;
+      setCurrentTrackIndex(startIdx);
+      currentTrackIndexRef.current = startIdx;
+      setAlbumMode(true);
+      albumModeRef.current = true;
+      // Play will be triggered by the effect below
     };
     const onRefresh = () => {
       setUserBgms([]);
@@ -187,9 +225,11 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       });
     };
     window.addEventListener("bgm-select", onSelect);
+    window.addEventListener("bgm-album-play", onAlbumPlay);
     window.addEventListener("bgm-list-changed", onRefresh);
     return () => {
       window.removeEventListener("bgm-select", onSelect);
+      window.removeEventListener("bgm-album-play", onAlbumPlay);
       window.removeEventListener("bgm-list-changed", onRefresh);
     };
   }, []);
@@ -214,11 +254,25 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     }
   }, []);
 
-  // Play audio or YouTube based on bgmId
-  useEffect(() => {
+  // Advance to next track in album
+  const advanceTrack = useCallback(() => {
+    const tracks = albumTracksRef.current;
+    if (!tracks.length) return;
+    const shuffle = albumShuffleRef.current;
+    let nextIdx: number;
+    if (shuffle) {
+      do { nextIdx = Math.floor(Math.random() * tracks.length); } while (tracks.length > 1 && nextIdx === currentTrackIndexRef.current);
+    } else {
+      nextIdx = (currentTrackIndexRef.current + 1) % tracks.length;
+    }
+    currentTrackIndexRef.current = nextIdx;
+    setCurrentTrackIndex(nextIdx);
+  }, []);
+
+  // Play track from album
+  const playTrack = useCallback(async (track: any) => {
     const el = audioElRef.current;
-    if (el) { el.pause(); el.src = ""; }
-    // Destroy YouTube player
+    if (!el) return;
     if (ytPlayerRef.current) {
       try { ytPlayerRef.current.destroy(); } catch {}
       ytPlayerRef.current = null;
@@ -231,52 +285,133 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     setYtPlaylistId("");
     setYtPlaying(false);
 
-    if (bgmId && bgmId !== "none") {
-      const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
-      if (preset?.url) {
-        const yt = extractYtId(preset.url);
-        if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
-        if (el) { el.src = preset.url; el.loop = true; el.volume = 0.3; el.play().catch(() => {}); }
-        return;
+    const yt = track.youtube_url ? extractYtId(track.youtube_url) : extractYtId(track.audio_url);
+    if (yt) {
+      const vid = yt.videoId;
+      setYtVideoId(vid);
+      setYtPlaylistId(yt.playlistId);
+      setTimeout(() => {
+        setYtPlaying(true);
+        if (ytPlayerRef.current) {
+          ytPlayerRef.current.playVideo();
+          return;
+        }
+        const container = document.createElement("div");
+        container.style.cssText = "position:fixed;top:-9999px;left:0;width:400px;height:300px;opacity:0;pointer-events:none";
+        container.id = "yt-bgm-player";
+        document.body.appendChild(container);
+        ytContainerRef.current = container;
+        const tryCreate = () => {
+          if (!(window as any).YT?.Player) { setTimeout(tryCreate, 200); return; }
+          ytPlayerRef.current = new (window as any).YT.Player("yt-bgm-player", {
+            videoId: vid,
+            height: 300, width: 400,
+            playerVars: {
+              autoplay: 1, loop: 0,
+              controls: 0, playsinline: 1,
+            },
+            events: {
+              onReady: (e: any) => { e.target.playVideo(); },
+              onStateChange: (e: any) => {
+                if (e.data === 0) advanceTrack();
+              },
+            },
+          });
+        };
+        tryCreate();
+      }, 50);
+      return;
+    }
+
+    let audioSrc = track.audio_url;
+    if (track.source_type === "local" && track.local_key) {
+      const blob = await idbGet<Blob>(track.local_key);
+      if (blob) audioSrc = URL.createObjectURL(blob);
+    } else if (track.audio_url && !track.audio_url.startsWith("local://")) {
+      const cacheKey = "cache-" + track.audio_url;
+      let blob = await idbGet<Blob>(cacheKey);
+      if (!blob) {
+        try {
+          const res = await fetch(track.audio_url);
+          blob = await res.blob();
+          await idbSave(cacheKey, blob);
+        } catch {}
       }
-      const userBgm = userBgms.find((b) => b.id === bgmId);
-      const localBgm = localBgms.find((b) => b.id === bgmId);
-      const target = userBgm ?? localBgm;
-      if (target?.audio_url && el) {
-        const yt = extractYtId(target.audio_url);
-        if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
-        (async () => {
-          // オフラインキャッシュをチェック
-          const cacheKey = "cache-" + target.audio_url;
-          let blob = await idbGet<Blob>(cacheKey);
-          if (!blob) {
-            try {
-              const res = await fetch(target.audio_url);
-              blob = await res.blob();
-              await idbSave(cacheKey, blob);
-            } catch {}
-          }
-          if (el) {
-            el.src = blob ? URL.createObjectURL(blob) : target.audio_url;
-            el.loop = true;
-            el.volume = 0.3;
-            el.play().catch(() => {});
-          }
-        })();
+      if (blob) audioSrc = URL.createObjectURL(blob);
+    }
+    el.src = audioSrc;
+    el.loop = false;
+    el.volume = 0.3;
+    el.onended = () => advanceTrack();
+    el.play().catch(() => {});
+  }, [advanceTrack]);
+
+  // Play single BGM (non-album mode)
+  const playSingleBgm = useCallback(async (targetId: string) => {
+    const el = audioElRef.current;
+    if (el) { el.pause(); el.src = ""; el.onended = null; }
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.destroy(); } catch {}
+      ytPlayerRef.current = null;
+    }
+    if (ytContainerRef.current) {
+      ytContainerRef.current.remove();
+      ytContainerRef.current = null;
+    }
+    setYtVideoId("");
+    setYtPlaylistId("");
+    setYtPlaying(false);
+
+    if (targetId === "none") return;
+
+    const preset = PRESET_TRACKS.find((t) => t.id === targetId);
+    if (preset?.url) {
+      const yt = extractYtId(preset.url);
+      if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
+      if (el) { el.src = preset.url; el.loop = true; el.volume = 0.3; el.play().catch(() => {}); }
+      return;
+    }
+    const userBgm = userBgms.find((b) => b.id === targetId);
+    const localBgm = localBgms.find((b) => b.id === targetId);
+    const target = userBgm ?? localBgm;
+    if (target?.audio_url && el) {
+      const yt = extractYtId(target.audio_url);
+      if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
+      const cacheKey = "cache-" + target.audio_url;
+      let blob = await idbGet<Blob>(cacheKey);
+      if (!blob) {
+        try {
+          const res = await fetch(target.audio_url);
+          blob = await res.blob();
+          await idbSave(cacheKey, blob);
+        } catch {}
+      }
+      if (el) {
+        el.src = blob ? URL.createObjectURL(blob) : target.audio_url;
+        el.loop = true;
+        el.volume = 0.3;
+        el.play().catch(() => {});
       }
     }
-    return () => {
-      if (el) { el.pause(); el.src = ""; }
-      if (ytPlayerRef.current) {
-        try { ytPlayerRef.current.destroy(); } catch {}
-        ytPlayerRef.current = null;
-      }
-      if (ytContainerRef.current) {
-        ytContainerRef.current.remove();
-        ytContainerRef.current = null;
-      }
-    };
-  }, [bgmId, localBgms]);
+  }, [userBgms, localBgms]);
+
+  // Sync refs when state changes
+  useEffect(() => { albumModeRef.current = albumMode; }, [albumMode]);
+  useEffect(() => { albumTracksRef.current = albumTracks; }, [albumTracks]);
+  useEffect(() => { albumShuffleRef.current = albumShuffle; }, [albumShuffle]);
+  useEffect(() => { currentTrackIndexRef.current = currentTrackIndex; }, [currentTrackIndex]);
+
+  useEffect(() => {
+    if (albumMode) return;
+    playSingleBgm(bgmId);
+  }, [bgmId, playSingleBgm, localBgms, albumMode]);
+
+  useEffect(() => {
+    if (!albumMode) return;
+    const tracks = albumTracks;
+    if (!tracks.length || currentTrackIndex >= tracks.length) return;
+    playTrack(tracks[currentTrackIndex]);
+  }, [currentTrackIndex, playTrack, albumMode, albumTracks]);
 
   useEffect(() => {
     if (status === "running" && startTimeRef.current) {
@@ -451,6 +586,21 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       {/* BGM */}
       <div className="flex items-center gap-2 px-1">
         <i className="fas fa-music text-xs text-gray-400" />
+        {albumMode ? (
+          <div className="flex-1 flex items-center gap-2 text-xs text-indigo-600">
+            <i className="fas fa-compact-disc" />
+            <span className="font-medium truncate">{albumName}</span>
+            <span className="text-gray-400">
+              {currentTrackIndex + 1} / {albumTracks.length}
+              {albumShuffle && <span className="ml-1">🔀</span>}
+            </span>
+            <button onClick={() => { setAlbumMode(false); setAlbumTracks([]); setBgmId("none"); }}
+              className="text-xs text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none ml-auto">
+              <i className="fas fa-times" /> 解除
+            </button>
+          </div>
+        ) : (
+          <>
         <select value={bgmId} onChange={(e) => setBgmId(e.target.value)}
           className="flex-1 rounded-lg border-gray-300 text-xs py-1">
           <optgroup label="プリセット">
@@ -502,6 +652,8 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
           title="YouTubeのURLを追加">
           <i className="fas fa-link" />
         </button>
+          </>
+        )}
       </div>
       {showUrlInput && (
         <div className="flex flex-col gap-1 px-1">

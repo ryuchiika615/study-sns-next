@@ -71,6 +71,8 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [ytError, setYtError] = useState("");
   const [cachingId, setCachingId] = useState<string | null>(null);
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const localInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -154,6 +156,34 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
       user_id: user.id, name, duration_seconds: 0, audio_url: urlData.publicUrl, price: 0,
     });
     setUploading(false);
+    window.dispatchEvent(new CustomEvent("bgm-list-changed"));
+    loadAll();
+  };
+
+  const startRename = (item: BgmItem) => {
+    setRenamingId(item.id);
+    setRenameValue(item.name);
+  };
+
+  const saveRename = async (item: BgmItem) => {
+    if (!renameValue.trim()) return;
+    if (item.source === "own" && item.dbId) {
+      await fetch("/api/bgm/rename", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.dbId, name: renameValue.trim() }),
+      });
+    }
+    if (item.source === "local") {
+      const meta = (await idbGet<{ id: string; name: string }[]>("list", "meta")) || [];
+      const idx = meta.findIndex((m) => m.id === item.id);
+      if (idx >= 0) {
+        meta[idx].name = renameValue.trim().slice(0, 50);
+        await idbSave("list", meta, "meta");
+      }
+    }
+    setRenamingId(null);
+    setRenameValue("");
     window.dispatchEvent(new CustomEvent("bgm-list-changed"));
     loadAll();
   };
@@ -258,30 +288,55 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                 <i className={`fas ${isCached ? "fa-check-circle" : "fa-music"}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.name}</p>
+                {renamingId === item.id ? (
+                  <div className="flex items-center gap-1">
+                    <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)}
+                      className="flex-1 rounded border-gray-300 text-sm py-0.5 px-1 min-w-0"
+                      autoFocus onKeyDown={(e) => { if (e.key === "Enter") saveRename(item); if (e.key === "Escape") setRenamingId(null); }} />
+                    <button onClick={() => saveRename(item)}
+                      className="text-xs text-green-600 cursor-pointer bg-transparent border-none p-1">
+                      <i className="fas fa-check" />
+                    </button>
+                    <button onClick={() => setRenamingId(null)}
+                      className="text-xs text-gray-400 cursor-pointer bg-transparent border-none p-1">
+                      <i className="fas fa-times" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium truncate">{item.name}</p>
+                )}
                 <p className={`text-[10px] ${isCached ? "text-green-600" : "text-gray-400"} flex items-center gap-1`}>
                   {isCached && <i className="fas fa-wifi-slash" />}
                   {sourceLabel(item.source, isCached)}
                 </p>
               </div>
               <div className="flex gap-1 shrink-0">
-                <button onClick={() => selectBgm(item)}
-                  className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none">
-                  {activeId === item.id ? "使用中" : "使う"}
-                </button>
-                {item.source !== "local" && !isCached && (
+                {renamingId !== item.id && (
+                  <button onClick={() => selectBgm(item)}
+                    className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none">
+                    {activeId === item.id ? "使用中" : "使う"}
+                  </button>
+                )}
+                {(item.source === "own" || item.source === "local") && renamingId !== item.id && (
+                  <button onClick={() => startRename(item)}
+                    className="text-xs text-gray-500 hover:bg-gray-100 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
+                    title="名前を変更">
+                    <i className="fas fa-pencil-alt" />
+                  </button>
+                )}
+                {item.source !== "local" && !isCached && renamingId !== item.id && (
                   <button onClick={() => cacheBgm(item)} disabled={cachingId === item.id}
                     className="text-xs text-gray-500 hover:bg-gray-100 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
                     title="オフライン保存">
                     <i className={`fas ${cachingId === item.id ? "fa-spinner fa-spin" : "fa-download"}`} />
                   </button>
                 )}
-                {isCached && (
+                {isCached && renamingId !== item.id && (
                   <span className="text-[10px] text-green-600 flex items-center px-1">
                     <i className="fas fa-check-circle" />
                   </span>
                 )}
-                {(item.source === "own" || item.source === "local") && (
+                {(item.source === "own" || item.source === "local") && renamingId !== item.id && (
                   <button onClick={() => deleteBgm(item)}
                     className="text-xs text-red-500 hover:bg-red-50 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
                     title="削除">
