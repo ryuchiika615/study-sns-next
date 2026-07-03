@@ -27,8 +27,12 @@ const supabase = createClient(supabaseUrl, serviceKey, {
 const outPath = join(tmpdir(), `ytbgm-${Date.now()}.mp3`);
 
 try {
-  console.log("ダウンロード中...");
-  execSync(`yt-dlp -x --audio-format mp3 -o "${outPath}" "${youtubeUrl}"`, { stdio: "inherit" });
+  console.log("タイトル取得中...");
+  const titleRaw = execSync(`C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp --print "%(title)s" "${youtubeUrl}"`, { encoding: "utf-8" });
+  const title = (titleRaw || "").trim().slice(0, 50) || "YouTube BGM";
+
+  console.log(`「${title}」をダウンロード中...`);
+  execSync(`C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp -x --audio-format mp3 -o "${outPath}" "${youtubeUrl}"`, { stdio: "inherit" });
 
   const buffer = readFileSync(outPath);
   const fileName = `bgm/${userId}/youtube-${Date.now()}.mp3`;
@@ -42,8 +46,6 @@ try {
 
   const { data: urlData } = supabase.storage.from("audio-bgm").getPublicUrl(fileName);
   if (!urlData?.publicUrl) throw new Error("公開URLの取得に失敗");
-
-  const title = youtubeUrl.split("/").pop()?.slice(0, 50) || "YouTube BGM";
 
   console.log("データベースに保存中...");
   const { error: insertError } = await supabase.from("audio_bgm").insert({

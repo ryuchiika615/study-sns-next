@@ -21,10 +21,10 @@ const supabase = createClient(supabaseUrl, serviceKey, {
 async function convert(youtubeUrl, userId, requestId, res) {
   const outPath = join(tmpdir(), `ytbgm-${Date.now()}.mp3`);
   try {
-    const info = execSync(`yt-dlp --print "%(title)s" "${youtubeUrl}"`, { encoding: "utf-8" });
+    const info = execSync(`C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp --print "%(title)s" "${youtubeUrl}"`, { encoding: "utf-8" });
     const title = info.trim().slice(0, 50) || "YouTube BGM";
 
-    execSync(`yt-dlp -x --audio-format mp3 -o "${outPath}" "${youtubeUrl}"`, { stdio: "inherit" });
+    execSync(`C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp -x --audio-format mp3 -o "${outPath}" "${youtubeUrl}"`, { stdio: "inherit" });
 
     const buffer = readFileSync(outPath);
     const fileName = `bgm/${userId}/youtube-${Date.now()}.mp3`;
