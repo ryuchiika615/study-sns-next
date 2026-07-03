@@ -228,7 +228,7 @@ const PostCard = memo(function PostCard({
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`} data-icon={post.current_avatar?.name?.replace("【アイコン】", "") || ""}>
             {post.user?.icon_url ? (
-              <Image src={getOptimizedIconUrl(post.user.icon_url, 256)} width={48} height={48} className="rounded-full object-cover border-2 border-white" alt="" />
+              <Image src={getOptimizedIconUrl(post.user.icon_url, 320)} width={48} height={48} className="rounded-full object-cover border-2 border-white" alt="" />
             ) : (
               <i className="fas fa-user-circle text-4xl text-gray-300" />
             )}

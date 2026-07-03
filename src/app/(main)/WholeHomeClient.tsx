@@ -423,7 +423,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
                     {i === 0 ? "👑" : `#${i + 1}`}
                   </span>
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                    {entry.user?.icon_url ? <NextImage src={getOptimizedIconUrl(entry.user.icon_url, 120)} width={32} height={32} className="rounded-full object-cover" alt="" />
+                    {entry.user?.icon_url ? <NextImage src={getOptimizedIconUrl(entry.user.icon_url, 192)} width={32} height={32} className="rounded-full object-cover" alt="" loading="lazy" />
                       : <div className="w-full h-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-xs" /></div>}
                   </div>
                   <div className="flex-1 min-w-0">
