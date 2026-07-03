@@ -635,6 +635,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
                 <span key={b.id} className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-0.5 text-[10px]">
                   {b.name}
                   <button onClick={async () => {
+                    if (!window.confirm("このBGMを削除しますか？")) return;
                     URL.revokeObjectURL(b.audio_url);
                     const meta = (await idbGet<{ id: string; name: string }[]>("list", "meta")) || [];
                     await idbSave("list", meta.filter((m) => m.id !== b.id), "meta");

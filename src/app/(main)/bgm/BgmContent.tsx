@@ -182,6 +182,7 @@ export default function BgmContent() {
   };
 
   const deleteBgm = async (item: BgmItem) => {
+    if (!window.confirm("このBGMを削除しますか？")) return;
     if (item.source === "own" && item.dbId) {
       await supabase.from("audio_bgm").delete().eq("id", item.dbId);
     }
@@ -280,6 +281,7 @@ export default function BgmContent() {
   };
 
   const deleteAlbum = async (albumId: string) => {
+    if (!window.confirm("このアルバムを削除しますか？")) return;
     await fetch(`/api/bgm/albums/${albumId}`, { method: "DELETE" });
     setAlbums((prev) => prev.filter((a) => a.id !== albumId));
     setExpandedAlbum((prev) => prev === albumId ? null : prev);
@@ -322,6 +324,7 @@ export default function BgmContent() {
   };
 
   const removeFromAlbum = async (albumId: string, itemId: string) => {
+    if (!window.confirm("この曲をアルバムから削除しますか？")) return;
     await fetch(`/api/bgm/albums/${albumId}/items/${itemId}`, { method: "DELETE" });
     loadAlbumItems(albumId);
   };

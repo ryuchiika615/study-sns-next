@@ -111,6 +111,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   };
 
   const deleteBgm = async (item: BgmItem) => {
+    if (!window.confirm("このBGMを削除しますか？")) return;
     if (item.source === "own" && item.dbId) {
       await supabase.from("audio_bgm").delete().eq("id", item.dbId);
     }
