@@ -87,6 +87,7 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
   const [ytPlaylistId, setYtPlaylistId] = useState("");
   const [ytPlaying, setYtPlaying] = useState(false);
   const [localBgms, setLocalBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
+  const [cachedBgms, setCachedBgms] = useState<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const ytPlayerRef = useRef<any>(null);
@@ -118,7 +119,15 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       ]);
       const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
       const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
-      setUserBgms([...own, ...purchased]);
+      const all = [...own, ...purchased];
+      setUserBgms(all);
+      // Check cache status
+      const cached = new Set<string>();
+      for (const b of all) {
+        const exists = await idbGet("cache-" + b.audio_url);
+        if (exists) cached.add(b.id);
+      }
+      setCachedBgms(cached);
     };
     loadUserBgms();
   }, []);
@@ -151,10 +160,17 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         Promise.all([
           supabase.from("audio_bgm").select("id, name, audio_url").eq("user_id", user.id),
           supabase.from("purchased_bgm").select("bgm:bgm_id(id, name, audio_url)").eq("user_id", user.id),
-        ]).then(([ownRes, purchasedRes]) => {
+        ]).then(async ([ownRes, purchasedRes]) => {
           const own = (ownRes.data || []).map((b: any) => ({ id: `user-${b.id}`, name: b.name, audio_url: b.audio_url }));
           const purchased = (purchasedRes.data || []).map((p: any) => p.bgm).filter(Boolean).map((b: any) => ({ id: `purchased-${b.id}`, name: b.name, audio_url: b.audio_url }));
-          setUserBgms([...own, ...purchased]);
+          const all = [...own, ...purchased];
+          setUserBgms(all);
+          const cached = new Set<string>();
+          for (const b of all) {
+            const exists = await idbGet("cache-" + b.audio_url);
+            if (exists) cached.add(b.id);
+          }
+          setCachedBgms(cached);
         });
       });
       // Re-fetch local BGM
@@ -438,9 +454,16 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
               <option key={t.id} value={t.id}>{t.label}</option>
             ))}
           </optgroup>
-          {userBgms.length > 0 && (
+          {userBgms.filter((b) => cachedBgms.has(b.id)).length > 0 && (
+            <optgroup label="あなたのBGM（オフライン✓）">
+              {userBgms.filter((b) => cachedBgms.has(b.id)).map((b) => (
+                <option key={b.id} value={b.id}>✓ {b.name}</option>
+              ))}
+            </optgroup>
+          )}
+          {userBgms.filter((b) => !cachedBgms.has(b.id)).length > 0 && (
             <optgroup label="あなたのBGM（オンライン）">
-              {userBgms.map((b) => (
+              {userBgms.filter((b) => !cachedBgms.has(b.id)).map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </optgroup>
