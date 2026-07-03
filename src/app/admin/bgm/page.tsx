@@ -11,8 +11,9 @@ export default function AdminBgmPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [giftUserId, setGiftUserId] = useState("");
+  const [giftUserIds, setGiftUserIds] = useState<string[]>([]);
   const [giftName, setGiftName] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const [giftFile, setGiftFile] = useState<File | null>(null);
   const [tab, setTab] = useState<"requests" | "gift">("requests");
   const router = useRouter();
@@ -45,33 +46,41 @@ export default function AdminBgmPage() {
   };
 
   const handleGift = async () => {
-    if (!giftUserId || !giftName || !giftFile) return;
+    if (!giftUserIds.length || !giftName || !giftFile) return;
     setUploading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setUploading(false); return; }
 
-    // Upload MP3
     const fileExt = giftFile.name.split(".").pop() || "mp3";
-    const fileName = `bgm/gift/${giftUserId}/${Date.now()}.${fileExt}`;
-    const { error: upErr } = await supabase.storage.from("audio-bgm").upload(fileName, giftFile);
-    if (upErr) { setMessage("アップロード失敗: " + upErr.message); setUploading(false); return; }
-    const { data: urlData } = supabase.storage.from("audio-bgm").getPublicUrl(fileName);
-    if (!urlData?.publicUrl) { setMessage("URL取得失敗"); setUploading(false); return; }
+    const results: string[] = [];
+    let hasError = false;
 
-    const res = await fetch("/api/admin/bgm-gift", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: giftUserId, name: giftName, audioUrl: urlData.publicUrl }),
-    });
+    for (const uid of giftUserIds) {
+      const fileName = `bgm/gift/${uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+      const { error: upErr } = await supabase.storage.from("audio-bgm").upload(fileName, giftFile);
+      if (upErr) { results.push(`${uid}: アップロード失敗`); hasError = true; continue; }
+      const { data: urlData } = supabase.storage.from("audio-bgm").getPublicUrl(fileName);
+      if (!urlData?.publicUrl) { results.push(`${uid}: URL取得失敗`); hasError = true; continue; }
 
-    if (res.ok) {
-      setMessage("BGMをプレゼントしました！");
-      setGiftFile(null);
-      setGiftName("");
-    } else {
-      const data = await res.json();
-      setMessage(data.error || "エラー");
+      const res = await fetch("/api/admin/bgm-gift", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: uid, name: giftName, audioUrl: urlData.publicUrl }),
+      });
+
+      if (res.ok) {
+        results.push(`${uid}: OK`);
+      } else {
+        const data = await res.json();
+        results.push(`${uid}: ${data.error || "エラー"}`);
+        hasError = true;
+      }
     }
+
+    setMessage(`${giftUserIds.length}人に送信完了${hasError ? "（一部エラーあり）" : ""}`);
+    setGiftFile(null);
+    setGiftName("");
+    setGiftUserIds([]);
     setUploading(false);
   };
 
@@ -198,14 +207,37 @@ export default function AdminBgmPage() {
           <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-3">
             <p className="text-sm font-bold">任意のBGMをユーザーにプレゼント</p>
             <div>
-              <label className="text-xs text-gray-600 block mb-1">対象ユーザー</label>
-              <select value={giftUserId} onChange={(e) => setGiftUserId(e.target.value)}
-                className="w-full rounded-lg border-gray-300 text-sm py-1.5">
-                <option value="">選択してください</option>
-                {users.map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.display_name || u.username} (@{u.username})</option>
-                ))}
-              </select>
+              <label className="text-xs text-gray-600 block mb-1">対象ユーザー（複数選択可）</label>
+              <input type="text" placeholder="ユーザーを検索..." value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mb-2" />
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-1 space-y-0.5">
+                {users
+                  .filter((u: any) =>
+                    !userSearch || (u.display_name || u.username || "").toLowerCase().includes(userSearch.toLowerCase())
+                  )
+                  .map((u: any) => (
+                    <label key={u.id}
+                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer text-sm">
+                      <input type="checkbox" checked={giftUserIds.includes(u.id)}
+                        onChange={(e) => {
+                          setGiftUserIds(prev =>
+                            e.target.checked ? [...prev, u.id] : prev.filter(id => id !== u.id)
+                          );
+                        }}
+                        className="rounded border-gray-300" />
+                      <span>{u.display_name || u.username} (@{u.username})</span>
+                    </label>
+                  ))}
+                {users.filter((u: any) =>
+                  !userSearch || (u.display_name || u.username || "").toLowerCase().includes(userSearch.toLowerCase())
+                ).length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-2">該当するユーザーがいません</p>
+                )}
+              </div>
+              {giftUserIds.length > 0 && (
+                <p className="text-xs text-gray-500">{giftUserIds.length}人選択中</p>
+              )}
             </div>
             <div>
               <label className="text-xs text-gray-600 block mb-1">BGM名</label>
@@ -217,9 +249,9 @@ export default function AdminBgmPage() {
               <input type="file" accept="audio/*" className="text-sm"
                 onChange={(e) => setGiftFile(e.target.files?.[0] || null)} />
             </div>
-            <button onClick={handleGift} disabled={!giftUserId || !giftName || !giftFile || uploading}
+            <button onClick={handleGift} disabled={!giftUserIds.length || !giftName || !giftFile || uploading}
               className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer disabled:opacity-40 border-none">
-              {uploading ? "アップロード中..." : "BGMをプレゼント"}
+              {uploading ? "アップロード中..." : `${giftUserIds.length}人にBGMをプレゼント`}
             </button>
           </div>
         )}
