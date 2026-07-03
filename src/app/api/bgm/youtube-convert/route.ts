@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ytdl from "@distube/ytdl-core";
+import { Innertube } from "youtubei.js";
 import { createServerSupabase } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
@@ -13,18 +13,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "有効なYouTubeのURLを入力してください" }, { status: 400 });
     }
 
-    const info = await ytdl.getInfo(youtubeUrl);
-    const format = ytdl.chooseFormat(info.formats, { quality: "lowestaudio", filter: "audioonly" });
-    if (!format) return NextResponse.json({ error: "音声が見つかりませんでした" }, { status: 500 });
+    const videoId = new URL(youtubeUrl).searchParams.get("v") || youtubeUrl.split("youtu.be/")[1]?.split("?")[0];
+    if (!videoId) return NextResponse.json({ error: "動画IDが見つかりません" }, { status: 400 });
 
-    const title = info.videoDetails.title?.slice(0, 50) || "Unknown";
-    const stream = ytdl(youtubeUrl, { format });
+    const yt = await Innertube.create({
+      lang: "ja",
+      retrieve_player: false,
+    });
 
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    const info = await yt.getInfo(videoId);
+    const title = info.basic_info.title?.slice(0, 50) || "Unknown";
+
+    const stream = await info.download({
+      type: "audio",
+      quality: "best",
+    });
+
+    const reader = stream.getReader();
+    const chunks: Uint8Array[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
     }
-    const audioBuffer = Buffer.concat(chunks);
+    const totalLength = chunks.reduce((sum, c) => sum + c.byteLength, 0);
+    const audioBuffer = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      audioBuffer.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
 
     const fileName = `bgm/${user.id}/youtube-${Date.now()}.mp3`;
 
@@ -41,10 +59,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "公開URLの取得に失敗" }, { status: 500 });
     }
 
+    const duration = info.basic_info.duration ? Math.round(info.basic_info.duration) : 0;
+
     const { error: insertError } = await supabase.from("audio_bgm").insert({
       user_id: user.id,
       name: title,
-      duration_seconds: Math.round(Number(info.videoDetails.lengthSeconds) || 0),
+      duration_seconds: duration,
       audio_url: urlData.publicUrl,
       price: 0,
     });
