@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase";
 import StudyTimer from "@/components/StudyTimer";
 import { compressImage } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
+import ImageCropper from "@/components/ImageCropper";
 
 const BeeryualCamera = dynamic(() => import("@/components/BeeryualCamera"), { ssr: false });
 const StudyPomodoro = dynamic(() => import("@/components/StudyPomodoro"), {
@@ -31,6 +32,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [silentPost, setSilentPost] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+  const [croppedImages, setCroppedImages] = useState<Blob[]>([]);
   const subjectRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -59,18 +63,14 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const imageInput = document.querySelector<HTMLInputElement>('input[name="image"]');
-    const files = imageInput?.files ? Array.from(imageInput.files) : [];
     const imageUrls: string[] = [];
     if (beeryualResult) imageUrls.push(beeryualResult);
 
-    for (const file of files) {
-      const compressed = file.type.startsWith("image/") ? await compressImage(file).catch(() => file) : file;
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+    for (const blob of croppedImages) {
+      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("post-images")
-        .upload(fileName, compressed);
+        .upload(fileName, blob);
       if (!uploadError) {
         const { data: urlData } = supabase.storage
           .from("post-images")
@@ -154,6 +154,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setBeeryualResult(null);
     setSilentPost(false);
     setAudioFile(null);
+    setCroppedImages([]);
 
     if (data?.post_id && !silentPost) {
       fetch("/api/push/follow-post", {
@@ -275,7 +276,24 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             />
           </div>
 
-          <input type="file" name="image" accept="image/*" multiple className="mt-2.5 text-sm" />
+          <div className="mt-2.5">
+            <input type="file" accept="image/*" className="text-sm"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setPendingCropFile(file);
+                setCropImageUrl(URL.createObjectURL(file));
+              }} />
+            {croppedImages.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {croppedImages.map((_, i) => (
+                  <span key={i} className="text-xs text-green-600 flex items-center gap-1">
+                    <i className="fas fa-check-circle" /> 画像{i + 1}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="mt-2.5 flex items-center gap-2">
             <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100">
@@ -313,6 +331,21 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
         </form>
       </div>
       </div>
+      {cropImageUrl && (
+        <ImageCropper
+          imageUrl={cropImageUrl}
+          aspect={4 / 3}
+          onComplete={(blob) => {
+            setCroppedImages((prev) => [...prev, blob]);
+            setCropImageUrl(null);
+            setPendingCropFile(null);
+          }}
+          onCancel={() => {
+            setCropImageUrl(null);
+            setPendingCropFile(null);
+          }}
+        />
+      )}
     </>
   );
 }

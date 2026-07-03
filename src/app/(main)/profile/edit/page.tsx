@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { formatStudyTime, subjectColor } from "@/lib/utils";
+import ImageCropper from "@/components/ImageCropper";
 import ProfileHeader from "./ProfileHeader";
 import TitleManager from "./TitleManager";
 import IconManager from "./IconManager";
@@ -29,6 +30,9 @@ export default function EditProfilePage() {
   const [likedError, setLikedError] = useState("");
   const [editSection, setEditSection] = useState<"posts" | "likes" | null>(null);
   const [postPage, setPostPage] = useState(1);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
+  const [iconFileName, setIconFileName] = useState("");
   const [likedPage, setLikedPage] = useState(1);
   const router = useRouter();
   const supabase = createClient();
@@ -114,14 +118,10 @@ export default function EditProfilePage() {
       target_date: targetDate || null, target_minutes: parseInt(targetMinutes) || 0,
     };
 
-    const iconInput = document.querySelector<HTMLInputElement>('input[name="icon"]');
-    if (iconInput?.files?.[0]) {
-      const file = iconInput.files[0];
-      const fileExt = file.name.split(".").pop();
-      const fileName = `icons/${user.id}/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(fileName, file);
+    if (croppedBlob && iconFileName) {
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(iconFileName, croppedBlob);
       if (!uploadError) {
-        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
+        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(iconFileName);
         if (urlData?.publicUrl) updateData.icon_url = urlData.publicUrl;
       }
     }
@@ -197,7 +197,19 @@ export default function EditProfilePage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700">アイコン画像</label>
-            <input type="file" name="icon" accept="image/*" className="text-xs mt-0.5" />
+            <input type="file" accept="image/*" className="text-xs mt-0.5"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const ext = file.name.split(".").pop() || "jpg";
+                setIconFileName(`icons/${userId}/${Date.now()}.${ext}`);
+                setCropImageUrl(URL.createObjectURL(file));
+              }} />
+            {croppedBlob && (
+              <span className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                <i className="fas fa-check-circle" /> 切り抜き済み
+              </span>
+            )}
           </div>
           <button type="submit" className="w-full bg-primary text-white font-bold rounded-full py-1.5 text-sm cursor-pointer">
             保存
@@ -236,6 +248,21 @@ export default function EditProfilePage() {
         </div>
       )}
 
+      {cropImageUrl && (
+        <ImageCropper
+          imageUrl={cropImageUrl}
+          aspect={1}
+          cropShape="round"
+          onComplete={(blob) => {
+            setCroppedBlob(blob);
+            setCropImageUrl(null);
+          }}
+          onCancel={() => {
+            setCropImageUrl(null);
+            setCroppedBlob(null);
+          }}
+        />
+      )}
     </div>
   );
 }
