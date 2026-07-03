@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import PostFormSection from "./PostFormSection";
 import HomeContent from "./HomeContent";
-import BgmToggle from "@/components/BgmToggle";
+
 
 function ContentSkeleton() {
   return (
@@ -83,7 +83,6 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
       <Suspense fallback={<ContentSkeleton />}>
         <HomeContent userId={user.id} profile={profile} totalMinutes={totalMinutes} search={searchParams?.q} />
       </Suspense>
-      <BgmToggle />
     </>
   );
 }

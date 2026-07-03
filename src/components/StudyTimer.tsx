@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
+import BgmToggle from "./BgmToggle";
 
 const STORAGE_KEY = "ryutter_timer_start";
 const STORAGE_PAUSED_KEY = "ryutter_timer_paused";
@@ -443,6 +444,9 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
             </button>
           </>
         )}
+        <div className="ml-auto">
+          <BgmToggle className="w-9 h-9 rounded-full bg-primary text-white shadow flex items-center justify-center cursor-pointer hover:bg-primary/80 border-none text-sm" iconOnly />
+        </div>
       </div>
       {/* BGM */}
       <div className="flex items-center gap-2 px-1">

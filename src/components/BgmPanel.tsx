@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
+import { BottomNav } from "./BottomNav";
 
 const DB_NAME = "ryutter-bgm";
 const DB_VER = 1;
@@ -70,6 +71,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [ytError, setYtError] = useState("");
   const [cachingId, setCachingId] = useState<string | null>(null);
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const localInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -195,14 +197,42 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-white">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
-        <h2 className="text-base font-bold flex items-center gap-2">
-          <i className="fas fa-music text-primary" /> マイBGM
-          {bgms.some((b) => cachedIds.has(b.id)) && (
-            <span className="text-[10px] text-green-600 font-normal flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full">
-              <i className="fas fa-wifi-slash" /> オフライン可
-            </span>
+        <div className="flex items-center gap-2">
+          {settingsOpen && (
+            <div className="fixed inset-0 z-50" onClick={() => setSettingsOpen(false)} />
           )}
-        </h2>
+          <button onClick={() => setSettingsOpen(!settingsOpen)}
+            className="text-gray-500 hover:text-gray-700 text-lg cursor-pointer bg-transparent border-none">
+            <i className="fas fa-bars" />
+          </button>
+          {settingsOpen && (
+            <div className="absolute top-14 left-2 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 min-w-[180px]">
+              <Link href="/" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
+                <i className="fas fa-home w-5" /> ホーム
+              </Link>
+              <Link href="/rankings" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
+                <i className="fas fa-trophy w-5" /> ランキング
+              </Link>
+              <Link href="/challenges" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
+                <i className="fas fa-fire w-5" /> チャレンジ
+              </Link>
+              <Link href="/shop" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
+                <i className="fas fa-store w-5" /> ショップ
+              </Link>
+              <Link href="/profile/edit" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
+                <i className="fas fa-user-circle w-5" /> プロフィール
+              </Link>
+            </div>
+          )}
+          <h2 className="text-base font-bold flex items-center gap-2">
+            <i className="fas fa-music text-primary" /> BGM
+            {bgms.some((b) => cachedIds.has(b.id)) && (
+              <span className="text-[10px] text-green-600 font-normal flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full">
+                <i className="fas fa-wifi-slash" /> オフライン可
+              </span>
+            )}
+          </h2>
+        </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer bg-none border-none">
           <i className="fas fa-times" />
         </button>
@@ -352,6 +382,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
           </Link>
         </div>
       </div>
+      <BottomNav unreadCount={0} />
     </div>
   );
 }
