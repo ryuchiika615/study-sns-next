@@ -110,6 +110,12 @@ export default function AdminBgmPage() {
     setUploading(false);
   };
 
+  const copyConvertCommand = (req: any) => {
+    const cmd = `node scripts/convert-youtube.mjs "${req.youtube_url}" "${req.user_id}"`;
+    navigator.clipboard.writeText(cmd);
+    setMessage("コマンドをコピーしました！プロジェクトルートで実行してください");
+  };
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -165,13 +171,22 @@ export default function AdminBgmPage() {
                 </a>
                 {req.title && <p className="text-xs text-gray-600">タイトル: {req.title}</p>}
                 {req.status === "pending" && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <input type="file" accept="audio/*" className="text-xs flex-1"
-                      onChange={(e) => setGiftFile(e.target.files?.[0] || null)} />
-                    <button onClick={() => handleRequestGift(req)} disabled={!giftFile || uploading}
-                      className="text-xs bg-primary text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
-                      {uploading ? "処理中..." : "変換してプレゼント"}
-                    </button>
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <input type="file" accept="audio/*" className="text-xs flex-1"
+                        onChange={(e) => setGiftFile(e.target.files?.[0] || null)} />
+                      <button onClick={() => handleRequestGift(req)} disabled={!giftFile || uploading}
+                        className="text-xs bg-primary text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
+                        {uploading ? "処理中..." : "手動アップロード"}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-400 flex-1">またはローカルで自動変換:</span>
+                      <button onClick={() => copyConvertCommand(req)}
+                        className="text-xs bg-green-600 text-white rounded-full px-3 py-1.5 cursor-pointer hover:bg-green-700 border-none shrink-0">
+                        <i className="fas fa-terminal mr-1" />CLIで変換
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
