@@ -9,6 +9,8 @@ export default function AdminDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [error, setError] = useState("");
+  const [bgmCount, setBgmCount] = useState(0);
+  const [feedbackCount, setFeedbackCount] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
@@ -27,11 +29,17 @@ export default function AdminDashboard() {
           return;
         }
       }
-      const sres = await fetch("/api/admin/login-activity");
+      const [sres, bgmRes, fbRes] = await Promise.all([
+        fetch("/api/admin/login-activity"),
+        fetch("/api/admin/bgm/count"),
+        fetch("/api/admin/feedback/count"),
+      ]);
       if (sres.ok) {
         const sd = await sres.json();
         setStats(sd);
       }
+      if (bgmRes.ok) { const d = await bgmRes.json(); setBgmCount(d.count || 0); }
+      if (fbRes.ok) { const d = await fbRes.json(); setFeedbackCount(d.count || 0); }
     });
   }, []);
 
@@ -106,16 +114,26 @@ export default function AdminDashboard() {
             <div className="text-xs text-gray-500 mt-1">全ユーザーへのお知らせ</div>
           </Link>
 
-          <Link href="/admin/feedback" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+          <Link href="/admin/feedback" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center relative">
             <div className="text-2xl mb-1">💬</div>
             <div className="font-bold text-sm">要望・報告</div>
             <div className="text-xs text-gray-500 mt-1">ユーザーからのフィードバック</div>
+            {feedbackCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[24px] h-[24px] flex items-center justify-center px-1 shadow-md">
+                {feedbackCount > 9 ? "9+" : feedbackCount}
+              </span>
+            )}
           </Link>
 
-          <Link href="/admin/bgm" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+          <Link href="/admin/bgm" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center relative">
             <div className="text-2xl mb-1">🎵</div>
             <div className="font-bold text-sm">BGM管理</div>
             <div className="text-xs text-gray-500 mt-1">YouTubeリクエスト・プレゼント</div>
+            {bgmCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[24px] h-[24px] flex items-center justify-center px-1 shadow-md">
+                {bgmCount > 9 ? "9+" : bgmCount}
+              </span>
+            )}
           </Link>
 
           <Link href="/admin/page-analytics" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
