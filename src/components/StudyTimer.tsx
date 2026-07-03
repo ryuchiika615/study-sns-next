@@ -228,10 +228,24 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
       if (target?.audio_url && el) {
         const yt = extractYtId(target.audio_url);
         if (yt) { setYtVideoId(yt.videoId); setYtPlaylistId(yt.playlistId); return; }
-        el.src = target.audio_url;
-        el.loop = true;
-        el.volume = 0.3;
-        el.play().catch(() => {});
+        (async () => {
+          // オフラインキャッシュをチェック
+          const cacheKey = "cache-" + target.audio_url;
+          let blob = await idbGet<Blob>(cacheKey);
+          if (!blob) {
+            try {
+              const res = await fetch(target.audio_url);
+              blob = await res.blob();
+              await idbSave(cacheKey, blob);
+            } catch {}
+          }
+          if (el) {
+            el.src = blob ? URL.createObjectURL(blob) : target.audio_url;
+            el.loop = true;
+            el.volume = 0.3;
+            el.play().catch(() => {});
+          }
+        })();
       }
     }
     return () => {

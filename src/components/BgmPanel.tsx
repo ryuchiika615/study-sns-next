@@ -67,6 +67,8 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [ytRequesting, setYtRequesting] = useState(false);
   const [ytRequestDone, setYtRequestDone] = useState(false);
   const [ytError, setYtError] = useState("");
+  const [cachingId, setCachingId] = useState<string | null>(null);
+  const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const localInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -153,6 +155,33 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
     loadAll();
   };
 
+  const cacheBgm = async (item: BgmItem) => {
+    setCachingId(item.id);
+    try {
+      const cacheKey = "cache-" + item.audio_url;
+      const res = await fetch(item.audio_url);
+      const blob = await res.blob();
+      await idbSave(cacheKey, blob);
+      setCachedIds((prev) => new Set(prev).add(item.id));
+    } catch {}
+    setCachingId(null);
+  };
+
+  const checkCache = async (bgms: BgmItem[]) => {
+    const cached = new Set<string>();
+    for (const item of bgms) {
+      if (item.source === "local") { cached.add(item.id); continue; }
+      const cacheKey = "cache-" + item.audio_url;
+      const exists = await idbGet(cacheKey);
+      if (exists) cached.add(item.id);
+    }
+    setCachedIds(cached);
+  };
+
+  useEffect(() => {
+    if (bgms.length > 0) checkCache(bgms);
+  }, [bgms]);
+
   const sourceLabel = (s: string) => {
     switch (s) {
       case "own": return "アップロード";
@@ -194,6 +223,13 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                   className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none">
                   {activeId === item.id ? "使用中" : "使う"}
                 </button>
+                {item.source !== "local" && (
+                  <button onClick={() => cacheBgm(item)} disabled={cachingId === item.id || cachedIds.has(item.id)}
+                    className={`text-xs rounded-full px-2 py-1 cursor-pointer border-none ${cachedIds.has(item.id) ? "text-green-500" : "text-gray-500 hover:bg-gray-100"}`}
+                    title={cachedIds.has(item.id) ? "オフライン保存済み" : "オフライン保存"}>
+                    <i className={`fas ${cachingId === item.id ? "fa-spinner fa-spin" : cachedIds.has(item.id) ? "fa-check" : "fa-download"}`} />
+                  </button>
+                )}
                 {(item.source === "own" || item.source === "local") && (
                   <button onClick={() => deleteBgm(item)}
                     className="text-xs text-red-500 hover:bg-red-50 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
