@@ -76,6 +76,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, title, audio_url: urlData.publicUrl });
   } catch (err: any) {
     console.error("youtube-convert error:", err);
-    return NextResponse.json({ error: err?.message || "変換に失敗しました" }, { status: 500 });
+    const msg = err?.message || "";
+    if (msg.includes("login required") || msg.includes("LOGIN_REQUIRED")) {
+      return NextResponse.json({ error: "この動画はダウンロードできません（ログイン制限）。管理者に依頼してください。" }, { status: 400 });
+    }
+    if (msg.includes("Private video") || msg.includes("private")) {
+      return NextResponse.json({ error: "この動画は非公開です。管理者に依頼してください。" }, { status: 400 });
+    }
+    return NextResponse.json({ error: `変換失敗: ${msg}` }, { status: 500 });
   }
 }

@@ -357,12 +357,12 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         videoId: ytVideoId,
         height: 300, width: 400,
         playerVars: {
-          autoplay: 1, mute: 1, loop: 1,
+          autoplay: 1, loop: 1,
           playlist: ytVideoId,
           controls: 0, playsinline: 1,
         },
         events: {
-          onReady: (e: any) => { e.target.mute(); e.target.playVideo(); },
+          onReady: (e: any) => { e.target.playVideo(); },
           onStateChange: (e: any) => {
             if (e.data === 0) e.target.playVideo(); // loop
           },
