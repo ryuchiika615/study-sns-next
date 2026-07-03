@@ -66,6 +66,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [ytRequestUrl, setYtRequestUrl] = useState("");
   const [ytRequesting, setYtRequesting] = useState(false);
   const [ytRequestDone, setYtRequestDone] = useState(false);
+  const [ytError, setYtError] = useState("");
   const localInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -218,38 +219,46 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
               {uploading ? "アップロード中..." : <><i className="fas fa-upload" /> アップロード</>}
             </button>
           </div>
-          {!ytRequestUrl && !ytRequestDone && (
+            {!ytRequestUrl && !ytRequestDone && (
             <button onClick={() => { setYtRequestUrl("dummy"); }}
-              className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-200 border-none flex items-center justify-center gap-1 w-full">
-              <i className="fab fa-youtube text-red-500" /> YouTubeをリクエスト
+              className="text-xs bg-red-50 text-red-600 rounded-full px-3 py-2 cursor-pointer hover:bg-red-100 border-none flex items-center justify-center gap-1 w-full">
+              <i className="fab fa-youtube" /> YouTubeのURLから追加
             </button>
           )}
           {ytRequestUrl && !ytRequestDone && (
-            <div className="flex items-center gap-2">
-              <input type="url" value={ytRequestUrl === "dummy" ? "" : ytRequestUrl}
-                onChange={(e) => setYtRequestUrl(e.target.value)}
-                placeholder="YouTubeのURLを貼り付け" className="flex-1 rounded-lg border-gray-300 text-xs py-1.5 px-2" />
-              <button onClick={async () => {
-                if (!ytRequestUrl || ytRequestUrl === "dummy") return;
-                setYtRequesting(true);
-                try {
-                  await fetch("/api/bgm/request", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
-                  });
-                  setYtRequestDone(true);
-                } catch {}
-                setYtRequesting(false);
-              }} disabled={ytRequesting || !ytRequestUrl || ytRequestUrl === "dummy"}
-                className="text-xs bg-red-500 text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
-                {ytRequesting ? "送信中..." : "リクエスト"}
-              </button>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <input type="url" value={ytRequestUrl === "dummy" ? "" : ytRequestUrl}
+                  onChange={(e) => { setYtRequestUrl(e.target.value); setYtError(""); }}
+                  placeholder="YouTubeのURLを貼り付け" className="flex-1 rounded-lg border-gray-300 text-xs py-1.5 px-2" />
+                <button onClick={async () => {
+                  if (!ytRequestUrl || ytRequestUrl === "dummy") return;
+                  setYtRequesting(true);
+                  setYtError("");
+                  try {
+                    const res = await fetch("/api/bgm/youtube-convert", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ youtubeUrl: ytRequestUrl }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) { setYtError(data.error || "変換失敗"); setYtRequesting(false); return; }
+                    setYtRequestDone(true);
+                    window.dispatchEvent(new CustomEvent("bgm-list-changed"));
+                    loadAll();
+                  } catch { setYtError("ネットワークエラー"); }
+                  setYtRequesting(false);
+                }} disabled={ytRequesting || !ytRequestUrl || ytRequestUrl === "dummy"}
+                  className="text-xs bg-red-500 text-white rounded-full px-3 py-1.5 cursor-pointer disabled:opacity-40 border-none shrink-0">
+                  {ytRequesting ? "変換中..." : "追加"}
+                </button>
+              </div>
+              {ytError && <p className="text-xs text-red-500"><i className="fas fa-exclamation-circle" /> {ytError}</p>}
             </div>
           )}
           {ytRequestDone && (
             <p className="text-xs text-green-600 flex items-center gap-1">
-              <i className="fas fa-check-circle" /> 管理者に送信しました。変換されるまでお待ちください。
+              <i className="fas fa-check-circle" /> マイBGMに追加しました！
             </p>
           )}
           <Link href="/shop"

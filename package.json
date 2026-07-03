@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.46.0",
     "@tanstack/react-virtual": "^3.14.3",
