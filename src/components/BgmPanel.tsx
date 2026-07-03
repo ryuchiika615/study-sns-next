@@ -182,11 +182,11 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
     if (bgms.length > 0) checkCache(bgms);
   }, [bgms]);
 
-  const sourceLabel = (s: string) => {
+  const sourceLabel = (s: string, cached: boolean) => {
     switch (s) {
-      case "own": return "アップロード";
-      case "purchased": return "購入";
-      case "local": return "ローカル";
+      case "own": return cached ? "オフライン ✓" : "アップロード";
+      case "purchased": return cached ? "オフライン ✓" : "購入";
+      case "local": return "オフライン ✓";
       default: return "";
     }
   };
@@ -196,6 +196,11 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
         <h2 className="text-base font-bold flex items-center gap-2">
           <i className="fas fa-music text-primary" /> マイBGM
+          {bgms.some((b) => cachedIds.has(b.id)) && (
+            <span className="text-[10px] text-green-600 font-normal flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full">
+              <i className="fas fa-wifi-slash" /> オフライン可
+            </span>
+          )}
         </h2>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer bg-none border-none">
           <i className="fas fa-times" />
@@ -203,32 +208,47 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-4 pb-2 text-[10px] text-gray-400 flex items-center gap-3 border-b border-gray-100">
+          <span><i className="fas fa-wifi mr-1" />オンライン</span>
+          <span><i className="fas fa-download mr-1" />タップで保存</span>
+          <span><i className="fas fa-check-circle text-green-500 mr-1" />オフライン可</span>
+        </div>
         <div className="p-4 space-y-1">
           {bgms.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-8">BGMがありません</p>
           )}
-          {bgms.map((item) => (
+          {bgms.map((item) => {
+            const isCached = cachedIds.has(item.id);
+            return (
             <div key={item.id} className={`flex items-center gap-3 p-2 rounded-xl ${
-              activeId === item.id ? "bg-primary/10 border border-primary/30" : "hover:bg-gray-50"
+              activeId === item.id ? "bg-primary/10 border border-primary/30" : isCached ? "bg-green-50/30 border border-green-100" : "hover:bg-gray-50"
             }`}>
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
-                <i className="fas fa-music" />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isCached ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                <i className={`fas ${isCached ? "fa-check-circle" : "fa-music"}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{item.name}</p>
-                <p className="text-[10px] text-gray-400">{sourceLabel(item.source)}</p>
+                <p className={`text-[10px] ${isCached ? "text-green-600" : "text-gray-400"} flex items-center gap-1`}>
+                  {isCached && <i className="fas fa-wifi-slash" />}
+                  {sourceLabel(item.source, isCached)}
+                </p>
               </div>
               <div className="flex gap-1 shrink-0">
                 <button onClick={() => selectBgm(item)}
                   className="text-xs bg-primary text-white rounded-full px-3 py-1 cursor-pointer hover:bg-primary/80 border-none">
                   {activeId === item.id ? "使用中" : "使う"}
                 </button>
-                {item.source !== "local" && (
-                  <button onClick={() => cacheBgm(item)} disabled={cachingId === item.id || cachedIds.has(item.id)}
-                    className={`text-xs rounded-full px-2 py-1 cursor-pointer border-none ${cachedIds.has(item.id) ? "text-green-500" : "text-gray-500 hover:bg-gray-100"}`}
-                    title={cachedIds.has(item.id) ? "オフライン保存済み" : "オフライン保存"}>
-                    <i className={`fas ${cachingId === item.id ? "fa-spinner fa-spin" : cachedIds.has(item.id) ? "fa-check" : "fa-download"}`} />
+                {item.source !== "local" && !isCached && (
+                  <button onClick={() => cacheBgm(item)} disabled={cachingId === item.id}
+                    className="text-xs text-gray-500 hover:bg-gray-100 rounded-full px-2 py-1 cursor-pointer border-none bg-transparent"
+                    title="オフライン保存">
+                    <i className={`fas ${cachingId === item.id ? "fa-spinner fa-spin" : "fa-download"}`} />
                   </button>
+                )}
+                {isCached && (
+                  <span className="text-[10px] text-green-600 flex items-center px-1">
+                    <i className="fas fa-check-circle" />
+                  </span>
                 )}
                 {(item.source === "own" || item.source === "local") && (
                   <button onClick={() => deleteBgm(item)}
@@ -239,7 +259,8 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="border-t border-gray-200 p-4 space-y-2">
