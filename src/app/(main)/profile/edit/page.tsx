@@ -53,7 +53,7 @@ export default function EditProfilePage() {
     const id = uid || userIdRef.current;
     if (!id) return;
     const [profileResult, userItemsResult] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_start_date, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", id).single(),
+      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", id).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", id),
     ]);
 
@@ -63,8 +63,15 @@ export default function EditProfilePage() {
       setDisplayName(profileResult.data.display_name || "");
       setBio(profileResult.data.bio || "");
       setTargetDate(profileResult.data.target_date || "");
-      setTargetStartDate(profileResult.data.target_start_date || new Date().toISOString().slice(0, 10));
       setTargetMinutes(String(profileResult.data.target_minutes || 0));
+      (async () => {
+        try {
+          const { data: sd } = await supabase.from("profiles").select("target_start_date").eq("id", id).maybeSingle();
+          setTargetStartDate((sd as any)?.target_start_date || new Date().toISOString().slice(0, 10));
+        } catch {
+          setTargetStartDate(new Date().toISOString().slice(0, 10));
+        }
+      })();
     }
     if (userItemsResult.data) {
       setItems(userItemsResult.data.map((ui: any) => ui.item));
@@ -117,7 +124,7 @@ export default function EditProfilePage() {
     }
     const updateData: Record<string, any> = {
       username: username || undefined, display_name: displayName, bio,
-      target_date: targetDate || null, target_start_date: targetStartDate || null, target_minutes: parseInt(targetMinutes) || 0,
+      target_date: targetDate || null, target_minutes: parseInt(targetMinutes) || 0,
     };
 
     if (croppedBlob && iconFileName) {
@@ -130,6 +137,9 @@ export default function EditProfilePage() {
 
     const { error } = await supabase.from("profiles").update(updateData).eq("id", user.id);
     if (!error) {
+      try {
+        await supabase.from("profiles").update({ target_start_date: targetStartDate || null }).eq("id", user.id);
+      } catch {}
       setMessage("保存しました！"); loadData(user.id);
     } else if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
       setMessage("このユーザーIDは既に使われています");
