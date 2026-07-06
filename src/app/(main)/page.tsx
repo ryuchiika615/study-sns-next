@@ -16,7 +16,7 @@ function ContentSkeleton() {
   );
 }
 
-function StatsCards({ profile, totalMinutes }: { profile: any; totalMinutes: number }) {
+function StatsCards({ profile, totalMinutes, goalMinutes }: { profile: any; totalMinutes: number; goalMinutes: number }) {
   const formatRemaining = (minutes: number) => {
     if (minutes <= 0) return "目標達成！🎉";
     const h = Math.floor(minutes / 60);
@@ -42,7 +42,7 @@ function StatsCards({ profile, totalMinutes }: { profile: any; totalMinutes: num
         <div className="p-4 rounded-xl bg-gradient-to-r from-gray-900 to-gray-800 text-white border border-yellow-600 text-center shadow-sm">
           <h4 className="text-yellow-500 m-0 mb-2"><i className="fas fa-bullseye" /> {profile.target_date} までの目標</h4>
           <p className="text-sm text-gray-400">目標合計 {Math.floor(profile.target_minutes / 60)}時間{profile.target_minutes % 60}分</p>
-          <p className="text-lg text-yellow-400 font-bold mt-1">あと {formatRemaining(profile.target_minutes - totalMinutes)}</p>
+          <p className="text-lg text-yellow-400 font-bold mt-1">あと {formatRemaining(profile.target_minutes - goalMinutes)}</p>
         </div>
       )}
     </div>
@@ -55,33 +55,40 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
   if (!user) redirect("/auth/login");
 
   const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 29);
-  const startStr = startDate.toISOString().split("T")[0];
   const endStr = today.toISOString().split("T")[0];
 
   const [profileResult, postsResult] = await Promise.all([
     supabase.from("profiles")
-      .select("id, display_name, username, icon_url, points, exchange_points, current_title_id, current_avatar_id, target_date, target_minutes, is_admin, bio, department, theme_color")
+      .select("id, display_name, username, icon_url, points, exchange_points, current_title_id, current_avatar_id, target_date, target_start_date, target_minutes, is_admin, bio, department, theme_color")
       .eq("id", user.id)
       .single(),
     supabase.from("posts")
-      .select("study_minutes")
+      .select("study_minutes, created_at")
       .eq("user_id", user.id)
-      .gt("study_minutes", 0)
-      .gte("created_at", startStr)
-      .lte("created_at", endStr + "T23:59:59Z"),
+      .gt("study_minutes", 0),
   ]);
 
   const profile = profileResult.data;
-  const totalMinutes = (postsResult.data || []).reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
+  const allPosts = postsResult.data || [];
+
+  const totalMinutes = allPosts.reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0);
+
+  // 目標期間中の勉強時間
+  const goalStart = profile?.target_start_date;
+  const goalEnd = profile?.target_date;
+  const goalMinutes = goalStart && goalEnd
+    ? allPosts.filter((p: any) => {
+        const d = p.created_at?.slice(0, 10);
+        return d >= goalStart && d <= goalEnd;
+      }).reduce((sum: number, p: any) => sum + (p.study_minutes || 0), 0)
+    : totalMinutes;
 
   return (
     <>
-      <StatsCards profile={profile} totalMinutes={totalMinutes} />
+      <StatsCards profile={profile} totalMinutes={totalMinutes} goalMinutes={goalMinutes} />
       <PostFormSection userId={user.id} profile={profile} />
       <Suspense fallback={<ContentSkeleton />}>
-        <HomeContent userId={user.id} profile={profile} totalMinutes={totalMinutes} search={searchParams?.q} />
+        <HomeContent userId={user.id} profile={profile} totalMinutes={goalMinutes} search={searchParams?.q} />
       </Suspense>
     </>
   );
