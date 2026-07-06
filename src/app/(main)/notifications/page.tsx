@@ -11,7 +11,7 @@ export default async function NotificationsPage() {
     .from("notifications")
     .select(`
       *,
-      sender:sender_id(id, display_name, username, icon_url)
+      sender:sender_id(id, display_name, username, icon_url, is_admin)
     `)
     .eq("recipient_id", user.id)
     .neq("notification_type", "follow_post")
