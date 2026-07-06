@@ -67,9 +67,15 @@ export default function EditProfilePage() {
       (async () => {
         try {
           const { data: sd } = await supabase.from("profiles").select("target_start_date").eq("id", id).maybeSingle();
-          setTargetStartDate((sd as any)?.target_start_date || new Date().toISOString().slice(0, 10));
+          const saved = (sd as any)?.target_start_date;
+          if (saved) {
+            setTargetStartDate(saved);
+            localStorage.setItem("target_start_date_fallback", saved);
+          } else {
+            setTargetStartDate(localStorage.getItem("target_start_date_fallback") || new Date().toISOString().slice(0, 10));
+          }
         } catch {
-          setTargetStartDate(new Date().toISOString().slice(0, 10));
+          setTargetStartDate(localStorage.getItem("target_start_date_fallback") || new Date().toISOString().slice(0, 10));
         }
       })();
     }
@@ -125,6 +131,7 @@ export default function EditProfilePage() {
     const updateData: Record<string, any> = {
       username: username || undefined, display_name: displayName, bio,
       target_date: targetDate || null, target_minutes: parseInt(targetMinutes) || 0,
+      target_start_date: targetStartDate || null,
     };
 
     if (croppedBlob && iconFileName) {
@@ -137,12 +144,16 @@ export default function EditProfilePage() {
 
     const { error } = await supabase.from("profiles").update(updateData).eq("id", user.id);
     if (!error) {
-      try {
-        await supabase.from("profiles").update({ target_start_date: targetStartDate || null }).eq("id", user.id);
-      } catch {}
+      localStorage.setItem("target_start_date_fallback", targetStartDate);
       setMessage("保存しました！"); loadData(user.id);
     } else if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
       setMessage("このユーザーIDは既に使われています");
+    } else if (error.message?.includes("target_start_date")) {
+      // カラム未存在（マイグレーション未実行）→ そのカラムだけ除外して再試行
+      delete updateData.target_start_date;
+      const { error: retryErr } = await supabase.from("profiles").update(updateData).eq("id", user.id);
+      if (retryErr) setMessage(retryErr.message || "保存に失敗しました");
+      else { setMessage("保存しました！（開始日はマイグレーション後に反映されます）"); loadData(user.id); }
     } else setMessage(error.message || "保存に失敗しました");
   };
 
