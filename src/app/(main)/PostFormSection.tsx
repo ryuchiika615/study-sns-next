@@ -35,17 +35,40 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
   const [croppedImages, setCroppedImages] = useState<Blob[]>([]);
+  const [subjectTemplates, setSubjectTemplates] = useState<{ id: string; name: string }[]>([]);
   const subjectRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const subjectOptions = textbooks.map(t => t.title);
+  const subjectOptions = [...subjectTemplates.map(t => t.name), ...textbooks.map(t => t.title)];
   const matchedTextbook = textbooks.find(t => t.title === subject);
 
   useEffect(() => {
-    supabase.from("textbooks").select("id, title, total_pages, pages_completed").eq("user_id", userId).then(({ data }) => {
-      if (data) setTextbooks(data);
+    Promise.all([
+      supabase.from("textbooks").select("id, title, total_pages, pages_completed").eq("user_id", userId),
+      fetch("/api/subject-templates").then(r => r.ok ? r.json() : { data: [] }),
+    ]).then(([tbRes, tmplRes]) => {
+      if (tbRes.data) setTextbooks(tbRes.data);
+      setSubjectTemplates(tmplRes.data || []);
     });
   }, [userId]);
+
+  const addTemplate = async () => {
+    if (!subject.trim()) return;
+    const res = await fetch("/api/subject-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: subject.trim() }),
+    });
+    if (res.ok) {
+      const { data } = await res.json();
+      setSubjectTemplates(prev => [...prev.filter(t => t.name !== data.name), data]);
+    }
+  };
+
+  const removeTemplate = async (id: string) => {
+    await fetch(`/api/subject-templates?id=${id}`, { method: "DELETE" });
+    setSubjectTemplates(prev => prev.filter(t => t.id !== id));
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -240,6 +263,33 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
                 )}
               </div>
             )}
+            {/* 科目テンプレート */}
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              {subjectTemplates.map(t => (
+                <span key={t.id} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs cursor-pointer border transition ${
+                  subject === t.name
+                    ? "bg-primary/15 text-primary border-primary/30 font-bold"
+                    : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                }`}>
+                  <button type="button" onClick={() => setSubject(t.name)}
+                    className="bg-transparent border-none cursor-pointer text-inherit p-0">
+                    {t.name}
+                  </button>
+                  <button type="button" onClick={() => removeTemplate(t.id)}
+                    className="text-gray-400 hover:text-red-500 cursor-pointer bg-transparent border-none p-0 leading-none text-[10px]"
+                    title="削除">
+                    <i className="fas fa-times" />
+                  </button>
+                </span>
+              ))}
+              {subject.trim() && !subjectTemplates.some(t => t.name === subject.trim()) && (
+                <button type="button" onClick={addTemplate}
+                  className="text-xs text-primary hover:bg-primary/10 rounded-full px-2 py-1 cursor-pointer bg-transparent border border-dashed border-primary/40"
+                  title="テンプレートとして保存">
+                  <i className="fas fa-plus mr-0.5" />保存
+                </button>
+              )}
+            </div>
           </div>
 
           {matchedTextbook && (
