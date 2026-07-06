@@ -20,6 +20,8 @@ export default function NotificationsClient({ notifications: initial }: { notifi
   const [giftLoading, setGiftLoading] = useState(false);
   const supabase = createClient();
 
+  const getGiftBgmId = (n: any) => n.bgm_id || n.post_id || null;
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return;
@@ -30,14 +32,15 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       supabase.rpc("cleanup_old_notifications", { days_old: 30 }).then(() => {});
     });
 
-    const giftNotifs = initial.filter((n: any) => n.notification_type === "gift" && n.post_id);
+    const giftNotifs = initial.filter((n: any) => n.notification_type === "gift" && getGiftBgmId(n));
     if (giftNotifs.length > 0) {
       Promise.all(giftNotifs.map(async (n: any) => {
+        const bgmId = getGiftBgmId(n)!;
         try {
-          const res = await fetch(`/api/bgm/get?id=${n.post_id}`);
+          const res = await fetch(`/api/bgm/get?id=${bgmId}`);
           if (res.ok) {
             const bgm = await res.json();
-            return { id: n.post_id, bgm };
+            return { id: bgmId, bgm };
           }
         } catch {}
         return null;
@@ -81,15 +84,16 @@ export default function NotificationsClient({ notifications: initial }: { notifi
   };
 
   const handleClick = (notif: any) => {
-    if (notif.notification_type === "gift" && notif.post_id) {
-      const bgm = giftBgms[notif.post_id];
+    const bgmId = getGiftBgmId(notif);
+    if (notif.notification_type === "gift" && bgmId) {
+      const bgm = giftBgms[bgmId];
       if (bgm) { setShowGift(bgm); return; }
       setGiftLoading(true);
       setShowGift({ id: "", name: "", audio_url: "" });
-      fetch(`/api/bgm/get?id=${notif.post_id}`).then(async (res) => {
+      fetch(`/api/bgm/get?id=${bgmId}`).then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          setGiftBgms(prev => ({ ...prev, [notif.post_id]: data }));
+          setGiftBgms(prev => ({ ...prev, [bgmId]: data }));
           setShowGift(data);
         } else setShowGift(null);
       }).catch(() => setShowGift(null)).finally(() => setGiftLoading(false));
@@ -153,8 +157,8 @@ export default function NotificationsClient({ notifications: initial }: { notifi
                 <i className={`fas ${getIcon(notif.notification_type)} text-xs flex-shrink-0`} />
               </div>
               <p className="text-sm text-gray-600 mt-0.5">
-                {notif.notification_type === "gift" && notif.post_id && giftBgms[notif.post_id] ? (
-                  <><span className="text-gray-400">から</span> <span className="text-purple-600 font-medium">「{giftBgms[notif.post_id].name}」</span> <span className="text-gray-400">が届きました 🎁</span></>
+                {notif.notification_type === "gift" && giftBgms[getGiftBgmId(notif) || ""] ? (
+                  <><span className="text-gray-400">から</span> <span className="text-purple-600 font-medium">「{giftBgms[getGiftBgmId(notif)!].name}」</span> <span className="text-gray-400">が届きました 🎁</span></>
                 ) : (
                   <span className="text-gray-400">{getNotificationText(notif)}</span>
                 )}

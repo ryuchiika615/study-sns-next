@@ -30,11 +30,12 @@ export async function POST(request: NextRequest) {
     await admin.from("bgm_requests").update({ status: "completed" }).eq("id", requestId);
   }
 
-  // Notify user (store bgm id in post_id so the client can show details)
+  // Notify user (store bgm id in bgm_id so the client can show details)
   await admin.from("notifications").insert({
     recipient_id: userId,
     sender_id: user.id,
     notification_type: "gift",
+    bgm_id: bgm.id,
     post_id: bgm.id,
   });
 
