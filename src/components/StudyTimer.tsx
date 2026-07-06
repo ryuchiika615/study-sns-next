@@ -227,6 +227,13 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
     window.addEventListener("bgm-select", onSelect);
     window.addEventListener("bgm-album-play", onAlbumPlay);
     window.addEventListener("bgm-list-changed", onRefresh);
+
+    const pending = localStorage.getItem("pending_bgm_id");
+    if (pending) {
+      localStorage.removeItem("pending_bgm_id");
+      setBgmId(pending);
+    }
+
     return () => {
       window.removeEventListener("bgm-select", onSelect);
       window.removeEventListener("bgm-album-play", onAlbumPlay);

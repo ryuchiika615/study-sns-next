@@ -79,11 +79,15 @@ export default function NotificationsClient({ notifications: initial }: { notifi
     }
   };
 
-  const handleClick = (notif: any) => {
+  const handleClick = async (notif: any) => {
     if (notif.notification_type === "gift" && notif.post_id) {
       const bgm = giftBgms[notif.post_id];
-      if (bgm) {
-        setShowGift(bgm);
+      if (bgm) { setShowGift(bgm); return; }
+      const res = await fetch(`/api/bgm/get?id=${notif.post_id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setGiftBgms(prev => ({ ...prev, [notif.post_id]: data }));
+        setShowGift(data);
         return;
       }
     }
@@ -182,10 +186,10 @@ export default function NotificationsClient({ notifications: initial }: { notifi
               <audio src={showGift.audio_url} controls className="w-full mt-3 h-10 rounded-lg" />
             </div>
             <div className="flex gap-2">
-              <button onClick={() => { setShowGift(null); window.dispatchEvent(new CustomEvent("bgm-select", { detail: `user-${showGift.id}` })); }}
-                className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer border-none">
-                使う
-              </button>
+               <button onClick={() => { setShowGift(null); localStorage.setItem("pending_bgm_id", `user-${showGift.id}`); router.push("/"); }}
+                 className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer border-none">
+                 使う
+               </button>
               <button onClick={() => setShowGift(null)}
                 className="flex-1 bg-gray-100 text-gray-700 rounded-full py-2 text-sm cursor-pointer border-none">
                 閉じる
