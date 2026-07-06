@@ -58,6 +58,7 @@ const PostCard = memo(function PostCard({
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteContent, setQuoteContent] = useState("");
   const [quoteSilent, setQuoteSilent] = useState(false);
+  const [championUserId, setChampionUserId] = useState<string | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const swipeStartY = useRef(0);
   const swipeDist = useRef(0);
@@ -71,6 +72,10 @@ const PostCard = memo(function PostCard({
       });
     }
   }, [editing]);
+
+  useEffect(() => {
+    fetch("/api/rankings/current-champion").then(r => r.json()).then(d => setChampionUserId(d.user_id)).catch(() => {});
+  }, []);
 
   const handleReply = useCallback((username: string) => {
     setCommentText(`@${username} `);
@@ -223,7 +228,25 @@ const PostCard = memo(function PostCard({
   const isOwn = post.user_id === currentUserId;
 
   return (
-    <div className={`post-card ${isOwn ? "border-l-4 border-l-primary" : ""}`}>
+    <div className={`post-card ${isOwn ? "border-l-4 border-l-primary" : ""} ${post.user_id === championUserId ? "relative overflow-hidden" : ""}`}>
+      {post.user_id === championUserId && (
+        <>
+          {/* 雫デコレーション（月間王者） */}
+          <div className="absolute inset-0 pointer-events-none border-2 border-transparent"
+            style={{
+              borderImage: "linear-gradient(135deg, rgba(6,182,212,0.5), rgba(59,130,246,0.3), rgba(6,182,212,0.1)) 1",
+            }}
+          />
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="text-[8px] text-cyan-400 drop-shadow"
+                style={{ opacity: 0.7 + i * 0.15 }}>
+                <i className="fas fa-tint" />
+              </span>
+            ))}
+          </div>
+        </>
+      )}
       <div className="flex px-4 pt-5">
         <Link href={`/profile/${post.user?.id || post.user_id}`} className="no-underline">
           <div className={`avatar-frame ${rarityClass(post.current_avatar?.rarity)}`} data-icon={post.current_avatar?.name?.replace("【アイコン】", "") || ""}>
