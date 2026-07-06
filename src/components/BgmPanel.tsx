@@ -68,6 +68,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const [ytRequestTitle, setYtRequestTitle] = useState("");
   const [ytRequesting, setYtRequesting] = useState(false);
   const [ytRequestDone, setYtRequestDone] = useState(false);
+  const [ytDoneType, setYtDoneType] = useState<"convert" | "request" | "">("");
   const [ytError, setYtError] = useState("");
   const [cachingId, setCachingId] = useState<string | null>(null);
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
@@ -391,6 +392,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                     const data = await res.json();
                     if (!res.ok) { setYtError(data.error || "変換失敗"); setYtRequesting(false); return; }
                     setYtRequestDone(true);
+                    setYtDoneType("convert");
                     window.dispatchEvent(new CustomEvent("bgm-list-changed"));
                     loadAll();
                   } catch { setYtError("ネットワークエラー"); }
@@ -411,6 +413,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
                     });
                     if (!res.ok) { setYtError("送信失敗"); setYtRequesting(false); return; }
                     setYtRequestDone(true);
+                    setYtDoneType("request");
                   } catch { setYtError("ネットワークエラー"); }
                   setYtRequesting(false);
                 }} disabled={ytRequesting || !ytRequestUrl || ytRequestUrl === "dummy"}
@@ -423,10 +426,14 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
           )}
           {ytRequestDone && (
             <div className="flex items-center gap-2">
-              <p className="flex-1 text-xs text-green-600 flex items-center gap-1">
-                <i className="fas fa-check-circle" /> マイBGMに追加しました！
+              <p className="flex-1 text-xs flex items-center gap-1">
+                {ytDoneType === "request" ? (
+                  <><i className="fas fa-check-circle text-green-600" /> 管理者にリクエストしました。少々お待ちください</>
+                ) : (
+                  <><i className="fas fa-check-circle text-green-600" /> マイBGMに追加しました！</>
+                )}
               </p>
-              <button onClick={() => { setYtRequestUrl("dummy"); setYtRequestTitle(""); setYtRequestDone(false); setYtError(""); }}
+              <button onClick={() => { setYtRequestUrl("dummy"); setYtRequestTitle(""); setYtRequestDone(false); setYtDoneType(""); setYtError(""); }}
                 className="text-xs text-gray-500 cursor-pointer bg-transparent border-none hover:text-gray-700">
                 他のURL
               </button>
