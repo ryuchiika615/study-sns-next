@@ -28,11 +28,18 @@ const outPath = join(tmpdir(), `ytbgm-${Date.now()}.mp3`);
 
 try {
   console.log("タイトル取得中...");
-  const titleRaw = execSync(`C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp --print "%(title)s" "${youtubeUrl}"`, { encoding: "utf-8" });
+  const titleRaw = execSync(`chcp 65001 >NUL && C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp --print "%(title)s" "${youtubeUrl}"`, { encoding: "utf-8" });
   const title = (titleRaw || "").trim().slice(0, 50) || "YouTube BGM";
 
   console.log(`「${title}」をダウンロード中...`);
-  execSync(`C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp -x --audio-format mp3 -o "${outPath}" "${youtubeUrl}"`, { stdio: "inherit" });
+  execSync(`chcp 65001 >NUL && C:\\Users\\ryuch\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m yt_dlp -x --audio-format mp3 -o "${outPath}" "${youtubeUrl}"`, { stdio: "inherit" });
+
+  // デスクトップにも保存
+  try {
+    const desktopPath = `C:\\Users\\ryuch\\Desktop\\${title}.mp3`;
+    execSync(`copy "${outPath}" "${desktopPath}"`, { stdio: "inherit" });
+    console.log(`デスクトップに保存: ${desktopPath}`);
+  } catch { console.log("デスクトップ保存はスキップされました"); }
 
   const buffer = readFileSync(outPath);
   const fileName = `bgm/${userId}/youtube-${Date.now()}.mp3`;
