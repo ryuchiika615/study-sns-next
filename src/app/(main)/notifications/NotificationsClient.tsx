@@ -17,6 +17,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
   const [notifications, setNotifications] = useState(initial);
   const [giftBgms, setGiftBgms] = useState<Record<string, GiftBgm>>({});
   const [showGift, setShowGift] = useState<GiftBgm | null>(null);
+  const [giftLoading, setGiftLoading] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -79,17 +80,20 @@ export default function NotificationsClient({ notifications: initial }: { notifi
     }
   };
 
-  const handleClick = async (notif: any) => {
+  const handleClick = (notif: any) => {
     if (notif.notification_type === "gift" && notif.post_id) {
       const bgm = giftBgms[notif.post_id];
       if (bgm) { setShowGift(bgm); return; }
-      const res = await fetch(`/api/bgm/get?id=${notif.post_id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setGiftBgms(prev => ({ ...prev, [notif.post_id]: data }));
-        setShowGift(data);
-        return;
-      }
+      setGiftLoading(true);
+      setShowGift({ id: "", name: "", audio_url: "" });
+      fetch(`/api/bgm/get?id=${notif.post_id}`).then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setGiftBgms(prev => ({ ...prev, [notif.post_id]: data }));
+          setShowGift(data);
+        } else setShowGift(null);
+      }).catch(() => setShowGift(null)).finally(() => setGiftLoading(false));
+      return;
     }
     if (notif.notification_type === "follow") {
       router.push(`/profile/${notif.sender?.id}`);
@@ -176,22 +180,34 @@ export default function NotificationsClient({ notifications: initial }: { notifi
         ))}
 
       {showGift && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowGift(null)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setShowGift(null); setGiftLoading(false); }}>
           <div className="bg-white rounded-2xl max-w-sm w-full shadow-xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
             <div className="text-5xl mb-4">🎁</div>
             <h3 className="text-lg font-bold mb-2">プレゼントが届きました！</h3>
-            <div className="bg-purple-50 rounded-xl p-4 mb-4">
-              <p className="text-sm text-gray-500 mb-1">受け取ったBGM</p>
-              <p className="text-lg font-bold text-purple-700">{showGift.name}</p>
-              <audio src={showGift.audio_url} controls className="w-full mt-3 h-10 rounded-lg" />
-            </div>
+            {giftLoading ? (
+              <div className="bg-purple-50 rounded-xl p-4 mb-4">
+                <p className="text-gray-400 text-sm"><i className="fas fa-spinner fa-pulse mr-1" />読み込み中...</p>
+              </div>
+            ) : showGift.name ? (
+              <div className="bg-purple-50 rounded-xl p-4 mb-4">
+                <p className="text-sm text-gray-500 mb-1">受け取ったBGM</p>
+                <p className="text-lg font-bold text-purple-700">{showGift.name}</p>
+                <audio src={showGift.audio_url} controls className="w-full mt-3 h-10 rounded-lg" />
+              </div>
+            ) : (
+              <div className="bg-red-50 rounded-xl p-4 mb-4">
+                <p className="text-sm text-gray-500">BGMの読み込みに失敗しました</p>
+              </div>
+            )}
             <div className="flex gap-2">
-               <button onClick={() => { setShowGift(null); localStorage.setItem("pending_bgm_id", `user-${showGift.id}`); router.push("/"); }}
-                 className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer border-none">
-                 使う
-               </button>
-              <button onClick={() => setShowGift(null)}
-                className="flex-1 bg-gray-100 text-gray-700 rounded-full py-2 text-sm cursor-pointer border-none">
+              {showGift.name ? (
+                <button onClick={() => { setShowGift(null); setGiftLoading(false); localStorage.setItem("pending_bgm_id", `user-${showGift.id}`); router.push("/"); }}
+                  className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer border-none">
+                  使う
+                </button>
+              ) : null}
+              <button onClick={() => { setShowGift(null); setGiftLoading(false); }}
+                className={`flex-1 bg-gray-100 text-gray-700 rounded-full py-2 text-sm cursor-pointer border-none ${showGift.name ? "" : "w-full"}`}>
                 閉じる
               </button>
             </div>
