@@ -17,6 +17,7 @@ export default function EditProfilePage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [targetStartDate, setTargetStartDate] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [targetMinutes, setTargetMinutes] = useState("");
   const [message, setMessage] = useState("");
@@ -52,7 +53,7 @@ export default function EditProfilePage() {
     const id = uid || userIdRef.current;
     if (!id) return;
     const [profileResult, userItemsResult] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", id).single(),
+      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_start_date, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", id).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", id),
     ]);
 
@@ -62,6 +63,7 @@ export default function EditProfilePage() {
       setDisplayName(profileResult.data.display_name || "");
       setBio(profileResult.data.bio || "");
       setTargetDate(profileResult.data.target_date || "");
+      setTargetStartDate(profileResult.data.target_start_date || new Date().toISOString().slice(0, 10));
       setTargetMinutes(String(profileResult.data.target_minutes || 0));
     }
     if (userItemsResult.data) {
@@ -115,7 +117,7 @@ export default function EditProfilePage() {
     }
     const updateData: Record<string, any> = {
       username: username || undefined, display_name: displayName, bio,
-      target_date: targetDate || null, target_minutes: parseInt(targetMinutes) || 0,
+      target_date: targetDate || null, target_start_date: targetStartDate || null, target_minutes: parseInt(targetMinutes) || 0,
     };
 
     if (croppedBlob && iconFileName) {
@@ -234,18 +236,23 @@ export default function EditProfilePage() {
       )}
 
       {sectionCard("学習目標", "fa-bullseye",
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700">目標日</label>
-            <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
+        <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700">開始日</label>
+              <input type="date" value={targetStartDate} onChange={(e) => setTargetStartDate(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">目標日</label>
+              <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700">目標時間（分）</label>
+              <input type="number" value={targetMinutes} onChange={(e) => setTargetMinutes(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={0} />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700">目標時間（分）</label>
-            <input type="number" value={targetMinutes} onChange={(e) => setTargetMinutes(e.target.value)}
-              className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={0} />
-          </div>
-        </div>
       )}
 
       {cropImageUrl && (
