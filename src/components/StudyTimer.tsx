@@ -56,7 +56,7 @@ async function idbDel(id: string, store = "files") {
 const PRESET_TRACKS = [
   { id: "none", label: "なし", url: "" },
   { id: "lofi", label: "Lo-fi", url: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1" },
-  { id: "rain", label: "雨の音", url: "https://www.youtube.com/embed/mPZkdNFk_b4?autoplay=1&loop=1" },
+  { id: "rain", label: "雨の音", url: "https://www.youtube.com/embed/avQYLnNAGOk?autoplay=1&loop=1" },
   { id: "nature", label: "自然", url: "https://www.youtube.com/embed/eKFTSSKCzWA?autoplay=1&loop=1" },
 ];
 
