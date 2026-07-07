@@ -30,14 +30,19 @@ export async function POST(request: NextRequest) {
     await admin.from("bgm_requests").update({ status: "completed" }).eq("id", requestId);
   }
 
-  // Notify user (store bgm id in bgm_id so the client can show details)
-  await admin.from("notifications").insert({
+  // Notify user — bgm_id/post_id はカラム欠落やFK制約で失敗しうるので個別対応
+  const notifPayload: Record<string, any> = {
     recipient_id: userId,
     sender_id: user.id,
     notification_type: "gift",
-    bgm_id: bgm.id,
     post_id: bgm.id,
-  });
+  };
+  const notifResult = await admin.from("notifications").insert(notifPayload);
+  if (notifResult.error && notifResult.error.message?.includes("column")) {
+    // bgm_id etc. が存在しない → 必要最小限で再試行
+    delete notifPayload.post_id;
+    await admin.from("notifications").insert(notifPayload);
+  }
 
   return NextResponse.json({ success: true, bgm });
 }
