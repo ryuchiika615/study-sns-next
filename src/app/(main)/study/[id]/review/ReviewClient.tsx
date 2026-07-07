@@ -10,7 +10,6 @@ const ratings = [
   { value: 3, label: "Easy", color: "bg-blue-500", short: "簡単" },
 ];
 
-const ratingEmojis = ["🔄", "🤔", "✅", "⚡"];
 const ratingColors = ["bg-red-500", "bg-orange-500", "bg-green-500", "bg-blue-500"];
 
 function shuffleArray(arr: number[]): number[] {
@@ -26,6 +25,8 @@ function extractBlanks(text: string): string[] {
   return [...text.matchAll(/［(.+?)］/g)].map(m => m[1]);
 }
 
+const blankLabels = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ", "ク", "ケ", "コ"];
+
 export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -39,9 +40,9 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [recommendedRating, setRecommendedRating] = useState<number | null>(null);
-  const [seqAnswers, setSeqAnswers] = useState<Record<string, number>>({});
+  const [seqOrder, setSeqOrder] = useState<number[]>([]);
   const [seqSubmitted, setSeqSubmitted] = useState(false);
-  const [seqResults, setSeqResults] = useState<Record<string, boolean>>({});
+  const [seqResults, setSeqResults] = useState<boolean[]>([]);
   const [showAnswer, setShowAnswer] = useState(false);
 
   const current = cards[index];
@@ -54,18 +55,14 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       if (isMultipleChoice && current.options?.length) {
         setShuffledIndices(shuffleArray(current.options.map((_: any, i: number) => i)));
       }
-      if (isSequence) {
-        const initial: Record<string, number> = {};
-        blanks.forEach(b => { initial[b] = 0; });
-        setSeqAnswers(initial);
-        setSeqSubmitted(false);
-        setSeqResults({});
-      }
       setSelectedAnswer(null);
       setShowFeedback(false);
       setRecommendedRating(null);
       setFlipped(false);
       setShowAnswer(false);
+      setSeqOrder([]);
+      setSeqSubmitted(false);
+      setSeqResults([]);
     }
   }, [index, current?.id]);
 
@@ -88,7 +85,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     setShowFeedback(false);
     setRecommendedRating(null);
     setSeqSubmitted(false);
-    setSeqResults({});
+    setSeqResults([]);
     setShowAnswer(false);
 
     if (index + 1 < cards.length) {
@@ -107,18 +104,23 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     setRecommendedRating(isCorrect ? 2 : 0);
   };
 
+  const handleSeqSelectOption = (optIdx: number) => {
+    if (seqSubmitted) return;
+    if (seqOrder.length >= blanks.length) return;
+    setSeqOrder([...seqOrder, optIdx]);
+  };
+
+  const handleUndoSeq = () => {
+    if (seqOrder.length === 0) return;
+    setSeqOrder(seqOrder.slice(0, -1));
+  };
+
   const handleSubmitSequence = () => {
     const correctMap = current.correct_mapping || {};
-    const results: Record<string, boolean> = {};
-    let allCorrect = true;
-    blanks.forEach(b => {
-      const correct = seqAnswers[b] === correctMap[b];
-      results[b] = correct;
-      if (!correct) allCorrect = false;
-    });
+    const results = blanks.map((b, i) => seqOrder[i] === correctMap[b]);
     setSeqResults(results);
     setSeqSubmitted(true);
-    setRecommendedRating(allCorrect ? 2 : 0);
+    setRecommendedRating(results.every(Boolean) ? 2 : 0);
   };
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -130,7 +132,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       }
       return;
     }
-    if ((isMultipleChoice || isSequence) && showFeedback) {
+    if ((isMultipleChoice && showFeedback) || (isSequence && seqSubmitted)) {
       const keyMap: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3 };
       if (e.key in keyMap) {
         e.preventDefault();
@@ -138,10 +140,23 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       }
       return;
     }
-    if (isSequence && !seqSubmitted && e.key === "Enter") {
-      e.preventDefault();
-      handleSubmitSequence();
-      return;
+    if (isSequence && !seqSubmitted) {
+      const optKeyMap: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3 };
+      if (e.key in optKeyMap && current.options?.length) {
+        e.preventDefault();
+        handleSeqSelectOption(optKeyMap[e.key]);
+        return;
+      }
+      if (e.key === "Enter" && seqOrder.length === blanks.length) {
+        e.preventDefault();
+        handleSubmitSequence();
+        return;
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        handleUndoSeq();
+        return;
+      }
     }
     if (!flipped) {
       if (e.key === " " || e.key === "Enter") {
@@ -155,7 +170,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       e.preventDefault();
       handleRate(keyMap[e.key]);
     }
-  }, [flipped, handleRate, isMultipleChoice, isSequence, showFeedback, seqSubmitted, current]);
+  }, [flipped, handleRate, isMultipleChoice, isSequence, showFeedback, seqSubmitted, seqOrder, blanks, current]);
 
   if (completed) {
     const total = ratingCounts.reduce((a, b) => a + b, 0);
@@ -232,34 +247,36 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
   const renderSequenceQuestion = () => {
     if (!current.front) return null;
     const parts = current.front.split(/(［.+?］)/g);
+    let blankIdx = -1;
     return parts.map((part: string, i: number) => {
       const match = part.match(/［(.+?)］/);
       if (!match) return <span key={i}>{part}</span>;
+      blankIdx++;
       const blank = match[1];
-      const isCorrect = seqResults[blank];
-      let selectClass = "rounded-lg border px-2 py-1 text-sm font-bold min-w-[3rem] ";
-      if (!seqSubmitted) {
-        selectClass += "border-gray-300 bg-white";
-      } else if (isCorrect) {
-        selectClass += "border-green-500 bg-green-50 text-green-700";
+      const isFilled = seqOrder.length > blankIdx;
+      const selectedOpt = isFilled ? seqOrder[blankIdx] : null;
+      const isActive = seqOrder.length === blankIdx && !seqSubmitted;
+      const isCorrect = seqSubmitted ? seqResults[blankIdx] : null;
+
+      let boxClass = "inline-flex items-center justify-center min-w-[2.5rem] h-8 px-1.5 rounded-lg font-bold text-sm border-2 mx-0.5 ";
+      if (seqSubmitted) {
+        boxClass += isCorrect ? "border-green-500 bg-green-50 text-green-700" : "border-red-500 bg-red-50 text-red-700";
+      } else if (isFilled) {
+        boxClass += "border-primary bg-primary/10 text-primary";
+      } else if (isActive) {
+        boxClass += "border-orange-400 bg-orange-50 text-orange-500 animate-pulse";
       } else {
-        selectClass += "border-red-500 bg-red-50 text-red-700";
+        boxClass += "border-dashed border-gray-300 text-gray-400";
       }
+
       return (
-        <span key={i} className="inline-flex items-center gap-1 mx-0.5">
-          <select
-            value={seqAnswers[blank] ?? 0}
-            onChange={(e) => setSeqAnswers({ ...seqAnswers, [blank]: Number(e.target.value) })}
-            disabled={seqSubmitted}
-            className={selectClass}
-          >
-            {current.options?.map((_: string, j: number) => (
-              <option key={j} value={j}>{String.fromCharCode(65 + j)}</option>
-            ))}
-          </select>
+        <span key={i} className="inline-flex items-center mx-0.5">
+          <span className={boxClass}>
+            {isFilled ? String.fromCharCode(65 + selectedOpt!) : blank}
+          </span>
           {seqSubmitted && !isCorrect && (
-            <span className="text-[10px] text-green-600 font-bold">
-              [{String.fromCharCode(65 + (current.correct_mapping?.[blank] ?? 0))}]
+            <span className="text-[10px] text-green-600 font-bold ml-0.5">
+              ({String.fromCharCode(65 + (current.correct_mapping?.[blank] ?? 0))})
             </span>
           )}
         </span>
@@ -351,27 +368,56 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         ) : isSequence ? (
           <>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-4">
-              <p className="text-sm text-gray-400 mb-3">空欄に適切な選択肢を選んでください</p>
+              <p className="text-sm text-gray-400 mb-3">正解だと思う順番に選択肢をタップ</p>
               <div className="text-lg font-medium leading-relaxed whitespace-pre-wrap">
                 {renderSequenceQuestion()}
               </div>
+              {!seqSubmitted && seqOrder.length > 0 && (
+                <div className="text-center mt-2">
+                  <button onClick={handleUndoSeq}
+                    className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                    <i className="fas fa-undo mr-1" />一つ戻す
+                  </button>
+                  <span className="text-xs text-gray-400 ml-3">
+                    {seqOrder.length}/{blanks.length}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs space-y-1">
-              {current.options?.map((opt: string, i: number) => (
-                <p key={i} className="text-gray-600">
-                  <span className="font-bold text-gray-800">{String.fromCharCode(65 + i)}</span>. {opt}
-                </p>
-              ))}
+
+            {/* Options buttons */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {current.options?.map((opt: string, i: number) => {
+                const isUsed = seqOrder.includes(i);
+                const isNext = seqOrder.length === blanks.length ? false : true;
+                let btnClass = "rounded-xl border px-4 py-3 text-sm font-medium text-left transition cursor-pointer ";
+                if (seqSubmitted) {
+                  btnClass += "border-gray-200 bg-gray-50 text-gray-400";
+                } else if (isUsed) {
+                  btnClass += "border-gray-200 bg-gray-100 text-gray-400";
+                } else {
+                  btnClass += "border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300";
+                }
+                return (
+                  <button key={i} onClick={() => handleSeqSelectOption(i)}
+                    disabled={isUsed || seqSubmitted}
+                    className={btnClass}>
+                    <span className="font-bold mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
+                  </button>
+                );
+              })}
             </div>
+
             {!seqSubmitted ? (
               <button onClick={handleSubmitSequence}
-                className="w-full bg-primary text-white font-bold rounded-full py-3 text-sm cursor-pointer hover:bg-primary/90 transition">
-                回答を確認
+                disabled={seqOrder.length !== blanks.length}
+                className="w-full bg-primary text-white font-bold rounded-full py-3 text-sm disabled:opacity-40 cursor-pointer hover:bg-primary/90 transition">
+                {seqOrder.length !== blanks.length ? `あと${blanks.length - seqOrder.length}個選択` : "回答を確認"}
               </button>
             ) : (
               <>
-                <div className={`text-center font-bold text-sm mb-3 ${Object.values(seqResults).every(Boolean) ? "text-green-600" : "text-red-600"}`}>
-                  {Object.values(seqResults).every(Boolean) ? "全問正解！" : "間違いがあります"}
+                <div className={`text-center font-bold text-sm mb-3 ${seqResults.every(Boolean) ? "text-green-600" : "text-red-600"}`}>
+                  {seqResults.every(Boolean) ? "全問正解！" : "間違いがあります"}
                 </div>
                 {current.back && (
                   <div className="text-center mb-3">
@@ -448,7 +494,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         <p className="text-[10px] text-gray-400 text-center mt-3">
           {!isMultipleChoice && !isSequence ? (!flipped ? "Space / Enter" : "1 2 3 4")
             : isMultipleChoice ? (!showFeedback ? "1 2 3 4 で選択" : "1 2 3 4 で評価")
-            : isSequence ? (!seqSubmitted ? "Enter で確認" : "1 2 3 4 で評価")
+            : isSequence ? (!seqSubmitted ? "1 2 3 4 で選択 / Backspace取消 / Enter確認" : "1 2 3 4 で評価")
             : ""}
         </p>
       </div>
