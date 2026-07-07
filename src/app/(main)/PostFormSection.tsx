@@ -33,8 +33,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [cropIndex, setCropIndex] = useState(-1);
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
-  const [croppedImages, setCroppedImages] = useState<Blob[]>([]);
+  const [attachedImages, setAttachedImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
   const [subjectTemplates, setSubjectTemplates] = useState<{ id: string; name: string }[]>([]);
   const subjectRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -89,11 +90,11 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     const imageUrls: string[] = [];
     if (beeryualResult) imageUrls.push(beeryualResult);
 
-    for (const blob of croppedImages) {
+    for (const img of attachedImages) {
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("post-images")
-        .upload(fileName, blob);
+        .upload(fileName, img.blob);
       if (!uploadError) {
         const { data: urlData } = supabase.storage
           .from("post-images")
@@ -177,7 +178,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setBeeryualResult(null);
     setSilentPost(false);
     setAudioFile(null);
-    setCroppedImages([]);
+    setAttachedImages([]);
 
     if (data?.post_id && !silentPost) {
       fetch("/api/push/follow-post", {
@@ -331,15 +332,30 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                setPendingCropFile(file);
-                setCropImageUrl(URL.createObjectURL(file));
+                const url = URL.createObjectURL(file);
+                setAttachedImages(prev => [...prev, { blob: file, originalUrl: url }]);
+                e.target.value = "";
               }} />
-            {croppedImages.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {croppedImages.map((_, i) => (
-                  <span key={i} className="text-xs text-green-600 flex items-center gap-1">
-                    <i className="fas fa-check-circle" /> 画像{i + 1}
-                  </span>
+            {attachedImages.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-2">
+                {attachedImages.map((img, i) => (
+                  <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                    <img src={img.originalUrl} alt=""
+                      className="w-full h-full object-cover" />
+                    <div className="absolute top-1 right-1 flex gap-0.5">
+                      <button type="button" onClick={() => { setCropImageUrl(img.originalUrl); setCropIndex(i); }}
+                        className="w-6 h-6 bg-black/50 hover:bg-black/70 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
+                        <i className="fas fa-crop" />
+                      </button>
+                      <button type="button" onClick={() => {
+                        setAttachedImages(prev => prev.filter((_, j) => j !== i));
+                        URL.revokeObjectURL(img.originalUrl);
+                      }}
+                        className="w-6 h-6 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -386,12 +402,16 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           imageUrl={cropImageUrl}
           aspect={4 / 3}
           onComplete={(blob) => {
-            setCroppedImages((prev) => [...prev, blob]);
+            if (cropIndex >= 0) {
+              setAttachedImages(prev => prev.map((img, j) => j === cropIndex ? { ...img, blob } : img));
+            }
             setCropImageUrl(null);
+            setCropIndex(-1);
             setPendingCropFile(null);
           }}
           onCancel={() => {
             setCropImageUrl(null);
+            setCropIndex(-1);
             setPendingCropFile(null);
           }}
         />
