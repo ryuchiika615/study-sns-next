@@ -307,19 +307,19 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                    <p className="text-xs text-blue-600 font-bold mb-2">
+                  <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-300">
+                    <p className="text-xs text-blue-700 font-bold mb-2">
                       <i className="fas fa-user mr-1" /> あなたの答え
                     </p>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <div className="text-sm text-gray-800 whitespace-pre-wrap font-medium">
                       {userInput}
                     </div>
                   </div>
-                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                    <p className="text-xs text-green-600 font-bold mb-2">
+                  <div className="bg-green-50 rounded-xl p-4 border-2 border-green-400">
+                    <p className="text-xs text-green-800 font-bold mb-2">
                       <i className="fas fa-check-circle mr-1" /> 正解
                     </p>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    <div className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium">
                       {current.back}
                     </div>
                   </div>
