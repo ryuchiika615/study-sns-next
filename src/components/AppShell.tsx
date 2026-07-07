@@ -130,7 +130,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       const readIds = reads?.map(r => r.announcement_id) || [];
       const { data: announcements } = await supabase
         .from("admin_announcements")
-        .select("id, content, image_url, created_at")
+        .select("id, content, image_url, image_urls, created_at")
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
       if (announcements) {
@@ -497,8 +497,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               <div className="px-4 pb-4">
-                {popupAnnouncement.image_url && (
-                  <img src={popupAnnouncement.image_url} alt="" loading="lazy" className="w-full rounded-lg mb-3 max-h-60 object-cover" />
+                {(popupAnnouncement.image_urls?.length > 0 || popupAnnouncement.image_url) && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {(popupAnnouncement.image_urls?.length > 0 ? popupAnnouncement.image_urls : [popupAnnouncement.image_url]).filter(Boolean).map((url: string, i: number) => (
+                      <img key={i} src={url} alt="" loading="lazy" className="w-full rounded-lg max-h-60 object-cover" />
+                    ))}
+                  </div>
                 )}
                 {popupAnnouncement.content.startsWith("✅") ? (
                   <RenderResolutionAnnouncement content={popupAnnouncement.content} />
@@ -565,7 +569,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   {pendingGifts.length > 0 && <h4 className="text-sm font-bold text-gray-600 mb-2">📢 お知らせ</h4>}
                   {unreadAnnouncements.map((a: any) => (
                     <div key={a.id} className="border border-gray-200 rounded-lg p-3">
-                      {a.image_url && <img src={a.image_url} alt="" loading="lazy" className="w-full rounded-lg mb-2 max-h-48 object-cover" />}
+                      {(a.image_urls?.length > 0 || a.image_url) && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {(a.image_urls?.length > 0 ? a.image_urls : [a.image_url]).filter(Boolean).map((url: string, i: number) => (
+                            <img key={i} src={url} alt="" loading="lazy" className="w-full rounded-lg max-h-48 object-cover" />
+                          ))}
+                        </div>
+                      )}
                       <p className="text-sm whitespace-pre-wrap mb-2">{a.content}</p>
                       <p className="text-xs text-gray-400 mb-2">{new Date(a.created_at).toLocaleString("ja-JP")}</p>
                       <button onClick={() => markAnnouncementRead(a.id)}
