@@ -96,7 +96,8 @@ export async function DELETE(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   // Soft delete: set is_deleted = true so the content disappears from users' views
-  const { error } = await ctx.supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("admin_announcements")
     .update({ is_deleted: true })
     .eq("id", id);
