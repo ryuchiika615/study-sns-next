@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -71,5 +72,64 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ review: data });
+
+  // Update streak and daily log in background
+  const admin = createAdminClient();
+  const today = new Date().toISOString().split("T")[0];
+  const isNew = !lastReview;
+
+  // Daily log
+  const { data: existingLog } = await admin
+    .from("daily_study_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("date", today)
+    .maybeSingle();
+
+  if (existingLog) {
+    await admin.from("daily_study_logs").update({
+      cards_reviewed: existingLog.cards_reviewed + (isNew ? 0 : 1),
+      cards_new: existingLog.cards_new + (isNew ? 1 : 0),
+    }).eq("user_id", user.id).eq("date", today);
+  } else {
+    await admin.from("daily_study_logs").insert({
+      user_id: user.id,
+      date: today,
+      cards_reviewed: isNew ? 0 : 1,
+      cards_new: isNew ? 1 : 0,
+      study_minutes: 0,
+    });
+  }
+
+  // Streak
+  const { data: streak } = await admin
+    .from("study_streaks")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+  let newStreak = 1;
+  let longestStreak = streak?.longest_streak || 0;
+
+  if (streak) {
+    if (streak.last_study_date === today) {
+      newStreak = streak.current_streak;
+    } else if (streak.last_study_date === yesterdayStr) {
+      newStreak = streak.current_streak + 1;
+    }
+    longestStreak = Math.max(longestStreak, newStreak);
+  }
+
+  await admin.from("study_streaks").upsert({
+    user_id: user.id,
+    current_streak: newStreak,
+    longest_streak: longestStreak,
+    last_study_date: today,
+  }, { onConflict: "user_id" });
+
+  return NextResponse.json({ review: data, streak: newStreak });
 }

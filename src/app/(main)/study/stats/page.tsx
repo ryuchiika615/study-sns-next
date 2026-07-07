@@ -1,12 +1,11 @@
 import { createServerSupabase } from "@/lib/supabase-server";
-import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
+import StatsClient from "./StatsClient";
 
-export const dynamic = "force-dynamic";
-
-export async function GET() {
+export default async function StatsPage() {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) redirect("/auth/login");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -22,7 +21,7 @@ export async function GET() {
 
   const dueSet = new Set((dueData.data || []).map((r: any) => r.card_id));
 
-  // Due cards projection (next 30 days)
+  // Due projection
   const { data: allReviews } = await supabase
     .from("reviews")
     .select("due_date, card_id")
@@ -31,25 +30,19 @@ export async function GET() {
     .order("due_date", { ascending: true });
 
   const dueProjection: Record<string, number> = {};
-  const seenForProjection = new Set<string>();
+  const seen = new Set<string>();
   if (allReviews) {
-    for (const r of allReviews) {
-      if (!seenForProjection.has(r.card_id)) {
-        seenForProjection.add(r.card_id);
-        dueProjection[r.due_date] = (dueProjection[r.due_date] || 0) + 1;
-      }
-    }
+    allReviews.forEach((r: any) => {
+      if (!seen.has(r.card_id)) { seen.add(r.card_id); dueProjection[r.due_date] = (dueProjection[r.due_date] || 0) + 1; }
+    });
   }
 
   const next30Days: { date: string; count: number }[] = [];
   for (let i = 0; i < 30; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().split("T")[0];
-    next30Days.push({ date: dateStr, count: dueProjection[dateStr] || 0 });
+    const d = new Date(today); d.setDate(d.getDate() + i);
+    next30Days.push({ date: d.toISOString().split("T")[0], count: dueProjection[d.toISOString().split("T")[0]] || 0 });
   }
 
-  // Per-rating counts for today
   const { data: todayRatingData } = await supabase
     .from("reviews")
     .select("rating")
@@ -57,21 +50,21 @@ export async function GET() {
     .gte("reviewed_at", today);
 
   const ratingDist = [0, 0, 0, 0];
-  if (todayRatingData) {
-    todayRatingData.forEach((r: any) => { if (r.rating >= 0 && r.rating <= 3) ratingDist[r.rating]++; });
-  }
+  if (todayRatingData) todayRatingData.forEach((r: any) => { if (r.rating >= 0 && r.rating <= 3) ratingDist[r.rating]++; });
 
-  const s = streakRes.data || { current_streak: 0, longest_streak: 0, last_study_date: null };
+  const streak = streakRes.data || null;
 
-  return NextResponse.json({
-    total_cards: totalCards.count || 0,
-    total_reviews: totalReviews.count || 0,
-    today_reviews: todayReviews.count || 0,
-    due_cards: dueSet.size,
-    decks_count: decksCount.count || 0,
-    streak: s,
-    daily_logs: dailyLogs.data || [],
-    due_projection: next30Days,
-    today_rating_distribution: ratingDist,
-  });
+  return (
+    <StatsClient
+      totalCards={totalCards.count || 0}
+      totalReviews={totalReviews.count || 0}
+      todayReviews={todayReviews.count || 0}
+      dueCards={dueSet.size}
+      decksCount={decksCount.count || 0}
+      streak={streak}
+      dailyLogs={dailyLogs.data || []}
+      dueProjection={next30Days}
+      ratingDistribution={ratingDist}
+    />
+  );
 }

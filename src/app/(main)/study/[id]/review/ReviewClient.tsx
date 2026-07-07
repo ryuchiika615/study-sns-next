@@ -10,26 +10,35 @@ const ratings = [
   { value: 3, label: "Easy", color: "bg-blue-500", short: "簡単" },
 ];
 
+const ratingEmojis = ["🔄", "🤔", "✅", "⚡"];
+const ratingColors = ["bg-red-500", "bg-orange-500", "bg-green-500", "bg-blue-500"];
+
 export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [reviewed, setReviewed] = useState(0);
+  const [ratingCounts, setRatingCounts] = useState([0, 0, 0, 0]);
+  const [startTime] = useState(Date.now());
+  const [lastStreak, setLastStreak] = useState(0);
 
   const current = cards[index];
 
   const handleRate = useCallback(async (rating: number) => {
     if (!current || submitting) return;
     setSubmitting(true);
-    await fetch("/api/study/reviews", {
+    setRatingCounts((prev) => { const next = [...prev]; next[rating]++; return next; });
+    const res = await fetch("/api/study/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ card_id: current.id, rating }),
     });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.streak) setLastStreak(data.streak);
+    }
     setSubmitting(false);
-    setReviewed((r) => r + 1);
     setFlipped(false);
 
     if (index + 1 < cards.length) {
@@ -55,21 +64,59 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
   }, [flipped, handleRate]);
 
   if (completed) {
+    const total = ratingCounts.reduce((a, b) => a + b, 0);
+    const elapsed = Math.floor((Date.now() - startTime) / 60000);
+    const bestRatingIdx = ratingCounts.indexOf(Math.max(...ratingCounts));
+    const totalReviewed = cards.length;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-sm mx-auto p-4">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-xl font-bold mb-2">学習完了！</h2>
-          <p className="text-gray-500 mb-2">{cards.length}枚中 {reviewed}枚を復習しました</p>
-          <p className="text-sm text-gray-400 mb-6">お疲れ様でした</p>
+        <div className="text-center max-w-sm mx-auto p-6 w-full">
+          <div className="text-6xl mb-4">
+            {lastStreak >= 7 ? "🔥" : "🎉"}
+          </div>
+          <h2 className="text-xl font-bold mb-1">学習完了！</h2>
+          {lastStreak > 0 && (
+            <p className="text-orange-500 font-bold text-sm mb-2">
+              <i className="fas fa-fire" /> {lastStreak}日連続！
+            </p>
+          )}
+          <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-lg font-bold text-primary">{total}</p>
+                <p className="text-[10px] text-gray-500">復習したカード</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-lg font-bold text-gray-700">{elapsed}分</p>
+                <p className="text-[10px] text-gray-500">所要時間</p>
+              </div>
+            </div>
+
+            {/* Rating bar */}
+            <div className="flex h-3 rounded-full overflow-hidden">
+              {ratingCounts.map((count, i) => {
+                const pct = total > 0 ? (count / total) * 100 : 0;
+                return pct > 0 ? <div key={i} className={ratingColors[i]} style={{ width: `${pct}%` }} /> : null;
+              })}
+            </div>
+            {total > 0 && (
+              <div className="flex justify-between text-[10px] text-gray-500">
+                {ratings.map((r, i) => (
+                  <span key={i}>{r.short}: {ratingCounts[i]}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2 justify-center">
             <button onClick={() => router.push(`/study/${deck.id}`)}
               className="bg-gray-200 text-gray-700 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-300 transition">
               デッキに戻る
             </button>
-            <button onClick={() => { setIndex(0); setFlipped(false); setCompleted(false); setReviewed(0); }}
+            <button onClick={() => { setIndex(0); setFlipped(false); setCompleted(false); setRatingCounts([0, 0, 0, 0]); }}
               className="bg-primary text-white rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-primary/90 transition">
-              続けて学習
+              続ける
             </button>
           </div>
         </div>
