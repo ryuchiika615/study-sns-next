@@ -36,24 +36,7 @@ export async function GET() {
     .lt("created_at", weekEndISO)
     .order("created_at", { ascending: true });
 
-  // Debug: total posts for this user (no date filter)
-  const { data: allUserPosts, count: allUserPostsCount } = await admin
-    .from("posts")
-    .select("id, created_at", { count: "exact", head: false })
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
-  console.log("[weekly-report debug]", {
-    userId: user.id,
-    weekStart: weekStartStr, weekEnd: weekEndStr,
-    queryStart: weekStartISO,
-    queryEnd: weekEndISO,
-    postsFound: posts?.length || 0,
-    totalUserPosts: allUserPostsCount || 0,
-    recentPosts: allUserPosts?.map(p => ({ id: p.id, created_at: p.created_at })),
-    posts: posts?.slice(0, 5).map(p => ({ study_minutes: p.study_minutes, subject: p.subject, created_at: p.created_at })),
-  });
-
+  
   const prevWeekStartISO = prevWeekStartDate.toISOString();
   const { data: prevPosts } = await admin
     .from("posts")
