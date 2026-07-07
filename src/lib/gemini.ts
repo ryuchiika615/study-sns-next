@@ -1,4 +1,4 @@
-export async function geminiGenerate(prompt: string): Promise<string> {
+export async function groqGenerate(prompt: string): Promise<string> {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("GROQ_API_KEY not set");
 

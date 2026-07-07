@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { geminiGenerate } from "@/lib/gemini";
+import { groqGenerate } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 
@@ -132,13 +132,13 @@ export async function GET() {
 
   // AI coaching comment (cached daily)
   const todayStr = new Date().toISOString().split("T")[0];
-  const hasGeminiKey = !!process.env.GROQ_API_KEY;
+  const hasGroqKey = !!process.env.GROQ_API_KEY;
   let aiComment: string | null = null;
   let aiError: string | null = null;
   const cachedComment = profile?.weekly_ai_week_start === todayStr ? profile?.weekly_ai_comment : null;
   if (cachedComment) {
     aiComment = cachedComment;
-  } else if (hasGeminiKey) {
+  } else if (hasGroqKey) {
     try {
       const diff = totalMinutes - prevTotalMinutes;
       const diffText = diff >= 0 ? `先週より${Math.floor(diff / 60)}時間${diff % 60}分増えました` : `先週より${Math.floor(Math.abs(diff) / 60)}時間${Math.abs(diff) % 60}分減りました`;
@@ -171,7 +171,7 @@ ${targetText}
 - 目標が期限切れなら、新しい目標設定を促す内容にする
 - ユーザーにだけ届く特別なアドバイスであること`;
 
-      aiComment = await geminiGenerate(prompt);
+      aiComment = await groqGenerate(prompt);
       await admin.from("profiles").update({
         weekly_ai_week_start: todayStr,
         weekly_ai_comment: aiComment,
@@ -197,6 +197,6 @@ ${targetText}
     bestHour,
     aiComment,
     aiError,
-    hasGeminiKey,
+    hasGroqKey,
   });
 }
