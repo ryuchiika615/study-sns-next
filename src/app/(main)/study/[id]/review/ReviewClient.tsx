@@ -42,6 +42,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
   const [seqAnswers, setSeqAnswers] = useState<Record<string, number>>({});
   const [seqSubmitted, setSeqSubmitted] = useState(false);
   const [seqResults, setSeqResults] = useState<Record<string, boolean>>({});
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const current = cards[index];
   const isMultipleChoice = current?.card_type === "multiple_choice";
@@ -64,6 +65,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       setShowFeedback(false);
       setRecommendedRating(null);
       setFlipped(false);
+      setShowAnswer(false);
     }
   }, [index, current?.id]);
 
@@ -87,6 +89,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     setRecommendedRating(null);
     setSeqSubmitted(false);
     setSeqResults({});
+    setShowAnswer(false);
 
     if (index + 1 < cards.length) {
       setIndex((i) => i + 1);
@@ -316,6 +319,20 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                     <span className="text-gray-500 font-normal ml-1">正解: {current.options[current.correct_answer]}</span>
                   )}
                 </div>
+                {current.back && (
+                  <div className="text-center mb-3">
+                    <button onClick={() => setShowAnswer(!showAnswer)}
+                      className="text-xs text-primary font-bold cursor-pointer hover:underline">
+                      <i className={`fas fa-chevron-${showAnswer ? "up" : "down"} mr-1`} />
+                      {showAnswer ? "答えを隠す" : "答えを表示"}
+                    </button>
+                    {showAnswer && (
+                      <div className="mt-2 bg-blue-50 rounded-lg p-3 text-sm text-left whitespace-pre-wrap">
+                        {current.back}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-4 gap-2">
                   {ratings.map((r) => {
                     const isRecommended = recommendedRating === r.value;
@@ -356,6 +373,20 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                 <div className={`text-center font-bold text-sm mb-3 ${Object.values(seqResults).every(Boolean) ? "text-green-600" : "text-red-600"}`}>
                   {Object.values(seqResults).every(Boolean) ? "全問正解！" : "間違いがあります"}
                 </div>
+                {current.back && (
+                  <div className="text-center mb-3">
+                    <button onClick={() => setShowAnswer(!showAnswer)}
+                      className="text-xs text-primary font-bold cursor-pointer hover:underline">
+                      <i className={`fas fa-chevron-${showAnswer ? "up" : "down"} mr-1`} />
+                      {showAnswer ? "完成文を隠す" : "完成文を表示"}
+                    </button>
+                    {showAnswer && (
+                      <div className="mt-2 bg-blue-50 rounded-lg p-3 text-sm text-left whitespace-pre-wrap">
+                        {current.back}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-4 gap-2">
                   {ratings.map((r) => {
                     const isRecommended = recommendedRating === r.value;
