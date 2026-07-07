@@ -78,7 +78,11 @@ const PostCard = memo(function PostCard({
   }, []);
 
   const handleReply = useCallback((username: string) => {
-    setCommentText(`@${username} `);
+    setCommentText((prev) => {
+      const tag = `@${username}`;
+      if (prev.includes(tag)) return prev;
+      return prev ? `${prev} ${tag} ` : `${tag} `;
+    });
     setShowComments(true);
     setTimeout(() => commentInputRef.current?.focus(), 100);
   }, []);
