@@ -18,7 +18,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   const [completed, setCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [userInput, setUserInput] = useState("");
 
   const current = cards[index];
 
@@ -36,7 +36,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
     if (current) {
       setAnswers(blanks.map(b => ({ blankId: b, selectedOption: null })));
       setSelectedAnswer(null);
-      setShowAnswer(false);
+      setUserInput("");
     }
   }, [index, current?.id]);
 
@@ -54,7 +54,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
     setAnswers(newAnswers);
   };
 
-  // 採点
+  // 解答
   const handleSubmit = () => {
     if (isMultipleChoice) {
       const correct = selectedAnswer === current.correct_answer;
@@ -78,12 +78,6 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
     setSubmitted(true);
   };
 
-  // 答えを見る（基本問題用）
-  const handleShowAnswer = () => {
-    setShowAnswer(true);
-    setScore(prev => prev + 1); // 基本問題は正解として扱う
-  };
-
   // 次の問題へ
   const handleNext = () => {
     if (index + 1 < cards.length) {
@@ -91,7 +85,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
       setSubmitted(false);
       setResults([]);
       setSelectedAnswer(null);
-      setShowAnswer(false);
+      setUserInput("");
     } else {
       setCompleted(true);
     }
@@ -110,6 +104,14 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
     }
   }, [current?.id]);
 
+  // 解答ボタンの disabled 判定
+  const isSubmitDisabled = () => {
+    if (isMultipleChoice) return selectedAnswer === null;
+    if (isSequence) return !answers.some(a => a.selectedOption !== null);
+    if (isBasic) return !userInput.trim();
+    return true;
+  };
+
   // 完了画面
   if (completed) {
     return (
@@ -125,7 +127,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
               className="flex-1 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-full py-3 text-sm hover:bg-gray-50 transition text-center">
               デッキに戻る
             </Link>
-            <button onClick={() => { setIndex(0); setScore(0); setCompleted(false); setSubmitted(false); setShowAnswer(false); }}
+            <button onClick={() => { setIndex(0); setScore(0); setCompleted(false); setSubmitted(false); }}
               className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm hover:bg-primary/90 transition">
               もう一度
             </button>
@@ -289,21 +291,37 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
             </div>
           )}
 
-          {/* 基本問題の場合 - 自分で答えてから答えを見る */}
+          {/* 基本問題の場合 - テキスト入力 */}
           {isBasic && (
             <div className="mt-4">
-              {!showAnswer ? (
-                <button onClick={handleShowAnswer}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl py-4 text-sm transition">
-                  <i className="fas fa-eye mr-2" /> 答えを見る
-                </button>
+              {!submitted ? (
+                <div>
+                  <label className="text-xs text-gray-500 block mb-2">あなたの答え:</label>
+                  <textarea
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    className="w-full rounded-xl border-2 border-gray-200 text-sm p-3 focus:border-primary focus:outline-none transition"
+                    rows={3}
+                    placeholder="ここに答えを入力してください..."
+                  />
+                </div>
               ) : (
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                  <p className="text-xs text-blue-600 font-bold mb-2">
-                    <i className="fas fa-check-circle mr-1" /> 解答
-                  </p>
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                    {current.back}
+                <div className="space-y-3">
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <p className="text-xs text-blue-600 font-bold mb-2">
+                      <i className="fas fa-user mr-1" /> あなたの答え
+                    </p>
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {userInput}
+                    </div>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <p className="text-xs text-green-600 font-bold mb-2">
+                      <i className="fas fa-check-circle mr-1" /> 正解
+                    </p>
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {current.back}
+                    </div>
                   </div>
                 </div>
               )}
@@ -311,16 +329,14 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           )}
         </div>
 
-        {/* 次へボタン */}
+        {/* 解答ボタン / 次へボタン */}
         <div className="flex gap-3">
-          {!submitted && !showAnswer ? (
-            (isMultipleChoice || isSequence) && (
-              <button onClick={handleSubmit}
-                disabled={isMultipleChoice ? selectedAnswer === null : !answers.some(a => a.selectedOption !== null)}
-                className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm disabled:opacity-40 hover:bg-primary/90 transition">
-                採点する
-              </button>
-            )
+          {!submitted ? (
+            <button onClick={handleSubmit}
+              disabled={isSubmitDisabled()}
+              className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm disabled:opacity-40 hover:bg-primary/90 transition">
+              解答
+            </button>
           ) : (
             <div className="flex-1">
               <button onClick={handleNext}
