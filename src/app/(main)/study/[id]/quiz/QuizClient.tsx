@@ -122,7 +122,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           </p>
           <div className="flex gap-3">
             <Link href={`/study/${deck.id}`}
-              className="flex-1 bg-gray-200 text-gray-700 font-bold rounded-full py-3 text-sm hover:bg-gray-300 transition text-center">
+              className="flex-1 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-full py-3 text-sm hover:bg-gray-50 transition text-center">
               デッキに戻る
             </Link>
             <button onClick={() => { setIndex(0); setScore(0); setCompleted(false); setSubmitted(false); setShowAnswer(false); }}
