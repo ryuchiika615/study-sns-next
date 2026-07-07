@@ -28,6 +28,16 @@ export default function DeckDetailClient({
   const [flippedId, setFlippedId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(deck.is_public);
 
+  // Edit card
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFront, setEditFront] = useState("");
+  const [editBack, setEditBack] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editCardType, setEditCardType] = useState<"basic" | "multiple_choice" | "sequence">("basic");
+  const [editOptions, setEditOptions] = useState<string[]>(["", ""]);
+  const [editCorrectAnswer, setEditCorrectAnswer] = useState(0);
+  const [editCorrectMapping, setEditCorrectMapping] = useState<Record<string, number>>({});
+
   // AI generate
   const [showAIGenerate, setShowAIGenerate] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
@@ -139,6 +149,45 @@ export default function DeckDetailClient({
       body: JSON.stringify({ id }),
     });
     if (res.ok) setCards((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const startEdit = (card: any) => {
+    setEditingId(card.id);
+    setEditFront(card.front);
+    setEditBack(card.back);
+    setEditTags((card.tags || []).join(", "));
+    setEditCardType(card.card_type || "basic");
+    setEditOptions(card.options?.length ? [...card.options] : ["", ""]);
+    setEditCorrectAnswer(card.correct_answer ?? 0);
+    setEditCorrectMapping(card.correct_mapping || {});
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFront.trim() || !editBack.trim()) return;
+    const body: any = { id: editingId, front: editFront.trim(), back: editBack.trim(), tags: editTags ? editTags.split(",").map((t: string) => t.trim()).filter(Boolean) : [] };
+    if (editCardType === "multiple_choice") {
+      if (editOptions.filter((o) => o.trim()).length < 2) return;
+      body.card_type = editCardType;
+      body.options = editOptions.filter((o) => o.trim());
+      body.correct_answer = editCorrectAnswer;
+    } else if (editCardType === "sequence") {
+      if (editOptions.filter((o) => o.trim()).length < 2) return;
+      if (Object.keys(editCorrectMapping).length === 0) return;
+      body.card_type = editCardType;
+      body.options = editOptions.filter((o) => o.trim());
+      body.correct_mapping = editCorrectMapping;
+    }
+    const res = await fetch("/api/study/cards", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setCards((prev) => prev.map((c) => c.id === editingId ? data.card : c));
+      setEditingId(null);
+    }
   };
 
   const handleAIGenerate = async () => {
@@ -555,10 +604,132 @@ export default function DeckDetailClient({
 
         {/* Card list */}
         <div className="space-y-2">
+          {editingId && (() => {
+            const card = cards.find((c: any) => c.id === editingId);
+            if (!card) return null;
+            return (
+              <form key={card.id} onSubmit={handleEditSave} className="bg-white rounded-xl border-2 border-primary p-4 space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-sm font-bold text-primary"><i className="fas fa-pen mr-1" />カードを編集</h3>
+                  <button type="button" onClick={() => setEditingId(null)}
+                    className="text-xs text-gray-400 cursor-pointer hover:text-gray-600"><i className="fas fa-times" /></button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">形式:</span>
+                  {(["basic", "multiple_choice", "sequence"] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => setEditCardType(t)}
+                      className={`text-xs font-bold rounded-full px-3 py-1 cursor-pointer transition ${editCardType === t ? "bg-primary text-white" : "bg-gray-100 text-gray-500"}`}>
+                      {t === "basic" ? "基本" : t === "multiple_choice" ? "選択問題" : "穴埋め"}
+                    </button>
+                  ))}
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">問題</label>
+                  <textarea value={editFront} onChange={(e) => {
+                    setEditFront(e.target.value);
+                    if (editCardType === "sequence") {
+                      const blanks = [...e.target.value.matchAll(/［(.+?)］/g)].map(m => m[1]);
+                      setEditCorrectMapping(prev => {
+                        const next = { ...prev };
+                        blanks.forEach(b => { if (!(b in next)) next[b] = 0; });
+                        Object.keys(next).forEach(k => { if (!blanks.includes(k)) delete next[k]; });
+                        return next;
+                      });
+                    }
+                  }} className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
+                </div>
+                {editCardType === "multiple_choice" && (
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 block">選択肢</label>
+                    {editOptions.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input type="radio" name="edit-correct" checked={editCorrectAnswer === i}
+                          onChange={() => setEditCorrectAnswer(i)} className="cursor-pointer" />
+                        <input value={opt} onChange={(e) => {
+                          const next = [...editOptions];
+                          next[i] = e.target.value;
+                          setEditOptions(next);
+                        }} className="flex-1 rounded-lg border-gray-300 text-sm" />
+                        {editOptions.length > 2 && (
+                          <button type="button" onClick={() => {
+                            const next = editOptions.filter((_, j) => j !== i);
+                            setEditOptions(next);
+                            if (editCorrectAnswer >= next.length) setEditCorrectAnswer(0);
+                          }} className="text-xs text-red-400 cursor-pointer"><i className="fas fa-times" /></button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setEditOptions([...editOptions, ""])}
+                      className="text-xs text-primary font-bold cursor-pointer"><i className="fas fa-plus mr-1" />選択肢を追加</button>
+                  </div>
+                )}
+                {editCardType === "sequence" && (
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 block">選択肢</label>
+                    {editOptions.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-400 w-5 text-center">{String.fromCharCode(65 + i)}</span>
+                        <input value={opt} onChange={(e) => {
+                          const next = [...editOptions];
+                          next[i] = e.target.value;
+                          setEditOptions(next);
+                        }} className="flex-1 rounded-lg border-gray-300 text-sm" />
+                        {editOptions.length > 2 && (
+                          <button type="button" onClick={() => {
+                            const next = editOptions.filter((_, j) => j !== i);
+                            setEditOptions(next);
+                            const fixed: Record<string, number> = {};
+                            Object.entries(editCorrectMapping).forEach(([k, v]) => { fixed[k] = v >= next.length ? 0 : v; });
+                            setEditCorrectMapping(fixed);
+                          }} className="text-xs text-red-400 cursor-pointer"><i className="fas fa-times" /></button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setEditOptions([...editOptions, ""])}
+                      className="text-xs text-primary font-bold cursor-pointer"><i className="fas fa-plus mr-1" />選択肢を追加</button>
+                    {editOptions.filter(o => o.trim()).length >= 2 && Object.keys(editCorrectMapping).length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <label className="text-xs text-gray-500 block mb-2">正しい組み合わせ</label>
+                        {Object.keys(editCorrectMapping).sort().map((blank) => (
+                          <div key={blank} className="flex items-center gap-2 mb-1.5">
+                            <span className="text-sm font-bold text-orange-600">［{blank}］</span>
+                            <span className="text-xs text-gray-400">→</span>
+                            <select value={editCorrectMapping[blank]} onChange={(e) => {
+                              setEditCorrectMapping({ ...editCorrectMapping, [blank]: Number(e.target.value) });
+                            }} className="flex-1 rounded-lg border-gray-300 text-sm">
+                              {editOptions.filter(o => o.trim()).map((_, i) => (
+                                <option key={i} value={i}>{String.fromCharCode(65 + i)}. {editOptions.filter(o => o.trim())[i]}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">{editCardType === "multiple_choice" || editCardType === "sequence" ? "解説（完成文）" : "裏面（答え）"}</label>
+                  <textarea value={editBack} onChange={(e) => setEditBack(e.target.value)}
+                    className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">タグ（カンマ区切り）</label>
+                  <input value={editTags} onChange={(e) => setEditTags(e.target.value)}
+                    className="w-full rounded-lg border-gray-300 text-sm" />
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer hover:bg-primary/90 transition">保存</button>
+                  <button type="button" onClick={() => setEditingId(null)}
+                    className="flex-1 bg-gray-100 text-gray-600 font-bold rounded-full py-2 text-sm cursor-pointer hover:bg-gray-200 transition">キャンセル</button>
+                </div>
+              </form>
+            );
+          })()}
           {cards.length === 0 && (
             <p className="text-center text-gray-400 py-8 text-sm">カードがありません。手動追加、AI生成、またはインポートでカードを作成しましょう。</p>
           )}
-          {cards.map((card: any) => (
+          {cards.map((card: any) =>
+            editingId === card.id ? null : (
             <div key={card.id}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition"
               onClick={() => {
@@ -586,9 +757,7 @@ export default function DeckDetailClient({
                         {card.tags?.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {card.tags.map((tag: string, i: number) => (
-                              <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
-                                {tag}
-                              </span>
+                              <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{tag}</span>
                             ))}
                           </div>
                         )}
@@ -604,14 +773,20 @@ export default function DeckDetailClient({
                       </div>
                     )}
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(card.id); }}
-                    className="text-xs text-red-400 cursor-pointer hover:text-red-600 ml-2 flex-shrink-0">
-                    <i className="fas fa-trash" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); startEdit(card); }}
+                      className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 flex-shrink-0">
+                      <i className="fas fa-pen" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(card.id); }}
+                      className="text-xs text-red-400 cursor-pointer hover:text-red-600 ml-2 flex-shrink-0">
+                      <i className="fas fa-trash" />
+                    </button>
+                  </div>
+                  {!flippedId && explainingId !== card.id && (
+                    <p className="text-[10px] text-gray-400 mt-2">タップして答えを表示</p>
+                  )}
                 </div>
-                {!flippedId && explainingId !== card.id && (
-                  <p className="text-[10px] text-gray-400 mt-2">タップして答えを表示</p>
-                )}
               </div>
             </div>
           ))}

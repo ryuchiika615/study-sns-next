@@ -74,6 +74,63 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ card: data });
 }
 
+export async function PATCH(request: NextRequest) {
+  const supabase = createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id, front, back, tags, card_type, options, correct_answer, correct_mapping } = await request.json();
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const updates: Record<string, any> = {};
+  if (front !== undefined) updates.front = front.trim();
+  if (back !== undefined) updates.back = back.trim();
+  if (tags !== undefined) updates.tags = tags;
+  if (card_type !== undefined) {
+    updates.card_type = card_type;
+    if (card_type === "basic") {
+      updates.options = null;
+      updates.correct_answer = null;
+      updates.correct_mapping = null;
+    } else if (card_type === "multiple_choice") {
+      if (!options?.length || options.length < 2) return NextResponse.json({ error: "multiple choice requires at least 2 options" }, { status: 400 });
+      if (typeof correct_answer !== "number" || correct_answer < 0 || correct_answer >= options.length)
+        return NextResponse.json({ error: "correct_answer must be a valid index" }, { status: 400 });
+      if (!back?.trim()) return NextResponse.json({ error: "back required" }, { status: 400 });
+      updates.options = options;
+      updates.correct_answer = correct_answer;
+      updates.correct_mapping = null;
+    } else if (card_type === "sequence") {
+      if (!options?.length || options.length < 2) return NextResponse.json({ error: "sequence requires at least 2 options" }, { status: 400 });
+      if (!correct_mapping || typeof correct_mapping !== "object") return NextResponse.json({ error: "correct_mapping required for sequence" }, { status: 400 });
+      if (!back?.trim()) return NextResponse.json({ error: "back required" }, { status: 400 });
+      for (const v of Object.values(correct_mapping)) {
+        if (typeof v !== "number" || v < 0 || v >= options.length)
+          return NextResponse.json({ error: "correct_mapping values must be valid option indices" }, { status: 400 });
+      }
+      updates.options = options;
+      updates.correct_mapping = correct_mapping;
+      updates.correct_answer = null;
+    }
+  } else {
+    // If card_type not changing but related fields are provided, validate
+    if (options !== undefined) updates.options = options;
+    if (correct_answer !== undefined) updates.correct_answer = correct_answer;
+    if (correct_mapping !== undefined) updates.correct_mapping = correct_mapping;
+  }
+
+  const { data, error } = await supabase
+    .from("cards")
+    .update(updates)
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ card: data });
+}
+
 export async function DELETE(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
