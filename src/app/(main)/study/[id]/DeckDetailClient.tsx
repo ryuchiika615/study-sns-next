@@ -236,16 +236,10 @@ export default function DeckDetailClient({
             </Link>
             <div className="flex items-center gap-2">
               {cards.length > 0 && (
-                <>
-                  <Link href={`/study/${deck.id}/quiz`}
-                    className="bg-purple-600 text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-purple-700 transition">
-                    <i className="fas fa-pen mr-1" /> クイズ
-                  </Link>
-                  <Link href={`/study/${deck.id}/review`}
-                    className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
-                    学習を開始
-                  </Link>
-                </>
+                <Link href={`/study/${deck.id}/quiz`}
+                  className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
+                  学習を開始
+                </Link>
               )}
             </div>
           </div>

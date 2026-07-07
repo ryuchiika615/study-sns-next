@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -17,8 +17,8 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   const [results, setResults] = useState<{ blankId: string; correct: boolean; correctOption: number }[]>([]);
   const [completed, setCompleted] = useState(false);
   const [score, setScore] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const current = cards[index];
 
@@ -28,22 +28,27 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   };
 
   const blanks = extractBlanks(current?.front || "");
-  const isSequence = blanks.length >= 2;
+  const isSequence = current?.card_type === "sequence" && blanks.length >= 2;
+  const isMultipleChoice = current?.card_type === "multiple_choice" && current?.options?.length > 0;
+  const isBasic = !isSequence && !isMultipleChoice;
 
   useEffect(() => {
     if (current) {
       setAnswers(blanks.map(b => ({ blankId: b, selectedOption: null })));
       setSelectedAnswer(null);
+      setShowAnswer(false);
     }
   }, [index, current?.id]);
 
   // 選択問題の回答処理
   const handleSelectMultipleChoice = (optionIndex: number) => {
+    if (submitted) return;
     setSelectedAnswer(optionIndex);
   };
 
   // 穴埋めの回答処理
   const handleSelectBlank = (blankIndex: number, optionIndex: number) => {
+    if (submitted) return;
     const newAnswers = [...answers];
     newAnswers[blankIndex] = { ...newAnswers[blankIndex], selectedOption: optionIndex };
     setAnswers(newAnswers);
@@ -51,8 +56,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
 
   // 採点
   const handleSubmit = () => {
-    if (current.card_type === "multiple_choice") {
-      // 選択問題
+    if (isMultipleChoice) {
       const correct = selectedAnswer === current.correct_answer;
       setResults([{
         blankId: "answer",
@@ -61,7 +65,6 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
       }]);
       setScore(prev => prev + (correct ? 1 : 0));
     } else if (isSequence) {
-      // 穴埋め
       const correctMap = current.correct_mapping || {};
       const newResults = blanks.map((blankId, i) => ({
         blankId,
@@ -70,13 +73,15 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
       }));
       const correctCount = newResults.filter(r => r.correct).length;
       setScore(prev => prev + correctCount);
-      setTotalCount(prev => prev + blanks.length);
       setResults(newResults);
-    } else {
-      // 基本問題 - テキスト入力
-      setResults([{ blankId: "answer", correct: true, correctOption: 0 }]);
     }
     setSubmitted(true);
+  };
+
+  // 答えを見る（基本問題用）
+  const handleShowAnswer = () => {
+    setShowAnswer(true);
+    setScore(prev => prev + 1); // 基本問題は正解として扱う
   };
 
   // 次の問題へ
@@ -86,6 +91,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
       setSubmitted(false);
       setResults([]);
       setSelectedAnswer(null);
+      setShowAnswer(false);
     } else {
       setCompleted(true);
     }
@@ -94,9 +100,8 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   // タグをランダムにシャッフル
   const [shuffledOptions, setShuffledOptions] = useState<number[]>([]);
   useEffect(() => {
-    if (current?.card_type === "multiple_choice" && current.options?.length) {
+    if (isMultipleChoice && current.options?.length) {
       const indices = current.options.map((_: any, i: number) => i);
-      // Fisher-Yates shuffle
       for (let i = indices.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [indices[i], indices[j]] = [indices[j], indices[i]];
@@ -111,19 +116,16 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
           <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-xl font-bold mb-2">クイズ完了！</h2>
+          <h2 className="text-xl font-bold mb-2">学習完了！</h2>
           <p className="text-gray-600 mb-4">
-            {score} / {cards.length} 問正解
+            {cards.length}問学習しました
           </p>
-          <div className="text-3xl font-bold text-primary mb-6">
-            {Math.round((score / cards.length) * 100)}%
-          </div>
           <div className="flex gap-3">
             <Link href={`/study/${deck.id}`}
               className="flex-1 bg-gray-200 text-gray-700 font-bold rounded-full py-3 text-sm hover:bg-gray-300 transition text-center">
               デッキに戻る
             </Link>
-            <button onClick={() => { setIndex(0); setScore(0); setCompleted(false); setSubmitted(false); }}
+            <button onClick={() => { setIndex(0); setScore(0); setCompleted(false); setSubmitted(false); setShowAnswer(false); }}
               className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm hover:bg-primary/90 transition">
               もう一度
             </button>
@@ -179,7 +181,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           </div>
 
           {/* 選択問題の場合 */}
-          {current.card_type === "multiple_choice" && current.options && (
+          {isMultipleChoice && (
             <div className="space-y-2">
               {current.options.map((opt: string, i: number) => {
                 const displayIndex = shuffledOptions.length ? shuffledOptions.indexOf(i) : i;
@@ -189,7 +191,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
                 const isWrong = submitted && isSelected && i !== current.correct_answer;
 
                 return (
-                  <button key={i} onClick={() => !submitted && handleSelectMultipleChoice(i)}
+                  <button key={i} onClick={() => handleSelectMultipleChoice(i)}
                     className={`w-full text-left p-3 rounded-xl border-2 transition-all text-sm
                       ${submitted
                         ? isCorrect ? "border-green-500 bg-green-50 text-green-700"
@@ -253,10 +255,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
               <div className="space-y-2">
                 <p className="text-xs text-gray-500 mb-2">選択肢:</p>
                 {current.options?.map((opt: string, i: number) => {
-                  const currentBlankIndex = answers.findIndex((a, idx) => {
-                    const correctMap = current.correct_mapping || {};
-                    return a.selectedOption === null || a.selectedOption === undefined;
-                  });
+                  const currentBlankIndex = answers.findIndex(a => a.selectedOption === null);
 
                   return (
                     <button key={i} onClick={() => {
@@ -289,40 +288,48 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
               )}
             </div>
           )}
-        </div>
 
-        {/* 採点ボタン / 次へボタン */}
-        <div className="flex gap-3">
-          {!submitted ? (
-            <button onClick={handleSubmit}
-              disabled={current.card_type === "multiple_choice" ? selectedAnswer === null : !answers.some(a => a.selectedOption !== null)}
-              className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm disabled:opacity-40 hover:bg-primary/90 transition">
-              採点する
-            </button>
-          ) : (
-            <>
-              {/* 解説表示 */}
-              <div className="flex-1">
-                <button onClick={handleNext}
-                  className="w-full bg-primary text-white font-bold rounded-full py-3 text-sm hover:bg-primary/90 transition">
-                  {index + 1 < cards.length ? "次の問題へ" : "結果を見る"}
+          {/* 基本問題の場合 - 自分で答えてから答えを見る */}
+          {isBasic && (
+            <div className="mt-4">
+              {!showAnswer ? (
+                <button onClick={handleShowAnswer}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl py-4 text-sm transition">
+                  <i className="fas fa-eye mr-2" /> 答えを見る
                 </button>
-              </div>
-            </>
+              ) : (
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                  <p className="text-xs text-blue-600 font-bold mb-2">
+                    <i className="fas fa-check-circle mr-1" /> 解答
+                  </p>
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {current.back}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* 解説（採点後） */}
-        {submitted && (
-          <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-sm font-bold text-gray-700 mb-2">
-              <i className="fas fa-book-open mr-1 text-primary" /> 解答・解説
-            </h3>
-            <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {current.back}
+        {/* 次へボタン */}
+        <div className="flex gap-3">
+          {!submitted && !showAnswer ? (
+            (isMultipleChoice || isSequence) && (
+              <button onClick={handleSubmit}
+                disabled={isMultipleChoice ? selectedAnswer === null : !answers.some(a => a.selectedOption !== null)}
+                className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm disabled:opacity-40 hover:bg-primary/90 transition">
+                採点する
+              </button>
+            )
+          ) : (
+            <div className="flex-1">
+              <button onClick={handleNext}
+                className="w-full bg-primary text-white font-bold rounded-full py-3 text-sm hover:bg-primary/90 transition">
+                {index + 1 < cards.length ? "次の問題へ" : "結果を見る"}
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
