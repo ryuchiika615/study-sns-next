@@ -29,10 +29,19 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { deck_id, front, back, image_url, audio_url, tags } = await request.json();
+  const { deck_id, front, back, image_url, audio_url, tags, card_type, options, correct_answer } = await request.json();
   if (!deck_id) return NextResponse.json({ error: "deck_id required" }, { status: 400 });
   if (!front?.trim()) return NextResponse.json({ error: "front required" }, { status: 400 });
-  if (!back?.trim()) return NextResponse.json({ error: "back required" }, { status: 400 });
+
+  const type = card_type || "basic";
+  if (type === "multiple_choice") {
+    if (!options?.length || options.length < 2) return NextResponse.json({ error: "multiple choice requires at least 2 options" }, { status: 400 });
+    if (typeof correct_answer !== "number" || correct_answer < 0 || correct_answer >= options.length)
+      return NextResponse.json({ error: "correct_answer must be a valid index" }, { status: 400 });
+    if (!back?.trim()) return NextResponse.json({ error: "back required" }, { status: 400 });
+  } else if (!back?.trim()) {
+    return NextResponse.json({ error: "back required" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("cards")
@@ -44,6 +53,9 @@ export async function POST(request: NextRequest) {
       image_url: image_url || null,
       audio_url: audio_url || null,
       tags: tags || [],
+      card_type: type,
+      options: type === "multiple_choice" ? options : null,
+      correct_answer: type === "multiple_choice" ? correct_answer : null,
     })
     .select()
     .single();

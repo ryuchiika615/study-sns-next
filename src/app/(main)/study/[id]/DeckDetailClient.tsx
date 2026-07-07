@@ -14,9 +14,12 @@ export default function DeckDetailClient({
   const router = useRouter();
   const [cards, setCards] = useState(initialCards);
   const [showCreate, setShowCreate] = useState(false);
+  const [cardType, setCardType] = useState<"basic" | "multiple_choice">("basic");
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [tags, setTags] = useState("");
+  const [options, setOptions] = useState<string[]>(["", ""]);
+  const [correctAnswer, setCorrectAnswer] = useState(0);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [flippedId, setFlippedId] = useState<string | null>(null);
@@ -50,18 +53,28 @@ export default function DeckDetailClient({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!front.trim() || !back.trim()) return;
+    if (!front.trim()) return;
+    if (cardType === "multiple_choice") {
+      if (options.filter((o) => o.trim()).length < 2) { setError("選択肢は最低2つ必要です"); return; }
+      if (!back.trim()) { setError("解説を入力してください"); return; }
+    } else if (!back.trim()) return;
     setCreating(true);
     setError("");
+    const body: any = {
+      deck_id: deck.id,
+      front: front.trim(),
+      back: cardType === "basic" ? back.trim() : back.trim(),
+      tags: tags ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
+      card_type: cardType,
+    };
+    if (cardType === "multiple_choice") {
+      body.options = options.filter((o: string) => o.trim());
+      body.correct_answer = correctAnswer;
+    }
     const res = await fetch("/api/study/cards", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        deck_id: deck.id,
-        front: front.trim(),
-        back: back.trim(),
-        tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-      }),
+      body: JSON.stringify(body),
     });
     setCreating(false);
     if (res.ok) {
@@ -70,6 +83,9 @@ export default function DeckDetailClient({
       setFront("");
       setBack("");
       setTags("");
+      setOptions(["", ""]);
+      setCorrectAnswer(0);
+      setCardType("basic");
       setShowCreate(false);
     } else {
       const data = await res.json().catch(() => ({}));
@@ -224,13 +240,58 @@ export default function DeckDetailClient({
         {/* Manual create form */}
         {showCreate && (
           <form onSubmit={handleCreate} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-gray-500">形式:</span>
+              <button type="button" onClick={() => setCardType("basic")}
+                className={`text-xs font-bold rounded-full px-3 py-1 cursor-pointer transition ${cardType === "basic" ? "bg-primary text-white" : "bg-gray-100 text-gray-500"}`}>
+                基本
+              </button>
+              <button type="button" onClick={() => setCardType("multiple_choice")}
+                className={`text-xs font-bold rounded-full px-3 py-1 cursor-pointer transition ${cardType === "multiple_choice" ? "bg-primary text-white" : "bg-gray-100 text-gray-500"}`}>
+                選択問題
+              </button>
+            </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">表面（問題）</label>
+              <label className="text-xs text-gray-500 block mb-1">問題</label>
               <textarea value={front} onChange={(e) => setFront(e.target.value)}
                 className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
             </div>
+            {cardType === "multiple_choice" && (
+              <div className="space-y-2">
+                <label className="text-xs text-gray-500 block">選択肢</label>
+                {options.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input type="radio" name="correct" checked={correctAnswer === i}
+                      onChange={() => setCorrectAnswer(i)}
+                      className="cursor-pointer" />
+                    <input value={opt} onChange={(e) => {
+                      const next = [...options];
+                      next[i] = e.target.value;
+                      setOptions(next);
+                    }}
+                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${i + 1}`} />
+                    {options.length > 2 && (
+                      <button type="button" onClick={() => {
+                        const next = options.filter((_, j) => j !== i);
+                        setOptions(next);
+                        if (correctAnswer >= next.length) setCorrectAnswer(0);
+                      }}
+                        className="text-xs text-red-400 cursor-pointer">
+                        <i className="fas fa-times" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={() => { setOptions([...options, ""]); }}
+                  className="text-xs text-primary font-bold cursor-pointer">
+                  <i className="fas fa-plus mr-1" />選択肢を追加
+                </button>
+              </div>
+            )}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">裏面（答え）</label>
+              <label className="text-xs text-gray-500 block mb-1">
+                {cardType === "multiple_choice" ? "解説" : "裏面（答え）"}
+              </label>
               <textarea value={back} onChange={(e) => setBack(e.target.value)}
                 className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
             </div>
@@ -318,6 +379,9 @@ export default function DeckDetailClient({
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
+                      {card.card_type === "multiple_choice" && (
+                        <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded">選択</span>
+                      )}
                       <p className="text-sm font-medium whitespace-pre-wrap">{card.front}</p>
                     </div>
                     {flippedId === card.id && (

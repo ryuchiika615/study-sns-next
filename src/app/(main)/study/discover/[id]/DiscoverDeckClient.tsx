@@ -104,6 +104,9 @@ export default function DiscoverDeckClient({
           front: c.front,
           back: c.back,
           tags: c.tags,
+          card_type: c.card_type || "basic",
+          options: c.options || null,
+          correct_answer: c.correct_answer != null ? c.correct_answer : null,
         }))
       );
     }
@@ -159,8 +162,23 @@ export default function DiscoverDeckClient({
             <div className="px-4 pb-4 space-y-2">
               {cards.map((card: any) => (
                 <div key={card.id} className="border border-gray-100 rounded-lg p-3">
-                  <p className="text-sm font-medium">{card.front}</p>
-                  <p className="text-xs text-gray-500 mt-1">{card.back}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    {card.card_type === "multiple_choice" && (
+                      <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded">選択</span>
+                    )}
+                    <p className="text-sm font-medium">{card.front}</p>
+                  </div>
+                  {card.card_type === "multiple_choice" ? (
+                    <div className="space-y-0.5 mt-1">
+                      {card.options?.map((opt: string, i: number) => (
+                        <p key={i} className={`text-xs ${i === card.correct_answer ? "text-green-600 font-bold" : "text-gray-500"}`}>
+                          {String.fromCharCode(65 + i)}. {opt}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">{card.back}</p>
+                  )}
                 </div>
               ))}
             </div>
