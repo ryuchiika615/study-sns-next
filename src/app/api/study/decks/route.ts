@@ -89,6 +89,25 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ deck: data });
 }
 
+export async function PATCH(request: NextRequest) {
+  const supabase = createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id, name, description, is_public, parent_id } = await request.json();
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const updates: Record<string, any> = {};
+  if (name !== undefined) updates.name = name.trim();
+  if (description !== undefined) updates.description = description || null;
+  if (is_public !== undefined) updates.is_public = is_public;
+  if (parent_id !== undefined) updates.parent_id = parent_id || null;
+
+  const { data, error } = await supabase.from("decks").update(updates).eq("id", id).eq("user_id", user.id).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ deck: data });
+}
+
 export async function DELETE(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();

@@ -20,11 +20,17 @@ export default function DeckDetailClient({
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [flippedId, setFlippedId] = useState<string | null>(null);
+  const [isPublic, setIsPublic] = useState(deck.is_public);
 
-  const dueCount = cards.filter((c) => {
-    if (!c.review_state) return true;
-    return c.review_state.due_date <= new Date().toISOString().split("T")[0];
-  }).length;
+  const togglePublic = async () => {
+    const newVal = !isPublic;
+    const res = await fetch("/api/study/decks", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: deck.id, is_public: newVal }),
+    });
+    if (res.ok) setIsPublic(newVal);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,16 +80,32 @@ export default function DeckDetailClient({
             <Link href="/study" className="text-gray-400 text-sm">
               <i className="fas fa-arrow-left mr-1" /> 戻る
             </Link>
-            {cards.length > 0 && (
-              <Link href={`/study/${deck.id}/review`}
-                className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
-                学習を開始
-              </Link>
-            )}
+            <div className="flex items-center gap-2">
+              {cards.length > 0 && (
+                <Link href={`/study/${deck.id}/review`}
+                  className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
+                  学習を開始
+                </Link>
+              )}
+            </div>
           </div>
-          <h1 className="text-lg font-bold">{deck.name}</h1>
-          {deck.description && <p className="text-xs text-gray-500">{deck.description}</p>}
-          <p className="text-xs text-gray-400 mt-1">カード {cards.length}枚</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-bold">{deck.name}</h1>
+              {deck.description && <p className="text-xs text-gray-500">{deck.description}</p>}
+              <p className="text-xs text-gray-400 mt-1">カード {cards.length}枚</p>
+            </div>
+            <button onClick={togglePublic}
+              className={`text-xs font-bold rounded-full px-3 py-1.5 cursor-pointer transition ${isPublic ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+              <i className={`fas fa-${isPublic ? "globe" : "lock"} mr-1`} />
+              {isPublic ? "公開中" : "非公開"}
+            </button>
+          </div>
+          {isPublic && (
+            <p className="text-[10px] text-green-500 mt-1">
+              公開リンク: /study/discover/{deck.id}
+            </p>
+          )}
         </div>
 
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
