@@ -258,8 +258,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="ryutter-home-banner bg-gradient-to-b from-gray-900 to-blue-900 border-b-3 border-yellow-600 text-center py-3 shadow-lg mb-4">
         <Link href="/challenges"
-          className="absolute top-4" style={{ left: "4.5rem" }}>
-          <i className="fas fa-fire text-yellow-600 text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition" />
+          className="absolute top-4 text-lg bg-white/20 rounded-full w-9 h-9 flex items-center justify-center cursor-pointer hover:bg-white/30 transition" style={{ left: "4.5rem" }}>
+          <i className="fas fa-fire text-yellow-600 leading-none" />
         </Link>
         <h1 className="text-2xl text-yellow-600 font-serif tracking-wider m-0" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
           RYUTTER
