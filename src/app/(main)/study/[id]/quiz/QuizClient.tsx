@@ -11,6 +11,9 @@ type Answer = {
 
 export default function QuizClient({ deck, cards }: { deck: any; cards: any[] }) {
   const router = useRouter();
+  const [started, setStarted] = useState(false);
+  const [questionCount, setQuestionCount] = useState(Math.min(cards.length, 10));
+  const [shuffledCards, setShuffledCards] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -20,7 +23,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [userInput, setUserInput] = useState("");
 
-  const current = cards[index];
+  const current = shuffledCards[index];
 
   // 穴埋めの空欄を抽出
   const extractBlanks = (text: string): string[] => {
@@ -80,7 +83,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
 
   // 次の問題へ
   const handleNext = () => {
-    if (index + 1 < cards.length) {
+    if (index + 1 < shuffledCards.length) {
       setIndex(i => i + 1);
       setSubmitted(false);
       setResults([]);
@@ -89,6 +92,15 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
     } else {
       setCompleted(true);
     }
+  };
+
+  const handleStart = () => {
+    // シャッフルしてquestionCount枚を選択
+    const shuffled = [...cards].sort(() => Math.random() - 0.5).slice(0, questionCount);
+    setShuffledCards(shuffled);
+    setIndex(0);
+    setScore(0);
+    setStarted(true);
   };
 
   // タグをランダムにシャッフル
@@ -112,6 +124,47 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
     return true;
   };
 
+  // 開始画面
+  if (!started) {
+    const counts = [5, 10, 15, 20, 30, cards.length];
+    const uniqueCounts = [...new Set(counts.filter(c => c <= cards.length))];
+    if (!uniqueCounts.includes(cards.length)) uniqueCounts.push(cards.length);
+
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+          <div className="text-5xl mb-4">📚</div>
+          <h2 className="text-xl font-bold mb-2">{deck.name}</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            {cards.length}問の問題があります
+          </p>
+          <div className="mb-6">
+            <label className="text-sm text-gray-600 block mb-3 font-bold">何問やる？</label>
+            <div className="flex flex-wrap justify-center gap-2">
+              {uniqueCounts.map(n => (
+                <button key={n} onClick={() => setQuestionCount(n)}
+                  className={`w-14 h-14 rounded-2xl font-bold text-sm transition-all cursor-pointer
+                    ${questionCount === n
+                      ? "bg-primary text-white shadow-md scale-110"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}>
+                  {n === cards.length ? "全" : n}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">
+              選択: {questionCount === cards.length ? `全${cards.length}問` : `${questionCount}問`}
+            </p>
+          </div>
+          <button onClick={handleStart}
+            className="w-full bg-primary text-white font-bold rounded-full py-3.5 text-sm hover:bg-primary/90 transition shadow-md">
+            <i className="fas fa-play mr-2" /> 学習を始める
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // 完了画面
   if (completed) {
     return (
@@ -120,14 +173,14 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           <div className="text-5xl mb-4">🎉</div>
           <h2 className="text-xl font-bold mb-2">学習完了！</h2>
           <p className="text-gray-600 mb-4">
-            {cards.length}問学習しました
+            {shuffledCards.length}問学習しました
           </p>
           <div className="flex gap-3">
             <Link href={`/study/${deck.id}`}
               className="flex-1 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-full py-3 text-sm hover:bg-gray-50 transition text-center">
               デッキに戻る
             </Link>
-            <button onClick={() => { setIndex(0); setScore(0); setCompleted(false); setSubmitted(false); }}
+            <button onClick={() => { setStarted(false); setCompleted(false); }}
               className="flex-1 bg-primary text-white font-bold rounded-full py-3 text-sm hover:bg-primary/90 transition">
               もう一度
             </button>
@@ -154,14 +207,14 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
             <i className="fas fa-arrow-left mr-1" /> 戻る
           </Link>
           <div className="text-sm font-bold text-gray-600">
-            {index + 1} / {cards.length}
+            {index + 1} / {shuffledCards.length}
           </div>
         </div>
 
         {/* プログレスバー */}
         <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
           <div className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((index + 1) / cards.length) * 100}%` }} />
+            style={{ width: `${((index + 1) / shuffledCards.length) * 100}%` }} />
         </div>
 
         {/* 問題カード */}
@@ -341,7 +394,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
             <div className="flex-1">
               <button onClick={handleNext}
                 className="w-full bg-primary text-white font-bold rounded-full py-3 text-sm hover:bg-primary/90 transition">
-                {index + 1 < cards.length ? "次の問題へ" : "結果を見る"}
+                {index + 1 < shuffledCards.length ? "次の問題へ" : "結果を見る"}
               </button>
             </div>
           )}
