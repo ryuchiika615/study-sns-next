@@ -10,7 +10,7 @@ export function BottomNav({ unreadCount = 0 }: { unreadCount?: number }) {
     { href: "/", icon: "fa-home", label: "ホーム", customColor: "#f59e0b" },
     { href: "/rankings", icon: "fa-trophy", label: "ランキング", customColor: "#f472b6" },
     { href: "/analytics", icon: "fa-chart-pie", label: "分析", customColor: "#c084fc" },
-    { href: "/challenges", icon: "fa-fire", label: "チャレンジ", customColor: "#ff6b6b" },
+    { href: "/tasks", icon: "fa-tasks", label: "タスク", customColor: "#4ade80" },
     { href: "/tasks", icon: "fa-tasks", label: "タスク", customColor: "#4ade80" },
     { href: "/shop", icon: "fa-store", label: "ショップ", customColor: "#fb923c" },
     { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール", customColor: "#34d399" },
