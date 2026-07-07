@@ -374,14 +374,19 @@ export default function DeckDetailClient({
                   });
                 }
               }}
-                className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
+                className="w-full rounded-lg border-gray-300 text-sm" rows={3} required
+                placeholder={cardType === "sequence"
+                  ? "例: ［ア］の定理では、直角三角形の斜辺の長さの2乗は、他の2つの辺の長さの2乗の［イ］に等しい"
+                  : cardType === "multiple_choice"
+                    ? "例: 日本の首都は？"
+                    : "例: ベイズの定理は？"} />
               {cardType === "sequence" && (
                 <p className="text-[10px] text-gray-400 mt-1">空欄は［ア］［イ］［ウ］のように記述</p>
               )}
             </div>
             {cardType === "multiple_choice" && (
               <div className="space-y-2">
-                <label className="text-xs text-gray-500 block">選択肢</label>
+                <label className="text-xs text-gray-500 block">選択肢（ラジオで正解を選択）</label>
                 {options.map((opt, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <input type="radio" name="correct" checked={correctAnswer === i}
@@ -392,7 +397,7 @@ export default function DeckDetailClient({
                       next[i] = e.target.value;
                       setOptions(next);
                     }}
-                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${i + 1}`} />
+                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={i === 0 ? "東京" : i === 1 ? "大阪" : `選択肢 ${i + 1}`} />
                     {options.length > 2 && (
                       <button type="button" onClick={() => {
                         const next = options.filter((_, j) => j !== i);
@@ -422,7 +427,7 @@ export default function DeckDetailClient({
                       next[i] = e.target.value;
                       setOptions(next);
                     }}
-                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${String.fromCharCode(65 + i)}`} />
+                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={i === 0 ? "ピタゴラス" : i === 1 ? "和" : i === 2 ? "差" : `選択肢 ${String.fromCharCode(65 + i)}`} />
                     {options.length > 2 && (
                       <button type="button" onClick={() => {
                         const next = options.filter((_, j) => j !== i);
@@ -476,7 +481,12 @@ export default function DeckDetailClient({
                 {cardType === "multiple_choice" || cardType === "sequence" ? "解説（完成文）" : "裏面（答え）"}
               </label>
               <textarea value={back} onChange={(e) => setBack(e.target.value)}
-                className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
+                className="w-full rounded-lg border-gray-300 text-sm" rows={3} required
+                placeholder={cardType === "sequence"
+                  ? "例: ピタゴラスの定理では、直角三角形の斜辺の長さの2乗は、他の2つの辺の長さの2乗の和に等しい"
+                  : cardType === "multiple_choice"
+                    ? "例: 東京は日本の首都であり、最大でもある"
+                    : "例: P(A|B) = P(B|A) × P(A) / P(B)"} />
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">タグ（カンマ区切り、任意）</label>
