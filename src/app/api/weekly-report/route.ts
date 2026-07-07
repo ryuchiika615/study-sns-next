@@ -130,11 +130,12 @@ export async function GET() {
   const targetMinutes = profile?.target_minutes || 0;
   const targetDate = profile?.target_date || null;
 
-  // AI coaching comment (cached per week)
+  // AI coaching comment (cached daily)
+  const todayStr = new Date().toISOString().split("T")[0];
   const hasGeminiKey = !!process.env.GROQ_API_KEY;
   let aiComment: string | null = null;
   let aiError: string | null = null;
-  const cachedComment = profile?.weekly_ai_week_start === weekStartStr ? profile?.weekly_ai_comment : null;
+  const cachedComment = profile?.weekly_ai_week_start === todayStr ? profile?.weekly_ai_comment : null;
   if (cachedComment) {
     aiComment = cachedComment;
   } else if (hasGeminiKey) {
@@ -172,7 +173,7 @@ ${targetText}
 
       aiComment = await geminiGenerate(prompt);
       await admin.from("profiles").update({
-        weekly_ai_week_start: weekStartStr,
+        weekly_ai_week_start: todayStr,
         weekly_ai_comment: aiComment,
       }).eq("id", user.id);
     } catch (e: any) {
