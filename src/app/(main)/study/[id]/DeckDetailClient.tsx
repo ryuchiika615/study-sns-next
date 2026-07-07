@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 export default function DeckDetailClient({
   deck,
   initialCards,
+  initialSuggestions = [],
 }: {
   deck: any;
   initialCards: any[];
+  initialSuggestions?: any[];
 }) {
   const router = useRouter();
   const [cards, setCards] = useState(initialCards);
@@ -40,6 +42,33 @@ export default function DeckDetailClient({
   // Explain
   const [explainingId, setExplainingId] = useState<string | null>(null);
   const [explanation, setExplanation] = useState("");
+
+  // Suggestions
+  const [suggestions, setSuggestions] = useState(initialSuggestions);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+
+  const loadSuggestions = async () => {
+    setSuggestLoading(true);
+    const res = await fetch(`/api/study/cards/suggestions?deck_id=${deck.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setSuggestions(data.suggestions);
+    }
+    setSuggestLoading(false);
+  };
+
+  const handleSuggestion = async (id: string, status: string) => {
+    const res = await fetch(`/api/study/cards/suggestions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) {
+      setSuggestions((prev: any[]) => prev.map((s: any) => s.id === id ? { ...s, status, reviewed_at: new Date().toISOString() } : s));
+      loadSuggestions(); // Refresh to get updated card data
+    }
+  };
 
   const togglePublic = async () => {
     const newVal = !isPublic;
@@ -236,6 +265,73 @@ export default function DeckDetailClient({
             <i className="fas fa-upload mr-1" /> インポート
           </button>
         </div>
+
+        {/* Suggestions section (owner only) */}
+        {isPublic && suggestions.filter((s: any) => s.status === "pending").length > 0 && (
+          <div className="bg-orange-50 rounded-xl border border-orange-200 p-3">
+            <button onClick={() => { setShowSuggestions(!showSuggestions); if (!showSuggestions && suggestions.length === 0) loadSuggestions(); }}
+              className="w-full flex items-center justify-between cursor-pointer">
+              <span className="text-sm font-bold text-orange-700">
+                <i className="fas fa-flag mr-1" /> 修正提案 ({suggestions.filter((s: any) => s.status === "pending").length}件)
+              </span>
+              <i className={`fas fa-chevron-${showSuggestions ? "up" : "down"} text-orange-400 text-xs`} />
+            </button>
+          </div>
+        )}
+
+        {showSuggestions && (
+          <div className="space-y-2">
+            {suggestLoading ? (
+              <p className="text-xs text-gray-400 text-center py-2">読み込み中...</p>
+            ) : suggestions.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-2">提案はありません</p>
+            ) : (
+              suggestions.map((s: any) => (
+                <div key={s.id} className={`bg-white rounded-xl border p-4 ${s.status === "pending" ? "border-orange-200" : "border-gray-200"}`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${s.status === "pending" ? "bg-orange-100 text-orange-600" : s.status === "accepted" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
+                        {s.status === "pending" ? "未対応" : s.status === "accepted" ? "採用" : "却下"}
+                      </span>
+                      <span className="text-[10px] text-gray-400 ml-2">
+                        {s.profiles?.display_name || s.profiles?.username} さん
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-gray-400">{new Date(s.created_at).toLocaleString("ja-JP")}</p>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-2 mb-2">
+                    <p className="text-xs text-gray-500">対象カード:</p>
+                    <p className="text-sm font-medium">{s.cards?.front}</p>
+                  </div>
+
+                  <p className="text-sm whitespace-pre-wrap mb-2">{s.description}</p>
+
+                  {(s.suggested_front || s.suggested_back) && (
+                    <div className="bg-blue-50 rounded-lg p-2 mb-2 text-xs space-y-1">
+                      {s.suggested_front && <p><span className="font-bold">問題修正案:</span> {s.suggested_front}</p>}
+                      {s.suggested_back && <p><span className="font-bold">回答修正案:</span> {s.suggested_back}</p>}
+                      {s.suggested_options && <p><span className="font-bold">選択肢修正案:</span> {s.suggested_options.join(", ")}</p>}
+                    </div>
+                  )}
+
+                  {s.status === "pending" && (
+                    <div className="flex gap-2 mt-2">
+                      <button onClick={() => handleSuggestion(s.id, "accepted")}
+                        className="flex-1 bg-green-500 text-white text-xs font-bold rounded-full py-1.5 cursor-pointer hover:bg-green-600 transition">
+                        <i className="fas fa-check mr-1" />採用して修正
+                      </button>
+                      <button onClick={() => handleSuggestion(s.id, "rejected")}
+                        className="flex-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-full py-1.5 cursor-pointer hover:bg-gray-300 transition">
+                        <i className="fas fa-times mr-1" />却下
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Manual create form */}
         {showCreate && (

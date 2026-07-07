@@ -32,6 +32,16 @@ export default function DiscoverDeckClient({
   const [showCards, setShowCards] = useState(false);
   const [importing, setImporting] = useState(false);
 
+  // Suggestion state
+  const [suggestCard, setSuggestCard] = useState<any | null>(null);
+  const [suggestDesc, setSuggestDesc] = useState("");
+  const [suggestFront, setSuggestFront] = useState("");
+  const [suggestBack, setSuggestBack] = useState("");
+  const [suggestOptions, setSuggestOptions] = useState<string[]>([]);
+  const [suggestCorrect, setSuggestCorrect] = useState<number>(0);
+  const [sendingSuggest, setSendingSuggest] = useState(false);
+  const [suggestDone, setSuggestDone] = useState(false);
+
   const isOwner = deck.user_id === userId;
 
   const toggleLike = async () => {
@@ -114,6 +124,43 @@ export default function DiscoverDeckClient({
     alert("デッキをコピーしました！");
   };
 
+  const openSuggest = (card: any) => {
+    setSuggestCard(card);
+    setSuggestDesc("");
+    setSuggestFront("");
+    setSuggestBack("");
+    setSuggestOptions(card.options ? [...card.options] : []);
+    setSuggestCorrect(card.correct_answer || 0);
+    setSuggestDone(false);
+  };
+
+  const handleSuggest = async () => {
+    if (!suggestDesc.trim() || !suggestCard) return;
+    setSendingSuggest(true);
+    const res = await fetch("/api/study/cards/suggest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        card_id: suggestCard.id,
+        deck_id: deck.id,
+        description: suggestDesc.trim(),
+        suggested_front: suggestFront.trim() || null,
+        suggested_back: suggestBack.trim() || null,
+        suggested_options: suggestCard.card_type === "multiple_choice" && suggestOptions.some((o: string) => o !== (suggestCard.options?.[suggestOptions.indexOf(o)] || ""))
+          ? suggestOptions : null,
+        suggested_correct_answer: suggestCard.card_type === "multiple_choice" && suggestCorrect !== suggestCard.correct_answer
+          ? suggestCorrect : null,
+      }),
+    });
+    setSendingSuggest(false);
+    if (res.ok) {
+      setSuggestDone(true);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "送信失敗");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto p-4 space-y-4">
@@ -162,28 +209,110 @@ export default function DiscoverDeckClient({
             <div className="px-4 pb-4 space-y-2">
               {cards.map((card: any) => (
                 <div key={card.id} className="border border-gray-100 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    {card.card_type === "multiple_choice" && (
-                      <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded">選択</span>
-                    )}
-                    <p className="text-sm font-medium">{card.front}</p>
-                  </div>
-                  {card.card_type === "multiple_choice" ? (
-                    <div className="space-y-0.5 mt-1">
-                      {card.options?.map((opt: string, i: number) => (
-                        <p key={i} className={`text-xs ${i === card.correct_answer ? "text-green-600 font-bold" : "text-gray-500"}`}>
-                          {String.fromCharCode(65 + i)}. {opt}
-                        </p>
-                      ))}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {card.card_type === "multiple_choice" && (
+                          <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded">選択</span>
+                        )}
+                        <p className="text-sm font-medium">{card.front}</p>
+                      </div>
+                      {card.card_type === "multiple_choice" ? (
+                        <div className="space-y-0.5 mt-1">
+                          {card.options?.map((opt: string, i: number) => (
+                            <p key={i} className={`text-xs ${i === card.correct_answer ? "text-green-600 font-bold" : "text-gray-500"}`}>
+                              {String.fromCharCode(65 + i)}. {opt}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 mt-1">{card.back}</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-gray-500 mt-1">{card.back}</p>
-                  )}
+                    {!isOwner && (
+                      <button onClick={(e) => { e.stopPropagation(); openSuggest(card); }}
+                        className="text-[10px] text-orange-500 font-bold cursor-pointer hover:text-orange-700 transition ml-2 flex-shrink-0">
+                        <i className="fas fa-flag mr-0.5" />修正提案
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Suggestion modal */}
+        {suggestCard && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => !sendingSuggest && setSuggestCard(null)}>
+            <div className="bg-white rounded-2xl w-full max-w-md p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm"><i className="fas fa-flag text-orange-500 mr-1" /> 修正提案</h3>
+                <button onClick={() => setSuggestCard(null)} className="text-gray-400 cursor-pointer text-lg"><i className="fas fa-times" /></button>
+              </div>
+
+              {suggestDone ? (
+                <div className="text-center py-6">
+                  <p className="text-green-600 font-bold text-lg mb-2">✓ 送信完了</p>
+                  <p className="text-xs text-gray-500">デッキ作成者が確認後、修正が反映される場合があります。</p>
+                  <button onClick={() => setSuggestCard(null)}
+                    className="mt-4 bg-primary text-white rounded-full px-6 py-2 text-sm font-bold cursor-pointer">
+                    閉じる
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                    <p className="font-medium">{suggestCard.front}</p>
+                    <p className="text-xs text-gray-500 mt-1">{suggestCard.back}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">どこが間違っていますか？ *</label>
+                    <textarea value={suggestDesc} onChange={(e) => setSuggestDesc(e.target.value)}
+                      className="w-full rounded-lg border-gray-300 text-sm" rows={3}
+                      placeholder="例: 選択肢Aの答えが間違っています。正しくは〜です。" required />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">修正案（問題文）— 任意</label>
+                    <input value={suggestFront} onChange={(e) => setSuggestFront(e.target.value)}
+                      className="w-full rounded-lg border-gray-300 text-sm" placeholder={suggestCard.front} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">修正案（答え/解説）— 任意</label>
+                    <textarea value={suggestBack} onChange={(e) => setSuggestBack(e.target.value)}
+                      className="w-full rounded-lg border-gray-300 text-sm" rows={2} placeholder={suggestCard.back} />
+                  </div>
+
+                  {suggestCard.card_type === "multiple_choice" && (
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-500 block">修正案（選択肢）— 任意</label>
+                      {suggestOptions.map((opt: string, i: number) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input type="radio" name="suggest-correct" checked={suggestCorrect === i}
+                            onChange={() => setSuggestCorrect(i)}
+                            className="cursor-pointer" />
+                          <input value={opt} onChange={(e) => {
+                            const next = [...suggestOptions];
+                            next[i] = e.target.value;
+                            setSuggestOptions(next);
+                          }}
+                            className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${i + 1}`} />
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-gray-400">ラジオボタンで正解を指定</p>
+                    </div>
+                  )}
+
+                  <button onClick={handleSuggest} disabled={sendingSuggest || !suggestDesc.trim()}
+                    className="w-full bg-orange-500 text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
+                    {sendingSuggest ? "送信中..." : "提案を送信"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Comments */}
         <div className="bg-white rounded-xl border border-gray-200 p-4">

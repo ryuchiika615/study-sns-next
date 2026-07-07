@@ -162,7 +162,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
           </div>
           <div className="flex gap-2 justify-center">
             <button onClick={() => router.push(`/study/${deck.id}`)}
-              className="bg-gray-200 text-gray-700 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-300 transition">
+              className="bg-white text-gray-800 border border-gray-300 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-50 transition">
               デッキに戻る
             </button>
             <button onClick={() => { setIndex(0); setFlipped(false); setCompleted(false); setRatingCounts([0, 0, 0, 0]); }}

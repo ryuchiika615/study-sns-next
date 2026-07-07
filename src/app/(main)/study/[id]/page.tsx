@@ -23,5 +23,15 @@ export default async function DeckDetailPage({ params }: { params: { id: string 
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  return <DeckDetailClient deck={deck} initialCards={cards || []} />;
+  let suggestions: any[] = [];
+  if (deck.is_public) {
+    const { data: s } = await supabase
+      .from("card_suggestions")
+      .select("*, cards(front, back, card_type), profiles!inner(display_name, username)")
+      .eq("deck_id", params.id)
+      .order("created_at", { ascending: false });
+    suggestions = s || [];
+  }
+
+  return <DeckDetailClient deck={deck} initialCards={cards || []} initialSuggestions={suggestions} />;
 }
