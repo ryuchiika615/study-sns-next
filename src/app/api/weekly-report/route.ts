@@ -125,28 +125,32 @@ export async function GET() {
   const totalPages = (textbookLogs || []).reduce((s, l) => s + (l.pages_completed || 0), 0);
 
   // Consecutive days this week & target info
-  const { data: profile } = await admin.from("profiles").select("consecutive_post_days, target_minutes, target_date").eq("id", user.id).single();
+  const { data: profile } = await admin.from("profiles").select("consecutive_post_days, target_minutes, target_date, weekly_ai_week_start, weekly_ai_comment").eq("id", user.id).single();
   const consecutiveDays = profile?.consecutive_post_days || 0;
   const targetMinutes = profile?.target_minutes || 0;
   const targetDate = profile?.target_date || null;
 
-  // AI coaching comment
+  // AI coaching comment (cached per week)
   const hasGeminiKey = !!process.env.GROQ_API_KEY;
   let aiComment: string | null = null;
   let aiError: string | null = null;
-  try {
-    const diff = totalMinutes - prevTotalMinutes;
-    const diffText = diff >= 0 ? `先週より${Math.floor(diff / 60)}時間${diff % 60}分増えました` : `先週より${Math.floor(Math.abs(diff) / 60)}時間${Math.abs(diff) % 60}分減りました`;
-    const subjectText = subjects.slice(0, 3).map(s => `${s.subject} ${Math.floor(s.minutes / 60)}h${s.minutes % 60}m`).join("、");
+  const cachedComment = profile?.weekly_ai_week_start === weekStartStr ? profile?.weekly_ai_comment : null;
+  if (cachedComment) {
+    aiComment = cachedComment;
+  } else if (hasGeminiKey) {
+    try {
+      const diff = totalMinutes - prevTotalMinutes;
+      const diffText = diff >= 0 ? `先週より${Math.floor(diff / 60)}時間${diff % 60}分増えました` : `先週より${Math.floor(Math.abs(diff) / 60)}時間${Math.abs(diff) % 60}分減りました`;
+      const subjectText = subjects.slice(0, 3).map(s => `${s.subject} ${Math.floor(s.minutes / 60)}h${s.minutes % 60}m`).join("、");
 
-    const targetExpired = targetDate ? new Date(targetDate + "T23:59:59") < new Date() : false;
-    const targetText = targetMinutes > 0 && targetDate && !targetExpired
-      ? `【目標】${targetDate}までに合計${Math.floor(targetMinutes / 60)}時間${targetMinutes % 60}分（残り${Math.floor(Math.max(targetMinutes - totalMinutes, 0) / 60)}時間${Math.max(targetMinutes - totalMinutes, 0) % 60}分）`
-      : targetMinutes > 0 && targetDate && targetExpired
-      ? `【目標】期限切れ: ${targetDate}までに${Math.floor(targetMinutes / 60)}時間${targetMinutes % 60}分の目標は達成できませんでした。新しい目標を設定するよう勧めてください`
-      : "【目標】なし";
+      const targetExpired = targetDate ? new Date(targetDate + "T23:59:59") < new Date() : false;
+      const targetText = targetMinutes > 0 && targetDate && !targetExpired
+        ? `【目標】${targetDate}までに合計${Math.floor(targetMinutes / 60)}時間${targetMinutes % 60}分（残り${Math.floor(Math.max(targetMinutes - totalMinutes, 0) / 60)}時間${Math.max(targetMinutes - totalMinutes, 0) % 60}分）`
+        : targetMinutes > 0 && targetDate && targetExpired
+        ? `【目標】期限切れ: ${targetDate}までに${Math.floor(targetMinutes / 60)}時間${targetMinutes % 60}分の目標は達成できませんでした。新しい目標を設定するよう勧めてください`
+        : "【目標】なし";
 
-    const prompt = `あなたは熱血勉強コーチです。以下のユーザーの週間データを見て、その人だけのオーダーメイドアドバイスを書いてください。テンプレート文章ではなく、この数字に基づいた具体的な改善策を提案してください。マークダウンは使わず、4〜5文程度で。
+      const prompt = `あなたは熱血勉強コーチです。以下のユーザーの週間データを見て、その人だけのオーダーメイドアドバイスを書いてください。テンプレート文章ではなく、この数字に基づいた具体的な改善策を提案してください。マークダウンは使わず、4〜5文程度で。
 
 【週間データ】
 - 今週の合計勉強時間: ${Math.floor(totalMinutes / 60)}時間${totalMinutes % 60}分
@@ -166,11 +170,16 @@ ${targetText}
 - 目標が期限切れなら、新しい目標設定を促す内容にする
 - ユーザーにだけ届く特別なアドバイスであること`;
 
-    aiComment = await geminiGenerate(prompt);
-  } catch (e: any) {
-    console.error("AI weekly report error:", e?.message || e);
-    aiError = e?.message || String(e);
-    aiComment = null;
+      aiComment = await geminiGenerate(prompt);
+      await admin.from("profiles").update({
+        weekly_ai_week_start: weekStartStr,
+        weekly_ai_comment: aiComment,
+      }).eq("id", user.id);
+    } catch (e: any) {
+      console.error("AI weekly report error:", e?.message || e);
+      aiError = e?.message || String(e);
+      aiComment = null;
+    }
   }
 
   return NextResponse.json({
