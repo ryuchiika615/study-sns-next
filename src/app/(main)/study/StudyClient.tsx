@@ -116,8 +116,8 @@ export default function StudyClient({
               )}
             </div>
             <Link href="/study/stats"
-              className="text-xs text-gray-400 hover:text-primary transition cursor-pointer">
-              <i className="fas fa-chart-bar mr-1" />統計
+              className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold rounded-full px-3 py-1.5 transition cursor-pointer">
+              <i className="fas fa-chart-line" /> 学習履歴を見る
             </Link>
           </div>
           <div className="flex gap-4 text-sm">
