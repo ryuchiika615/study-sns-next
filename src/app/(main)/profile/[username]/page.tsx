@@ -4,6 +4,8 @@ import { redirect, notFound } from "next/navigation";
 import { subjectColor } from "@/lib/utils";
 import ProfileClient from "./ProfileClient";
 
+export const revalidate = 30;
+
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const supabase = createServerSupabase();
   const { username } = params;
@@ -55,8 +57,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
   if (error || !profile) notFound();
 
   const yearStart = `${new Date().getFullYear()}-01-01`;
-  const [followResult, followersResult, followingResult, postCountResult, statsResult, calendarResult] = await Promise.all([
-    supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", profile.id).maybeSingle(),
+  const [followersResult, followingResult, postCountResult, statsResult, calendarResult] = await Promise.all([
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
@@ -93,7 +94,6 @@ export default async function UserProfilePage({ params }: { params: { username: 
     <ProfileClient
       user={{ id: user.id }}
       profile={profile}
-      isFollowing={!!followResult.data}
       consecutivePostDays={profile.consecutive_post_days || 0}
       subjectLabels={JSON.stringify([...subjectMap.keys()])}
       subjectData={JSON.stringify([...subjectMap.values()])}

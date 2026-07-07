@@ -15,7 +15,6 @@ const PER_PAGE = 10;
 type ProfileClientProps = {
   user: { id: string };
   profile: any;
-  isFollowing: boolean;
   consecutivePostDays: number;
   subjectLabels: string;
   subjectData: string;
@@ -30,17 +29,25 @@ type ProfileClientProps = {
 };
 
 export default function ProfileClient({
-  user, profile, isFollowing: initialFollow, consecutivePostDays,
+  user, profile, consecutivePostDays,
   subjectLabels, subjectData, subjectColors,
   followersCount, followingCount, postCount,
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
   calendarData,
 }: ProfileClientProps) {
   const supabase = createClient();
-  const [isFollowing, setIsFollowing] = useState(initialFollow);
+  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
   const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
   const [badges, setBadges] = useState<any[]>([]);
   const [focusScore, setFocusScore] = useState<any>(null);
+
+  useEffect(() => {
+    if (user.id !== profile.id) {
+      supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", profile.id).maybeSingle().then(({ data }) => {
+        setIsFollowing(!!data);
+      });
+    } else setIsFollowing(false);
+  }, []);
 
   useEffect(() => {
     if (user.id === profile.id) {
@@ -89,6 +96,7 @@ export default function ProfileClient({
   }, [isFollowing, user.id, profile.id]);
 
   const handleFollow = async () => {
+    if (isFollowing === null) return;
     const wasFollowing = isFollowing;
     setIsFollowing(!wasFollowing);
 
@@ -238,13 +246,13 @@ export default function ProfileClient({
 
                 {user.id !== profile?.id && (
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button onClick={handleFollow}
-                      className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer transition ${
+                    <button onClick={handleFollow} disabled={isFollowing === null}
+                      className={`px-4 py-1.5 rounded-full text-sm font-bold cursor-pointer transition disabled:opacity-50 ${
                         isFollowing ? "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200" : "bg-primary text-white hover:bg-blue-600"
                       }`}>
-                      {isFollowing ? "フォロー中" : "フォローする"}
+                      {isFollowing === null ? "..." : isFollowing ? "フォロー中" : "フォローする"}
                     </button>
-                    {isFollowing && (
+                    {isFollowing === true && (
                       <div className="relative">
                         <button onClick={() => setShowNotifyPopover(!showNotifyPopover)}
                           className={`text-lg cursor-pointer p-1.5 rounded-full transition ${
