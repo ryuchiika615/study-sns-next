@@ -364,7 +364,6 @@ export default function DeckDetailClient({
               <label className="text-xs text-gray-500 block mb-1">問題</label>
               <textarea value={front} onChange={(e) => {
                 setFront(e.target.value);
-                // Auto-detect blanks and init mapping
                 if (cardType === "sequence") {
                   const blanks = [...e.target.value.matchAll(/［(.+?)］/g)].map(m => m[1]);
                   setCorrectMapping(prev => {
@@ -410,6 +409,59 @@ export default function DeckDetailClient({
                   className="text-xs text-primary font-bold cursor-pointer">
                   <i className="fas fa-plus mr-1" />選択肢を追加
                 </button>
+              </div>
+            )}
+            {cardType === "sequence" && (
+              <div className="space-y-2">
+                <label className="text-xs text-gray-500 block">選択肢</label>
+                {options.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-400 w-5 text-center">{String.fromCharCode(65 + i)}</span>
+                    <input value={opt} onChange={(e) => {
+                      const next = [...options];
+                      next[i] = e.target.value;
+                      setOptions(next);
+                    }}
+                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${String.fromCharCode(65 + i)}`} />
+                    {options.length > 2 && (
+                      <button type="button" onClick={() => {
+                        const next = options.filter((_, j) => j !== i);
+                        setOptions(next);
+                        const fixed: Record<string, number> = {};
+                        Object.entries(correctMapping).forEach(([k, v]) => { fixed[k] = v >= next.length ? 0 : v; });
+                        setCorrectMapping(fixed);
+                      }}
+                        className="text-xs text-red-400 cursor-pointer">
+                        <i className="fas fa-times" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={() => { setOptions([...options, ""]); }}
+                  className="text-xs text-primary font-bold cursor-pointer">
+                  <i className="fas fa-plus mr-1" />選択肢を追加
+                </button>
+
+                {/* Blank mapping */}
+                {Object.keys(correctMapping).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <label className="text-xs text-gray-500 block mb-2">正しい組み合わせ</label>
+                    {Object.keys(correctMapping).sort().map((blank) => (
+                      <div key={blank} className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm font-bold text-orange-600">［{blank}］</span>
+                        <span className="text-xs text-gray-400">→</span>
+                        <select value={correctMapping[blank]} onChange={(e) => {
+                          setCorrectMapping({ ...correctMapping, [blank]: Number(e.target.value) });
+                        }}
+                          className="flex-1 rounded-lg border-gray-300 text-sm">
+                          {options.map((_, i) => (
+                            <option key={i} value={i}>{(String.fromCharCode(65 + i))}. {options[i] || `(空)`}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div>
