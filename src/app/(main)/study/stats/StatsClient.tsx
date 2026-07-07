@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
+import Chart from "chart.js/auto";
 
 const ratingLabels = ["Again", "Hard", "Good", "Easy"];
 const ratingColors = ["bg-red-500", "bg-orange-500", "bg-green-500", "bg-blue-500"];
@@ -26,20 +28,68 @@ export default function StatsClient({
   dueProjection: { date: string; count: number }[];
   ratingDistribution: number[];
 }) {
-  // Calendar heatmap: build map of date -> count
+  const curveCanvas = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<Chart | null>(null);
+
+  useEffect(() => {
+    if (!curveCanvas.current) return;
+    if (chartRef.current) chartRef.current.destroy();
+
+    // Forgetting curve: simulate SM-2 intervals
+    const intervals = [1, 6, 15, 30, 60, 120, 180, 365];
+    const labels = intervals.map((d) => `${d}日後`);
+    const retention = intervals.map((d) => Math.exp(-d / (intervals[intervals.indexOf(d)] * 1.5)) * 100);
+
+    chartRef.current = new Chart(curveCanvas.current, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "記憶保持率 (%)",
+          data: retention,
+          borderColor: "#1d9bf0",
+          backgroundColor: "rgba(29, 155, 240, 0.1)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: "#1d9bf0",
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: (v) => `${v}%`, font: { size: 10 } },
+            grid: { color: "rgba(0,0,0,0.05)" },
+          },
+          x: {
+            ticks: { font: { size: 9 } },
+            grid: { display: false },
+          },
+        },
+      },
+    });
+
+    return () => { if (chartRef.current) chartRef.current.destroy(); };
+  }, []);
+
+  // Calendar heatmap
   const logMap = new Map(dailyLogs.map((l: any) => [l.date, l.cards_reviewed + l.cards_new]));
 
-  // Generate last 365 days
   const today = new Date();
   const yearDays: { date: string; count: number }[] = [];
   for (let i = 364; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    yearDays.push({ date: dateStr, count: logMap.get(dateStr) || 0 });
+    yearDays.push({ date: d.toISOString().split("T")[0], count: logMap.get(d.toISOString().split("T")[0]) || 0 });
   }
 
-  // Weeks for calendar
   const weeks: { date: string; count: number }[][] = [];
   let week: { date: string; count: number }[] = [];
   yearDays.forEach((day, i) => {
@@ -65,7 +115,6 @@ export default function StatsClient({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Header */}
         <div className="flex items-center gap-2 mb-2">
           <Link href="/study" className="text-gray-400 text-sm"><i className="fas fa-arrow-left mr-1" />戻る</Link>
           <h1 className="text-lg font-bold">学習統計</h1>
@@ -74,13 +123,9 @@ export default function StatsClient({
         {/* Streak */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
           <div className="text-5xl mb-2">
-            {streak && streak.current_streak > 0 ? (
-              <span className={`${streak.current_streak >= 7 ? "text-orange-500" : "text-yellow-500"}`}>
-                <i className="fas fa-fire" />
-              </span>
-            ) : (
-              <span className="text-gray-300"><i className="far fa-calendar" /></span>
-            )}
+            {streak && streak.current_streak > 0
+              ? <span className={streak.current_streak >= 7 ? "text-orange-500" : "text-yellow-500"}><i className="fas fa-fire" /></span>
+              : <span className="text-gray-300"><i className="far fa-calendar" /></span>}
           </div>
           <p className="text-3xl font-bold">
             {streak?.current_streak || 0}
@@ -92,7 +137,7 @@ export default function StatsClient({
           </p>
         </div>
 
-        {/* Overview cards */}
+        {/* Overview */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold text-primary">{totalCards}</p>
@@ -110,9 +155,14 @@ export default function StatsClient({
             <p className="text-2xl font-bold text-orange-500">{dueCards}</p>
             <p className="text-xs text-gray-500">復習待ち</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-            <p className="text-2xl font-bold text-gray-700">{decksCount}</p>
-            <p className="text-xs text-gray-500">デッキ数</p>
+        </div>
+
+        {/* Forgetting curve */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-bold mb-2">忘却曲線（SM-2理論値）</h3>
+          <p className="text-[10px] text-gray-400 mb-3">復習間隔が長くなるほど記憶保持率は低下します。定期的な復習で曲線をリセットしましょう。</p>
+          <div className="h-48">
+            <canvas ref={curveCanvas} />
           </div>
         </div>
 
@@ -123,11 +173,8 @@ export default function StatsClient({
             {weeks.map((w, wi) => (
               <div key={wi} className="flex flex-col gap-0.5">
                 {w.map((day) => (
-                  <div
-                    key={day.date}
-                    className={`w-3 h-3 rounded-sm ${getHeatColor(day.count)}`}
-                    title={`${day.date}: ${day.count}枚`}
-                  />
+                  <div key={day.date} className={`w-3 h-3 rounded-sm ${getHeatColor(day.count)}`}
+                    title={`${day.date}: ${day.count}枚`} />
                 ))}
               </div>
             ))}
@@ -149,28 +196,24 @@ export default function StatsClient({
           <p className="text-xs text-gray-400 mb-3">合計 {dueSum}枚の復習が予定されています</p>
           <div className="flex items-end gap-1 h-24">
             {dueProjection.map((d) => {
-              const maxCount = Math.max(...dueProjection.map((x) => x.count), 1);
-              const height = (d.count / maxCount) * 100;
+              const maxC = Math.max(...dueProjection.map((x) => x.count), 1);
+              const height = (d.count / maxC) * 100;
               const isToday = d.date === new Date().toISOString().split("T")[0];
               return (
                 <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5">
-                  <div
-                    className={`w-full rounded-t ${isToday ? "bg-primary" : "bg-blue-300"} transition-all`}
-                    style={{ height: `${Math.max(height, d.count > 0 ? 4 : 0)}%` }}
-                  />
+                  <div className={`w-full rounded-t ${isToday ? "bg-primary" : "bg-blue-300"} transition-all`}
+                    style={{ height: `${Math.max(height, d.count > 0 ? 4 : 0)}%` }} />
                   {d.count > 0 && <span className="text-[8px] text-gray-400">{d.count}</span>}
                 </div>
               );
             })}
           </div>
           <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-            <span>今日</span>
-            <span>15日後</span>
-            <span>30日後</span>
+            <span>今日</span><span>15日後</span><span>30日後</span>
           </div>
         </div>
 
-        {/* Today's rating distribution */}
+        {/* Rating distribution */}
         {totalRatingCount > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <h3 className="text-sm font-bold mb-3">今日の評価分布</h3>
