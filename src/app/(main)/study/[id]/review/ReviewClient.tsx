@@ -22,6 +22,10 @@ function shuffleArray(arr: number[]): number[] {
   return a;
 }
 
+function extractBlanks(text: string): string[] {
+  return [...text.matchAll(/［(.+?)］/g)].map(m => m[1]);
+}
+
 export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -35,18 +39,30 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [recommendedRating, setRecommendedRating] = useState<number | null>(null);
+  const [seqAnswers, setSeqAnswers] = useState<Record<string, number>>({});
+  const [seqSubmitted, setSeqSubmitted] = useState(false);
+  const [seqResults, setSeqResults] = useState<Record<string, boolean>>({});
 
   const current = cards[index];
   const isMultipleChoice = current?.card_type === "multiple_choice";
+  const isSequence = current?.card_type === "sequence";
+  const blanks = isSequence ? extractBlanks(current?.front || "") : [];
 
   useEffect(() => {
-    if (current && isMultipleChoice && current.options?.length) {
-      setShuffledIndices(shuffleArray(current.options.map((_: any, i: number) => i)));
+    if (current) {
+      if (isMultipleChoice && current.options?.length) {
+        setShuffledIndices(shuffleArray(current.options.map((_: any, i: number) => i)));
+      }
+      if (isSequence) {
+        const initial: Record<string, number> = {};
+        blanks.forEach(b => { initial[b] = 0; });
+        setSeqAnswers(initial);
+        setSeqSubmitted(false);
+        setSeqResults({});
+      }
       setSelectedAnswer(null);
       setShowFeedback(false);
       setRecommendedRating(null);
-      setFlipped(false);
-    } else {
       setFlipped(false);
     }
   }, [index, current?.id]);
@@ -69,6 +85,8 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     setSelectedAnswer(null);
     setShowFeedback(false);
     setRecommendedRating(null);
+    setSeqSubmitted(false);
+    setSeqResults({});
 
     if (index + 1 < cards.length) {
       setIndex((i) => i + 1);
@@ -86,9 +104,22 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     setRecommendedRating(isCorrect ? 2 : 0);
   };
 
+  const handleSubmitSequence = () => {
+    const correctMap = current.correct_mapping || {};
+    const results: Record<string, boolean> = {};
+    let allCorrect = true;
+    blanks.forEach(b => {
+      const correct = seqAnswers[b] === correctMap[b];
+      results[b] = correct;
+      if (!correct) allCorrect = false;
+    });
+    setSeqResults(results);
+    setSeqSubmitted(true);
+    setRecommendedRating(allCorrect ? 2 : 0);
+  };
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (isMultipleChoice && !showFeedback) {
-      // 1-4 for options
       const optKeyMap: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3 };
       if (e.key in optKeyMap && current.options?.length) {
         e.preventDefault();
@@ -96,12 +127,17 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       }
       return;
     }
-    if (isMultipleChoice && showFeedback) {
+    if ((isMultipleChoice || isSequence) && showFeedback) {
       const keyMap: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3 };
       if (e.key in keyMap) {
         e.preventDefault();
         handleRate(keyMap[e.key]);
       }
+      return;
+    }
+    if (isSequence && !seqSubmitted && e.key === "Enter") {
+      e.preventDefault();
+      handleSubmitSequence();
       return;
     }
     if (!flipped) {
@@ -116,9 +152,8 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
       e.preventDefault();
       handleRate(keyMap[e.key]);
     }
-  }, [flipped, handleRate, isMultipleChoice, showFeedback, current]);
+  }, [flipped, handleRate, isMultipleChoice, isSequence, showFeedback, seqSubmitted, current]);
 
-  // ----- completed -----
   if (completed) {
     const total = ratingCounts.reduce((a, b) => a + b, 0);
     const elapsed = Math.floor((Date.now() - startTime) / 60000);
@@ -191,6 +226,44 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
 
   const progress = ((index) / cards.length) * 100;
 
+  const renderSequenceQuestion = () => {
+    if (!current.front) return null;
+    const parts = current.front.split(/(［.+?］)/g);
+    return parts.map((part: string, i: number) => {
+      const match = part.match(/［(.+?)］/);
+      if (!match) return <span key={i}>{part}</span>;
+      const blank = match[1];
+      const isCorrect = seqResults[blank];
+      let selectClass = "rounded-lg border px-2 py-1 text-sm font-bold min-w-[3rem] ";
+      if (!seqSubmitted) {
+        selectClass += "border-gray-300 bg-white";
+      } else if (isCorrect) {
+        selectClass += "border-green-500 bg-green-50 text-green-700";
+      } else {
+        selectClass += "border-red-500 bg-red-50 text-red-700";
+      }
+      return (
+        <span key={i} className="inline-flex items-center gap-1 mx-0.5">
+          <select
+            value={seqAnswers[blank] ?? 0}
+            onChange={(e) => setSeqAnswers({ ...seqAnswers, [blank]: Number(e.target.value) })}
+            disabled={seqSubmitted}
+            className={selectClass}
+          >
+            {current.options?.map((_: string, j: number) => (
+              <option key={j} value={j}>{String.fromCharCode(65 + j)}</option>
+            ))}
+          </select>
+          {seqSubmitted && !isCorrect && (
+            <span className="text-[10px] text-green-600 font-bold">
+              [{String.fromCharCode(65 + (current.correct_mapping?.[blank] ?? 0))}]
+            </span>
+          )}
+        </span>
+      );
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" tabIndex={0} onKeyDown={handleKeyDown}>
       <div className="h-1 bg-gray-200">
@@ -205,16 +278,13 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
 
         {isMultipleChoice ? (
           <>
-            {/* Question */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-4">
               <p className="text-sm text-gray-400 mb-3">問題</p>
               <p className="text-xl font-medium whitespace-pre-wrap mb-4">{current.front}</p>
-
-              {/* Options */}
               <div className="space-y-2">
                 {shuffledIndices.map((_, optIdx) => {
                   const actualIdx = shuffledIndices[optIdx];
-                  const label = String.fromCharCode(65 + optIdx); // A, B, C, D
+                  const label = String.fromCharCode(65 + optIdx);
                   const optionText = current.options[actualIdx];
                   const isSelected = showFeedback && selectedAnswer === actualIdx;
                   const isCorrectOption = current.correct_answer === actualIdx;
@@ -238,8 +308,6 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                 })}
               </div>
             </div>
-
-            {/* Feedback */}
             {showFeedback && (
               <>
                 <div className={`text-center font-bold text-sm mb-3 ${selectedAnswer === current.correct_answer ? "text-green-600" : "text-red-600"}`}>
@@ -248,18 +316,52 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                     <span className="text-gray-500 font-normal ml-1">正解: {current.options[current.correct_answer]}</span>
                   )}
                 </div>
-
-                {/* Rating buttons */}
                 <div className="grid grid-cols-4 gap-2">
                   {ratings.map((r) => {
                     const isRecommended = recommendedRating === r.value;
                     return (
-                      <button
-                        key={r.value}
-                        onClick={() => handleRate(r.value)}
-                        disabled={submitting}
-                        className={`${r.color} text-white font-bold rounded-xl py-3 text-xs cursor-pointer hover:opacity-90 transition disabled:opacity-50 ${isRecommended ? "ring-2 ring-white ring-offset-2" : ""}`}
-                      >
+                      <button key={r.value} onClick={() => handleRate(r.value)} disabled={submitting}
+                        className={`${r.color} text-white font-bold rounded-xl py-3 text-xs cursor-pointer hover:opacity-90 transition disabled:opacity-50 ${isRecommended ? "ring-2 ring-white ring-offset-2" : ""}`}>
+                        <div>{r.short}</div>
+                        <div className="text-[10px] opacity-75">({r.value + 1})</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </>
+        ) : isSequence ? (
+          <>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-4">
+              <p className="text-sm text-gray-400 mb-3">空欄に適切な選択肢を選んでください</p>
+              <div className="text-lg font-medium leading-relaxed whitespace-pre-wrap">
+                {renderSequenceQuestion()}
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs space-y-1">
+              {current.options?.map((opt: string, i: number) => (
+                <p key={i} className="text-gray-600">
+                  <span className="font-bold text-gray-800">{String.fromCharCode(65 + i)}</span>. {opt}
+                </p>
+              ))}
+            </div>
+            {!seqSubmitted ? (
+              <button onClick={handleSubmitSequence}
+                className="w-full bg-primary text-white font-bold rounded-full py-3 text-sm cursor-pointer hover:bg-primary/90 transition">
+                回答を確認
+              </button>
+            ) : (
+              <>
+                <div className={`text-center font-bold text-sm mb-3 ${Object.values(seqResults).every(Boolean) ? "text-green-600" : "text-red-600"}`}>
+                  {Object.values(seqResults).every(Boolean) ? "全問正解！" : "間違いがあります"}
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {ratings.map((r) => {
+                    const isRecommended = recommendedRating === r.value;
+                    return (
+                      <button key={r.value} onClick={() => handleRate(r.value)} disabled={submitting}
+                        className={`${r.color} text-white font-bold rounded-xl py-3 text-xs cursor-pointer hover:opacity-90 transition disabled:opacity-50 ${isRecommended ? "ring-2 ring-white ring-offset-2" : ""}`}>
                         <div>{r.short}</div>
                         <div className="text-[10px] opacity-75">({r.value + 1})</div>
                       </button>
@@ -271,7 +373,6 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
           </>
         ) : (
           <>
-            {/* Basic card: front/back flip */}
             <div
               className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center justify-center cursor-pointer p-6 mb-4 hover:shadow-md transition"
               onClick={() => !flipped && setFlipped(true)}
@@ -299,17 +400,11 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                 )}
               </div>
             </div>
-
-            {/* Rating buttons */}
             {flipped && (
               <div className="grid grid-cols-4 gap-2">
                 {ratings.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => handleRate(r.value)}
-                    disabled={submitting}
-                    className={`${r.color} text-white font-bold rounded-xl py-3 text-xs cursor-pointer hover:opacity-90 transition disabled:opacity-50`}
-                  >
+                  <button key={r.value} onClick={() => handleRate(r.value)} disabled={submitting}
+                    className={`${r.color} text-white font-bold rounded-xl py-3 text-xs cursor-pointer hover:opacity-90 transition disabled:opacity-50`}>
                     <div>{r.short}</div>
                     <div className="text-[10px] opacity-75">({r.value + 1})</div>
                   </button>
@@ -320,8 +415,10 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         )}
 
         <p className="text-[10px] text-gray-400 text-center mt-3">
-          {!isMultipleChoice ? (!flipped ? "Space / Enter" : "1 2 3 4")
-            : !showFeedback ? "1 2 3 4 で選択" : "1 2 3 4 で評価"}
+          {!isMultipleChoice && !isSequence ? (!flipped ? "Space / Enter" : "1 2 3 4")
+            : isMultipleChoice ? (!showFeedback ? "1 2 3 4 で選択" : "1 2 3 4 で評価")
+            : isSequence ? (!seqSubmitted ? "Enter で確認" : "1 2 3 4 で評価")
+            : ""}
         </p>
       </div>
     </div>

@@ -16,12 +16,13 @@ export default function DeckDetailClient({
   const router = useRouter();
   const [cards, setCards] = useState(initialCards);
   const [showCreate, setShowCreate] = useState(false);
-  const [cardType, setCardType] = useState<"basic" | "multiple_choice">("basic");
+  const [cardType, setCardType] = useState<"basic" | "multiple_choice" | "sequence">("basic");
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [tags, setTags] = useState("");
   const [options, setOptions] = useState<string[]>(["", ""]);
   const [correctAnswer, setCorrectAnswer] = useState(0);
+  const [correctMapping, setCorrectMapping] = useState<Record<string, number>>({});
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [flippedId, setFlippedId] = useState<string | null>(null);
@@ -86,19 +87,26 @@ export default function DeckDetailClient({
     if (cardType === "multiple_choice") {
       if (options.filter((o) => o.trim()).length < 2) { setError("選択肢は最低2つ必要です"); return; }
       if (!back.trim()) { setError("解説を入力してください"); return; }
+    } else if (cardType === "sequence") {
+      if (options.filter((o) => o.trim()).length < 2) { setError("選択肢は最低2つ必要です"); return; }
+      if (!back.trim()) { setError("完成文を入力してください"); return; }
+      if (Object.keys(correctMapping).length === 0) { setError("正しい組み合わせを設定してください"); return; }
     } else if (!back.trim()) return;
     setCreating(true);
     setError("");
     const body: any = {
       deck_id: deck.id,
       front: front.trim(),
-      back: cardType === "basic" ? back.trim() : back.trim(),
+      back: back.trim(),
       tags: tags ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
       card_type: cardType,
     };
     if (cardType === "multiple_choice") {
       body.options = options.filter((o: string) => o.trim());
       body.correct_answer = correctAnswer;
+    } else if (cardType === "sequence") {
+      body.options = options.filter((o: string) => o.trim());
+      body.correct_mapping = correctMapping;
     }
     const res = await fetch("/api/study/cards", {
       method: "POST",
@@ -114,6 +122,7 @@ export default function DeckDetailClient({
       setTags("");
       setOptions(["", ""]);
       setCorrectAnswer(0);
+      setCorrectMapping({});
       setCardType("basic");
       setShowCreate(false);
     } else {
@@ -346,11 +355,30 @@ export default function DeckDetailClient({
                 className={`text-xs font-bold rounded-full px-3 py-1 cursor-pointer transition ${cardType === "multiple_choice" ? "bg-primary text-white" : "bg-gray-100 text-gray-500"}`}>
                 選択問題
               </button>
+              <button type="button" onClick={() => setCardType("sequence")}
+                className={`text-xs font-bold rounded-full px-3 py-1 cursor-pointer transition ${cardType === "sequence" ? "bg-primary text-white" : "bg-gray-100 text-gray-500"}`}>
+                穴埋め
+              </button>
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">問題</label>
-              <textarea value={front} onChange={(e) => setFront(e.target.value)}
+              <textarea value={front} onChange={(e) => {
+                setFront(e.target.value);
+                // Auto-detect blanks and init mapping
+                if (cardType === "sequence") {
+                  const blanks = [...e.target.value.matchAll(/［(.+?)］/g)].map(m => m[1]);
+                  setCorrectMapping(prev => {
+                    const next = { ...prev };
+                    blanks.forEach(b => { if (!(b in next)) next[b] = 0; });
+                    Object.keys(next).forEach(k => { if (!blanks.includes(k)) delete next[k]; });
+                    return next;
+                  });
+                }
+              }}
                 className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
+              {cardType === "sequence" && (
+                <p className="text-[10px] text-gray-400 mt-1">空欄は［ア］［イ］［ウ］のように記述</p>
+              )}
             </div>
             {cardType === "multiple_choice" && (
               <div className="space-y-2">
@@ -386,7 +414,7 @@ export default function DeckDetailClient({
             )}
             <div>
               <label className="text-xs text-gray-500 block mb-1">
-                {cardType === "multiple_choice" ? "解説" : "裏面（答え）"}
+                {cardType === "multiple_choice" || cardType === "sequence" ? "解説（完成文）" : "裏面（答え）"}
               </label>
               <textarea value={back} onChange={(e) => setBack(e.target.value)}
                 className="w-full rounded-lg border-gray-300 text-sm" rows={3} required />
@@ -478,6 +506,9 @@ export default function DeckDetailClient({
                       {card.card_type === "multiple_choice" && (
                         <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded">選択</span>
                       )}
+                      {card.card_type === "sequence" && (
+                        <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-1.5 py-0.5 rounded">穴埋め</span>
+                      )}
                       <p className="text-sm font-medium whitespace-pre-wrap">{card.front}</p>
                     </div>
                     {flippedId === card.id && (
@@ -490,8 +521,61 @@ export default function DeckDetailClient({
                                 {tag}
                               </span>
                             ))}
-                          </div>
-                        )}
+              </div>
+            )}
+            {cardType === "sequence" && (
+              <div className="space-y-2">
+                <label className="text-xs text-gray-500 block">選択肢（A, B, C...）</label>
+                {options.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-400 w-5 text-center">{String.fromCharCode(65 + i)}</span>
+                    <input value={opt} onChange={(e) => {
+                      const next = [...options];
+                      next[i] = e.target.value;
+                      setOptions(next);
+                    }}
+                      className="flex-1 rounded-lg border-gray-300 text-sm" placeholder={`選択肢 ${String.fromCharCode(65 + i)}`} />
+                    {options.length > 2 && (
+                      <button type="button" onClick={() => {
+                        const next = options.filter((_, j) => j !== i);
+                        setOptions(next);
+                        const fixed: Record<string, number> = {};
+                        Object.entries(correctMapping).forEach(([k, v]) => { fixed[k] = v >= next.length ? 0 : v; });
+                        setCorrectMapping(fixed);
+                      }}
+                        className="text-xs text-red-400 cursor-pointer">
+                        <i className="fas fa-times" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={() => { setOptions([...options, ""]); }}
+                  className="text-xs text-primary font-bold cursor-pointer">
+                  <i className="fas fa-plus mr-1" />選択肢を追加
+                </button>
+
+                {/* Blank mapping */}
+                {Object.keys(correctMapping).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <label className="text-xs text-gray-500 block mb-2">正しい組み合わせ</label>
+                    {Object.keys(correctMapping).sort().map((blank) => (
+                      <div key={blank} className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm font-bold text-orange-600">［{blank}］</span>
+                        <span className="text-xs text-gray-400">→</span>
+                        <select value={correctMapping[blank]} onChange={(e) => {
+                          setCorrectMapping({ ...correctMapping, [blank]: Number(e.target.value) });
+                        }}
+                          className="flex-1 rounded-lg border-gray-300 text-sm">
+                          {options.map((_, i) => (
+                            <option key={i} value={i}>{(String.fromCharCode(65 + i))}. {options[i] || `(空)`}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
                         <button onClick={(e) => { e.stopPropagation(); handleExplain(card); }}
                           className="mt-2 text-xs text-purple-500 font-bold cursor-pointer hover:text-purple-700 transition">
                           <i className="fas fa-robot mr-0.5" /> AI解説

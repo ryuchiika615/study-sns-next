@@ -117,6 +117,7 @@ export default function DiscoverDeckClient({
           card_type: c.card_type || "basic",
           options: c.options || null,
           correct_answer: c.correct_answer != null ? c.correct_answer : null,
+          correct_mapping: c.correct_mapping || null,
         }))
       );
     }
@@ -215,6 +216,9 @@ export default function DiscoverDeckClient({
                         {card.card_type === "multiple_choice" && (
                           <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded">選択</span>
                         )}
+                        {card.card_type === "sequence" && (
+                          <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-1.5 py-0.5 rounded">穴埋め</span>
+                        )}
                         <p className="text-sm font-medium">{card.front}</p>
                       </div>
                       {card.card_type === "multiple_choice" ? (
@@ -224,6 +228,17 @@ export default function DiscoverDeckClient({
                               {String.fromCharCode(65 + i)}. {opt}
                             </p>
                           ))}
+                        </div>
+                      ) : card.card_type === "sequence" ? (
+                        <div className="space-y-0.5 mt-1">
+                          {card.options?.map((opt: string, i: number) => (
+                            <p key={i} className="text-xs text-gray-500">
+                              {String.fromCharCode(65 + i)}. {opt}
+                            </p>
+                          ))}
+                          <p className="text-[10px] text-green-600 mt-1">
+                            正解: {Object.entries(card.correct_mapping || {}).sort(([a],[b]) => a.localeCompare(b)).map(([k, v]) => `${k}→${String.fromCharCode(65 + (v as number))}`).join(", ")}
+                          </p>
                         </div>
                       ) : (
                         <p className="text-xs text-gray-500 mt-1">{card.back}</p>

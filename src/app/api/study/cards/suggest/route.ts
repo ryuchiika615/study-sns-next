@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { card_id, deck_id, description, suggested_front, suggested_back, suggested_options, suggested_correct_answer } = await request.json();
+  const { card_id, deck_id, description, suggested_front, suggested_back, suggested_options, suggested_correct_answer, suggested_correct_mapping } = await request.json();
 
   if (!card_id) return NextResponse.json({ error: "card_id required" }, { status: 400 });
   if (!deck_id) return NextResponse.json({ error: "deck_id required" }, { status: 400 });
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       suggested_back: suggested_back?.trim() || null,
       suggested_options: suggested_options || null,
       suggested_correct_answer: suggested_correct_answer != null ? suggested_correct_answer : null,
+      suggested_correct_mapping: suggested_correct_mapping || null,
     })
     .select()
     .single();

@@ -33,6 +33,7 @@ export async function PATCH(
     if (suggestion.suggested_back) updateData.back = suggestion.suggested_back;
     if (suggestion.suggested_options) updateData.options = suggestion.suggested_options;
     if (suggestion.suggested_correct_answer != null) updateData.correct_answer = suggestion.suggested_correct_answer;
+    if (suggestion.suggested_correct_mapping) updateData.correct_mapping = suggestion.suggested_correct_mapping;
 
     if (Object.keys(updateData).length > 0) {
       const { error: updateError } = await supabase

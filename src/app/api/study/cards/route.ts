@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { deck_id, front, back, image_url, audio_url, tags, card_type, options, correct_answer } = await request.json();
+  const { deck_id, front, back, image_url, audio_url, tags, card_type, options, correct_answer, correct_mapping } = await request.json();
   if (!deck_id) return NextResponse.json({ error: "deck_id required" }, { status: 400 });
   if (!front?.trim()) return NextResponse.json({ error: "front required" }, { status: 400 });
 
@@ -39,6 +39,15 @@ export async function POST(request: NextRequest) {
     if (typeof correct_answer !== "number" || correct_answer < 0 || correct_answer >= options.length)
       return NextResponse.json({ error: "correct_answer must be a valid index" }, { status: 400 });
     if (!back?.trim()) return NextResponse.json({ error: "back required" }, { status: 400 });
+  } else if (type === "sequence") {
+    if (!options?.length || options.length < 2) return NextResponse.json({ error: "sequence requires at least 2 options" }, { status: 400 });
+    if (!correct_mapping || typeof correct_mapping !== "object") return NextResponse.json({ error: "correct_mapping required for sequence" }, { status: 400 });
+    if (!back?.trim()) return NextResponse.json({ error: "back required" }, { status: 400 });
+    // Validate mapping values are valid indices
+    for (const v of Object.values(correct_mapping)) {
+      if (typeof v !== "number" || v < 0 || v >= options.length)
+        return NextResponse.json({ error: "correct_mapping values must be valid option indices" }, { status: 400 });
+    }
   } else if (!back?.trim()) {
     return NextResponse.json({ error: "back required" }, { status: 400 });
   }
@@ -54,8 +63,9 @@ export async function POST(request: NextRequest) {
       audio_url: audio_url || null,
       tags: tags || [],
       card_type: type,
-      options: type === "multiple_choice" ? options : null,
+      options: type !== "basic" ? options : null,
       correct_answer: type === "multiple_choice" ? correct_answer : null,
+      correct_mapping: type === "sequence" ? correct_mapping : null,
     })
     .select()
     .single();
