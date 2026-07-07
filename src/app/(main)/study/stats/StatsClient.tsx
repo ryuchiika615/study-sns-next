@@ -35,10 +35,11 @@ export default function StatsClient({
     if (!curveCanvas.current) return;
     if (chartRef.current) chartRef.current.destroy();
 
-    // Forgetting curve: simulate SM-2 intervals
+    // Forgetting curve: Ebbinghaus forgetting curve R = e^(-t/S)
+    const stability = 30; // base stability in days
     const intervals = [1, 6, 15, 30, 60, 120, 180, 365];
     const labels = intervals.map((d) => `${d}日後`);
-    const retention = intervals.map((d) => Math.exp(-d / (intervals[intervals.indexOf(d)] * 1.5)) * 100);
+    const retention = intervals.map((d) => Math.exp(-d / stability) * 100);
 
     chartRef.current = new Chart(curveCanvas.current, {
       type: "line",

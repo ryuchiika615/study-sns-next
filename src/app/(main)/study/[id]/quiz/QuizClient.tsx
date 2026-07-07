@@ -25,6 +25,17 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
 
   const current = shuffledCards[index];
 
+  // 回答記録を保存
+  const saveReview = async (cardId: string, rating: number) => {
+    try {
+      await fetch("/api/study/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ card_id: cardId, rating }),
+      });
+    } catch (e) { /* ignore */ }
+  };
+
   // 穴埋めの空欄を抽出
   const extractBlanks = (text: string): string[] => {
     return [...text.matchAll(/［(.+?)］/g)].map(m => m[1]);
@@ -59,14 +70,15 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
 
   // 解答
   const handleSubmit = () => {
+    let isCorrect = false;
     if (isMultipleChoice) {
-      const correct = selectedAnswer === current.correct_answer;
+      isCorrect = selectedAnswer === current.correct_answer;
       setResults([{
         blankId: "answer",
-        correct,
+        correct: isCorrect,
         correctOption: current.correct_answer,
       }]);
-      setScore(prev => prev + (correct ? 1 : 0));
+      setScore(prev => prev + (isCorrect ? 1 : 0));
     } else if (isSequence) {
       const correctMap = current.correct_mapping || {};
       const newResults = blanks.map((blankId, i) => ({
@@ -74,10 +86,16 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
         correct: answers[i].selectedOption === correctMap[blankId],
         correctOption: correctMap[blankId] ?? 0,
       }));
+      isCorrect = newResults.every(r => r.correct);
       const correctCount = newResults.filter(r => r.correct).length;
       setScore(prev => prev + correctCount);
       setResults(newResults);
+    } else if (isBasic) {
+      // 基本問題は正解判定なし、入力があれば記録
+      isCorrect = true;
     }
+    // 回答記録を保存（正解→Easy 3、不正解→Again 0）
+    saveReview(current.id, isCorrect ? 3 : 0);
     setSubmitted(true);
   };
 
