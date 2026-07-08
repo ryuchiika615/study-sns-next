@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { redirect } from "next/navigation";
 import DiscoverClient from "./DiscoverClient";
 
@@ -7,7 +8,8 @@ export default async function DiscoverPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: decks } = await supabase
+  const admin = createAdminClient();
+  const { data: decks } = await admin
     .from("decks")
     .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, avatar_url)")
     .eq("is_public", true)
@@ -17,10 +19,10 @@ export default async function DiscoverPage() {
   const deckIds = (decks || []).map((d: any) => d.id);
   const [cardCounts, likeCounts] = await Promise.all([
     deckIds.length > 0
-      ? supabase.from("cards").select("deck_id").in("deck_id", deckIds)
+      ? admin.from("cards").select("deck_id").in("deck_id", deckIds)
       : Promise.resolve({ data: [] }),
     deckIds.length > 0
-      ? supabase.from("deck_likes").select("deck_id").in("deck_id", deckIds)
+      ? admin.from("deck_likes").select("deck_id").in("deck_id", deckIds)
       : Promise.resolve({ data: [] }),
   ]);
 

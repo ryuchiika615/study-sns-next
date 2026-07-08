@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,8 @@ export async function GET(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const admin = createAdminClient();
 
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1");
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
   const deckId = searchParams.get("deck_id");
 
   if (deckId) {
-    const { data: deck } = await supabase
+    const { data: deck } = await admin
       .from("decks")
       .select("*, profiles!inner(display_name, username, avatar_url)")
       .eq("id", deckId)
@@ -26,18 +29,18 @@ export async function GET(request: NextRequest) {
 
     if (!deck) return NextResponse.json({ deck: null });
 
-    const { data: cards } = await supabase
+    const { data: cards } = await admin
       .from("cards")
       .select("id, front, back, tags, created_at")
       .eq("deck_id", deckId)
       .limit(50);
 
-    const { count: likeCount } = await supabase
+    const { count: likeCount } = await admin
       .from("deck_likes")
       .select("id", { count: "exact", head: true })
       .eq("deck_id", deckId);
 
-    const { count: commentCount } = await supabase
+    const { count: commentCount } = await admin
       .from("deck_comments")
       .select("id", { count: "exact", head: true })
       .eq("deck_id", deckId);
@@ -71,7 +74,7 @@ export async function GET(request: NextRequest) {
   }
 
   // List public decks
-  let query = supabase
+  let query = admin
     .from("decks")
     .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, avatar_url)")
     .eq("is_public", true);
@@ -87,10 +90,10 @@ export async function GET(request: NextRequest) {
   const deckIds = (decks || []).map((d: any) => d.id);
   const [cardCounts, likeCounts] = await Promise.all([
     deckIds.length > 0
-      ? supabase.from("cards").select("deck_id").in("deck_id", deckIds)
+      ? admin.from("cards").select("deck_id").in("deck_id", deckIds)
       : Promise.resolve({ data: [] }),
     deckIds.length > 0
-      ? supabase.from("deck_likes").select("deck_id").in("deck_id", deckIds)
+      ? admin.from("deck_likes").select("deck_id").in("deck_id", deckIds)
       : Promise.resolve({ data: [] }),
   ]);
 

@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { notFound, redirect } from "next/navigation";
 import DiscoverDeckClient from "./DiscoverDeckClient";
 
@@ -7,7 +8,9 @@ export default async function DiscoverDeckPage({ params }: { params: { id: strin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: deck } = await supabase
+  const admin = createAdminClient();
+
+  const { data: deck } = await admin
     .from("decks")
     .select("*, profiles!inner(display_name, username, avatar_url)")
     .eq("id", params.id)
@@ -16,18 +19,18 @@ export default async function DiscoverDeckPage({ params }: { params: { id: strin
 
   if (!deck) notFound();
 
-  const { data: cards } = await supabase
+  const { data: cards } = await admin
     .from("cards")
     .select("id, front, back, tags, created_at")
     .eq("deck_id", params.id)
     .limit(50);
 
-  const { count: likeCount } = await supabase
+  const { count: likeCount } = await admin
     .from("deck_likes")
     .select("id", { count: "exact", head: true })
     .eq("deck_id", params.id);
 
-  const { count: commentCount } = await supabase
+  const { count: commentCount } = await admin
     .from("deck_comments")
     .select("id", { count: "exact", head: true })
     .eq("deck_id", params.id);
