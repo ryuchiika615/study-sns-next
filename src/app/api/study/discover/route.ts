@@ -22,53 +22,32 @@ export async function GET(request: NextRequest) {
   if (deckId) {
     const { data: deck } = await admin
       .from("decks")
-      .select("*, profiles!inner(display_name, username, icon_url)")
+      .select("id, name, description, created_at, user_id")
       .eq("id", deckId)
       .eq("is_public", true)
       .single();
 
     if (!deck) return NextResponse.json({ deck: null });
 
-    const { data: cards } = await admin
-      .from("cards")
-      .select("id, front, back, tags, created_at")
-      .eq("deck_id", deckId)
-      .limit(50);
-
-    const { count: likeCount } = await admin
-      .from("deck_likes")
-      .select("id", { count: "exact", head: true })
-      .eq("deck_id", deckId);
-
-    const { count: commentCount } = await admin
-      .from("deck_comments")
-      .select("id", { count: "exact", head: true })
-      .eq("deck_id", deckId);
-
-    const { data: userLike } = await supabase
-      .from("deck_likes")
-      .select("id")
-      .eq("deck_id", deckId)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const { data: userBookmark } = await supabase
-      .from("deck_bookmarks")
-      .select("id")
-      .eq("deck_id", deckId)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const [profileResult, cardsResult, likeCountResult, commentCountResult, userLikeResult, userBookmarkResult] = await Promise.all([
+      admin.from("profiles").select("display_name, username, icon_url").eq("id", deck.user_id).single(),
+      admin.from("cards").select("id, front, back, tags, created_at").eq("deck_id", deckId).limit(50),
+      admin.from("deck_likes").select("id", { count: "exact", head: true }).eq("deck_id", deckId),
+      admin.from("deck_comments").select("id", { count: "exact", head: true }).eq("deck_id", deckId),
+      supabase.from("deck_likes").select("id").eq("deck_id", deckId).eq("user_id", user.id).maybeSingle(),
+      supabase.from("deck_bookmarks").select("id").eq("deck_id", deckId).eq("user_id", user.id).maybeSingle(),
+    ]);
 
     return NextResponse.json({
       deck: {
         ...deck,
-        profiles: deck.profiles,
-        card_count: cards?.length || 0,
-        cards: cards || [],
-        like_count: likeCount || 0,
-        comment_count: commentCount || 0,
-        user_liked: !!userLike,
-        user_bookmarked: !!userBookmark,
+        profiles: profileResult.data,
+        cards: cardsResult.data || [],
+        card_count: cardsResult.data?.length || 0,
+        like_count: likeCountResult.count || 0,
+        comment_count: commentCountResult.count || 0,
+        user_liked: !!userLikeResult.data,
+        user_bookmarked: !!userBookmarkResult.data,
       },
     });
   }
@@ -76,19 +55,21 @@ export async function GET(request: NextRequest) {
   // List public decks
   let query = admin
     .from("decks")
-    .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, icon_url)")
+    .select("id, name, description, created_at, user_id")
     .eq("is_public", true);
 
   if (search) query = query.ilike("name", `%${search}%`);
 
   if (sort === "newest") query = query.order("created_at", { ascending: false });
-  else query = query.order("created_at", { ascending: false }); // default: newest
+  else query = query.order("created_at", { ascending: false });
 
   const { data: decks } = await query.range(offset, offset + limit - 1);
 
-  // Batch get card counts and like counts
   const deckIds = (decks || []).map((d: any) => d.id);
-  const [cardCounts, likeCounts] = await Promise.all([
+  const [profiles, cardCounts, likeCounts] = await Promise.all([
+    deckIds.length > 0
+      ? admin.from("profiles").select("id, display_name, username").in("id", (decks || []).map((d: any) => d.user_id))
+      : Promise.resolve({ data: [] }),
     deckIds.length > 0
       ? admin.from("cards").select("deck_id").in("deck_id", deckIds)
       : Promise.resolve({ data: [] }),
@@ -96,6 +77,8 @@ export async function GET(request: NextRequest) {
       ? admin.from("deck_likes").select("deck_id").in("deck_id", deckIds)
       : Promise.resolve({ data: [] }),
   ]);
+
+  const profileMap = new Map((profiles.data || []).map((p: any) => [p.id, p]));
 
   const cardCountMap = new Map<string, number>();
   (cardCounts.data || []).forEach((c: any) => cardCountMap.set(c.deck_id, (cardCountMap.get(c.deck_id) || 0) + 1));
@@ -105,11 +88,11 @@ export async function GET(request: NextRequest) {
 
   const result = (decks || []).map((d: any) => ({
     ...d,
+    profiles: profileMap.get(d.user_id) || null,
     card_count: cardCountMap.get(d.id) || 0,
     like_count: likeCountMap.get(d.id) || 0,
   }));
 
-  // Sort by popularity if needed
   if (sort === "popular") result.sort((a, b) => b.like_count - a.like_count);
 
   return NextResponse.json({ decks: result });
