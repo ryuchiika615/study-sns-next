@@ -1,7 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
-import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +42,6 @@ export async function PUT(request: NextRequest) {
       admin.from("notifications").select("id").eq("recipient_id", post.user_id).eq("sender_id", user.id).eq("post_id", post_id).eq("notification_type", "like").limit(1).maybeSingle(),
     ]);
     if ((followCount.count || 0) > 0 && !existingNotif.data) {
-      // 1. Insert notification (triggers DB-level push via pg_net)
       try {
         await admin.from("notifications").insert({
           recipient_id: post.user_id,
@@ -51,31 +49,6 @@ export async function PUT(request: NextRequest) {
           post_id,
           notification_type: "like",
         });
-      } catch (_) {}
-
-      // 2. Direct push fallback (works even if pg_net fails)
-      try {
-        const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        const privateKey = process.env.VAPID_PRIVATE_KEY;
-        if (publicKey && privateKey) {
-          webpush.setVapidDetails("mailto:admin@ryutter.app", publicKey, privateKey);
-          const [subResult, senderResult] = await Promise.all([
-            admin.from("push_subscriptions").select("endpoint, p256dh_key, auth_key").eq("user_id", post.user_id),
-            admin.from("profiles").select("display_name, username").eq("id", user.id).single(),
-          ]);
-          const senderName = senderResult.data?.display_name || senderResult.data?.username || "誰か";
-          const body = `${senderName}が${reaction}のリアクションをしました`;
-          if (subResult.data) {
-            for (const sub of subResult.data) {
-              try {
-                await webpush.sendNotification({
-                  endpoint: sub.endpoint,
-                  keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
-                }, JSON.stringify({ title: "リュッター", body, url: `/post/${post_id}` }));
-              } catch (_) {}
-            }
-          }
-        }
       } catch (_) {}
     }
   }

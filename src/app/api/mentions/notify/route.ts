@@ -1,7 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
-import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +22,6 @@ export async function POST(request: NextRequest) {
 
   if (!users) return NextResponse.json({ ok: true });
 
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  if (publicKey && privateKey) {
-    webpush.setVapidDetails("mailto:admin@ryutter.app", publicKey, privateKey);
-  }
-
   for (const mentioned of users) {
     if (mentioned.id === user.id) continue;
 
@@ -38,30 +31,6 @@ export async function POST(request: NextRequest) {
       post_id,
       notification_type: "mention",
     });
-
-    if (publicKey && privateKey) {
-      const { data: subs } = await admin
-        .from("push_subscriptions")
-        .select("endpoint, p256dh_key, auth_key")
-        .eq("user_id", mentioned.id);
-
-      if (subs) {
-        const { data: senderProfile } = await admin
-          .from("profiles")
-          .select("display_name, username")
-          .eq("id", user.id)
-          .single();
-        const senderName = senderProfile?.display_name || senderProfile?.username || "誰か";
-        for (const sub of subs) {
-          try {
-            await webpush.sendNotification({
-              endpoint: sub.endpoint,
-              keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
-            }, JSON.stringify({ title: "リュッター", body: `${senderName}からメンションが来ました`, url: `/post/${post_id}` }));
-          } catch (_) {}
-        }
-      }
-    }
   }
 
   return NextResponse.json({ ok: true });
