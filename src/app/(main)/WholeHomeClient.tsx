@@ -491,21 +491,30 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           incomingChallenge={incomingChallenge}
           onClose={() => setIncomingChallenge(null)}
           onAccept={async () => {
-            await fetch(`/api/challenges/${incomingChallenge.id}/respond`, {
+            const res = await fetch(`/api/challenges/${incomingChallenge.id}/respond`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ action: "accept" }),
             });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              addToast({ message: data.error || "受け付けに失敗しました", type: "error" });
+              return;
+            }
             setIncomingChallenge(null);
             addToast({ message: "勝負を受けた！頑張って！", type: "info" });
           }}
           onDecline={async () => {
-            await fetch(`/api/challenges/${incomingChallenge.id}/respond`, {
+            const res = await fetch(`/api/challenges/${incomingChallenge.id}/respond`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ action: "decline" }),
             });
             setIncomingChallenge(null);
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              addToast({ message: data.error || "拒否に失敗しました", type: "error" });
+            }
           }}
         />
       )}
