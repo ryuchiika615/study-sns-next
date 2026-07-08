@@ -12,7 +12,7 @@ export default async function DiscoverDeckPage({ params }: { params: { id: strin
 
   const { data: deck } = await admin
     .from("decks")
-    .select("*, profiles!inner(display_name, username, avatar_url)")
+    .select("*, profiles!inner(display_name, username, icon_url)")
     .eq("id", params.id)
     .eq("is_public", true)
     .single();
@@ -51,7 +51,7 @@ export default async function DiscoverDeckPage({ params }: { params: { id: strin
 
   const { data: commentsData } = await supabase
     .from("deck_comments")
-    .select("*, profiles!inner(display_name, username, avatar_url)")
+    .select("*, profiles!inner(display_name, username, icon_url)")
     .eq("deck_id", params.id)
     .order("created_at", { ascending: true });
 

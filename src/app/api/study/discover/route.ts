@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   if (deckId) {
     const { data: deck } = await admin
       .from("decks")
-      .select("*, profiles!inner(display_name, username, avatar_url)")
+      .select("*, profiles!inner(display_name, username, icon_url)")
       .eq("id", deckId)
       .eq("is_public", true)
       .single();
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
   // List public decks
   let query = admin
     .from("decks")
-    .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, avatar_url)")
+    .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, icon_url)")
     .eq("is_public", true);
 
   if (search) query = query.ilike("name", `%${search}%`);

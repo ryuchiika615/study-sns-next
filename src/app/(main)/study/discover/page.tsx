@@ -11,7 +11,7 @@ export default async function DiscoverPage() {
   const admin = createAdminClient();
   const { data: decks } = await admin
     .from("decks")
-    .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, avatar_url)")
+    .select("id, name, description, created_at, user_id, profiles!inner(display_name, username, icon_url)")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(20);

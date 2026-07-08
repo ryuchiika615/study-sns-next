@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { data: comments } = await supabase
     .from("deck_comments")
-    .select("*, profiles!inner(display_name, username, avatar_url)")
+    .select("*, profiles!inner(display_name, username, icon_url)")
     .eq("deck_id", deckId)
     .order("created_at", { ascending: true });
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("deck_comments")
     .insert({ deck_id, user_id: user.id, content: content.trim() })
-    .select("*, profiles!inner(display_name, username, avatar_url)")
+    .select("*, profiles!inner(display_name, username, icon_url)")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
