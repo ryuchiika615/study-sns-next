@@ -85,6 +85,7 @@ export default function PageAnalyticsPage() {
     "チャレンジ": "bg-rose-500",
     "タスク": "bg-teal-500",
     "習慣": "bg-emerald-500",
+    "学習": "bg-sky-500",
     "投稿詳細": "bg-violet-500",
   };
 
@@ -102,6 +103,7 @@ export default function PageAnalyticsPage() {
     "チャレンジ": "🔥",
     "タスク": "✅",
     "習慣": "🔄",
+    "学習": "📖",
     "投稿詳細": "📝",
   };
 

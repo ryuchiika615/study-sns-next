@@ -112,7 +112,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
     if (!user) return;
     const { error } = await supabase.from("follows").insert({
       follower_id: user.id,
-      followee_id: senderId,
+      following_id: senderId,
     });
     if (error) {
       console.error(error);
@@ -122,11 +122,6 @@ export default function NotificationsClient({ notifications: initial }: { notifi
           n.sender?.id === senderId ? { ...n, followed_back: true } : n
         )
       );
-      fetch("/api/push/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "follow", recipient_id: senderId }),
-      }).catch(() => {});
     }
   };
 

@@ -591,25 +591,25 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
         </div>
       </div>
       {/* BGM */}
-      <div className="flex items-center gap-2 px-1">
-        <i className="fas fa-music text-xs text-gray-400" />
+      <div className="flex items-center gap-2 px-1 max-w-full overflow-hidden">
+        <i className="fas fa-music text-xs text-gray-400 shrink-0" />
         {albumMode ? (
-          <div className="flex-1 flex items-center gap-2 text-xs text-indigo-600">
-            <i className="fas fa-compact-disc" />
+          <div className="flex-1 flex items-center gap-2 text-xs text-indigo-600 min-w-0">
+            <i className="fas fa-compact-disc shrink-0" />
             <span className="font-medium truncate">{albumName}</span>
-            <span className="text-gray-400">
+            <span className="text-gray-400 shrink-0">
               {currentTrackIndex + 1} / {albumTracks.length}
               {albumShuffle && <span className="ml-1">🔀</span>}
             </span>
             <button onClick={() => { setAlbumMode(false); setAlbumTracks([]); setBgmId("none"); }}
-              className="text-xs text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none ml-auto">
+              className="text-xs text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none ml-auto shrink-0">
               <i className="fas fa-times" /> 解除
             </button>
           </div>
         ) : (
           <>
         <select value={bgmId} onChange={(e) => setBgmId(e.target.value)}
-          className="flex-1 rounded-lg border-gray-300 text-xs py-1">
+          className="flex-1 min-w-0 rounded-lg border-gray-300 text-xs py-1">
           <optgroup label="プリセット">
             {PRESET_TRACKS.map((t) => (
               <option key={t.id} value={t.id}>{t.label}</option>

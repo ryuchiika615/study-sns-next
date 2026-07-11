@@ -109,8 +109,9 @@ export async function GET(request: NextRequest) {
       if (clean.startsWith("/analytics")) return "分析";
       if (clean.startsWith("/achievements")) return "実績";
       if (clean.startsWith("/challenges")) return "チャレンジ";
-      if (clean.startsWith("/tasks")) return "タスク";
+      if (clean.startsWith("/tasks") || clean.startsWith("/task")) return "タスク";
       if (clean.startsWith("/habits")) return "習慣";
+      if (clean.startsWith("/study")) return "学習";
       if (clean.startsWith("/post")) return "投稿詳細";
       if (clean.startsWith("/auth")) return "認証";
       if (clean.startsWith("/admin")) return "管理";

@@ -140,13 +140,6 @@ const PostCard = memo(function PostCard({
     if (!error && data) {
       setComments([...comments, data]);
       setCommentText("");
-      if (post.user_id !== currentUserId) {
-        fetch("/api/push/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "reply", recipient_id: post.user_id, post_id: post.id }),
-        }).catch(() => {});
-      }
       const mentionMatches = text.match(/@([\w.-]+)/g);
       if (mentionMatches) {
         const mentionedUsernames = [...new Set(mentionMatches.map(m => m.slice(1)))];

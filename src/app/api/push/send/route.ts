@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     admin_announcement: "vibrate_admin_announcement",
     repost: "vibrate_repost",
     challenge: "vibrate_challenge",
+    challenge_complete: "vibrate_challenge",
   };
 
   const [notifSettingsResult, subscriptionsResult, senderResult] = await Promise.all([
@@ -135,7 +136,9 @@ export async function POST(request: NextRequest) {
       follow_post: preview ? `${senderName}が「${preview}」を投稿しました` : `${senderName}がリュイートしました`,
       gift: `${senderName}からプレゼントが届きました。`,
       mention: `${senderName}からメンションが来ました`,
+      admin_announcement: `お知らせが届きました`,
       repost: preview ? `${senderName}があなたの投稿「${preview}」を引用しました` : `${senderName}があなたの投稿を引用しました`,
+      challenge_complete: `${senderName}が勝負をクリアしました！`,
     };
     bodyText = messages[record.notification_type] || "新しい通知があります";
   }
