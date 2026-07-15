@@ -391,10 +391,16 @@ export default function DeckDetailClient({
             </Link>
             <div className="flex items-center gap-2">
               {cards.length > 0 && (
-                <Link href={`/study/${deck.id}/quiz`}
-                  className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
-                  学習を開始
-                </Link>
+                <>
+                  <button onClick={() => document.getElementById("card-list")?.scrollIntoView({ behavior: "smooth" })}
+                    className="bg-white border-2 border-primary text-primary text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/5 transition">
+                    <i className="fas fa-book-open mr-1" /> 練習
+                  </button>
+                  <Link href={`/study/${deck.id}/quiz`}
+                    className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
+                    <i className="fas fa-pen mr-1" /> テスト
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -799,7 +805,7 @@ export default function DeckDetailClient({
         )}
 
         {/* Card list */}
-        <div className="space-y-2">
+        <div id="card-list" className="space-y-2">
           {editingId && (() => {
             const card = cards.find((c: any) => c.id === editingId);
             if (!card) return null;
