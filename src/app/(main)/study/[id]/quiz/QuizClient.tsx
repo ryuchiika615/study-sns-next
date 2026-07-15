@@ -13,6 +13,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   const router = useRouter();
   const [started, setStarted] = useState(false);
   const [questionCount, setQuestionCount] = useState(Math.min(cards.length, 10));
+  const [randomOrder, setRandomOrder] = useState(true);
   const [shuffledCards, setShuffledCards] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -113,12 +114,19 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
   };
 
   const handleStart = () => {
-    // シャッフルしてquestionCount枚を選択
-    const shuffled = [...cards].sort(() => Math.random() - 0.5).slice(0, questionCount);
-    setShuffledCards(shuffled);
+    const selected = randomOrder
+      ? [...cards].sort(() => Math.random() - 0.5).slice(0, questionCount)
+      : cards.slice(0, questionCount);
+    setShuffledCards(selected);
     setIndex(0);
     setScore(0);
     setStarted(true);
+  };
+
+  const handleExit = () => {
+    if (confirm("学習を終了しますか？")) {
+      router.push(`/study/${deck.id}`);
+    }
   };
 
   // タグをランダムにシャッフル
@@ -174,6 +182,14 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
               選択: {questionCount === cards.length ? `全${cards.length}問` : `${questionCount}問`}
             </p>
           </div>
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <label className="text-sm text-gray-600 font-bold">順番</label>
+            <button onClick={() => setRandomOrder(!randomOrder)}
+              className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${randomOrder ? "bg-primary" : "bg-gray-300"}`}>
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${randomOrder ? "translate-x-6" : ""}`} />
+            </button>
+            <span className="text-sm text-gray-600">{randomOrder ? "ランダム" : "順番通り"}</span>
+          </div>
           <button onClick={handleStart}
             className="w-full bg-primary text-white font-bold rounded-full py-3.5 text-sm hover:bg-primary/90 transition shadow-md">
             <i className="fas fa-play mr-2" /> 学習を始める
@@ -221,9 +237,9 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
       <div className="max-w-2xl mx-auto p-4">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-6">
-          <Link href={`/study/${deck.id}`} className="text-gray-400 text-sm hover:text-gray-600">
-            <i className="fas fa-arrow-left mr-1" /> 戻る
-          </Link>
+          <button onClick={handleExit} className="text-gray-400 text-sm hover:text-gray-600 cursor-pointer">
+            <i className="fas fa-times mr-1" /> 終了
+          </button>
           <div className="text-sm font-bold text-gray-600">
             {index + 1} / {shuffledCards.length}
           </div>

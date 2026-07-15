@@ -29,12 +29,14 @@ const blankLabels = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ", "ク", "�
 
 export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] }) {
   const router = useRouter();
+  const [started, setStarted] = useState(false);
+  const [sessionCards, setSessionCards] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [ratingCounts, setRatingCounts] = useState([0, 0, 0, 0]);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [lastStreak, setLastStreak] = useState(0);
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -44,8 +46,9 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
   const [seqSubmitted, setSeqSubmitted] = useState(false);
   const [seqResults, setSeqResults] = useState<boolean[]>([]);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [quitConfirm, setQuitConfirm] = useState(false);
 
-  const current = cards[index];
+  const current = sessionCards[index];
   const isMultipleChoice = current?.card_type === "multiple_choice";
   const isSequence = current?.card_type === "sequence";
   const blanks = isSequence ? extractBlanks(current?.front || "") : [];
@@ -88,12 +91,12 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     setSeqResults([]);
     setShowAnswer(false);
 
-    if (index + 1 < cards.length) {
+    if (index + 1 < sessionCards.length) {
       setIndex((i) => i + 1);
     } else {
       setCompleted(true);
     }
-  }, [current, submitting, index, cards.length]);
+  }, [current, submitting, index, sessionCards.length]);
 
   const handleSelectOption = (optIdx: number) => {
     if (showFeedback) return;
@@ -172,6 +175,53 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     }
   }, [flipped, handleRate, isMultipleChoice, isSequence, showFeedback, seqSubmitted, seqOrder, blanks, current]);
 
+  const handleStart = (count: number) => {
+    const shuffled = [...cards].sort(() => Math.random() - 0.5);
+    const selected = count === 0 ? shuffled : shuffled.slice(0, count);
+    setSessionCards(selected);
+    setStartTime(Date.now());
+    setStarted(true);
+  };
+
+  const handleQuit = () => {
+    router.push(`/study/${deck.id}`);
+  };
+
+  if (!started) {
+    const total = cards.length;
+    const options = [
+      { label: "10問", value: 10 },
+      { label: "20問", value: 20 },
+      { label: "30問", value: 30 },
+      { label: "全て", value: 0 },
+    ].filter(o => o.value === 0 || o.value <= total);
+
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 max-w-sm w-full mx-4 text-center space-y-4">
+          <div className="text-4xl">📚</div>
+          <h2 className="text-lg font-bold">{deck.name}</h2>
+          <p className="text-sm text-gray-500">全{total}枚のカード</p>
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400">何問解答しますか？</p>
+            <div className="grid grid-cols-2 gap-2">
+              {options.map((o) => (
+                <button key={o.value} onClick={() => handleStart(o.value)}
+                  className="bg-primary text-white font-bold rounded-xl py-3 text-sm hover:bg-primary/90 transition cursor-pointer">
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button onClick={handleQuit}
+            className="text-gray-400 text-xs cursor-pointer hover:text-gray-600">
+            キャンセル
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (completed) {
     const total = ratingCounts.reduce((a, b) => a + b, 0);
     const elapsed = Math.floor((Date.now() - startTime) / 60000);
@@ -218,7 +268,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
               className="bg-white text-gray-800 border border-gray-300 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-50 transition">
               デッキに戻る
             </button>
-            <button onClick={() => { setIndex(0); setFlipped(false); setCompleted(false); setRatingCounts([0, 0, 0, 0]); }}
+            <button onClick={() => { setStarted(false); setIndex(0); setFlipped(false); setCompleted(false); setRatingCounts([0, 0, 0, 0]); setSessionCards([]); }}
               className="bg-primary text-white rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-primary/90 transition">
               続ける
             </button>
@@ -242,7 +292,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
     );
   }
 
-  const progress = ((index) / cards.length) * 100;
+  const progress = ((index) / sessionCards.length) * 100;
 
   const renderSequenceQuestion = () => {
     if (!current.front) return null;
@@ -290,10 +340,35 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
+      {quitConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-xs w-full mx-4 text-center space-y-4">
+            <p className="font-bold text-sm">学習を終了しますか？</p>
+            <p className="text-xs text-gray-500">途中経過は保存されません</p>
+            <div className="flex gap-2">
+              <button onClick={() => setQuitConfirm(false)}
+                className="flex-1 bg-gray-100 text-gray-600 font-bold rounded-xl py-2 text-sm cursor-pointer">
+                続ける
+              </button>
+              <button onClick={handleQuit}
+                className="flex-1 bg-red-500 text-white font-bold rounded-xl py-2 text-sm cursor-pointer">
+                終了する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4">
         <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
           <span>{deck.name}</span>
-          <span>{index + 1} / {cards.length}</span>
+          <div className="flex items-center gap-3">
+            <span>{index + 1} / {sessionCards.length}</span>
+            <button onClick={() => setQuitConfirm(true)}
+              className="text-gray-400 hover:text-red-500 cursor-pointer">
+              <i className="fas fa-times" />
+            </button>
+          </div>
         </div>
 
         {isMultipleChoice ? (
