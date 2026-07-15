@@ -39,7 +39,7 @@ export default async function ReviewPage({ params }: { params: { id: string } })
     });
   }
 
-  // New cards (never reviewed) - limit 10 per session
+  // New cards (never reviewed)
   const { data: reviewedCards } = await supabase
     .from("reviews")
     .select("card_id")
@@ -48,8 +48,7 @@ export default async function ReviewPage({ params }: { params: { id: string } })
   const reviewedSet = new Set((reviewedCards || []).map((r: any) => r.card_id));
   const newCardIds = (allCards || [])
     .filter((c: any) => !reviewedSet.has(c.id))
-    .map((c: any) => c.id)
-    .slice(0, 10);
+    .map((c: any) => c.id);
 
   const allIds = Array.from(new Set([...Array.from(dueCardIds), ...newCardIds]));
 
