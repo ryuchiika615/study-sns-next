@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import LatexText from "@/components/LatexText";
 
 type Answer = {
   blankId: string;
@@ -266,9 +267,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           )}
 
           {/* 問題文 */}
-          <div className={`text-sm leading-relaxed whitespace-pre-wrap mb-6 ${current.text_color || ""}`}>
-            {current.front}
-          </div>
+          <LatexText text={current.front} className={`text-sm leading-relaxed mb-6 ${current.text_color || ""}`} />
           {current.front_image_url && (
             <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-6">
               <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
@@ -412,9 +411,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
                     <p className="text-xs text-green-800 font-bold mb-2">
                       <i className="fas fa-check-circle mr-1" /> 正解
                     </p>
-                    <div className={`text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium ${current.text_color || ""}`}>
-                      {current.back}
-                    </div>
+                    <LatexText text={current.back} className={`text-sm text-gray-900 leading-relaxed font-medium ${current.text_color || ""}`} />
                     {current.back_image_url && (
                       <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
                         <Image src={current.back_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import LatexText from "@/components/LatexText";
 
 const ratings = [
   { value: 0, label: "Again", color: "bg-red-500", short: "もう一度" },
@@ -419,7 +420,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
           <>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-4">
                     <p className="text-sm text-gray-400 mb-3">問題</p>
-                    <p className={`text-xl font-medium whitespace-pre-wrap mb-4 ${current.text_color || ""}`}>{current.front}</p>
+                    <LatexText text={current.front} className={`text-xl font-medium mb-4 ${current.text_color || ""}`} />
                     {current.front_image_url && (
                       <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-4">
                         <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
@@ -588,7 +589,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
                 {!flipped ? (
                   <div>
                     <p className="text-sm text-gray-400 mb-3">問題</p>
-                    <p className={`text-xl font-medium whitespace-pre-wrap ${current.text_color || ""}`}>{current.front}</p>
+                    <LatexText text={current.front} className={`text-xl font-medium ${current.text_color || ""}`} />
                     {current.front_image_url && (
                       <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
                         <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
@@ -599,7 +600,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
                 ) : (
                   <div>
                     <p className="text-sm text-gray-400 mb-3">答え</p>
-                    <p className={`text-xl whitespace-pre-wrap ${current.text_color || ""}`}>{current.back}</p>
+                    <LatexText text={current.back} className={`text-xl ${current.text_color || ""}`} />
                     {current.back_image_url && (
                       <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
                         <Image src={current.back_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
