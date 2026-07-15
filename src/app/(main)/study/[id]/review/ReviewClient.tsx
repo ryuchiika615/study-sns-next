@@ -162,11 +162,9 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         return;
       }
     }
-    if (!flipped) {
-      if (e.key === " " || e.key === "Enter") {
-        e.preventDefault();
-        setFlipped(true);
-      }
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      setFlipped(!flipped);
       return;
     }
     const keyMap: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3 };
@@ -533,7 +531,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
           <>
             <div
               className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center justify-center cursor-pointer p-6 mb-4 hover:shadow-md transition"
-              onClick={() => !flipped && setFlipped(true)}
+              onClick={() => setFlipped(!flipped)}
               style={{ minHeight: "300px" }}
             >
               <div className="text-center w-full">
@@ -541,7 +539,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                   <div>
                     <p className="text-sm text-gray-400 mb-3">問題</p>
                     <p className={`text-xl font-medium whitespace-pre-wrap ${current.text_color || ""}`}>{current.front}</p>
-                    <p className="text-xs text-gray-400 mt-6">タップするかスペースキーで答えを表示</p>
+                    <p className="text-xs text-gray-400 mt-6">タップで問題/答えを切り替え</p>
                   </div>
                 ) : (
                   <div>
@@ -578,7 +576,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         )}
 
         <p className="text-[10px] text-gray-400 text-center mt-3">
-          {!isMultipleChoice && !isSequence ? (!flipped ? "Space / Enter" : "1 2 3 4")
+          {!isMultipleChoice && !isSequence ? "Space / Enter で切替 / 1 2 3 4 で評価"
             : isMultipleChoice ? (!showFeedback ? "1 2 3 4 で選択" : "1 2 3 4 で評価")
             : isSequence ? (!seqSubmitted ? "1 2 3 4 で選択 / Backspace取消 / Enter確認" : "1 2 3 4 で評価")
             : ""}

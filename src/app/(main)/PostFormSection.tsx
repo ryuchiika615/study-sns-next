@@ -8,6 +8,7 @@ import StudyTimer from "@/components/StudyTimer";
 import { compressImage, insertAtCursor, notifyMentions } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
 import ImageCropper from "@/components/ImageCropper";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
 
 const BeeryualCamera = dynamic(() => import("@/components/BeeryualCamera"), { ssr: false });
 const StudyPomodoro = dynamic(() => import("@/components/StudyPomodoro"), {
@@ -237,11 +238,14 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               ref={contentRef}
               value={content}
               onChange={(e) => setContent(e.target.value.slice(0, 2000))}
+              onKeyDown={(e) => {
+              }}
               placeholder="今日の学びを書こう"
               required
               maxLength={2000}
               className="w-full border-none outline-none text-lg resize-none h-20 pr-7"
             />
+            <MentionAutocomplete textareaRef={contentRef} content={content} onChange={(v) => setContent(v)} />
             <button type="button" onClick={() => contentRef.current && insertAtCursor(contentRef.current, "@")}
               className="absolute top-0 right-0 text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-sm p-1">
               ＠

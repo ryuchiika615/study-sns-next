@@ -7,6 +7,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl, insertAtCursor, notifyMentions } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
+import MentionAutocomplete from "./MentionAutocomplete";
 
 function highlightMentions(text: string) {
   const parts: (string | JSX.Element)[] = [];
@@ -389,7 +390,7 @@ const PostCard = memo(function PostCard({
           </div>
         ) : (
           <>
-            <p className="whitespace-pre-wrap">{post.content}</p>
+            <p className="whitespace-pre-wrap">{highlightMentions(post.content)}</p>
 
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="subject-chip" style={{ backgroundColor: post.subject_color }}>
@@ -464,6 +465,7 @@ const PostCard = memo(function PostCard({
                 <div className="relative">
                   <textarea ref={quoteContentRef} value={quoteContent} onChange={(e) => setQuoteContent(e.target.value.slice(0, 2000))}
                     className="w-full rounded-lg border-gray-300 text-sm resize-none pr-6" rows={2} placeholder="コメントを入力（任意）" maxLength={2000} />
+                  <MentionAutocomplete textareaRef={quoteContentRef} content={quoteContent} onChange={(v) => setQuoteContent(v)} />
                   <button type="button" onClick={() => quoteContentRef.current && insertAtCursor(quoteContentRef.current, "@")}
                     className="absolute top-1 right-1 text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-xs p-0.5">
                     ＠
