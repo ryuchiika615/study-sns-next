@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const ratings = [
   { value: 0, label: "Again", color: "bg-red-500", short: "もう一度" },
@@ -374,8 +375,13 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
         {isMultipleChoice ? (
           <>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-4">
-              <p className="text-sm text-gray-400 mb-3">問題</p>
-              <p className={`text-xl font-medium whitespace-pre-wrap mb-4 ${current.text_color || ""}`}>{current.front}</p>
+                    <p className="text-sm text-gray-400 mb-3">問題</p>
+                    <p className={`text-xl font-medium whitespace-pre-wrap mb-4 ${current.text_color || ""}`}>{current.front}</p>
+                    {current.front_image_url && (
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-4">
+                        <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                      </div>
+                    )}
               <div className="space-y-2">
                 {shuffledIndices.map((_, optIdx) => {
                   const actualIdx = shuffledIndices[optIdx];
@@ -541,6 +547,11 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                   <div>
                     <p className="text-sm text-gray-400 mb-3">答え</p>
                     <p className={`text-xl whitespace-pre-wrap ${current.text_color || ""}`}>{current.back}</p>
+                    {current.back_image_url && (
+                      <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                        <Image src={current.back_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                      </div>
+                    )}
                     {current.tags?.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1 mt-4">
                         {current.tags.map((tag: string, i: number) => (

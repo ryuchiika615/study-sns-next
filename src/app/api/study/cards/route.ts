@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { deck_id, front, back, image_url, audio_url, tags, card_type, options, correct_answer, correct_mapping, text_color } = await request.json();
+  const { deck_id, front, back, front_image_url, back_image_url, audio_url, tags, card_type, options, correct_answer, correct_mapping, text_color } = await request.json();
   if (!deck_id) return NextResponse.json({ error: "deck_id required" }, { status: 400 });
   if (!front?.trim()) return NextResponse.json({ error: "front required" }, { status: 400 });
 
@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       front: front.trim(),
       back: back.trim(),
-      image_url: image_url || null,
+      front_image_url: front_image_url || null,
+      back_image_url: back_image_url || null,
       audio_url: audio_url || null,
       tags: tags || [],
       card_type: type,
@@ -80,13 +81,14 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id, front, back, image_url, tags, card_type, options, correct_answer, correct_mapping, text_color } = await request.json();
+  const { id, front, back, front_image_url, back_image_url, tags, card_type, options, correct_answer, correct_mapping, text_color } = await request.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const updates: Record<string, any> = {};
   if (front !== undefined) updates.front = front.trim();
   if (back !== undefined) updates.back = back.trim();
-  if (image_url !== undefined) updates.image_url = image_url;
+  if (front_image_url !== undefined) updates.front_image_url = front_image_url;
+  if (back_image_url !== undefined) updates.back_image_url = back_image_url;
   if (tags !== undefined) updates.tags = tags;
   if (text_color !== undefined) updates.text_color = text_color;
   if (card_type !== undefined) {

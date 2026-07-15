@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 type Answer = {
   blankId: string;
@@ -268,6 +269,11 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           <div className={`text-sm leading-relaxed whitespace-pre-wrap mb-6 ${current.text_color || ""}`}>
             {current.front}
           </div>
+          {current.front_image_url && (
+            <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-6">
+              <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+            </div>
+          )}
 
           {/* 選択問題の場合 */}
           {isMultipleChoice && (
@@ -409,6 +415,11 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
                     <div className={`text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium ${current.text_color || ""}`}>
                       {current.back}
                     </div>
+                    {current.back_image_url && (
+                      <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                        <Image src={current.back_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

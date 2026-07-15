@@ -43,8 +43,10 @@ export default function DeckDetailClient({
   const [creating, setCreating] = useState(false);
   const [flippedId, setFlippedId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(deck.is_public);
-  const [imageFile, setImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [frontImageFile, setFrontImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
+  const frontImageInputRef = useRef<HTMLInputElement>(null);
+  const [backImageFile, setBackImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
+  const backImageInputRef = useRef<HTMLInputElement>(null);
 
   // Edit card
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,8 +58,10 @@ export default function DeckDetailClient({
   const [editCorrectAnswer, setEditCorrectAnswer] = useState(0);
   const [editCorrectMapping, setEditCorrectMapping] = useState<Record<string, number>>({});
   const [editTextColor, setEditTextColor] = useState("");
-  const [editImageFile, setEditImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
-  const editImageInputRef = useRef<HTMLInputElement>(null);
+  const [editFrontImageFile, setEditFrontImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
+  const editFrontImageInputRef = useRef<HTMLInputElement>(null);
+  const [editBackImageFile, setEditBackImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
+  const editBackImageInputRef = useRef<HTMLInputElement>(null);
 
   // AI generate
   const [showAIGenerate, setShowAIGenerate] = useState(false);
@@ -146,11 +150,11 @@ export default function DeckDetailClient({
     setCreating(true);
     setError("");
 
-    let imageUrl: string | null = null;
-    if (imageFile) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) imageUrl = await uploadCardImage(imageFile, user.id);
-    }
+    let frontImageUrl: string | null = null;
+    let backImageUrl: string | null = null;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (frontImageFile && user) frontImageUrl = await uploadCardImage(frontImageFile, user.id);
+    if (backImageFile && user) backImageUrl = await uploadCardImage(backImageFile, user.id);
 
     const body: any = {
       deck_id: deck.id,
@@ -158,7 +162,8 @@ export default function DeckDetailClient({
       back: back.trim(),
       tags: tags ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
       card_type: cardType,
-      image_url: imageUrl,
+      front_image_url: frontImageUrl,
+      back_image_url: backImageUrl,
       text_color: textColor || null,
     };
     if (cardType === "multiple_choice") {
@@ -186,7 +191,8 @@ export default function DeckDetailClient({
       setCardType("basic");
       setTextColor("");
       setShowCreate(false);
-      if (imageFile) { URL.revokeObjectURL(imageFile.preview); setImageFile(null); }
+      if (frontImageFile) { URL.revokeObjectURL(frontImageFile.preview); setFrontImageFile(null); }
+      if (backImageFile) { URL.revokeObjectURL(backImageFile.preview); setBackImageFile(null); }
     } else {
       const data = await res.json().catch(() => ({}));
       setError(data.error || "作成失敗");
@@ -219,14 +225,15 @@ export default function DeckDetailClient({
     e.preventDefault();
     if (!editFront.trim() || !editBack.trim()) return;
 
-    let imageUrl: string | null = null;
-    if (editImageFile) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) imageUrl = await uploadCardImage(editImageFile, user.id);
-    }
+    let editFrontImageUrl: string | null = null;
+    let editBackImageUrl: string | null = null;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (editFrontImageFile && user) editFrontImageUrl = await uploadCardImage(editFrontImageFile, user.id);
+    if (editBackImageFile && user) editBackImageUrl = await uploadCardImage(editBackImageFile, user.id);
 
     const body: any = { id: editingId, front: editFront.trim(), back: editBack.trim(), tags: editTags ? editTags.split(",").map((t: string) => t.trim()).filter(Boolean) : [], text_color: editTextColor || null };
-    if (imageUrl) body.image_url = imageUrl;
+    if (editFrontImageUrl) body.front_image_url = editFrontImageUrl;
+    if (editBackImageUrl) body.back_image_url = editBackImageUrl;
     if (editCardType === "multiple_choice") {
       if (editOptions.filter((o) => o.trim()).length < 2) return;
       body.card_type = editCardType;
@@ -248,7 +255,8 @@ export default function DeckDetailClient({
       const data = await res.json();
       setCards((prev) => prev.map((c) => c.id === editingId ? data.card : c));
       setEditingId(null);
-      if (editImageFile) { URL.revokeObjectURL(editImageFile.preview); setEditImageFile(null); }
+      if (editFrontImageFile) { URL.revokeObjectURL(editFrontImageFile.preview); setEditFrontImageFile(null); }
+      if (editBackImageFile) { URL.revokeObjectURL(editBackImageFile.preview); setEditBackImageFile(null); }
     }
   };
 
@@ -690,19 +698,39 @@ export default function DeckDetailClient({
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
-              <input ref={imageInputRef} type="file" accept="image/*" className="text-sm"
+              <label className="text-xs text-gray-500 block mb-1">問題に画像を添付（任意）</label>
+              <input ref={frontImageInputRef} type="file" accept="image/*" className="text-sm"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  if (imageFile) URL.revokeObjectURL(imageFile.preview);
-                  setImageFile({ blob: file, preview: URL.createObjectURL(file) });
+                  if (frontImageFile) URL.revokeObjectURL(frontImageFile.preview);
+                  setFrontImageFile({ blob: file, preview: URL.createObjectURL(file) });
                   e.target.value = "";
                 }} />
-              {imageFile && (
+              {frontImageFile && (
                 <div className="relative w-24 h-24 mt-2 rounded-lg overflow-hidden border border-gray-200">
-                  <img src={imageFile.preview} alt="" className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => { URL.revokeObjectURL(imageFile.preview); setImageFile(null); if (imageInputRef.current) imageInputRef.current.value = ""; }}
+                  <img src={frontImageFile.preview} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => { URL.revokeObjectURL(frontImageFile.preview); setFrontImageFile(null); if (frontImageInputRef.current) frontImageInputRef.current.value = ""; }}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
+                    <i className="fas fa-times" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">解答に画像を添付（任意）</label>
+              <input ref={backImageInputRef} type="file" accept="image/*" className="text-sm"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (backImageFile) URL.revokeObjectURL(backImageFile.preview);
+                  setBackImageFile({ blob: file, preview: URL.createObjectURL(file) });
+                  e.target.value = "";
+                }} />
+              {backImageFile && (
+                <div className="relative w-24 h-24 mt-2 rounded-lg overflow-hidden border border-gray-200">
+                  <img src={backImageFile.preview} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => { URL.revokeObjectURL(backImageFile.preview); setBackImageFile(null); if (backImageInputRef.current) backImageInputRef.current.value = ""; }}
                     className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
                     <i className="fas fa-times" />
                   </button>
@@ -966,19 +994,39 @@ export default function DeckDetailClient({
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
-                  <input ref={editImageInputRef} type="file" accept="image/*" className="text-sm"
+                  <label className="text-xs text-gray-500 block mb-1">問題に画像を添付（任意）</label>
+                  <input ref={editFrontImageInputRef} type="file" accept="image/*" className="text-sm"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (editImageFile) URL.revokeObjectURL(editImageFile.preview);
-                      setEditImageFile({ blob: file, preview: URL.createObjectURL(file) });
+                      if (editFrontImageFile) URL.revokeObjectURL(editFrontImageFile.preview);
+                      setEditFrontImageFile({ blob: file, preview: URL.createObjectURL(file) });
                       e.target.value = "";
                     }} />
-                  {(editImageFile || (cards.find((c: any) => c.id === editingId)?.image_url)) && (
+                  {(editFrontImageFile || (cards.find((c: any) => c.id === editingId)?.front_image_url)) && (
                     <div className="relative w-24 h-24 mt-2 rounded-lg overflow-hidden border border-gray-200">
-                      <img src={editImageFile?.preview || (cards.find((c: any) => c.id === editingId)?.image_url)} alt="" className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => { if (editImageFile) { URL.revokeObjectURL(editImageFile.preview); } setEditImageFile(null); if (editImageInputRef.current) editImageInputRef.current.value = ""; }}
+                      <img src={editFrontImageFile?.preview || (cards.find((c: any) => c.id === editingId)?.front_image_url)} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => { if (editFrontImageFile) { URL.revokeObjectURL(editFrontImageFile.preview); } setEditFrontImageFile(null); if (editFrontImageInputRef.current) editFrontImageInputRef.current.value = ""; }}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">解答に画像を添付（任意）</label>
+                  <input ref={editBackImageInputRef} type="file" accept="image/*" className="text-sm"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (editBackImageFile) URL.revokeObjectURL(editBackImageFile.preview);
+                      setEditBackImageFile({ blob: file, preview: URL.createObjectURL(file) });
+                      e.target.value = "";
+                    }} />
+                  {(editBackImageFile || (cards.find((c: any) => c.id === editingId)?.back_image_url)) && (
+                    <div className="relative w-24 h-24 mt-2 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={editBackImageFile?.preview || (cards.find((c: any) => c.id === editingId)?.back_image_url)} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => { if (editBackImageFile) { URL.revokeObjectURL(editBackImageFile.preview); } setEditBackImageFile(null); if (editBackImageInputRef.current) editBackImageInputRef.current.value = ""; }}
                         className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
                         <i className="fas fa-times" />
                       </button>
@@ -1018,18 +1066,18 @@ export default function DeckDetailClient({
                         <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-1.5 py-0.5 rounded">穴埋め</span>
                       )}
                       <LatexText text={card.front} className={`text-sm font-medium ${card.text_color || ""}`} />
-                      {card.image_url && !flippedId && (
+                      {card.front_image_url && !flippedId && (
                         <div className="mt-2 relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
-                          <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 400px" />
+                          <Image src={card.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 400px" />
                         </div>
                       )}
                     </div>
                     {flippedId === card.id && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
                         <LatexText text={card.back} className={`text-sm text-gray-700 ${card.text_color || ""}`} />
-                        {card.image_url && (
+                        {card.back_image_url && (
                           <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
-                            <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                            <Image src={card.back_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
                           </div>
                         )}
                         {card.tags?.length > 0 && (
