@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 const ratings = [
   { value: 0, label: "Again", color: "bg-red-500", short: "もう一度" },
@@ -267,6 +268,10 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
               className="bg-white text-gray-800 border border-gray-300 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-50 transition">
               デッキに戻る
             </button>
+            <Link href="/study/stats"
+              className="bg-white text-primary border border-primary rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-primary/5 transition no-underline">
+              <i className="fas fa-chart-bar mr-1" />統計
+            </Link>
             <button onClick={() => { setStarted(false); setIndex(0); setFlipped(false); setCompleted(false); setRatingCounts([0, 0, 0, 0]); setSessionCards([]); }}
               className="bg-primary text-white rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-primary/90 transition">
               続ける
@@ -364,8 +369,8 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
           <div className="flex items-center gap-3">
             <span>{index + 1} / {sessionCards.length}</span>
             <button onClick={() => setQuitConfirm(true)}
-              className="text-gray-400 hover:text-red-500 cursor-pointer">
-              <i className="fas fa-times" />
+              className="text-gray-400 hover:text-red-500 cursor-pointer flex items-center gap-1">
+              <i className="fas fa-times" /> <span className="text-xs">終了</span>
             </button>
           </div>
         </div>
