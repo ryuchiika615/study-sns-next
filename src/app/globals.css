@@ -56,6 +56,9 @@ html.dark .border-gray-300 { border-color: var(--border-card); }
 html.dark .ring-gray-200 { --tw-ring-color: var(--border-card); }
 html.dark .bg-blue-50 { background-color: #1e3a5f; }
 html.dark .bg-red-50 { background-color: #3b1c2a; }
+html.dark .bg-green-50 { background-color: #1a3a2a; }
+html.dark .text-green-800 { color: #86efac; }
+html.dark .text-green-700 { color: #6ee7b7; }
 html.dark .text-blue-600 { color: #93c5fd; }
 html.dark .text-red-600 { color: #fca5a5; }
 html.dark .hover\:bg-gray-50:hover { background-color: var(--bg-surface); }
