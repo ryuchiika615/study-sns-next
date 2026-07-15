@@ -19,6 +19,17 @@ export default function DeckDetailClient({
   const router = useRouter();
   const [cards, setCards] = useState(initialCards);
   const supabase = createClient();
+
+  const COLORS = [
+    { value: "", label: "標準", class: "" },
+    { value: "text-red-600", label: "赤", class: "bg-red-500" },
+    { value: "text-orange-500", label: "橙", class: "bg-orange-500" },
+    { value: "text-yellow-600", label: "黄", class: "bg-yellow-500" },
+    { value: "text-blue-600", label: "青", class: "bg-blue-500" },
+    { value: "text-purple-600", label: "紫", class: "bg-purple-500" },
+    { value: "text-green-600", label: "緑", class: "bg-green-500" },
+    { value: "text-pink-500", label: "ピンク", class: "bg-pink-500" },
+  ];
   const [showCreate, setShowCreate] = useState(false);
   const [cardType, setCardType] = useState<"basic" | "multiple_choice" | "sequence">("basic");
   const [front, setFront] = useState("");
@@ -27,6 +38,7 @@ export default function DeckDetailClient({
   const [options, setOptions] = useState<string[]>(["", ""]);
   const [correctAnswer, setCorrectAnswer] = useState(0);
   const [correctMapping, setCorrectMapping] = useState<Record<string, number>>({});
+  const [textColor, setTextColor] = useState("");
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [flippedId, setFlippedId] = useState<string | null>(null);
@@ -43,6 +55,7 @@ export default function DeckDetailClient({
   const [editOptions, setEditOptions] = useState<string[]>(["", ""]);
   const [editCorrectAnswer, setEditCorrectAnswer] = useState(0);
   const [editCorrectMapping, setEditCorrectMapping] = useState<Record<string, number>>({});
+  const [editTextColor, setEditTextColor] = useState("");
   const [editImageFile, setEditImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
   const editImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -146,6 +159,7 @@ export default function DeckDetailClient({
       tags: tags ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
       card_type: cardType,
       image_url: imageUrl,
+      text_color: textColor || null,
     };
     if (cardType === "multiple_choice") {
       body.options = options.filter((o: string) => o.trim());
@@ -170,6 +184,7 @@ export default function DeckDetailClient({
       setCorrectAnswer(0);
       setCorrectMapping({});
       setCardType("basic");
+      setTextColor("");
       setShowCreate(false);
       if (imageFile) { URL.revokeObjectURL(imageFile.preview); setImageFile(null); }
     } else {
@@ -197,6 +212,7 @@ export default function DeckDetailClient({
     setEditOptions(card.options?.length ? [...card.options] : ["", ""]);
     setEditCorrectAnswer(card.correct_answer ?? 0);
     setEditCorrectMapping(card.correct_mapping || {});
+    setEditTextColor(card.text_color || "");
   };
 
   const handleEditSave = async (e: React.FormEvent) => {
@@ -209,7 +225,7 @@ export default function DeckDetailClient({
       if (user) imageUrl = await uploadCardImage(editImageFile, user.id);
     }
 
-    const body: any = { id: editingId, front: editFront.trim(), back: editBack.trim(), tags: editTags ? editTags.split(",").map((t: string) => t.trim()).filter(Boolean) : [] };
+    const body: any = { id: editingId, front: editFront.trim(), back: editBack.trim(), tags: editTags ? editTags.split(",").map((t: string) => t.trim()).filter(Boolean) : [], text_color: editTextColor || null };
     if (imageUrl) body.image_url = imageUrl;
     if (editCardType === "multiple_choice") {
       if (editOptions.filter((o) => o.trim()).length < 2) return;
@@ -659,6 +675,21 @@ export default function DeckDetailClient({
                 className="w-full rounded-lg border-gray-300 text-sm" placeholder="例: 数学, 代数" />
             </div>
             <div>
+              <label className="text-xs text-gray-500 block mb-1">強調色（任意）</label>
+              <div className="flex gap-1.5">
+                {COLORS.map(c => (
+                  <button key={c.value} type="button" onClick={() => setTextColor(c.value)}
+                    className={`w-7 h-7 rounded-full text-xs font-bold cursor-pointer transition-all
+                      ${c.value === "" ? "border-2 border-gray-300 bg-white hover:bg-gray-100" : c.class}
+                      ${textColor === c.value ? (c.value === "" ? "ring-2 ring-primary ring-offset-1" : "ring-2 ring-gray-400 ring-offset-1 scale-110") : ""}
+                      ${c.value === "" ? "" : "text-white text-[10px]"}`}
+                    title={c.label}>
+                    {c.value === "" ? "×" : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
               <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
               <input ref={imageInputRef} type="file" accept="image/*" className="text-sm"
                 onChange={(e) => {
@@ -920,6 +951,21 @@ export default function DeckDetailClient({
                     className="w-full rounded-lg border-gray-300 text-sm" />
                 </div>
                 <div>
+                  <label className="text-xs text-gray-500 block mb-1">強調色（任意）</label>
+                  <div className="flex gap-1.5">
+                    {COLORS.map(c => (
+                      <button key={c.value} type="button" onClick={() => setEditTextColor(c.value)}
+                        className={`w-7 h-7 rounded-full text-xs font-bold cursor-pointer transition-all
+                          ${c.value === "" ? "border-2 border-gray-300 bg-white hover:bg-gray-100" : c.class}
+                          ${editTextColor === c.value ? (c.value === "" ? "ring-2 ring-primary ring-offset-1" : "ring-2 ring-gray-400 ring-offset-1 scale-110") : ""}
+                          ${c.value === "" ? "" : "text-white text-[10px]"}`}
+                        title={c.label}>
+                        {c.value === "" ? "×" : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
                   <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
                   <input ref={editImageInputRef} type="file" accept="image/*" className="text-sm"
                     onChange={(e) => {
@@ -971,7 +1017,7 @@ export default function DeckDetailClient({
                       {card.card_type === "sequence" && (
                         <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-1.5 py-0.5 rounded">穴埋め</span>
                       )}
-                      <LatexText text={card.front} className="text-sm font-medium" />
+                      <LatexText text={card.front} className={`text-sm font-medium ${card.text_color || ""}`} />
                       {card.image_url && !flippedId && (
                         <div className="mt-2 relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
                           <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 400px" />
@@ -980,7 +1026,7 @@ export default function DeckDetailClient({
                     </div>
                     {flippedId === card.id && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
-                        <LatexText text={card.back} className="text-sm text-gray-700" />
+                        <LatexText text={card.back} className={`text-sm text-gray-700 ${card.text_color || ""}`} />
                         {card.image_url && (
                           <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
                             <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />

@@ -375,7 +375,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
           <>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-4">
               <p className="text-sm text-gray-400 mb-3">問題</p>
-              <p className="text-xl font-medium whitespace-pre-wrap mb-4">{current.front}</p>
+              <p className={`text-xl font-medium whitespace-pre-wrap mb-4 ${current.text_color || ""}`}>{current.front}</p>
               <div className="space-y-2">
                 {shuffledIndices.map((_, optIdx) => {
                   const actualIdx = shuffledIndices[optIdx];
@@ -419,7 +419,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                       {showAnswer ? "答えを隠す" : "答えを表示"}
                     </button>
                     {showAnswer && (
-                      <div className="mt-2 bg-blue-50 rounded-lg p-3 text-sm text-left whitespace-pre-wrap">
+                      <div className={`mt-2 bg-blue-50 rounded-lg p-3 text-sm text-left whitespace-pre-wrap ${current.text_color || ""}`}>
                         {current.back}
                       </div>
                     )}
@@ -502,7 +502,7 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                       {showAnswer ? "完成文を隠す" : "完成文を表示"}
                     </button>
                     {showAnswer && (
-                      <div className="mt-2 bg-blue-50 rounded-lg p-3 text-sm text-left whitespace-pre-wrap">
+                      <div className={`mt-2 bg-blue-50 rounded-lg p-3 text-sm text-left whitespace-pre-wrap ${current.text_color || ""}`}>
                         {current.back}
                       </div>
                     )}
@@ -534,13 +534,13 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                 {!flipped ? (
                   <div>
                     <p className="text-sm text-gray-400 mb-3">問題</p>
-                    <p className="text-xl font-medium whitespace-pre-wrap">{current.front}</p>
+                    <p className={`text-xl font-medium whitespace-pre-wrap ${current.text_color || ""}`}>{current.front}</p>
                     <p className="text-xs text-gray-400 mt-6">タップするかスペースキーで答えを表示</p>
                   </div>
                 ) : (
                   <div>
                     <p className="text-sm text-gray-400 mb-3">答え</p>
-                    <p className="text-xl whitespace-pre-wrap">{current.back}</p>
+                    <p className={`text-xl whitespace-pre-wrap ${current.text_color || ""}`}>{current.back}</p>
                     {current.tags?.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1 mt-4">
                         {current.tags.map((tag: string, i: number) => (

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { deck_id, front, back, image_url, audio_url, tags, card_type, options, correct_answer, correct_mapping } = await request.json();
+  const { deck_id, front, back, image_url, audio_url, tags, card_type, options, correct_answer, correct_mapping, text_color } = await request.json();
   if (!deck_id) return NextResponse.json({ error: "deck_id required" }, { status: 400 });
   if (!front?.trim()) return NextResponse.json({ error: "front required" }, { status: 400 });
 
@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       options: type !== "basic" ? options : null,
       correct_answer: type === "multiple_choice" ? correct_answer : null,
       correct_mapping: type === "sequence" ? correct_mapping : null,
+      text_color: text_color || null,
     })
     .select()
     .single();
@@ -79,7 +80,7 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id, front, back, image_url, tags, card_type, options, correct_answer, correct_mapping } = await request.json();
+  const { id, front, back, image_url, tags, card_type, options, correct_answer, correct_mapping, text_color } = await request.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const updates: Record<string, any> = {};
@@ -87,6 +88,7 @@ export async function PATCH(request: NextRequest) {
   if (back !== undefined) updates.back = back.trim();
   if (image_url !== undefined) updates.image_url = image_url;
   if (tags !== undefined) updates.tags = tags;
+  if (text_color !== undefined) updates.text_color = text_color;
   if (card_type !== undefined) {
     updates.card_type = card_type;
     if (card_type === "basic") {

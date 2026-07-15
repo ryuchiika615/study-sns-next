@@ -265,7 +265,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
           )}
 
           {/* 問題文 */}
-          <div className="text-sm leading-relaxed whitespace-pre-wrap mb-6">
+          <div className={`text-sm leading-relaxed whitespace-pre-wrap mb-6 ${current.text_color || ""}`}>
             {current.front}
           </div>
 
@@ -406,7 +406,7 @@ export default function QuizClient({ deck, cards }: { deck: any; cards: any[] })
                     <p className="text-xs text-green-800 font-bold mb-2">
                       <i className="fas fa-check-circle mr-1" /> 正解
                     </p>
-                    <div className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium">
+                    <div className={`text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium ${current.text_color || ""}`}>
                       {current.back}
                     </div>
                   </div>
