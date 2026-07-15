@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  overscroll-behavior-x: none;
+}
+
 @layer base {
   :root {
     --bg-body: #f2f2f6;
