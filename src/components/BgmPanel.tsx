@@ -445,7 +445,7 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
           </Link>
         </div>
       </div>
-      <BottomNav unreadCount={0} />
+      <BottomNav />
     </div>
   );
 }
