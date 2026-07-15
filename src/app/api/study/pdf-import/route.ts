@@ -1,6 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
-import pdf from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +15,11 @@ export async function POST(request: NextRequest) {
   if (file.type !== "application/pdf") return NextResponse.json({ error: "PDFファイルを選択してください" }, { status: 400 });
 
   const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
 
   let pdfData;
   try {
-    pdfData = await pdf(buffer);
+    const parser = new PDFParse({ data: arrayBuffer });
+    pdfData = await parser.getText();
   } catch (e: any) {
     return NextResponse.json({ error: `PDFの読み取りに失敗しました: ${e.message}` }, { status: 500 });
   }
@@ -90,7 +90,7 @@ ${truncatedText}
 
     if (validCards.length === 0) return NextResponse.json({ error: "有効なカードを生成できませんでした" }, { status: 502 });
 
-    return NextResponse.json({ cards: validCards, pageCount: pdfData.numpages, extractedLength: extractedText.length });
+    return NextResponse.json({ cards: validCards, pageCount: pdfData.total, extractedLength: extractedText.length });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
