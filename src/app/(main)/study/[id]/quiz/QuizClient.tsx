@@ -12,7 +12,7 @@ type Answer = {
 export default function QuizClient({ deck, cards }: { deck: any; cards: any[] }) {
   const router = useRouter();
   const [started, setStarted] = useState(false);
-  const [questionCount, setQuestionCount] = useState(Math.min(cards.length, 10));
+  const [questionCount, setQuestionCount] = useState(cards.length);
   const [randomOrder, setRandomOrder] = useState(true);
   const [shuffledCards, setShuffledCards] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
