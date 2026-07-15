@@ -85,6 +85,7 @@ export interface CommentWithUser {
   post_id: string;
   user_id: string;
   text: string;
+  image_urls: string[] | null;
   created_at: string;
   user: Profile;
 }

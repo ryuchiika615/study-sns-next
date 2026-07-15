@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
 import StudyTimer from "@/components/StudyTimer";
-import { compressImage } from "@/lib/utils";
+import { compressImage, insertAtCursor, notifyMentions } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
 import ImageCropper from "@/components/ImageCropper";
 
@@ -38,6 +38,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [attachedImages, setAttachedImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
   const [subjectTemplates, setSubjectTemplates] = useState<{ id: string; name: string }[]>([]);
   const subjectRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const subjectOptions = [...subjectTemplates.map(t => t.name), ...textbooks.map(t => t.title)];
@@ -180,12 +181,15 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setAudioFile(null);
     setAttachedImages([]);
 
-    if (data?.post_id && !silentPost) {
-      fetch("/api/push/follow-post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ post_id: data.post_id }),
-      }).catch(() => {});
+    if (data?.post_id) {
+      notifyMentions(data.post_id, content);
+      if (!silentPost) {
+        fetch("/api/push/follow-post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: data.post_id }),
+        }).catch(() => {});
+      }
     }
 
     window.dispatchEvent(new CustomEvent("post-created"));
@@ -228,15 +232,22 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           </form>
 
           <form onSubmit={handleSubmit} encType="multipart/form-data">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value.slice(0, 300))}
-            placeholder="今日の学びを書こう"
-            required
-            maxLength={300}
-            className="w-full border-none outline-none text-lg resize-none h-20"
-          />
-          <p className="text-xs text-right mt-1 text-gray-400">{content.length}/300</p>
+          <div className="relative">
+            <textarea
+              ref={contentRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value.slice(0, 2000))}
+              placeholder="今日の学びを書こう"
+              required
+              maxLength={2000}
+              className="w-full border-none outline-none text-lg resize-none h-20 pr-7"
+            />
+            <button type="button" onClick={() => contentRef.current && insertAtCursor(contentRef.current, "@")}
+              className="absolute top-0 right-0 text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-sm p-1">
+              ＠
+            </button>
+          </div>
+          <p className="text-xs text-right mt-1 text-gray-400">{content.length}/2000</p>
           <div className="relative mt-2.5">
             <input
               ref={subjectRef}
@@ -328,12 +339,15 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           </div>
 
           <div className="mt-2.5">
-            <input type="file" accept="image/*" className="text-sm"
+            <input type="file" accept="image/*" multiple className="text-sm"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const url = URL.createObjectURL(file);
-                setAttachedImages(prev => [...prev, { blob: file, originalUrl: url }]);
+                const files = e.target.files;
+                if (!files) return;
+                const newImages = Array.from(files).map(file => ({
+                  blob: file,
+                  originalUrl: URL.createObjectURL(file),
+                }));
+                setAttachedImages(prev => [...prev, ...newImages]);
                 e.target.value = "";
               }} />
             {attachedImages.length > 0 && (

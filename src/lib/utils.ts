@@ -114,3 +114,36 @@ export function getOptimizedIconUrl(url: string | null | undefined, size = 96): 
   }
   return url;
 }
+
+function extractMentionNames(text: string): string[] {
+  const regex = /@([\p{L}\p{N}._-]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gu;
+  const matches = text.match(regex);
+  if (!matches) return [];
+  return [...new Set(matches.map(m => m.slice(1)))];
+}
+
+export function notifyMentions(postId: string, text: string): void {
+  const mentioned = extractMentionNames(text);
+  if (mentioned.length === 0) return;
+  fetch("/api/mentions/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ post_id: postId, mentioned_usernames: mentioned }),
+  }).catch(() => {});
+}
+
+export function insertAtCursor(
+  input: HTMLInputElement | HTMLTextAreaElement,
+  text: string
+): void {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  const before = input.value.slice(0, start);
+  const after = input.value.slice(end);
+  input.value = before + text + after;
+  const newPos = start + text.length;
+  input.selectionStart = newPos;
+  input.selectionEnd = newPos;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.focus();
+}

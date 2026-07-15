@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl } from "@/lib/utils";
+import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl, insertAtCursor, notifyMentions } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
 
 function highlightMentions(text: string) {
   const parts: (string | JSX.Element)[] = [];
   let last = 0;
-  const regex = /@[\p{L}\p{N}._-]+/gu;
+  const regex = /@(?:[\p{L}\p{N}._-]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gu;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
@@ -59,6 +59,11 @@ const PostCard = memo(function PostCard({
   const [quoteContent, setQuoteContent] = useState("");
   const [quoteSilent, setQuoteSilent] = useState(false);
   const [championUserId, setChampionUserId] = useState<string | null>(null);
+  const [quoteImages, setQuoteImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
+  const quoteContentRef = useRef<HTMLTextAreaElement>(null);
+  const [commentImages, setCommentImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
+  const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
+  const [commentLikesCount, setCommentLikesCount] = useState<Record<string, number>>({});
   const commentInputRef = useRef<HTMLInputElement>(null);
   const swipeStartY = useRef(0);
   const swipeDist = useRef(0);
@@ -124,6 +129,23 @@ const PostCard = memo(function PostCard({
       if (data) {
         setComments(data);
         setCommentsLoaded(true);
+        const commentIds = data.map((c: any) => c.id);
+        if (commentIds.length > 0) {
+          const { data: likesData } = await supabase
+            .from("comment_likes")
+            .select("comment_id, user_id")
+            .in("comment_id", commentIds);
+          if (likesData) {
+            const counts: Record<string, number> = {};
+            const myLikes: Record<string, boolean> = {};
+            for (const l of likesData) {
+              counts[l.comment_id] = (counts[l.comment_id] || 0) + 1;
+              if (l.user_id === currentUserId) myLikes[l.comment_id] = true;
+            }
+            setCommentLikesCount(counts);
+            setCommentLikes(myLikes);
+          }
+        }
       }
     }
     setShowComments(!showComments);
@@ -132,23 +154,31 @@ const PostCard = memo(function PostCard({
   const addComment = async () => {
     if (!commentText.trim()) return;
     const text = commentText.trim();
+
+    const imageUrls: string[] = [];
+    for (const img of commentImages) {
+      const fileName = `${currentUserId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("post-images")
+        .upload(fileName, img.blob);
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("post-images")
+          .getPublicUrl(fileName);
+        if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl);
+      }
+    }
+
     const { data, error } = await supabase
       .from("comments")
-      .insert({ post_id: post.id, user_id: currentUserId, text })
+      .insert({ post_id: post.id, user_id: currentUserId, text, image_urls: imageUrls.length > 0 ? imageUrls : null })
       .select("*, user:user_id(*)")
       .single();
     if (!error && data) {
       setComments([...comments, data]);
       setCommentText("");
-      const mentionMatches = text.match(/@([\w.-]+)/g);
-      if (mentionMatches) {
-        const mentionedUsernames = [...new Set(mentionMatches.map(m => m.slice(1)))];
-        fetch("/api/mentions/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ post_id: post.id, mentioned_usernames: mentionedUsernames }),
-        }).catch(() => {});
-      }
+      setCommentImages([]);
+      notifyMentions(post.id, text);
     }
   };
 
@@ -177,6 +207,29 @@ const PostCard = memo(function PostCard({
 
   const cancelEditComment = () => {
     setEditCommentId(null);
+  };
+
+  const handleCommentMentionClick = () => {
+    commentInputRef.current && insertAtCursor(commentInputRef.current, "@");
+  };
+
+  const toggleCommentLike = async (commentId: string) => {
+    const prevLiked = commentLikes[commentId];
+    const prevCount = commentLikesCount[commentId] || 0;
+    setCommentLikes(prev => ({ ...prev, [commentId]: !prevLiked }));
+    setCommentLikesCount(prev => ({ ...prev, [commentId]: prevCount + (prevLiked ? -1 : 1) }));
+    const { error } = prevLiked
+      ? await supabase.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", currentUserId)
+      : await supabase.from("comment_likes").insert({ comment_id: commentId, user_id: currentUserId });
+    if (error) {
+      setCommentLikes(prev => ({ ...prev, [commentId]: prevLiked }));
+      setCommentLikesCount(prev => ({ ...prev, [commentId]: prevCount }));
+    }
+  };
+
+  const handleCommentQuote = (c: any) => {
+    setShowQuoteForm(true);
+    setQuoteContent(`@${c.user?.username || c.user_id?.slice(0, 8)} `);
   };
 
   const handleDelete = async () => {
@@ -408,8 +461,46 @@ const PostCard = memo(function PostCard({
             {showQuoteForm && (
               <div className="mt-3 border border-primary/30 rounded-xl p-3 bg-primary/5">
                 <p className="text-xs font-bold text-gray-600 mb-2">引用してリュイート</p>
-                <textarea value={quoteContent} onChange={(e) => setQuoteContent(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 text-sm resize-none" rows={2} placeholder="コメントを入力（任意）" />
+                <div className="relative">
+                  <textarea ref={quoteContentRef} value={quoteContent} onChange={(e) => setQuoteContent(e.target.value.slice(0, 2000))}
+                    className="w-full rounded-lg border-gray-300 text-sm resize-none pr-6" rows={2} placeholder="コメントを入力（任意）" maxLength={2000} />
+                  <button type="button" onClick={() => quoteContentRef.current && insertAtCursor(quoteContentRef.current, "@")}
+                    className="absolute top-1 right-1 text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-xs p-0.5">
+                    ＠
+                  </button>
+                </div>
+                <p className="text-xs text-right text-gray-400 mt-1">{quoteContent.length}/2000</p>
+                <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer">
+                  <i className="fas fa-camera" />
+                  画像を追加
+                  <input type="file" accept="image/*" multiple className="hidden"
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (!files) return;
+                      const newImages = Array.from(files).map(file => ({
+                        blob: file,
+                        originalUrl: URL.createObjectURL(file),
+                      }));
+                      setQuoteImages(prev => [...prev, ...newImages]);
+                      e.target.value = "";
+                    }} />
+                </label>
+                {quoteImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {quoteImages.map((img, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                        <img src={img.originalUrl} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => {
+                          setQuoteImages(prev => prev.filter((_, j) => j !== i));
+                          URL.revokeObjectURL(img.originalUrl);
+                        }}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/50 hover:bg-red-600/80 rounded text-white text-[8px] flex items-center justify-center cursor-pointer border-none">
+                          <i className="fas fa-times" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer select-none">
                   <input type="checkbox" checked={quoteSilent} onChange={(e) => setQuoteSilent(e.target.checked)}
                     className="accent-gray-400 w-3.5 h-3.5" />
@@ -420,12 +511,27 @@ const PostCard = memo(function PostCard({
                     if (!quoteContent.trim()) return;
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) return;
+
+                    const imageUrls: string[] = [];
+                    for (const img of quoteImages) {
+                      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+                      const { error: uploadError } = await supabase.storage
+                        .from("post-images")
+                        .upload(fileName, img.blob);
+                      if (!uploadError) {
+                        const { data: urlData } = supabase.storage
+                          .from("post-images")
+                          .getPublicUrl(fileName);
+                        if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl);
+                      }
+                    }
+
                     const { data, error } = await supabase.rpc("create_post", {
                       p_content: quoteContent.trim(),
                       p_subject: "その他",
                       p_study_minutes: 0,
-                      p_image_url: null,
-                      p_image_urls: null,
+                      p_image_url: imageUrls[0] || null,
+                      p_image_urls: imageUrls.length > 0 ? imageUrls : null,
                       p_study_date: null,
                       p_quote_post_id: post.id,
                       p_silent: quoteSilent,
@@ -433,9 +539,11 @@ const PostCard = memo(function PostCard({
                       p_audio_name: null,
                     });
                     if (!error && data?.post_id) {
+                      notifyMentions(data.post_id, quoteContent);
                       setShowQuoteForm(false);
                       setQuoteContent("");
                       setQuoteSilent(false);
+                      setQuoteImages([]);
                       if (!quoteSilent) {
                         fetch("/api/push/follow-post", {
                           method: "POST",
@@ -449,7 +557,7 @@ const PostCard = memo(function PostCard({
                   }} className="bg-primary text-white rounded-full px-4 py-1 text-xs font-bold cursor-pointer">
                     引用リュイート
                   </button>
-                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); setQuoteSilent(false); }}
+                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); setQuoteSilent(false); setQuoteImages([]); }}
                     className="text-gray-500 text-xs bg-none border-none cursor-pointer">
                     キャンセル
                   </button>
@@ -547,9 +655,10 @@ const PostCard = memo(function PostCard({
                       <input
                         type="text"
                         value={editCommentText}
-                        onChange={(e) => setEditCommentText(e.target.value)}
+                        onChange={(e) => setEditCommentText(e.target.value.slice(0, 500))}
                         className="flex-1 border border-gray-300 rounded-lg p-1 text-sm"
                         autoFocus
+                        maxLength={500}
                       />
                       <button onClick={saveEditComment} className="bg-primary text-white rounded-full px-3 py-1 text-xs font-bold border-none cursor-pointer">
                         保存
@@ -559,7 +668,18 @@ const PostCard = memo(function PostCard({
                       </button>
                     </div>
                   ) : (
-                    <p className="mt-1 text-gray-900 whitespace-pre-wrap">{highlightMentions(c.text)}</p>
+                    <>
+                      <p className="mt-1 text-gray-900 whitespace-pre-wrap">{highlightMentions(c.text)}</p>
+                      {c.image_urls?.length > 0 && (
+                        <div className="mt-2 flex gap-2">
+                          {c.image_urls.map((url: string, i: number) => (
+                            <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                              <Image src={url} fill className="object-cover cursor-pointer" onClick={() => setViewingImage(url)} sizes="80px" alt="" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 {c.user_id === currentUserId && (
@@ -576,28 +696,78 @@ const PostCard = memo(function PostCard({
                 )}
               </div>
               {editCommentId !== c.id && (
-                <button onClick={() => handleReply(c.user?.username || c.user_id?.slice(0, 8))}
-                  className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs mt-1 pl-0">
-                  <i className="fas fa-reply mr-1" />返信
-                </button>
+                <div className="flex items-center gap-2 mt-1">
+                  <button onClick={() => handleReply(c.user?.username || c.user_id?.slice(0, 8))}
+                    className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs">
+                    <i className="fas fa-reply mr-1" />返信
+                  </button>
+                  <button onClick={() => toggleCommentLike(c.id)}
+                    className={`bg-none border-none cursor-pointer text-xs flex items-center gap-0.5 ${
+                      commentLikes[c.id] ? "text-red-500" : "text-gray-400 hover:text-red-500"
+                    }`}>
+                    <i className={`${commentLikes[c.id] ? "fas" : "far"} fa-heart`} />
+                    <span>{(commentLikesCount[c.id] || 0) > 0 ? commentLikesCount[c.id] : ""}</span>
+                  </button>
+                  <button onClick={() => handleCommentQuote(c)}
+                    className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs">
+                    <i className="fas fa-retweet mr-0.5" />引用
+                  </button>
+                </div>
               )}
             </div>
           ))}
           <div className="flex gap-2 mt-2">
-            <input
-              ref={commentInputRef}
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="返信をリュイート"
-              className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm bg-gray-100 focus:bg-white focus:border-primary outline-none"
-              onKeyDown={(e) => e.key === "Enter" && addComment()}
-            />
+            <div className="flex-1 flex items-center gap-1 bg-gray-100 rounded-full px-3 focus-within:bg-white focus-within:border focus-within:border-primary">
+              <input
+                ref={commentInputRef}
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
+                placeholder="返信をリュイート"
+                className="flex-1 bg-transparent border-none outline-none py-2 text-sm"
+                maxLength={500}
+                onKeyDown={(e) => e.key === "Enter" && addComment()}
+              />
+              <button type="button" onClick={handleCommentMentionClick}
+                className="text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-xs p-1">
+                ＠
+              </button>
+              <label className="text-gray-400 hover:text-primary cursor-pointer text-xs p-1">
+                <i className="fas fa-camera" />
+                <input type="file" accept="image/*" multiple className="hidden"
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (!files) return;
+                    const newImages = Array.from(files).map(file => ({
+                      blob: file,
+                      originalUrl: URL.createObjectURL(file),
+                    }));
+                    setCommentImages(prev => [...prev, ...newImages]);
+                    e.target.value = "";
+                  }} />
+              </label>
+            </div>
             <button onClick={addComment}
               className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer">
               返信
             </button>
           </div>
+          {commentImages.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {commentImages.map((img, i) => (
+                <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200">
+                  <img src={img.originalUrl} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => {
+                    setCommentImages(prev => prev.filter((_, j) => j !== i));
+                    URL.revokeObjectURL(img.originalUrl);
+                  }}
+                    className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/50 hover:bg-red-600/80 rounded text-white text-[8px] flex items-center justify-center cursor-pointer border-none">
+                    <i className="fas fa-times" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

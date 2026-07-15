@@ -15,12 +15,19 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data: users } = await admin
-    .from("profiles")
-    .select("id, username")
-    .in("username", mentioned_usernames);
 
-  if (!users) return NextResponse.json({ ok: true });
+  const usernames = mentioned_usernames.filter((u: string) => !u.includes("-"));
+  const ids = mentioned_usernames.filter((u: string) => u.includes("-"));
+
+  const { data: byUsername } = usernames.length > 0
+    ? await admin.from("profiles").select("id, username").in("username", usernames)
+    : { data: [] };
+  const { data: byId } = ids.length > 0
+    ? await admin.from("profiles").select("id, username").in("id", ids)
+    : { data: [] };
+
+  const users = [...(byUsername || []), ...(byId || [])];
+  if (users.length === 0) return NextResponse.json({ ok: true });
 
   for (const mentioned of users) {
     if (mentioned.id === user.id) continue;

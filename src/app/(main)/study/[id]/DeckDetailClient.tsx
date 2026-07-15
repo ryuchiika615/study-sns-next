@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 
 export default function DeckDetailClient({
   deck,
@@ -15,6 +17,7 @@ export default function DeckDetailClient({
 }) {
   const router = useRouter();
   const [cards, setCards] = useState(initialCards);
+  const supabase = createClient();
   const [showCreate, setShowCreate] = useState(false);
   const [cardType, setCardType] = useState<"basic" | "multiple_choice" | "sequence">("basic");
   const [front, setFront] = useState("");
@@ -27,6 +30,8 @@ export default function DeckDetailClient({
   const [creating, setCreating] = useState(false);
   const [flippedId, setFlippedId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(deck.is_public);
+  const [imageFile, setImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Edit card
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -37,6 +42,8 @@ export default function DeckDetailClient({
   const [editOptions, setEditOptions] = useState<string[]>(["", ""]);
   const [editCorrectAnswer, setEditCorrectAnswer] = useState(0);
   const [editCorrectMapping, setEditCorrectMapping] = useState<Record<string, number>>({});
+  const [editImageFile, setEditImageFile] = useState<{ blob: Blob; preview: string } | null>(null);
+  const editImageInputRef = useRef<HTMLInputElement>(null);
 
   // AI generate
   const [showAIGenerate, setShowAIGenerate] = useState(false);
@@ -49,6 +56,13 @@ export default function DeckDetailClient({
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
+
+  // PDF Import
+  const [showPDFImport, setShowPDFImport] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfProcessing, setPdfProcessing] = useState(false);
+  const [pdfCards, setPdfCards] = useState<any[]>([]);
+  const [pdfInfo, setPdfInfo] = useState<{ pageCount: number; extractedLength: number } | null>(null);
 
   // Explain
   const [explainingId, setExplainingId] = useState<string | null>(null);
@@ -91,6 +105,18 @@ export default function DeckDetailClient({
     if (res.ok) setIsPublic(newVal);
   };
 
+  const uploadCardImage = async (file: { blob: Blob; preview: string }, userId: string): Promise<string | null> => {
+    const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from("post-images")
+      .upload(fileName, file.blob);
+    if (uploadError) return null;
+    const { data: urlData } = supabase.storage
+      .from("post-images")
+      .getPublicUrl(fileName);
+    return urlData?.publicUrl || null;
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!front.trim()) return;
@@ -104,12 +130,20 @@ export default function DeckDetailClient({
     } else if (!back.trim()) return;
     setCreating(true);
     setError("");
+
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) imageUrl = await uploadCardImage(imageFile, user.id);
+    }
+
     const body: any = {
       deck_id: deck.id,
       front: front.trim(),
       back: back.trim(),
       tags: tags ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
       card_type: cardType,
+      image_url: imageUrl,
     };
     if (cardType === "multiple_choice") {
       body.options = options.filter((o: string) => o.trim());
@@ -135,6 +169,7 @@ export default function DeckDetailClient({
       setCorrectMapping({});
       setCardType("basic");
       setShowCreate(false);
+      if (imageFile) { URL.revokeObjectURL(imageFile.preview); setImageFile(null); }
     } else {
       const data = await res.json().catch(() => ({}));
       setError(data.error || "作成失敗");
@@ -165,7 +200,15 @@ export default function DeckDetailClient({
   const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editFront.trim() || !editBack.trim()) return;
+
+    let imageUrl: string | null = null;
+    if (editImageFile) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) imageUrl = await uploadCardImage(editImageFile, user.id);
+    }
+
     const body: any = { id: editingId, front: editFront.trim(), back: editBack.trim(), tags: editTags ? editTags.split(",").map((t: string) => t.trim()).filter(Boolean) : [] };
+    if (imageUrl) body.image_url = imageUrl;
     if (editCardType === "multiple_choice") {
       if (editOptions.filter((o) => o.trim()).length < 2) return;
       body.card_type = editCardType;
@@ -187,6 +230,7 @@ export default function DeckDetailClient({
       const data = await res.json();
       setCards((prev) => prev.map((c) => c.id === editingId ? data.card : c));
       setEditingId(null);
+      if (editImageFile) { URL.revokeObjectURL(editImageFile.preview); setEditImageFile(null); }
     }
   };
 
@@ -258,6 +302,50 @@ export default function DeckDetailClient({
     }
   };
 
+  const handlePDFImport = async () => {
+    if (!pdfFile) return;
+    setPdfProcessing(true);
+    setError("");
+    setPdfCards([]);
+    setPdfInfo(null);
+    const formData = new FormData();
+    formData.append("file", pdfFile);
+    const res = await fetch("/api/study/pdf-import", {
+      method: "POST",
+      body: formData,
+    });
+    setPdfProcessing(false);
+    if (res.ok) {
+      const data = await res.json();
+      setPdfCards(data.cards);
+      setPdfInfo({ pageCount: data.pageCount, extractedLength: data.extractedLength });
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "PDFインポート失敗");
+    }
+  };
+
+  const addPDFCards = async () => {
+    setCreating(true);
+    for (const card of pdfCards) {
+      await fetch("/api/study/cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deck_id: deck.id, front: card.front, back: card.back }),
+      });
+    }
+    const res = await fetch(`/api/study/cards?deck_id=${deck.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setCards(data.cards);
+    }
+    setPdfCards([]);
+    setPdfFile(null);
+    setPdfInfo(null);
+    setShowPDFImport(false);
+    setCreating(false);
+  };
+
   const handleExplain = async (card: any) => {
     setExplainingId(card.id);
     setExplanation("");
@@ -309,17 +397,21 @@ export default function DeckDetailClient({
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
 
         {/* Action buttons row */}
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button onClick={() => setShowCreate(!showCreate)}
-            className="flex-1 bg-primary text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-primary/90 transition">
+            className="bg-primary text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-primary/90 transition">
             + 手動追加
           </button>
           <button onClick={() => setShowAIGenerate(!showAIGenerate)}
-            className="flex-1 bg-purple-600 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-purple-700 transition">
+            className="bg-purple-600 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-purple-700 transition">
             <i className="fas fa-magic mr-1" /> AI生成
           </button>
+          <button onClick={() => setShowPDFImport(!showPDFImport)}
+            className="bg-red-500 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-red-600 transition">
+            <i className="fas fa-file-pdf mr-1" /> PDFインポート
+          </button>
           <button onClick={() => setShowImport(!showImport)}
-            className="flex-1 bg-gray-700 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-gray-800 transition">
+            className="bg-gray-700 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-gray-800 transition">
             <i className="fas fa-upload mr-1" /> インポート
           </button>
         </div>
@@ -542,6 +634,26 @@ export default function DeckDetailClient({
               <input value={tags} onChange={(e) => setTags(e.target.value)}
                 className="w-full rounded-lg border-gray-300 text-sm" placeholder="例: 数学, 代数" />
             </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
+              <input ref={imageInputRef} type="file" accept="image/*" className="text-sm"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (imageFile) URL.revokeObjectURL(imageFile.preview);
+                  setImageFile({ blob: file, preview: URL.createObjectURL(file) });
+                  e.target.value = "";
+                }} />
+              {imageFile && (
+                <div className="relative w-24 h-24 mt-2 rounded-lg overflow-hidden border border-gray-200">
+                  <img src={imageFile.preview} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => { URL.revokeObjectURL(imageFile.preview); setImageFile(null); if (imageInputRef.current) imageInputRef.current.value = ""; }}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
+                    <i className="fas fa-times" />
+                  </button>
+                </div>
+              )}
+            </div>
             <button type="submit" disabled={creating}
               className="w-full bg-primary text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
               {creating ? "作成中..." : "追加"}
@@ -599,6 +711,61 @@ export default function DeckDetailClient({
               className="w-full bg-gray-700 text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
               {importing ? "インポート中..." : "インポート"}
             </button>
+          </div>
+        )}
+
+        {/* PDF Import form */}
+        {showPDFImport && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <h3 className="font-bold text-sm"><i className="fas fa-file-pdf text-red-500 mr-1" /> PDFインポート</h3>
+            <p className="text-[10px] text-gray-400">
+              PDFファイルを選択すると、テキストを抽出してAIが自動的にフラッシュカードを生成します。
+            </p>
+            <div>
+              <input type="file" accept=".pdf,application/pdf" className="text-sm"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) { setPdfFile(file); setPdfCards([]); setPdfInfo(null); }
+                  e.target.value = "";
+                }} />
+              {pdfFile && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                  <i className="fas fa-file-pdf text-red-500" />
+                  <span>{pdfFile.name}</span>
+                  <span className="text-gray-400">({(pdfFile.size / 1024 / 1024).toFixed(1)}MB)</span>
+                  <button onClick={() => { setPdfFile(null); setPdfCards([]); setPdfInfo(null); }}
+                    className="text-gray-400 hover:text-red-500 cursor-pointer"><i className="fas fa-times" /></button>
+                </div>
+              )}
+            </div>
+            <button onClick={handlePDFImport} disabled={pdfProcessing || !pdfFile}
+              className="w-full bg-red-500 text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
+              {pdfProcessing ? (
+                <span><i className="fas fa-spinner fa-spin mr-1" /> テキスト抽出・カード生成中...</span>
+              ) : "PDFからカードを生成"}
+            </button>
+            {pdfInfo && (
+              <p className="text-[10px] text-gray-400">
+                {pdfInfo.pageCount}ページ / {pdfInfo.extractedLength.toLocaleString()}文字を抽出
+              </p>
+            )}
+            {pdfCards.length > 0 && (
+              <div className="space-y-2 mt-2">
+                <p className="text-xs text-gray-500">{pdfCards.length}枚のカードが生成されました</p>
+                <div className="max-h-60 overflow-y-auto space-y-1">
+                  {pdfCards.map((card: any, i: number) => (
+                    <div key={i} className="border border-gray-100 rounded-lg p-2">
+                      <p className="text-xs font-bold">Q: {card.front.length > 80 ? card.front.slice(0, 80) + "..." : card.front}</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">A: {card.back.length > 80 ? card.back.slice(0, 80) + "..." : card.back}</p>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={addPDFCards} disabled={creating}
+                  className="w-full bg-red-500 text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
+                  {creating ? "追加中..." : `${pdfCards.length}枚をデッキに追加`}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -717,6 +884,26 @@ export default function DeckDetailClient({
                   <input value={editTags} onChange={(e) => setEditTags(e.target.value)}
                     className="w-full rounded-lg border-gray-300 text-sm" />
                 </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">画像（任意）</label>
+                  <input ref={editImageInputRef} type="file" accept="image/*" className="text-sm"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (editImageFile) URL.revokeObjectURL(editImageFile.preview);
+                      setEditImageFile({ blob: file, preview: URL.createObjectURL(file) });
+                      e.target.value = "";
+                    }} />
+                  {(editImageFile || (cards.find((c: any) => c.id === editingId)?.image_url)) && (
+                    <div className="relative w-24 h-24 mt-2 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={editImageFile?.preview || (cards.find((c: any) => c.id === editingId)?.image_url)} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => { if (editImageFile) { URL.revokeObjectURL(editImageFile.preview); } setEditImageFile(null); if (editImageInputRef.current) editImageInputRef.current.value = ""; }}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-red-600/80 rounded text-white text-[10px] flex items-center justify-center cursor-pointer border-none">
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-primary text-white font-bold rounded-full py-2 text-sm cursor-pointer hover:bg-primary/90 transition">保存</button>
                   <button type="button" onClick={() => setEditingId(null)}
@@ -750,10 +937,20 @@ export default function DeckDetailClient({
                         <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-1.5 py-0.5 rounded">穴埋め</span>
                       )}
                       <p className="text-sm font-medium whitespace-pre-wrap">{card.front}</p>
+                      {card.image_url && !flippedId && (
+                        <div className="mt-2 relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
+                          <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 400px" />
+                        </div>
+                      )}
                     </div>
                     {flippedId === card.id && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{card.back}</p>
+                        {card.image_url && (
+                          <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                            <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                          </div>
+                        )}
                         {card.tags?.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {card.tags.map((tag: string, i: number) => (

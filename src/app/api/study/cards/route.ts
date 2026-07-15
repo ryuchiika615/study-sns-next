@@ -79,12 +79,13 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id, front, back, tags, card_type, options, correct_answer, correct_mapping } = await request.json();
+  const { id, front, back, image_url, tags, card_type, options, correct_answer, correct_mapping } = await request.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const updates: Record<string, any> = {};
   if (front !== undefined) updates.front = front.trim();
   if (back !== undefined) updates.back = back.trim();
+  if (image_url !== undefined) updates.image_url = image_url;
   if (tags !== undefined) updates.tags = tags;
   if (card_type !== undefined) {
     updates.card_type = card_type;
