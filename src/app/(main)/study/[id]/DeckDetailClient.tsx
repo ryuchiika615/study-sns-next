@@ -61,6 +61,7 @@ export default function DeckDetailClient({
   const [showPDFImport, setShowPDFImport] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfProcessing, setPdfProcessing] = useState(false);
+  const pdfAbortRef = useRef<AbortController | null>(null);
   const [pdfCards, setPdfCards] = useState<any[]>([]);
   const [pdfInfo, setPdfInfo] = useState<{ pageCount: number; extractedLength: number } | null>(null);
 
@@ -304,25 +305,41 @@ export default function DeckDetailClient({
 
   const handlePDFImport = async () => {
     if (!pdfFile) return;
+    pdfAbortRef.current = new AbortController();
     setPdfProcessing(true);
     setError("");
     setPdfCards([]);
     setPdfInfo(null);
     const formData = new FormData();
     formData.append("file", pdfFile);
-    const res = await fetch("/api/study/pdf-import", {
-      method: "POST",
-      body: formData,
-    });
-    setPdfProcessing(false);
-    if (res.ok) {
-      const data = await res.json();
-      setPdfCards(data.cards);
-      setPdfInfo({ pageCount: data.pageCount, extractedLength: data.extractedLength });
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || "PDFインポート失敗");
+    try {
+      const res = await fetch("/api/study/pdf-import", {
+        method: "POST",
+        body: formData,
+        signal: pdfAbortRef.current.signal,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPdfCards(data.cards);
+        setPdfInfo({ pageCount: data.pageCount, extractedLength: data.extractedLength });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "PDFインポート失敗");
+      }
+    } catch (e: any) {
+      if (e.name === "AbortError") {
+        setError("キャンセルしました");
+      } else {
+        setError(e.message || "エラーが発生しました");
+      }
+    } finally {
+      setPdfProcessing(false);
+      pdfAbortRef.current = null;
     }
+  };
+
+  const cancelPDFImport = () => {
+    pdfAbortRef.current?.abort();
   };
 
   const addPDFCards = async () => {
@@ -738,12 +755,23 @@ export default function DeckDetailClient({
                 </div>
               )}
             </div>
-            <button onClick={handlePDFImport} disabled={pdfProcessing || !pdfFile}
-              className="w-full bg-red-500 text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
-              {pdfProcessing ? (
-                <span><i className="fas fa-spinner fa-spin mr-1" /> テキスト抽出・カード生成中...</span>
-              ) : "PDFからカードを生成"}
-            </button>
+            {pdfProcessing ? (
+              <div className="flex gap-2">
+                <button disabled
+                  className="flex-1 bg-red-500 text-white font-bold rounded-full py-2 text-sm opacity-50 cursor-not-allowed">
+                  <span><i className="fas fa-spinner fa-spin mr-1" /> テキスト抽出・カード生成中...</span>
+                </button>
+                <button onClick={cancelPDFImport}
+                  className="bg-gray-200 text-gray-600 font-bold rounded-full px-4 py-2 text-sm hover:bg-gray-300 cursor-pointer">
+                  中止
+                </button>
+              </div>
+            ) : (
+              <button onClick={handlePDFImport} disabled={!pdfFile}
+                className="w-full bg-red-500 text-white font-bold rounded-full py-2 text-sm disabled:opacity-50 cursor-pointer">
+                PDFからカードを生成
+              </button>
+            )}
             {pdfInfo && (
               <p className="text-[10px] text-gray-400">
                 {pdfInfo.pageCount}ページ / {pdfInfo.extractedLength.toLocaleString()}文字を抽出
