@@ -33,7 +33,7 @@ export async function fetchPostById(
       *,
       user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
       likes_count:likes(count),
-      comments_count:comments(count)
+      comments_count:comments!post_id(count)
     `)
     .eq("id", postId)
     .maybeSingle();
@@ -90,7 +90,7 @@ export async function fetchAndEnrichPosts(
       *,
       user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
       likes_count:likes(count),
-      comments_count:comments(count)
+      comments_count:comments!post_id(count)
     `, { count: "estimated" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
