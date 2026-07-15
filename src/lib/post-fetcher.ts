@@ -105,11 +105,12 @@ export async function fetchAndEnrichPosts(
   const postIds = (posts || []).map((p: any) => p.id);
 
   const quotePostIds = (posts || []).map((p: any) => p.quote_post_id).filter(Boolean);
+  const quoteCommentIds = (posts || []).map((p: any) => p.quote_comment_id).filter(Boolean);
   const titleIds = [...new Set((posts || []).map((p: any) => p.user?.current_title_id).filter(Boolean))];
   const avatarIds = [...new Set((posts || []).map((p: any) => p.user?.current_avatar_id).filter(Boolean))];
   const allItemIds = [...new Set([...titleIds, ...avatarIds])];
 
-  const [likesResult, myReactionsResult, allReactionsResult, quotedPostsResult, itemsResult] = await Promise.all([
+  const [likesResult, myReactionsResult, allReactionsResult, quotedPostsResult, quotedCommentsResult, itemsResult] = await Promise.all([
     postIds.length > 0
       ? supabase.from("likes").select("post_id").in("post_id", postIds).eq("user_id", currentUserId)
       : { data: [] },
@@ -121,6 +122,9 @@ export async function fetchAndEnrichPosts(
       : { data: [] },
     quotePostIds.length > 0
       ? supabase.from("posts").select("id, content, user_id, user:user_id(id, display_name, username, icon_url)").in("id", quotePostIds)
+      : { data: [] },
+    quoteCommentIds.length > 0
+      ? supabase.from("comments").select("id, text, user_id, user:user_id(id, display_name, username, icon_url)").in("id", quoteCommentIds)
       : { data: [] },
     allItemIds.length > 0
       ? supabase.from("gacha_items").select("*").in("id", allItemIds)
@@ -148,11 +152,13 @@ export async function fetchAndEnrichPosts(
   }
 
   const quotedPostMap = new Map((quotedPostsResult.data || []).map((qp: any) => [qp.id, qp]));
+  const quotedCommentMap = new Map((quotedCommentsResult.data || []).map((qc: any) => [qc.id, qc]));
   const itemMap = new Map((itemsResult.data || []).map((i: any) => [i.id, i]));
 
   const enriched = (posts || []).map((post: any) => {
     const postReactionGroups = reactionsByPost.get(post.id) || new Map();
     const quotedPost = post.quote_post_id ? quotedPostMap.get(post.quote_post_id) : null;
+    const quotedComment = post.quote_comment_id ? quotedCommentMap.get(post.quote_comment_id) : null;
     return {
       ...post,
       is_liked: likedPostIds.has(post.id),
@@ -166,6 +172,7 @@ export async function fetchAndEnrichPosts(
       current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,
       current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
       quoted_post: quotedPost || null,
+      quoted_comment: quotedComment || null,
     };
   });
 

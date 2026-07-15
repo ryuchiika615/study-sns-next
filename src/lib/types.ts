@@ -41,6 +41,7 @@ export interface PostWithDetails {
   audio_name: string | null;
   reply_to_id: string | null;
   quote_post_id: string | null;
+  quote_comment_id: string | null;
   created_at: string;
   updated_at: string | null;
   user: Profile;
@@ -57,6 +58,12 @@ export interface PostWithDetails {
   quoted_post: {
     id: string;
     content: string;
+    user_id: string;
+    user: { id: string; display_name: string | null; username: string | null; icon_url: string | null };
+  } | null;
+  quoted_comment: {
+    id: string;
+    text: string;
     user_id: string;
     user: { id: string; display_name: string | null; username: string | null; icon_url: string | null };
   } | null;

@@ -136,6 +136,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       p_image_urls: imageUrls.length > 0 ? imageUrls : null,
       p_study_date: studyDateVal,
       p_quote_post_id: null,
+      p_quote_comment_id: null,
       p_silent: silentPost,
       p_audio_url: audioUrl || null,
       p_audio_name: audioName || null,

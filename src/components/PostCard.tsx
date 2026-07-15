@@ -62,6 +62,7 @@ const PostCard = memo(function PostCard({
   const [championUserId, setChampionUserId] = useState<string | null>(null);
   const [quoteImages, setQuoteImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
   const quoteContentRef = useRef<HTMLTextAreaElement>(null);
+  const [quoteCommentId, setQuoteCommentId] = useState<string | null>(null);
   const [commentImages, setCommentImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
   const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
   const [commentLikesCount, setCommentLikesCount] = useState<Record<string, number>>({});
@@ -228,10 +229,11 @@ const PostCard = memo(function PostCard({
     }
   };
 
-  const handleCommentQuote = (c: any) => {
-    setShowQuoteForm(true);
-    setQuoteContent(`@${c.user?.username || c.user_id?.slice(0, 8)} `);
-  };
+const handleCommentQuote = (c: any) => {
+  setShowQuoteForm(true);
+  setQuoteCommentId(c.id);
+  setQuoteContent(`@${c.user?.username || c.user_id?.slice(0, 8)} `);
+};
 
   const handleDelete = async () => {
     const daysOld = (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60 * 24);
@@ -457,6 +459,24 @@ const PostCard = memo(function PostCard({
                 <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">{post.quoted_post.content}</p>
               </Link>
             )}
+            {/* Quoted comment embed */}
+            {post.quoted_comment && (
+              <div className="block mt-3 border border-gray-200 rounded-xl p-3 bg-blue-50/30 no-underline text-inherit">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                    {post.quoted_comment.user?.icon_url ? (
+                      <Image src={getOptimizedIconUrl(post.quoted_comment.user.icon_url, 60)} width={20} height={20} className="object-cover" alt="" />
+                    ) : (
+                      <i className="fas fa-user text-xs text-gray-400 flex items-center justify-center w-full h-full" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">{post.quoted_comment.user?.display_name || "ユーザー"}</span>
+                  <span className="text-xs text-gray-500">@{post.quoted_comment.user?.username}</span>
+                  <span className="text-[10px] text-gray-400 ml-auto">コメントから引用</span>
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">{post.quoted_comment.text}</p>
+              </div>
+            )}
 
             {/* Quote repost form */}
             {showQuoteForm && (
@@ -535,7 +555,8 @@ const PostCard = memo(function PostCard({
                       p_image_url: imageUrls[0] || null,
                       p_image_urls: imageUrls.length > 0 ? imageUrls : null,
                       p_study_date: null,
-                      p_quote_post_id: post.id,
+                      p_quote_post_id: quoteCommentId ? null : post.id,
+                      p_quote_comment_id: quoteCommentId,
                       p_silent: quoteSilent,
                       p_audio_url: null,
                       p_audio_name: null,
@@ -546,6 +567,7 @@ const PostCard = memo(function PostCard({
                       setQuoteContent("");
                       setQuoteSilent(false);
                       setQuoteImages([]);
+                      setQuoteCommentId(null);
                       if (!quoteSilent) {
                         fetch("/api/push/follow-post", {
                           method: "POST",
@@ -559,7 +581,7 @@ const PostCard = memo(function PostCard({
                   }} className="bg-primary text-white rounded-full px-4 py-1 text-xs font-bold cursor-pointer">
                     引用リュイート
                   </button>
-                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); setQuoteSilent(false); setQuoteImages([]); }}
+                  <button onClick={() => { setShowQuoteForm(false); setQuoteContent(""); setQuoteSilent(false); setQuoteImages([]); setQuoteCommentId(null); }}
                     className="text-gray-500 text-xs bg-none border-none cursor-pointer">
                     キャンセル
                   </button>
