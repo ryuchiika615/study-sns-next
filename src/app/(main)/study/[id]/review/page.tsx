@@ -34,5 +34,22 @@ export default async function ReviewPage({ params }: { params: { id: string } })
     );
   }
 
-  return <ReviewClient deck={deck} cards={cards} />;
+  // Fetch latest review rating for each card
+  const { data: reviews } = await supabase
+    .from("reviews")
+    .select("card_id, rating")
+    .in("card_id", cards.map(c => c.id))
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const ratingMap: Record<string, number> = {};
+  if (reviews) {
+    for (const r of reviews) {
+      if (!(r.card_id in ratingMap)) {
+        ratingMap[r.card_id] = r.rating;
+      }
+    }
+  }
+
+  return <ReviewClient deck={deck} cards={cards} ratingMap={ratingMap} />;
 }
