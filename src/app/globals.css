@@ -328,3 +328,19 @@ html.dark .pomodoro-timer {
 html.dark .pomodoro-label {
   color: #94a3b8 !important;
 }
+
+/* KaTeX: スマホで数式をスクロール可能に */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.25rem 0;
+}
+.katex-display > .katex {
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .katex .katex-html {
+    font-size: 0.85em;
+  }
+}
