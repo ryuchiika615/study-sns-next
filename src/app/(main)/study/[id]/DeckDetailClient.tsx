@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import LatexText from "@/components/LatexText";
 
 export default function DeckDetailClient({
   deck,
@@ -964,7 +965,7 @@ export default function DeckDetailClient({
                       {card.card_type === "sequence" && (
                         <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-1.5 py-0.5 rounded">穴埋め</span>
                       )}
-                      <p className="text-sm font-medium whitespace-pre-wrap">{card.front}</p>
+                      <LatexText text={card.front} className="text-sm font-medium" />
                       {card.image_url && !flippedId && (
                         <div className="mt-2 relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
                           <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 400px" />
@@ -973,7 +974,7 @@ export default function DeckDetailClient({
                     </div>
                     {flippedId === card.id && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{card.back}</p>
+                        <LatexText text={card.back} className="text-sm text-gray-700" />
                         {card.image_url && (
                           <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
                             <Image src={card.image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
