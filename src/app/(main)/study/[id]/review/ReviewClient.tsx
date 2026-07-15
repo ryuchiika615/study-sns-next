@@ -451,6 +451,11 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
               <div className="text-lg font-medium leading-relaxed whitespace-pre-wrap">
                 {renderSequenceQuestion()}
               </div>
+              {current.front_image_url && (
+                <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                  <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                </div>
+              )}
               {!seqSubmitted && seqOrder.length > 0 && (
                 <div className="text-center mt-2">
                   <button onClick={handleUndoSeq}
@@ -539,6 +544,11 @@ export default function ReviewClient({ deck, cards }: { deck: any; cards: any[] 
                   <div>
                     <p className="text-sm text-gray-400 mb-3">問題</p>
                     <p className={`text-xl font-medium whitespace-pre-wrap ${current.text_color || ""}`}>{current.front}</p>
+                    {current.front_image_url && (
+                      <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                        <Image src={current.front_image_url} fill className="object-contain" alt="" sizes="(max-width: 768px) 100vw, 600px" />
+                      </div>
+                    )}
                     <p className="text-xs text-gray-400 mt-6">タップで問題/答えを切り替え</p>
                   </div>
                 ) : (
