@@ -392,10 +392,10 @@ export default function DeckDetailClient({
             <div className="flex items-center gap-2">
               {cards.length > 0 && (
                 <>
-                  <button onClick={() => document.getElementById("card-list")?.scrollIntoView({ behavior: "smooth" })}
+                  <Link href={`/study/${deck.id}/review`}
                     className="bg-white border-2 border-primary text-primary text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/5 transition">
                     <i className="fas fa-book-open mr-1" /> 練習
-                  </button>
+                  </Link>
                   <Link href={`/study/${deck.id}/quiz`}
                     className="bg-primary text-white text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/90 transition">
                     <i className="fas fa-pen mr-1" /> テスト
