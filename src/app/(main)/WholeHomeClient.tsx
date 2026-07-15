@@ -30,7 +30,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [totalPages, setTotalPages] = useState(initialTotalPages || 1);
   const [totalMinutes, setTotalMinutes] = useState(initialTotal);
   const [showTargetAchievement, setShowTargetAchievement] = useState(false);
-  const initialFetchDone = useRef(!!initialPosts);
+  const initialFetchDone = useRef(initialPosts ? initialPosts.length > 0 : false);
   const seenNotifs = useRef<Set<string>>(new Set(
     JSON.parse(localStorage.getItem("seen_notifs") || "[]")
   ));

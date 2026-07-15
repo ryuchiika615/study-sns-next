@@ -27,7 +27,7 @@ export async function fetchPostById(
   postId: string,
   currentUserId: string
 ): Promise<PostWithDetails | null> {
-  const { data: post } = await supabase
+  const { data: post, error } = await supabase
     .from("posts")
     .select(`
       *,
@@ -36,9 +36,9 @@ export async function fetchPostById(
       comments_count:comments(count)
     `)
     .eq("id", postId)
-    .single();
+    .maybeSingle();
 
-  if (!post) return null;
+  if (error || !post) return null;
 
   const allItemIds: string[] = [];
   if (post.user?.current_title_id) allItemIds.push(post.user.current_title_id);
