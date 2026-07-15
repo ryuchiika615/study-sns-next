@@ -79,16 +79,23 @@ export default function StudyClient({
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {deck.card_count > 0 && (
-            <Link href={`/study/${deck.id}/review`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs bg-primary text-white rounded-full px-3 py-1.5 font-bold cursor-pointer hover:bg-primary/90 transition whitespace-nowrap">
-              学習
-            </Link>
+            <>
+              <Link href={`/study/${deck.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] bg-white border border-primary text-primary rounded-full px-2.5 py-1 font-bold cursor-pointer hover:bg-primary/5 transition whitespace-nowrap">
+                練習
+              </Link>
+              <Link href={`/study/${deck.id}/quiz`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] bg-primary text-white rounded-full px-2.5 py-1 font-bold cursor-pointer hover:bg-primary/90 transition whitespace-nowrap">
+                テスト
+              </Link>
+            </>
           )}
           <button onClick={(e) => handleDelete(deck.id, e)}
-            className="text-xs text-red-400 cursor-pointer hover:text-red-600">
+            className="text-xs text-red-400 cursor-pointer hover:text-red-600 ml-1">
             <i className="fas fa-trash" />
           </button>
         </div>
