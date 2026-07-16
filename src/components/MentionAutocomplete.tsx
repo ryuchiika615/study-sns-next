@@ -17,6 +17,8 @@ export default function MentionAutocomplete({ textareaRef, content, onChange }: 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [cursorPos, setCursorPos] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const cursorPosRef = useRef(0);
+  const queryRef = useRef("");
   const supabase = createClient();
 
   const loadFollowedUsers = useCallback(async (q: string) => {
@@ -53,7 +55,9 @@ export default function MentionAutocomplete({ textareaRef, content, onChange }: 
       if (match && match.index !== undefined) {
         const q = match[1];
         setQuery(q);
+        queryRef.current = q;
         setCursorPos(match.index);
+        cursorPosRef.current = match.index;
         setOpen(true);
         loadFollowedUsers(q);
       } else {
@@ -74,14 +78,15 @@ export default function MentionAutocomplete({ textareaRef, content, onChange }: 
   const insertMention = (username: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    const before = content.slice(0, cursorPos);
-    const after = content.slice(textarea.selectionStart);
-    const newVal = before + `@${username} ` + after;
+    const cp = cursorPosRef.current;
+    const ql = queryRef.current.length;
+    const after = content.slice(cp + 1 + ql);
+    const newVal = content.slice(0, cp) + `@${username} ` + after;
     onChange(newVal);
     setOpen(false);
-    const newPos = cursorPos + username.length + 2;
+    const newPos = cp + username.length + 2;
+    textarea.focus();
     requestAnimationFrame(() => {
-      textarea.focus();
       textarea.setSelectionRange(newPos, newPos);
     });
   };
@@ -106,13 +111,13 @@ export default function MentionAutocomplete({ textareaRef, content, onChange }: 
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
+    const handler = (e: PointerEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
   }, [open]);
 
   if (!open || users.length === 0) return null;
@@ -122,7 +127,7 @@ export default function MentionAutocomplete({ textareaRef, content, onChange }: 
       className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
       {users.map((u, i) => (
         <button key={u.username} type="button"
-          onMouseDown={(e) => { e.preventDefault(); insertMention(u.username); }}
+          onPointerDown={(e) => { e.preventDefault(); insertMention(u.username); }}
           onMouseEnter={() => setSelectedIndex(i)}
           className={`w-full flex items-center gap-2 px-3 py-2 text-sm border-none cursor-pointer transition ${
             i === selectedIndex ? "bg-primary/10 text-primary" : "bg-white text-gray-700 hover:bg-gray-50"
