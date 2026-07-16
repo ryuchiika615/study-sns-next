@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import Image from "next/image";
 
 interface MentionAutocompleteProps {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
   content: string;
   onChange: (val: string) => void;
 }
@@ -50,6 +50,7 @@ export default function MentionAutocomplete({ textareaRef, content, onChange }: 
 
     const handler = () => {
       const pos = textarea.selectionStart;
+      if (pos === null) return;
       const before = content.slice(0, pos);
       const match = before.match(/@([\p{L}\p{N}._-]*)$/u);
       if (match && match.index !== undefined) {

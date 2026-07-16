@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl, insertAtCursor, notifyMentions } from "@/lib/utils";
+import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl, notifyMentions } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
 import MentionAutocomplete from "./MentionAutocomplete";
 
@@ -209,10 +209,6 @@ const PostCard = memo(function PostCard({
 
   const cancelEditComment = () => {
     setEditCommentId(null);
-  };
-
-  const handleCommentMentionClick = () => {
-    commentInputRef.current && insertAtCursor(commentInputRef.current, "@");
   };
 
   const toggleCommentLike = async (commentId: string) => {
@@ -486,10 +482,6 @@ const handleCommentQuote = (c: any) => {
                   <textarea ref={quoteContentRef} value={quoteContent} onChange={(e) => setQuoteContent(e.target.value.slice(0, 2000))}
                     className="w-full rounded-lg border-gray-300 text-sm resize-none pr-6" rows={2} placeholder="コメントを入力（任意）" maxLength={2000} />
                   <MentionAutocomplete textareaRef={quoteContentRef} content={quoteContent} onChange={(v) => setQuoteContent(v)} />
-                  <button type="button" onClick={() => quoteContentRef.current && insertAtCursor(quoteContentRef.current, "@")}
-                    className="absolute top-1 right-1 text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-xs p-0.5">
-                    ＠
-                  </button>
                 </div>
                 <p className="text-xs text-right text-gray-400 mt-1">{quoteContent.length}/2000</p>
                 <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer">
@@ -742,20 +734,19 @@ const handleCommentQuote = (c: any) => {
           ))}
           <div className="flex gap-2 mt-2">
             <div className="flex-1 flex items-center gap-1 bg-gray-100 rounded-full px-3 focus-within:bg-white focus-within:border focus-within:border-primary">
-              <input
-                ref={commentInputRef}
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
-                placeholder="返信をリュイート"
-                className="flex-1 bg-transparent border-none outline-none py-2 text-sm"
-                maxLength={500}
-                onKeyDown={(e) => e.key === "Enter" && addComment()}
-              />
-              <button type="button" onClick={handleCommentMentionClick}
-                className="text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-xs p-1">
-                ＠
-              </button>
+              <div className="relative flex-1">
+                <input
+                  ref={commentInputRef}
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
+                  placeholder="返信をリュイート"
+                  className="w-full bg-transparent border-none outline-none py-2 text-sm"
+                  maxLength={500}
+                  onKeyDown={(e) => e.key === "Enter" && addComment()}
+                />
+                <MentionAutocomplete textareaRef={commentInputRef} content={commentText} onChange={(v) => setCommentText(v)} />
+              </div>
               <label className="text-gray-400 hover:text-primary cursor-pointer text-xs p-1">
                 <i className="fas fa-camera" />
                 <input type="file" accept="image/*" multiple className="hidden"

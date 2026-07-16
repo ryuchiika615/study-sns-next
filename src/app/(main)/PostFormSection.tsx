@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
 import StudyTimer from "@/components/StudyTimer";
-import { compressImage, insertAtCursor, notifyMentions } from "@/lib/utils";
+import { compressImage, notifyMentions } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
 import ImageCropper from "@/components/ImageCropper";
 import MentionAutocomplete from "@/components/MentionAutocomplete";
@@ -247,10 +247,6 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               className="w-full border-none outline-none text-lg resize-none h-20 pr-7"
             />
             <MentionAutocomplete textareaRef={contentRef} content={content} onChange={(v) => setContent(v)} />
-            <button type="button" onClick={() => contentRef.current && insertAtCursor(contentRef.current, "@")}
-              className="absolute top-0 right-0 text-gray-400 hover:text-primary bg-none border-none cursor-pointer text-sm p-1">
-              ＠
-            </button>
           </div>
           <p className="text-xs text-right mt-1 text-gray-400">{content.length}/2000</p>
           <div className="relative mt-2.5">
