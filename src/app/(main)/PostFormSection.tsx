@@ -232,7 +232,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               </button>
             </div>
           </div>
-          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} onToggleWorkout={() => setWorkoutMode(v => !v)} />
+          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} />
         </div>
         <StudyPomodoro />
       </div>
