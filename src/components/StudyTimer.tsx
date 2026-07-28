@@ -72,7 +72,7 @@ function getPausedElapsed(): number {
   return v ? parseInt(v, 10) : 0;
 }
 
-export default function StudyTimer({ onStop, workoutMode = false }: { onStop: (minutes: number) => void; workoutMode?: boolean }) {
+export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkout }: { onStop: (minutes: number) => void; workoutMode?: boolean; onToggleWorkout?: () => void }) {
   const [status, setStatus] = useState<"idle" | "running" | "paused">("idle");
   const [display, setDisplay] = useState(0);
   const startTimeRef = useRef<number | null>(null);
@@ -590,7 +590,23 @@ export default function StudyTimer({ onStop, workoutMode = false }: { onStop: (m
             </button>
           </>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1.5">
+          {onToggleWorkout && (
+            <div className="inline-flex bg-white/30 rounded-full p-0.5">
+              <button type="button" onClick={() => { if (workoutMode) onToggleWorkout(); }}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer border-none ${
+                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-white/70 bg-transparent"
+                }`}>
+                勉強
+              </button>
+              <button type="button" onClick={() => { if (!workoutMode) onToggleWorkout(); }}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer border-none ${
+                  workoutMode ? "bg-white text-pink-600 shadow-sm" : "text-white/70 bg-transparent"
+                }`}>
+                筋トレ
+              </button>
+            </div>
+          )}
           <BgmToggle className="w-9 h-9 rounded-full bg-primary text-white shadow flex items-center justify-center cursor-pointer hover:bg-primary/80 border-none text-sm" iconOnly />
         </div>
       </div>

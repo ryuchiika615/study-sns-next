@@ -216,23 +216,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     <>
       <div className="mx-4 mb-3 space-y-3">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between px-4 pt-3 pb-1">
-            <div className="inline-flex bg-gray-100 rounded-full p-0.5">
-              <button type="button" onClick={() => setWorkoutMode(false)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border-none ${
-                  !workoutMode ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 bg-transparent"
-                }`}>
-                勉強
-              </button>
-              <button type="button" onClick={() => setWorkoutMode(true)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border-none ${
-                  workoutMode ? "bg-pink-500 text-white shadow-sm" : "text-gray-500 bg-transparent"
-                }`}>
-                筋トレ
-              </button>
-            </div>
-          </div>
-          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} />
+          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} onToggleWorkout={() => setWorkoutMode(v => !v)} />
         </div>
         <StudyPomodoro />
       </div>
