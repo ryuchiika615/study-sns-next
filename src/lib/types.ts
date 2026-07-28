@@ -36,6 +36,7 @@ export interface PostWithDetails {
   image_urls: string[] | null;
   subject: string;
   study_minutes: number;
+  workout_minutes: number;
   study_date: string | null;
   audio_url: string | null;
   audio_name: string | null;
@@ -53,6 +54,7 @@ export interface PostWithDetails {
   reactions_count: { reaction: string; count: number; users: { id: string; icon_url: string | null; display_name: string }[] }[];
   my_reaction: string | null;
   display_study_time: string;
+  display_workout_time: string;
   subject_color: string;
   formatted_time: string;
   quoted_post: {

@@ -399,6 +399,11 @@ const handleCommentQuote = (c: any) => {
                   <i className="fas fa-book-open" /> {post.display_study_time}
                 </span>
               )}
+              {post.workout_minutes > 0 && (
+                <span className="text-pink-500 font-bold text-sm">
+                  <i className="fas fa-dumbbell" /> {post.display_workout_time}
+                </span>
+              )}
             </div>
 
             {((post.image_urls?.length ?? 0) > 0 || post.image_url) && (
