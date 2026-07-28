@@ -555,7 +555,7 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
   return (
     <div className="flex flex-col gap-2">
       <div className={`flex items-center gap-3 rounded-lg p-3 border ${
-        workoutMode ? "bg-pink-50 border-pink-200" : "bg-gray-50 border-gray-200"
+        workoutMode ? "bg-pink-900 border-pink-700" : "bg-gray-50 border-gray-200"
       }`}>
         <span className={`text-2xl font-mono font-bold tabular-nums ${
           workoutMode ? "text-pink-600" : ""
@@ -592,16 +592,16 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
         )}
         <div className="ml-auto flex items-center gap-1.5">
           {onToggleWorkout && (
-            <div className="inline-flex bg-white/30 rounded-full p-0.5">
+            <div className={`inline-flex rounded-full p-0.5 ${workoutMode ? "bg-pink-900/50" : "bg-white/30"}`}>
               <button type="button" onClick={() => { if (workoutMode) onToggleWorkout(); }}
                 className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer border-none ${
-                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-white/70 bg-transparent"
+                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-white/60 bg-transparent"
                 }`}>
                 勉強
               </button>
               <button type="button" onClick={() => { if (!workoutMode) onToggleWorkout(); }}
                 className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer border-none ${
-                  workoutMode ? "bg-white text-pink-600 shadow-sm" : "text-white/70 bg-transparent"
+                  workoutMode ? "bg-white text-pink-600 shadow-sm" : "text-white/60 bg-transparent"
                 }`}>
                 筋トレ
               </button>
