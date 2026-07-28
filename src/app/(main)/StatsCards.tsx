@@ -18,7 +18,6 @@ export default function StatsCards({ profile, totalMinutes, goalMinutes, totalWo
     : false;
 
   const displayMinutes = showWorkout ? totalWorkoutMinutes : totalMinutes;
-  const hasWorkout = totalWorkoutMinutes > 0;
 
   return (
     <div className="mx-4 mb-3 space-y-3">
@@ -26,32 +25,30 @@ export default function StatsCards({ profile, totalMinutes, goalMinutes, totalWo
         <div>
           <div className={`p-4 rounded-xl text-white text-center shadow-sm border ${
             showWorkout
-              ? "bg-gradient-to-r from-orange-900 to-orange-700 border-orange-400"
+              ? "bg-gradient-to-r from-pink-900 to-pink-700 border-pink-400"
               : "bg-gradient-to-r from-blue-900 to-blue-700 border-blue-400"
           }`}>
-            <p className={`text-sm ${showWorkout ? "text-orange-200" : "text-blue-200"}`}>
+            <p className={`text-sm ${showWorkout ? "text-pink-200" : "text-blue-200"}`}>
               {showWorkout ? "総筋トレ時間" : "総勉強時間"}
             </p>
             <p className="text-2xl font-bold">{formatRemaining(displayMinutes)}</p>
           </div>
-          {hasWorkout && (
-            <div className="flex justify-center mt-1.5">
-              <div className="inline-flex bg-gray-100 rounded-full p-0.5">
-                <button onClick={() => setShowWorkout(false)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer border-none ${
-                    !showWorkout ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 bg-transparent"
-                  }`}>
-                  勉強
-                </button>
-                <button onClick={() => setShowWorkout(true)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer border-none ${
-                    showWorkout ? "bg-white text-orange-700 shadow-sm" : "text-gray-500 bg-transparent"
-                  }`}>
-                  筋トレ
-                </button>
-              </div>
+          <div className="flex justify-center mt-1.5">
+            <div className="inline-flex bg-gray-100 rounded-full p-0.5">
+              <button onClick={() => setShowWorkout(false)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer border-none ${
+                  !showWorkout ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                勉強
+              </button>
+              <button onClick={() => setShowWorkout(true)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer border-none ${
+                  showWorkout ? "bg-white text-pink-600 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                筋トレ
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
       {profile?.target_date && profile?.target_minutes > 0 && !isTargetExpired && (
