@@ -57,10 +57,11 @@ export default async function UserProfilePage({ params }: { params: { username: 
   if (error || !profile) notFound();
 
   const yearStart = `${new Date().getFullYear()}-01-01`;
-  const [followersResult, followingResult, postCountResult, statsResult, calendarResult] = await Promise.all([
+  const [followersResult, followingResult, postCountResult, likesCountResult, statsResult, calendarResult] = await Promise.all([
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
+    supabase.from("likes").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
     supabase.from("posts").select("study_minutes, subject, created_at").eq("user_id", profile.id).gt("study_minutes", 0).gte("created_at", yearStart),
     supabase.from("posts").select("created_at, study_minutes").eq("user_id", profile.id).gte("created_at", yearStart).gt("study_minutes", 0),
   ]);
@@ -101,6 +102,7 @@ export default async function UserProfilePage({ params }: { params: { username: 
       followersCount={followersResult.count || 0}
       followingCount={followingResult.count || 0}
       postCount={postCountResult.count || 0}
+      likesCount={likesCountResult.count || 0}
       totalStudyDisplay={fmtStudyTime(totalMinutes)}
       monthStudyDisplay={fmtStudyTime(monthMinutes)}
       totalStudyMinutes={totalMinutes}

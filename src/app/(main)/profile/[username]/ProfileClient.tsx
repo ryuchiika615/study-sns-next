@@ -22,6 +22,7 @@ type ProfileClientProps = {
   followersCount: number;
   followingCount: number;
   postCount: number;
+  likesCount: number;
   totalStudyDisplay: string;
   monthStudyDisplay: string;
   totalStudyMinutes: number;
@@ -31,7 +32,7 @@ type ProfileClientProps = {
 export default function ProfileClient({
   user, profile, consecutivePostDays,
   subjectLabels, subjectData, subjectColors,
-  followersCount, followingCount, postCount,
+  followersCount, followingCount, postCount, likesCount,
   totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
   calendarData,
 }: ProfileClientProps) {
@@ -65,10 +66,11 @@ export default function ProfileClient({
   const [postError, setPostError] = useState("");
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
-  const [likedIds, setLikedIds] = useState<string[]>([]);
   const [likedPage, setLikedPage] = useState(1);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState("");
+  const [hasMoreLiked, setHasMoreLiked] = useState(false);
+  const [totalLiked, setTotalLiked] = useState(0);
 
   useEffect(() => {
     if (profile?.icon_url) {
@@ -156,21 +158,16 @@ export default function ProfileClient({
   const loadLikedIds = async () => {
     setLikedLoading(true);
     setLikedError("");
-    const { data, error } = await supabase
-      .from("likes")
-      .select("post_id")
-      .eq("user_id", profile.id);
-    if (error) {
-      setLikedError(error.message);
-      setLikedLoading(false);
-      return;
-    }
-    const ids = (data || []).map((l: any) => l.post_id);
-    setLikedIds(ids);
-    setLikedPage(1);
-    setLikedPosts([]);
-    if (ids.length > 0) {
-      await loadLikedPosts(ids, 1);
+    try {
+      const res = await fetch(`/api/posts/liked?userId=${profile.id}&currentUserId=${user.id}&page=1`);
+      if (!res.ok) { setLikedError("読み込み失敗"); setLikedLoading(false); return; }
+      const data = await res.json();
+      setLikedPosts(data.posts || []);
+      setLikedPage(1);
+      setTotalLiked(data.totalLiked || 0);
+      setHasMoreLiked((data.posts || []).length >= 10 && (data.totalLiked || 0) > 10);
+    } catch (e: any) {
+      setLikedError(e.message || "ネットワークエラー");
     }
     setLikedLoading(false);
   };
@@ -194,11 +191,22 @@ export default function ProfileClient({
 
   const loadMoreLiked = async () => {
     const next = likedPage + 1;
-    setLikedPage(next);
-    await loadLikedPosts(likedIds, next);
+    setLikedLoading(true);
+    try {
+      const res = await fetch(`/api/posts/liked?userId=${profile.id}&currentUserId=${user.id}&page=${next}`);
+      if (!res.ok) { setLikedLoading(false); return; }
+      const data = await res.json();
+      const newPosts = data.posts || [];
+      setLikedPosts((prev) => [...prev, ...newPosts]);
+      setLikedPage(next);
+      if (newPosts.length < 10 || likedPosts.length + newPosts.length >= totalLiked) {
+        setHasMoreLiked(false);
+      }
+    } catch (e: any) {
+      setLikedError(e.message || "ネットワークエラー");
+    }
+    setLikedLoading(false);
   };
-
-  const hasMoreLiked = likedPosts.length < likedIds.length;
 
   return (
     <div className="mx-auto my-4 max-w-xl space-y-3 px-4">
@@ -296,7 +304,7 @@ export default function ProfileClient({
                     className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-50 transition cursor-pointer">
                     <i className="far fa-heart text-red-500 w-5 text-center text-sm" />
                     <span className="text-sm font-bold">いいねを見る</span>
-                    <i className="fas fa-chevron-right text-xs text-gray-300 ml-auto" />
+                    <span className="text-xs text-gray-400 ml-auto">{likesCount}件</span>
                   </button>
                 </div>
               )}
@@ -342,11 +350,11 @@ export default function ProfileClient({
           {section === "likes" && (
             <div className="px-4 pb-4 border-t border-gray-100">
               <div className="flex items-center justify-between mb-2 pt-3">
-                <button onClick={() => { setSection(null); setLikedPosts([]); setLikedIds([]); }}
+                <button onClick={() => { setSection(null); setLikedPosts([]); setLikedPage(1); setTotalLiked(0); setHasMoreLiked(false); }}
                   className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
                   <i className="fas fa-arrow-left" /> 戻る
                 </button>
-                <span className="text-xs font-bold">いいね</span>
+                <span className="text-xs font-bold">いいね {totalLiked > 0 && `(${totalLiked}件)`}</span>
                 <div className="w-8" />
               </div>
               {likedError && <div className="bg-red-50 text-red-600 p-2 rounded-lg text-xs mb-2">{likedError}</div>}
