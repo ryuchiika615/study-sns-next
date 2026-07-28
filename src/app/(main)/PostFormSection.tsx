@@ -232,7 +232,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               </button>
             </div>
           </div>
-          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} onToggleWorkout={() => setWorkoutMode(v => !v)} />
+          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} />
         </div>
         <StudyPomodoro />
       </div>
@@ -267,7 +267,23 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             />
             <MentionAutocomplete textareaRef={contentRef} content={content} onChange={(v) => setContent(v)} />
           </div>
-          <p className="text-xs text-right mt-1 text-gray-400">{content.length}/2000</p>
+          <div className="flex items-center justify-between mt-1">
+            <div className="inline-flex bg-gray-100 rounded-full p-0.5">
+              <button type="button" onClick={() => setWorkoutMode(false)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer border-none ${
+                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                勉強
+              </button>
+              <button type="button" onClick={() => setWorkoutMode(true)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer border-none ${
+                  workoutMode ? "bg-white text-pink-600 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                筋トレ
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">{content.length}/2000</p>
+          </div>
           <div className="relative mt-2.5">
             <input
               ref={subjectRef}
