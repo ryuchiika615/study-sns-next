@@ -27,20 +27,23 @@ export default function AnalyticsPage() {
   const [user, setUser] = useState<any>(null);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
+  const [workoutMode, setWorkoutMode] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  const fetchData = useCallback(async (s?: string, e?: string) => {
+  const fetchData = useCallback(async (s?: string, e?: string, isWorkout?: boolean) => {
     const uid = user?.id;
     if (!uid) return;
     const startStr = s || getDateNDaysAgo(29);
     const endStr = e || getTodayString();
+    const useWorkout = isWorkout ?? workoutMode;
+    const timeField = useWorkout ? "workout_minutes" : "study_minutes";
 
     const { data: posts } = await supabase
       .from("posts")
       .select("*")
       .eq("user_id", uid)
-      .gt("study_minutes", 0)
+      .gt(timeField, 0)
       .gte("created_at", startStr)
       .lte("created_at", endStr + "T23:59:59Z")
       .order("created_at", { ascending: true });
@@ -53,13 +56,13 @@ export default function AnalyticsPage() {
 
     posts.forEach((post: any) => {
       const sub = subjectMap.get(post.subject) || { total: 0, count: 0 };
-      sub.total += post.study_minutes || 0;
+      sub.total += post[timeField] || 0;
       sub.count += 1;
       subjectMap.set(post.subject, sub);
 
       const day = post.created_at.split("T")[0];
-      dayMap.set(day, (dayMap.get(day) || 0) + (post.study_minutes || 0));
-      totalMinutes += post.study_minutes || 0;
+      dayMap.set(day, (dayMap.get(day) || 0) + (post[timeField] || 0));
+      totalMinutes += post[timeField] || 0;
     });
 
     const subjectRows = Array.from(subjectMap.entries())
@@ -103,13 +106,13 @@ export default function AnalyticsPage() {
         if (!weeklySubjects.has(post.subject)) {
           weeklySubjects.set(post.subject, new Array(7).fill(0));
         }
-        weeklySubjects.get(post.subject)![idx] += post.study_minutes || 0;
+        weeklySubjects.get(post.subject)![idx] += post[timeField] || 0;
       }
     });
 
     let weeklyDatasets: { label: string; data: number[]; backgroundColor: string }[];
     if (weeklySubjects.size === 0) {
-      weeklyDatasets = [{ label: "勉強時間", data: new Array(7).fill(0), backgroundColor: "#1877f2" }];
+      weeklyDatasets = [{ label: useWorkout ? "筋トレ時間" : "勉強時間", data: new Array(7).fill(0), backgroundColor: useWorkout ? "#ec4899" : "#1877f2" }];
     } else {
       weeklyDatasets = Array.from(weeklySubjects.entries()).map(([subject, data]) => ({
         label: subject,
@@ -133,7 +136,7 @@ export default function AnalyticsPage() {
     });
     setStart(startStr);
     setEnd(endStr);
-  }, [user?.id]);
+  }, [user?.id, workoutMode]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: authData }) => {
@@ -145,20 +148,40 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (user) fetchData();
-  }, [user]);
+  }, [user, workoutMode]);
 
   const handleDateSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchData(start, end);
+    fetchData(start, end, workoutMode);
   };
 
   if (!data) return <div className="p-4 text-center text-gray-500 py-12">読み込み中...</div>;
 
   return (
     <div className="mx-4 my-4 space-y-3">
+        {/* 勉強/筋トレトグル */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">
+          <button onClick={() => setWorkoutMode(false)}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
+              !workoutMode ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}>
+            勉強
+          </button>
+          <button onClick={() => setWorkoutMode(true)}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
+              workoutMode ? "bg-pink-500 text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}>
+            筋トレ
+          </button>
+        </div>
+
         {/* 合計時間 */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-xl shadow-sm p-5 text-center text-white">
-          <p className="text-sm text-blue-200">期間合計</p>
+        <div className={`rounded-xl shadow-sm p-5 text-center text-white ${
+          workoutMode
+            ? "bg-gradient-to-r from-pink-900 to-pink-700"
+            : "bg-gradient-to-r from-blue-900 to-blue-700"
+        }`}>
+          <p className={`text-sm ${workoutMode ? "text-pink-200" : "text-blue-200"}`}>期間合計</p>
           <p className="text-3xl font-bold mt-1">{data.total_all_time_display}</p>
         </div>
 
@@ -200,7 +223,7 @@ export default function AnalyticsPage() {
 
         {/* 日別勉強時間 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="font-bold text-sm text-gray-500 mb-4"><i className="fas fa-chart-bar mr-1.5" />日別勉強時間</h3>
+          <h3 className="font-bold text-sm text-gray-500 mb-4"><i className="fas fa-chart-bar mr-1.5" />日別{workoutMode ? "筋トレ" : "勉強"}時間</h3>
           <BarChart labels={data.bar_labels} data={data.bar_data} />
         </div>
 

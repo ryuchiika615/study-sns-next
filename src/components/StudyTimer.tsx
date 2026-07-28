@@ -72,7 +72,7 @@ function getPausedElapsed(): number {
   return v ? parseInt(v, 10) : 0;
 }
 
-export default function StudyTimer({ onStop }: { onStop: (minutes: number) => void }) {
+export default function StudyTimer({ onStop, workoutMode = false }: { onStop: (minutes: number) => void; workoutMode?: boolean }) {
   const [status, setStatus] = useState<"idle" | "running" | "paused">("idle");
   const [display, setDisplay] = useState(0);
   const startTimeRef = useRef<number | null>(null);
@@ -554,8 +554,12 @@ export default function StudyTimer({ onStop }: { onStop: (minutes: number) => vo
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
-        <span className="text-2xl font-mono font-bold tabular-nums">{fmt(display)}</span>
+      <div className={`flex items-center gap-3 rounded-lg p-3 border ${
+        workoutMode ? "bg-pink-50 border-pink-200" : "bg-gray-50 border-gray-200"
+      }`}>
+        <span className={`text-2xl font-mono font-bold tabular-nums ${
+          workoutMode ? "text-pink-600" : ""
+        }`}>{fmt(display)}</span>
         {status === "idle" && (
           <button onClick={handleStart}
             className="bg-green-500 text-white rounded-full px-4 py-1 text-sm font-bold cursor-pointer hover:bg-green-600">

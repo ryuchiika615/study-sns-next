@@ -13,23 +13,25 @@ export default function RankingsClient({ initialRanking, initialDays }: {
   const [ranking, setRanking] = useState(initialRanking);
   const [days, setDays] = useState(initialDays);
   const [loading, setLoading] = useState(true);
+  const [workoutMode, setWorkoutMode] = useState(false);
   const supabase = createClient();
 
-  const fetchRankings = async (d: number) => {
+  const fetchRankings = async (d: number, isWorkout: boolean) => {
     setLoading(true);
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - d);
 
+    const timeField = isWorkout ? "workout_minutes" : "study_minutes";
     const { data: posts } = await supabase
       .from("posts")
-      .select("user_id, study_minutes")
-      .gt("study_minutes", 0)
+      .select(`user_id, ${timeField}`)
+      .gt(timeField, 0)
       .gte("created_at", startDate.toISOString());
 
     const userTotals = new Map<string, { total: number; posts: number }>();
     (posts || []).forEach((row: any) => {
       const current = userTotals.get(row.user_id) || { total: 0, posts: 0 };
-      current.total += row.study_minutes || 0;
+      current.total += row[timeField] || 0;
       current.posts += 1;
       userTotals.set(row.user_id, current);
     });
@@ -58,8 +60,13 @@ export default function RankingsClient({ initialRanking, initialDays }: {
   };
 
   useEffect(() => {
-    fetchRankings(initialDays);
+    fetchRankings(initialDays, false);
   }, []);
+
+  const toggleWorkout = (isWorkout: boolean) => {
+    setWorkoutMode(isWorkout);
+    fetchRankings(days, isWorkout);
+  };
 
   const getMedal = (rank: number) => {
     if (rank === 1) return { emoji: "🥇", bg: "bg-yellow-50 border-yellow-300", rankBg: "bg-yellow-100 text-yellow-700" };
@@ -70,10 +77,26 @@ export default function RankingsClient({ initialRanking, initialDays }: {
 
   return (
     <div className="mx-4 my-4 space-y-3">
+        {/* 勉強/筋トレトグル */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">
+          <button onClick={() => toggleWorkout(false)}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
+              !workoutMode ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}>
+            勉強
+          </button>
+          <button onClick={() => toggleWorkout(true)}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
+              workoutMode ? "bg-pink-500 text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}>
+            筋トレ
+          </button>
+        </div>
+
         {/* 期間選択 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">
           {[7, 30, 90, 365].map((d) => (
-            <button key={d} onClick={() => fetchRankings(d)}
+            <button key={d} onClick={() => { setDays(d); fetchRankings(d, workoutMode); }}
               className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
                 days === d ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}>
@@ -118,7 +141,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm truncate">{entry.user?.display_name || "ユーザー"}</p>
-                      <p className="text-xs text-gray-500">{entry.post_count}回の勉強 · {entry.display_time}</p>
+                      <p className="text-xs text-gray-500">{entry.post_count}回の{workoutMode ? "筋トレ" : "勉強"} · {entry.display_time}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className={`font-bold ${isPodium ? "text-lg" : "text-sm"} ${entry.rank === 1 ? "text-yellow-600" : entry.rank === 2 ? "text-gray-500" : entry.rank === 3 ? "text-amber-700" : "text-primary"}`}>
