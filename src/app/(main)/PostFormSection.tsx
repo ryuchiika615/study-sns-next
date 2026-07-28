@@ -342,20 +342,6 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
           )}
 
           <div className="flex gap-2.5 mt-2.5 items-center">
-            <div className="inline-flex bg-gray-100 rounded-full p-0.5 shrink-0">
-              <button type="button" onClick={() => setWorkoutMode(false)}
-                className={`px-2 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border-none ${
-                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 bg-transparent"
-                }`}>
-                勉強
-              </button>
-              <button type="button" onClick={() => setWorkoutMode(true)}
-                className={`px-2 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border-none ${
-                  workoutMode ? "bg-white text-orange-700 shadow-sm" : "text-gray-500 bg-transparent"
-                }`}>
-                筋トレ
-              </button>
-            </div>
             <input
               type="number"
               value={studyMinutes}
@@ -416,6 +402,20 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               <input type="file" accept="audio/*" className="hidden"
                 onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
             </label>
+            <div className="inline-flex bg-gray-100 rounded-full p-0.5 shrink-0">
+              <button type="button" onClick={() => setWorkoutMode(false)}
+                className={`px-2 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border-none ${
+                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                勉強
+              </button>
+              <button type="button" onClick={() => setWorkoutMode(true)}
+                className={`px-2 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border-none ${
+                  workoutMode ? "bg-white text-orange-700 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                筋トレ
+              </button>
+            </div>
             {audioFile && (
               <span className="text-xs text-green-600 flex items-center gap-1">
                 <i className="fas fa-check-circle" /> {audioFile.name}
