@@ -24,6 +24,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [content, setContent] = useState("");
   const [subject, setSubject] = useState("");
   const [studyMinutes, setStudyMinutes] = useState("");
+  const [workoutMode, setWorkoutMode] = useState(false);
   const [studyDate, setStudyDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
@@ -131,7 +132,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     const { data, error } = await supabase.rpc("create_post", {
       p_content: content,
       p_subject: subject || "その他",
-      p_study_minutes: parseInt(studyMinutes || "0"),
+      p_study_minutes: workoutMode ? 0 : parseInt(studyMinutes || "0"),
+      p_workout_minutes: workoutMode ? parseInt(studyMinutes || "0") : 0,
       p_image_url: imageUrls[0] || null,
       p_image_urls: imageUrls.length > 0 ? imageUrls : null,
       p_study_date: studyDateVal,
@@ -177,6 +179,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setContent("");
     setSubject("");
     setStudyMinutes("");
+    setWorkoutMode(false);
     setTbPages("");
     setBeeryualResult(null);
     setSilentPost(false);
@@ -322,13 +325,27 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
             </div>
           )}
 
-          <div className="flex gap-2.5 mt-2.5">
+          <div className="flex gap-2.5 mt-2.5 items-center">
+            <div className="inline-flex bg-gray-100 rounded-full p-0.5 shrink-0">
+              <button type="button" onClick={() => setWorkoutMode(false)}
+                className={`px-2 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border-none ${
+                  !workoutMode ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                勉強
+              </button>
+              <button type="button" onClick={() => setWorkoutMode(true)}
+                className={`px-2 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border-none ${
+                  workoutMode ? "bg-white text-orange-700 shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                筋トレ
+              </button>
+            </div>
             <input
               type="number"
               value={studyMinutes}
               onChange={(e) => setStudyMinutes(e.target.value)}
               min={0}
-              placeholder="勉強時間（分）"
+              placeholder={workoutMode ? "筋トレ時間（分）" : "勉強時間（分）"}
               className="flex-1 p-2.5 border border-gray-200 rounded-lg text-sm"
             />
             <input
