@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       *,
       user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
       likes_count:likes(count),
-      comments_count:comments(count)
+      comments_count:comments!post_id(count)
     `, { count: "estimated" })
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
