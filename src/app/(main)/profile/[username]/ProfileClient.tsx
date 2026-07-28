@@ -24,7 +24,9 @@ type ProfileClientProps = {
   postCount: number;
   likesCount: number;
   totalStudyDisplay: string;
+  totalWorkoutDisplay: string;
   monthStudyDisplay: string;
+  monthWorkoutDisplay: string;
   totalStudyMinutes: number;
   calendarData?: { date: string; minutes: number }[];
 };
@@ -33,7 +35,7 @@ export default function ProfileClient({
   user, profile, consecutivePostDays,
   subjectLabels, subjectData, subjectColors,
   followersCount, followingCount, postCount, likesCount,
-  totalStudyDisplay, monthStudyDisplay, totalStudyMinutes,
+  totalStudyDisplay, totalWorkoutDisplay, monthStudyDisplay, monthWorkoutDisplay, totalStudyMinutes,
   calendarData,
 }: ProfileClientProps) {
   const supabase = createClient();
@@ -60,6 +62,7 @@ export default function ProfileClient({
   }, []);
   const [showNotifyPopover, setShowNotifyPopover] = useState(false);
   const [section, setSection] = useState<"posts" | "likes" | null>(null);
+  const [workoutMode, setWorkoutMode] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [postPage, setPostPage] = useState(1);
   const [postLoading, setPostLoading] = useState(false);
@@ -133,9 +136,16 @@ export default function ProfileClient({
     setPostLoading(true);
     setPostError("");
     try {
-      const res = await fetch(`/api/posts/user?userId=${profile.id}&currentUserId=${user.id}&page=1`);
-      if (!res.ok) { setPostError("読み込み失敗"); setPostLoading(false); return; }
-      const data = await res.json();
+      const url = `/api/posts/user?userId=${encodeURIComponent(profile.id)}&currentUserId=${encodeURIComponent(user.id)}&page=1`;
+      const res = await fetch(url);
+      const text = await res.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch { data = { error: "JSON parse error", raw: text.slice(0, 200) }; }
+      if (!res.ok || data.error) {
+        setPostError(data.error || `HTTP ${res.status}`);
+        setPostLoading(false);
+        return;
+      }
       setPosts(data.posts || []);
       setPostPage(1);
       setHasMorePosts((data.posts || []).length >= 10);
@@ -159,9 +169,16 @@ export default function ProfileClient({
     setLikedLoading(true);
     setLikedError("");
     try {
-      const res = await fetch(`/api/posts/liked?userId=${profile.id}&currentUserId=${user.id}&page=1`);
-      if (!res.ok) { setLikedError("読み込み失敗"); setLikedLoading(false); return; }
-      const data = await res.json();
+      const url = `/api/posts/liked?userId=${encodeURIComponent(profile.id)}&currentUserId=${encodeURIComponent(user.id)}&page=1`;
+      const res = await fetch(url);
+      const text = await res.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch { data = { error: "JSON parse error", raw: text.slice(0, 200) }; }
+      if (!res.ok || data.error) {
+        setLikedError(data.error || `HTTP ${res.status}`);
+        setLikedLoading(false);
+        return;
+      }
       setLikedPosts(data.posts || []);
       setLikedPage(1);
       setTotalLiked(data.totalLiked || 0);
@@ -382,25 +399,54 @@ export default function ProfileClient({
           )}
         </div>
 
-        {/* ===== 勉強時間カード ===== */}
+        {/* ===== 勉強/筋トレ時間カード ===== */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center gap-4">
-            {consecutivePostDays > 0 && (
-              <div className="flex-1 text-center py-2 rounded-lg bg-orange-50">
-                <p className="text-xs text-orange-500 font-bold">連続勉強</p>
-                <p className="text-lg font-bold text-orange-600">🔥{consecutivePostDays}日</p>
-              </div>
-            )}
-            <div className="flex-1 text-center py-2 rounded-lg bg-blue-50">
-              <p className="text-xs text-blue-500 font-bold">総勉強時間</p>
-              <p className="text-lg font-bold text-blue-700">{totalStudyDisplay}</p>
-            </div>
-            <div className="flex-1 text-center py-2 rounded-lg bg-green-50">
-              <p className="text-xs text-green-500 font-bold">今月</p>
-              <p className="text-lg font-bold text-green-700">{monthStudyDisplay}</p>
+          <div className="flex justify-center mb-3">
+            <div className="inline-flex bg-gray-100 rounded-full p-0.5">
+              <button onClick={() => setWorkoutMode(false)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border-none ${
+                  !workoutMode ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                勉強
+              </button>
+              <button onClick={() => setWorkoutMode(true)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer border-none ${
+                  workoutMode ? "bg-pink-500 text-white shadow-sm" : "text-gray-500 bg-transparent"
+                }`}>
+                筋トレ
+              </button>
             </div>
           </div>
-          {profile?.target_date && profile?.target_minutes > 0 && new Date(profile.target_date + "T23:59:59") >= new Date() && (
+          {workoutMode ? (
+            <div className="flex items-center gap-4">
+              <div className="flex-1 text-center py-2 rounded-lg bg-pink-50">
+                <p className="text-xs text-pink-500 font-bold">総筋トレ時間</p>
+                <p className="text-lg font-bold text-pink-700">{totalWorkoutDisplay}</p>
+              </div>
+              <div className="flex-1 text-center py-2 rounded-lg bg-pink-50">
+                <p className="text-xs text-pink-500 font-bold">今月</p>
+                <p className="text-lg font-bold text-pink-700">{monthWorkoutDisplay}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              {consecutivePostDays > 0 && (
+                <div className="flex-1 text-center py-2 rounded-lg bg-orange-50">
+                  <p className="text-xs text-orange-500 font-bold">連続勉強</p>
+                  <p className="text-lg font-bold text-orange-600">🔥{consecutivePostDays}日</p>
+                </div>
+              )}
+              <div className="flex-1 text-center py-2 rounded-lg bg-blue-50">
+                <p className="text-xs text-blue-500 font-bold">総勉強時間</p>
+                <p className="text-lg font-bold text-blue-700">{totalStudyDisplay}</p>
+              </div>
+              <div className="flex-1 text-center py-2 rounded-lg bg-green-50">
+                <p className="text-xs text-green-500 font-bold">今月</p>
+                <p className="text-lg font-bold text-green-700">{monthStudyDisplay}</p>
+              </div>
+            </div>
+          )}
+          {!workoutMode && profile?.target_date && profile?.target_minutes > 0 && new Date(profile.target_date + "T23:59:59") >= new Date() && (
             <div className="mt-3 text-sm text-center py-2 rounded-lg bg-yellow-50 text-yellow-800 font-bold">
               <i className="fas fa-bullseye mr-1" />
               目標 {profile.target_date} まであと{(() => {

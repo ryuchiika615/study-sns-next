@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   const offset = (page - 1) * limit;
 
-  const { data: posts, count } = await admin
+  const { data: posts, count, error: postsError } = await admin
     .from("posts")
     .select(`
       *,
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
+  if (postsError) return NextResponse.json({ error: postsError.message, posts: [], totalPages: 0 });
   if (!posts) return NextResponse.json({ posts: [], totalPages: 0 });
 
   const postIds = posts.map((p: any) => p.id);
