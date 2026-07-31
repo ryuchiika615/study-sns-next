@@ -201,7 +201,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
 
     window.dispatchEvent(new CustomEvent("post-created"));
 
-    router.refresh();
+    window.location.reload();
   };
 
   const handleSearch = (e: React.FormEvent) => {

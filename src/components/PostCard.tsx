@@ -579,7 +579,7 @@ const handleCommentQuote = (c: any) => {
                         }).catch(() => {});
                       }
                       window.dispatchEvent(new CustomEvent("post-created"));
-                      router.refresh();
+                      window.location.reload();
                     }
                   }} className="bg-primary text-white rounded-full px-4 py-1 text-xs font-bold cursor-pointer">
                     引用リュイート
