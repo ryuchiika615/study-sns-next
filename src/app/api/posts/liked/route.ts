@@ -53,11 +53,14 @@ export async function GET(request: NextRequest) {
 
   const postIds = posts.map((p: any) => p.id);
 
-  const [{ data: myLikes }, { data: myReactions }, { data: allReactions }] = await Promise.all([
+  const [{ data: myLikes }, { data: myReactions }, { data: allReactions }, { data: textbooksData }] = await Promise.all([
     admin.from("likes").select("post_id").in("post_id", postIds).eq("user_id", currentUserId),
     admin.from("post_reactions").select("post_id, reaction").in("post_id", postIds).eq("user_id", currentUserId),
     admin.from("post_reactions").select("post_id, reaction").in("post_id", postIds),
+    admin.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", userId),
   ]);
+
+  const textbookMap = new Map((textbooksData || []).map((t: any) => [t.title, t]));
 
   const likedPostIds = new Set((myLikes || []).map((l: any) => l.post_id));
   const myReactionMap = new Map((myReactions || []).map((r: any) => [r.post_id, r.reaction]));
@@ -84,6 +87,7 @@ export async function GET(request: NextRequest) {
     .filter(Boolean)
     .map((post: any) => {
       const postReactions = reactionsGrouped.get(post.id) || new Map();
+      const textbook = post.total_pages > 0 ? null : textbookMap.get(post.subject);
       return {
         ...post,
         is_liked: likedPostIds.has(post.id),
@@ -97,6 +101,8 @@ export async function GET(request: NextRequest) {
         formatted_time: formatRelativeTime(post.created_at),
         current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,
         current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
+        pages_completed: post.pages_completed || textbook?.pages_completed || 0,
+        total_pages: post.total_pages || textbook?.total_pages || 0,
       };
     });
 
