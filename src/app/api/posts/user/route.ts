@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       reactions_count: Array.from(postReactions.entries()).map(([reaction, count]) => ({ reaction, count })),
       my_reaction: myReactionMap.get(post.id) || null,
       display_study_time: formatStudyTime(post.study_minutes),
+      display_workout_time: formatStudyTime(post.workout_minutes),
       subject_color: subjectColor(post.subject),
       formatted_time: formatRelativeTime(post.created_at),
       current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,

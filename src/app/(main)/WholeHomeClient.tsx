@@ -378,7 +378,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       {posts.map((post: any) => (
         <PostCard key={post.id} post={post} currentUserId={userId}
           onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...(data as any), subject_color: (data as any).subject ? subjectColor((data as any).subject) : p.subject_color, display_study_time: formatStudyTime((data as any).study_minutes ?? p.study_minutes), display_workout_time: formatStudyTime((data as any).workout_minutes ?? p.workout_minutes) } : p))} />
       ))}
 
       {posts.length === 0 && !loading && (

@@ -354,7 +354,7 @@ export default function ProfileClient({
                     const idx = posts.findIndex((p: any) => p.id === id);
                     if (idx >= 0) { const newPosts = [...posts]; newPosts.splice(idx, 1); setPosts(newPosts); }
                   }}
-                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...data, subject_color: data.subject ? subjectColor(data.subject) : p.subject_color, display_study_time: formatStudyTime(data.study_minutes ?? p.study_minutes) } : p))} />
+                  onUpdate={(id, data) => setPosts((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, ...(data as any), subject_color: (data as any).subject ? subjectColor((data as any).subject) : p.subject_color, display_study_time: formatStudyTime((data as any).study_minutes ?? p.study_minutes), display_workout_time: formatStudyTime((data as any).workout_minutes ?? p.workout_minutes) } : p))} />
               ))}
               {posts.length > 0 && hasMorePosts && (
                 <button onClick={loadMorePosts}

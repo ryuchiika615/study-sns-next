@@ -549,6 +549,7 @@ const handleCommentQuote = (c: any) => {
                       p_content: quoteContent.trim(),
                       p_subject: "その他",
                       p_study_minutes: 0,
+                      p_workout_minutes: 0,
                       p_image_url: imageUrls[0] || null,
                       p_image_urls: imageUrls.length > 0 ? imageUrls : null,
                       p_study_date: null,
