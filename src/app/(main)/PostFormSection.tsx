@@ -142,6 +142,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       p_silent: silentPost,
       p_audio_url: audioUrl || null,
       p_audio_name: audioName || null,
+      p_pages_completed: matchedTextbook ? (parseInt(tbPages) || 0) : 0,
+      p_total_pages: matchedTextbook ? matchedTextbook.total_pages : 0,
     });
 
     setIsSubmitting(false);

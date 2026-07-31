@@ -37,6 +37,8 @@ export interface PostWithDetails {
   subject: string;
   study_minutes: number;
   workout_minutes: number;
+  pages_completed: number;
+  total_pages: number;
   study_date: string | null;
   audio_url: string | null;
   audio_name: string | null;
