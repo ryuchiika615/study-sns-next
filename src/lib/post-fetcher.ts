@@ -192,8 +192,8 @@ export async function fetchAndEnrichPosts(
       current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
       quoted_post: quotedPost || null,
       quoted_comment: quotedComment || null,
-      pages_completed: post.pages_completed || textbook?.pages_completed || 0,
-      total_pages: post.total_pages || textbook?.total_pages || 0,
+      pages_completed: post.pages_completed || 0,
+      total_pages: post.total_pages || 0,
     };
   });
 

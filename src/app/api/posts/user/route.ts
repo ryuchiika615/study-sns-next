@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
       formatted_time: formatRelativeTime(post.created_at),
       current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,
       current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
-      pages_completed: post.pages_completed || textbook?.pages_completed || 0,
-      total_pages: post.total_pages || textbook?.total_pages || 0,
+      pages_completed: post.pages_completed || 0,
+      total_pages: post.total_pages || 0,
     };
   });
 
