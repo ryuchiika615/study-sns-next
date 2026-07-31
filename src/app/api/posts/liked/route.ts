@@ -53,14 +53,22 @@ export async function GET(request: NextRequest) {
 
   const postIds = posts.map((p: any) => p.id);
 
-  const [{ data: myLikes }, { data: myReactions }, { data: allReactions }, { data: textbooksData }] = await Promise.all([
+  const [{ data: myLikes }, { data: myReactions }, { data: allReactions }] = await Promise.all([
     admin.from("likes").select("post_id").in("post_id", postIds).eq("user_id", currentUserId),
     admin.from("post_reactions").select("post_id, reaction").in("post_id", postIds).eq("user_id", currentUserId),
     admin.from("post_reactions").select("post_id, reaction").in("post_id", postIds),
-    admin.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", userId),
   ]);
 
-  const textbookMap = new Map((textbooksData || []).map((t: any) => [t.title, t]));
+  const postUserIds = [...new Set(posts.map((p: any) => p.user_id))];
+  const { data: textbooksData } = postUserIds.length > 0
+    ? await admin.from("textbooks").select("user_id, title, pages_completed, total_pages").in("user_id", postUserIds)
+    : { data: [] };
+
+  const textbookMapByUser = new Map<string, Map<string, any>>();
+  for (const t of (textbooksData || []) as any[]) {
+    if (!textbookMapByUser.has(t.user_id)) textbookMapByUser.set(t.user_id, new Map());
+    textbookMapByUser.get(t.user_id)!.set(t.title, t);
+  }
 
   const likedPostIds = new Set((myLikes || []).map((l: any) => l.post_id));
   const myReactionMap = new Map((myReactions || []).map((r: any) => [r.post_id, r.reaction]));
@@ -87,7 +95,7 @@ export async function GET(request: NextRequest) {
     .filter(Boolean)
     .map((post: any) => {
       const postReactions = reactionsGrouped.get(post.id) || new Map();
-      const textbook = post.total_pages > 0 ? null : textbookMap.get(post.subject);
+      const textbook = post.total_pages > 0 ? null : textbookMapByUser.get(post.user_id)?.get(post.subject);
       return {
         ...post,
         is_liked: likedPostIds.has(post.id),

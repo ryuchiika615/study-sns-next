@@ -34,14 +34,14 @@ export async function GET(request: NextRequest) {
 
   const postIds = posts.map((p: any) => p.id);
 
-  const [{ data: likes }, { data: myReactions }, { data: allReactions }, { data: textbooksData }] = await Promise.all([
+  const [{ data: likes }, { data: myReactions }, { data: allReactions }] = await Promise.all([
     admin.from("likes").select("post_id").in("post_id", postIds).eq("user_id", currentUserId),
     admin.from("post_reactions").select("post_id, reaction").in("post_id", postIds).eq("user_id", currentUserId),
     admin.from("post_reactions").select("post_id, reaction").in("post_id", postIds),
-    admin.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", userId),
   ]);
 
-  const textbookMap = new Map((textbooksData || []).map((t: any) => [t.title, t]));
+  const { data: textbooksData } = await admin.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", userId);
+  const textbookMap = new Map<string, any>((textbooksData || []).map((t: any) => [t.title, t]));
 
   const likedPostIds = new Set((likes || []).map((l: any) => l.post_id));
   const myReactionMap = new Map((myReactions || []).map((r: any) => [r.post_id, r.reaction]));

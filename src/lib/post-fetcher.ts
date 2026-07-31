@@ -51,7 +51,7 @@ export async function fetchPostById(
       : { data: [] },
     supabase.from("post_reactions").select("reaction").eq("post_id", post.id).eq("user_id", currentUserId).maybeSingle(),
     supabase.from("post_reactions").select("reaction, user_id").eq("post_id", post.id),
-    supabase.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", currentUserId),
+    supabase.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", post.user_id),
   ]);
 
   const likedPostIds = new Set((likesResult.data || []).map((l: any) => l.post_id));
@@ -116,7 +116,7 @@ export async function fetchAndEnrichPosts(
   const avatarIds = [...new Set((posts || []).map((p: any) => p.user?.current_avatar_id).filter(Boolean))];
   const allItemIds = [...new Set([...titleIds, ...avatarIds])];
 
-  const [likesResult, myReactionsResult, allReactionsResult, quotedPostsResult, quotedCommentsResult, itemsResult, textbooksResult] = await Promise.all([
+  const [likesResult, myReactionsResult, allReactionsResult, quotedPostsResult, quotedCommentsResult, itemsResult] = await Promise.all([
     postIds.length > 0
       ? supabase.from("likes").select("post_id").in("post_id", postIds).eq("user_id", currentUserId)
       : { data: [] },
@@ -135,10 +135,18 @@ export async function fetchAndEnrichPosts(
     allItemIds.length > 0
       ? supabase.from("gacha_items").select("*").in("id", allItemIds)
       : { data: [] },
-    supabase.from("textbooks").select("title, pages_completed, total_pages").eq("user_id", currentUserId),
   ]);
 
-  const textbookMap = new Map<string, any>((textbooksResult.data || []).map((t: any) => [t.title, t]));
+  const postUserIds = [...new Set((posts || []).map((p: any) => p.user_id))];
+  const { data: textbooksData } = postUserIds.length > 0
+    ? supabase.from("textbooks").select("user_id, title, pages_completed, total_pages").in("user_id", postUserIds)
+    : { data: [] };
+
+  const textbookMapByUser = new Map<string, Map<string, any>>();
+  for (const t of (textbooksData || []) as any[]) {
+    if (!textbookMapByUser.has(t.user_id)) textbookMapByUser.set(t.user_id, new Map());
+    textbookMapByUser.get(t.user_id)!.set(t.title, t);
+  }
 
   const likedPostIds = new Set((likesResult.data || []).map((l: any) => l.post_id));
   const myReactionMap = new Map((myReactionsResult.data || []).map((r: any) => [r.post_id, r.reaction]));
@@ -168,7 +176,7 @@ export async function fetchAndEnrichPosts(
     const postReactionGroups = reactionsByPost.get(post.id) || new Map();
     const quotedPost = post.quote_post_id ? quotedPostMap.get(post.quote_post_id) : null;
     const quotedComment = post.quote_comment_id ? quotedCommentMap.get(post.quote_comment_id) : null;
-    const textbook = post.total_pages > 0 ? null : textbookMap.get(post.subject) as any;
+    const textbook = post.total_pages > 0 ? null : textbookMapByUser.get(post.user_id)?.get(post.subject) as any;
     return {
       ...post,
       is_liked: likedPostIds.has(post.id),
