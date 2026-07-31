@@ -56,6 +56,12 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     });
   }, [userId]);
 
+  useEffect(() => {
+    if (matchedTextbook && !tbPages) {
+      setTbPages(String(matchedTextbook.pages_completed));
+    }
+  }, [matchedTextbook]);
+
   const addTemplate = async () => {
     if (!subject.trim()) return;
     const res = await fetch("/api/subject-templates", {
@@ -142,7 +148,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       p_silent: silentPost,
       p_audio_url: audioUrl || null,
       p_audio_name: audioName || null,
-      p_pages_completed: matchedTextbook ? (parseInt(tbPages) || 0) : 0,
+      p_pages_completed: matchedTextbook ? (parseInt(tbPages) || matchedTextbook.pages_completed) : 0,
       p_total_pages: matchedTextbook ? matchedTextbook.total_pages : 0,
     });
 
