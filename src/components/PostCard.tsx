@@ -529,7 +529,7 @@ const handleCommentQuote = (c: any) => {
                   通知を送らない
                 </label>
                 <div className="flex gap-2 mt-2">
-                  <button onClick={async () => {
+                  <button type="button" onClick={async () => {
                     if (!quoteContent.trim()) return;
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) return;
@@ -561,6 +561,8 @@ const handleCommentQuote = (c: any) => {
                       p_silent: quoteSilent,
                       p_audio_url: null,
                       p_audio_name: null,
+                      p_pages_completed: 0,
+                      p_total_pages: 0,
                     });
                     if (!error && data?.post_id) {
                       notifyMentions(data.post_id, quoteContent);
