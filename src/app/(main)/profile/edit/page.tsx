@@ -10,6 +10,7 @@ import ProfileHeader from "./ProfileHeader";
 import TitleManager from "./TitleManager";
 import IconManager from "./IconManager";
 import FollowRecommendations from "@/components/FollowRecommendations";
+import XConnectionCard from "@/components/XConnectionCard";
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -242,6 +243,8 @@ export default function EditProfilePage() {
           <IconManager items={items} profile={profile} onRefresh={loadData} onMessage={setMessage} />
         </>)
       }
+
+      {sectionCard("SNS連携", "fa-share-nodes", <XConnectionCard />)}
 
       {sectionCard("ログインボーナス", "fa-calendar-check",
         <Link href="/gacha" className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 no-underline">
