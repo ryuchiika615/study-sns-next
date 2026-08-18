@@ -1,6 +1,6 @@
 "use client";
 
-import { appUrl, xIntentUrl } from "@/lib/share";
+import { xIntentUrl } from "@/lib/share";
 
 export default function XShareButton({ shareType, entityId, text, sharePath, compact = false }: {
   shareType: "study_record" | "ranking" | "achievement";
@@ -10,7 +10,8 @@ export default function XShareButton({ shareType, entityId, text, sharePath, com
   compact?: boolean;
 }) {
   const share = async () => {
-    let url = appUrl(sharePath);
+    // 共有操作はブラウザで行うため、環境変数の未反映時でも現在開いている本番ドメインを使う。
+    let url = `${window.location.origin}${sharePath}`;
     try {
       const res = await fetch("/api/referrals/code");
       if (res.ok) {
