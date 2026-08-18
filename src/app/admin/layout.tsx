@@ -10,11 +10,13 @@ const NAV_ITEMS = [
   { href: "/admin/login-activity", label: "ログイン監視", icon: "👁️" },
   { href: "/admin/posts", label: "リュイート管理", icon: "📝" },
   { href: "/admin/users", label: "ユーザー管理", icon: "👥" },
+  { href: "/admin/pro", label: "Pro管理", icon: "✨" },
   { href: "/admin/stats", label: "統計", icon: "📊" },
   { href: "/admin/announcements", label: "お知らせ", icon: "📨" },
   { href: "/admin/feedback", label: "要望・報告", icon: "💬", badgeKey: "feedback" as const },
   { href: "/admin/bgm", label: "BGM管理", icon: "🎵", badgeKey: "bgm" as const },
   { href: "/admin/page-analytics", label: "ページ分析", icon: "📈" },
+  { href: "/admin/social-analytics", label: "SNS流入", icon: "𝕏" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

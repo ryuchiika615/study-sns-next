@@ -102,6 +102,10 @@ export default function AdminDashboard() {
             <div className="text-xs text-gray-500 mt-1">パスワードリセット・権限管理</div>
           </Link>
 
+          <Link href="/admin/pro" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">✨</div><div className="font-bold text-sm">Pro管理</div><div className="text-xs text-gray-500 mt-1">無料Proの付与・解除</div>
+          </Link>
+
           <Link href="/admin/stats" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
             <div className="text-2xl mb-1">📊</div>
             <div className="font-bold text-sm">統計</div>
@@ -141,6 +145,7 @@ export default function AdminDashboard() {
             <div className="font-bold text-sm">ページ分析</div>
             <div className="text-xs text-gray-500 mt-1">画面遷移を可視化</div>
           </Link>
+          <Link href="/admin/social-analytics" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center"><div className="text-2xl mb-1">𝕏</div><div className="font-bold text-sm">SNS流入</div><div className="text-xs text-gray-500 mt-1">共有・紹介の分析</div></Link>
         </div>
       </div>
     </div>

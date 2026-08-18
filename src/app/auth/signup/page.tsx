@@ -76,6 +76,7 @@ export default function SignupPage() {
     }
 
     router.push("/");
+    fetch("/api/referrals/complete", { method: "POST" }).catch(() => {});
     router.refresh();
   };
 

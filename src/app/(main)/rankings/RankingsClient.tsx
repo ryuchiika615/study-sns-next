@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
 import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
+import XShareButton from "@/components/XShareButton";
 
 export default function RankingsClient({ initialRanking, initialDays }: {
   initialRanking: any[];
@@ -14,6 +15,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
   const [days, setDays] = useState(initialDays);
   const [loading, setLoading] = useState(true);
   const [workoutMode, setWorkoutMode] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const supabase = createClient();
 
   const fetchRankings = async (d: number, isWorkout: boolean) => {
@@ -61,6 +63,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
 
   useEffect(() => {
     fetchRankings(initialDays, false);
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
   }, []);
 
   const toggleWorkout = (isWorkout: boolean) => {
@@ -74,6 +77,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
     if (rank === 3) return { emoji: "🥉", bg: "bg-amber-50 border-amber-300", rankBg: "bg-amber-100 text-amber-700" };
     return { emoji: `#${rank}`, bg: "bg-white border-gray-100", rankBg: "bg-gray-100 text-gray-500" };
   };
+  const myEntry = ranking.find((entry: any) => entry.user?.id === currentUserId);
 
   return (
     <div className="mx-4 my-4 space-y-3">
@@ -92,6 +96,12 @@ export default function RankingsClient({ initialRanking, initialDays }: {
             筋トレ
           </button>
         </div>
+
+        {myEntry && !workoutMode && (
+          <div className="flex justify-end"><XShareButton shareType="ranking" entityId={`${days}:${myEntry.rank}`}
+            text={`🏆 リュッターランキング\n\n${myEntry.rank === 1 ? "🥇1位になりました！" : `${myEntry.rank}位です！`}\n${days === 30 ? "今月" : `${days}日間`}の勉強時間：${myEntry.display_time}\n\n次も頑張ります🔥\n\n#リュッター #勉強垢`}
+            sharePath={`/share/ranking/${currentUserId}/current`} /></div>
+        )}
 
         {/* 期間選択 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import XShareButton from "@/components/XShareButton";
 
 type Achievement = {
   id: string;
@@ -136,6 +137,11 @@ export default function AchievementsClient({ userId }: { userId: string }) {
                         )}
                         {a.claimed && (
                           <span className="text-xs text-green-500 font-bold">✅ 受取済み</span>
+                        )}
+                        {a.earned && (
+                          <XShareButton compact shareType="achievement" entityId={a.id}
+                            text={`🎉 「${a.title}」を獲得しました！\n\n${a.description}\n\nリュッターで勉強を記録しています。\n\n#リュッター #勉強記録`}
+                            sharePath={`/share/achievement/${userId}/${a.id}`} />
                         )}
                       </div>
                     </div>

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase";
 import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOptimizedIconUrl, notifyMentions } from "@/lib/utils";
 import type { PostWithDetails } from "@/lib/types";
 import MentionAutocomplete from "./MentionAutocomplete";
+import XShareButton from "./XShareButton";
 
 function highlightMentions(text: string) {
   const parts: (string | JSX.Element)[] = [];
@@ -596,6 +597,11 @@ const handleCommentQuote = (c: any) => {
       </div>
 
       <div className="flex items-center gap-3 px-4 pb-3 flex-wrap">
+        {post.study_minutes > 0 && (
+          <XShareButton compact shareType="study_record" entityId={post.id}
+            text={`📚 今日の勉強記録\n\n勉強時間：${formatStudyTime(post.study_minutes)}\n科目：${post.subject}\n🔥 連続学習：${post.user?.consecutive_post_days || 0}日\n\n今日も積み上げました！\n\n#リュッター #勉強記録`}
+            sharePath={`/share/study/${post.user_id}/${post.id}`} />
+        )}
         <button onClick={toggleComments} className="flex items-center gap-1.5 text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-primary">
           <i className="far fa-comment" /> <span>{post.comments_count}</span>
         </button>
