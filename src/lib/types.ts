@@ -47,6 +47,7 @@ export interface PostWithDetails {
   reply_to_id: string | null;
   quote_post_id: string | null;
   quote_comment_id: string | null;
+  group_id?: string | null;
   created_at: string;
   updated_at: string | null;
   user: Profile;

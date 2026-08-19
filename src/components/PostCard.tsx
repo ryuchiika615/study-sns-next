@@ -553,7 +553,7 @@ const handleCommentQuote = (c: any) => {
                       }
                     }
 
-                    const { data, error } = await supabase.rpc("create_post", {
+                    const { data, error } = await supabase.rpc(post.group_id ? "create_group_post" : "create_post", {
                       p_content: quoteContent.trim(),
                       p_subject: "その他",
                       p_study_minutes: 0,
@@ -568,15 +568,16 @@ const handleCommentQuote = (c: any) => {
                       p_audio_name: null,
                       p_pages_completed: 0,
                       p_total_pages: 0,
+                      ...(post.group_id ? { p_group_id: post.group_id } : {}),
                     });
                     if (!error && data?.post_id) {
-                      if (!quoteSilent) notifyMentions(data.post_id, quoteContent);
+                      if (!post.group_id && !quoteSilent) notifyMentions(data.post_id, quoteContent);
                       setShowQuoteForm(false);
                       setQuoteContent("");
                       setQuoteSilent(false);
                       setQuoteImages([]);
                       setQuoteCommentId(null);
-                      if (!quoteSilent) {
+                      if (!post.group_id && !quoteSilent) {
                         fetch("/api/push/follow-post", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },

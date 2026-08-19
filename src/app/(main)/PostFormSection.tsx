@@ -16,7 +16,7 @@ const StudyPomodoro = dynamic(() => import("@/components/StudyPomodoro"), {
   loading: () => <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />,
 });
 
-export default function PostFormSection({ userId, profile }: { userId: string; profile: any }) {
+export default function PostFormSection({ userId, profile, groupId }: { userId: string; profile: any; groupId?: string }) {
   const router = useRouter();
   const supabase = createClient();
   const addToast = useToast();
@@ -135,7 +135,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     jstNow.setHours(jstNow.getHours() + 9);
     const studyDateVal = studyDate || jstNow.toISOString().split("T")[0];
 
-    const { data, error } = await supabase.rpc("create_post", {
+    const postPayload: any = {
       p_content: content,
       p_subject: subject || "その他",
       p_study_minutes: workoutMode ? 0 : parseInt(studyMinutes || "0"),
@@ -150,7 +150,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       p_audio_name: audioName || null,
       p_pages_completed: matchedTextbook ? (parseInt(tbPages) || matchedTextbook.pages_completed) : 0,
       p_total_pages: matchedTextbook ? matchedTextbook.total_pages : 0,
-    });
+    };
+    if (groupId) postPayload.p_group_id = groupId;
+    const { data, error } = await supabase.rpc(groupId ? "create_group_post" : "create_post", postPayload);
 
     setIsSubmitting(false);
     if (error) {
@@ -195,8 +197,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setAttachedImages([]);
 
     if (data?.post_id) {
-      if (!silentPost) notifyMentions(data.post_id, content);
-      if (!silentPost) {
+      // グループ外のフォロー通知から、非公開投稿の存在を漏らさない。
+      if (!groupId && !silentPost) notifyMentions(data.post_id, content);
+      if (!groupId && !silentPost) {
         fetch("/api/push/follow-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -231,11 +234,11 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 mb-4 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-gray-500"><i className="far fa-edit mr-1.5" />新規リュイート</h3><span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">🌍 全体公開</span></div>
-          <p className="mt-1 text-[11px] text-gray-400">知らない人に見せたくない投稿は、グループを開いてから投稿してください。</p>
+          <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-gray-500"><i className="far fa-edit mr-1.5" />{groupId ? "グループに投稿" : "新規リュイート"}</h3><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${groupId ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>{groupId ? "🔒 メンバー限定" : "🌍 全体公開"}</span></div>
+          <p className="mt-1 text-[11px] text-gray-400">{groupId ? "このグループに参加している人だけが見られます。" : "知らない人に見せたくない投稿は、グループを開いてから投稿してください。"}</p>
         </div>
         <div className="px-4 py-3">
-          <form onSubmit={handleSearch} className="mb-3">
+          {!groupId && <form onSubmit={handleSearch} className="mb-3">
             <input
               type="text"
               value={search}
@@ -243,7 +246,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               placeholder="リュイートを検索"
               className="w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm"
             />
-          </form>
+          </form>}
 
           <form onSubmit={handleSubmit} encType="multipart/form-data">
           <div className="relative">
