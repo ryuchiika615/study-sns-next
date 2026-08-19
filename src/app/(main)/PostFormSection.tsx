@@ -231,7 +231,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 mb-4 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100">
-          <h3 className="text-sm font-bold text-gray-500"><i className="far fa-edit mr-1.5" />新規リュイート</h3>
+          <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-gray-500"><i className="far fa-edit mr-1.5" />新規リュイート</h3><span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">🌍 全体公開</span></div>
+          <p className="mt-1 text-[11px] text-gray-400">知らない人に見せたくない投稿は、グループを開いてから投稿してください。</p>
         </div>
         <div className="px-4 py-3">
           <form onSubmit={handleSearch} className="mb-3">
