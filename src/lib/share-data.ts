@@ -9,9 +9,18 @@ export async function getShareCardData(kind: string, userId: string, itemId: str
   if (!profile) return null;
   const name = profile.display_name || profile.username || "リュッターユーザー";
   if (kind === "study") {
-    const { data: post } = await admin.from("posts").select("id, user_id, subject, study_minutes").eq("id", itemId).eq("user_id", userId).maybeSingle();
+    const { data: post } = await admin.from("posts").select("id, user_id, subject, study_minutes, workout_minutes").eq("id", itemId).eq("user_id", userId).maybeSingle();
     if (!post) return null;
-    return { title: name, subtitle: post.subject || "今日の勉強記録", metric: formatMinutes(post.study_minutes || 0), label: `🔥 ${profile.consecutive_post_days || 0} DAYS`, username: profile.username, referrerId: userId };
+    const isWorkout = (post.workout_minutes || 0) > 0 && !(post.study_minutes || 0);
+    const minutes = isWorkout ? post.workout_minutes : post.study_minutes;
+    return {
+      title: `${name} の${isWorkout ? "運動記録" : "勉強記録"}`,
+      subtitle: isWorkout ? "今日の運動記録" : post.subject || "今日の勉強記録",
+      metric: formatMinutes(minutes || 0),
+      label: `${isWorkout ? "💪 WORKOUT" : "🔥"} ${profile.consecutive_post_days || 0} DAYS`,
+      username: profile.username,
+      referrerId: userId,
+    };
   }
   if (kind === "ranking") {
     const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
