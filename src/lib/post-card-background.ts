@@ -16,7 +16,9 @@ export async function attachActiveProToPosts<T extends { user_id: string; user?:
   const activeProUserIds = new Set((grants || []).map((grant: any) => grant.user_id));
 
   return posts.map((post) => post.user
-    ? { ...post, user: { ...post.user, has_active_pro: activeProUserIds.has(post.user_id) } }
+    // pro_badge is stamped on a post when its author is Pro. Keep it as a
+    // fallback for existing posts while the public active-Pro view propagates.
+    ? { ...post, user: { ...post.user, has_active_pro: activeProUserIds.has(post.user_id) || Boolean((post as any).pro_badge) } }
     : post
   );
 }
