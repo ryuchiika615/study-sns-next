@@ -321,21 +321,47 @@ html.dark input[type="file"] {
   right: 12px;
   bottom: 82px;
   border: 1px solid #374151;
-  border-radius: 18px;
-  padding: 12px;
-  background: rgba(24, 35, 55, .98);
+  border-radius: 22px;
+  padding: 16px;
+  background: rgba(15, 23, 42, .98);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, .35);
 }
-.bottom-more-link {
+.bottom-more-close {
+  min-width: 32px !important;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px !important;
+  color: #cbd5e1 !important;
+  background: #334155 !important;
+}
+.bottom-more-grid {
   display: grid;
-  grid-template-columns: 28px 1fr 16px;
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  padding: 11px 8px;
+}
+.bottom-more-link {
+  display: flex;
+  min-height: 96px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 14px;
   color: #f8fafc !important;
+  background: linear-gradient(145deg, rgba(51,65,85,.85), rgba(30,41,59,.85));
+  text-decoration: none;
+}
+.bottom-more-link:hover, .bottom-more-link:active {
+  border-color: #64748b;
+  background: #334155;
+}
+.bottom-more-link > i {
+  font-size: 24px;
 }
 .bottom-more-link b { display: block; font-size: 14px; }
-.bottom-more-link small { display: block; margin-top: 2px; color: #94a3b8; font-size: 11px; }
+.bottom-more-link small { display: block; margin-top: 2px; color: #94a3b8; font-size: 10px; }
 
 /* ページフェードイン */
 .page-enter {
