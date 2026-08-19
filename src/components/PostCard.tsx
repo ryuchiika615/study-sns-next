@@ -569,7 +569,7 @@ const handleCommentQuote = (c: any) => {
                       p_total_pages: 0,
                     });
                     if (!error && data?.post_id) {
-                      notifyMentions(data.post_id, quoteContent);
+                      if (!quoteSilent) notifyMentions(data.post_id, quoteContent);
                       setShowQuoteForm(false);
                       setQuoteContent("");
                       setQuoteSilent(false);

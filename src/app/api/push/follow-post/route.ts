@@ -29,9 +29,10 @@ export async function POST(request: NextRequest) {
   let preview = "";
   const { data: post } = await admin
     .from("posts")
-    .select("content")
+    .select("content, is_silent")
     .eq("id", post_id)
     .maybeSingle();
+  if (!post || post.is_silent) return NextResponse.json({ ok: true, sent: 0, skipped: "silent_post" });
   if (post?.content) {
     preview = post.content.length > 30 ? post.content.slice(0, 30) + "…" : post.content;
   }

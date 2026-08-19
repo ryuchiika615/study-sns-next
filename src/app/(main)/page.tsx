@@ -27,7 +27,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
 
   const [profileResult, postsResult] = await Promise.all([
     supabase.from("profiles")
-      .select("id, display_name, username, icon_url, points, exchange_points, current_title_id, current_avatar_id, target_date, target_start_date, target_minutes, is_admin, bio, department, theme_color")
+      .select("id, display_name, username, icon_url, points, exchange_points, current_title_id, current_avatar_id, target_date, target_start_date, target_minutes, is_admin, bio, department, theme_color, default_post_card_theme")
       .eq("id", user.id)
       .single(),
     supabase.from("posts")

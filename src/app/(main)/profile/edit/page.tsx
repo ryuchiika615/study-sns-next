@@ -36,6 +36,9 @@ export default function EditProfilePage() {
   const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
   const [iconFileName, setIconFileName] = useState("");
   const [likedPage, setLikedPage] = useState(1);
+  const [isPro, setIsPro] = useState(false);
+  const [defaultCardTheme, setDefaultCardTheme] = useState<"default" | "ocean" | "sunset" | "midnight" | "photo">("default");
+  const [savingCardTheme, setSavingCardTheme] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -50,11 +53,18 @@ export default function EditProfilePage() {
     });
   }, []);
 
+  useEffect(() => {
+    fetch("/api/pro/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setIsPro(Boolean(data?.isPro)))
+      .catch(() => setIsPro(false));
+  }, []);
+
   const loadData = async (uid?: string) => {
     const id = uid || userIdRef.current;
     if (!id) return;
     const [profileResult, userItemsResult] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id").eq("id", id).single(),
+      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id, default_post_card_theme").eq("id", id).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", id),
     ]);
 
@@ -65,6 +75,7 @@ export default function EditProfilePage() {
       setBio(profileResult.data.bio || "");
       setTargetDate(profileResult.data.target_date || "");
       setTargetMinutes(String(profileResult.data.target_minutes || 0));
+      setDefaultCardTheme(profileResult.data.default_post_card_theme || "default");
       (async () => {
         try {
           const { data: sd } = await supabase.from("profiles").select("target_start_date").eq("id", id).maybeSingle();
@@ -158,6 +169,20 @@ export default function EditProfilePage() {
     } else setMessage(error.message || "保存に失敗しました");
   };
 
+  const saveDefaultCardTheme = async (theme: "default" | "ocean" | "sunset" | "midnight" | "photo") => {
+    if (!isPro || !userId) return;
+    setDefaultCardTheme(theme);
+    setSavingCardTheme(true);
+    const { error } = await supabase.from("profiles").update({ default_post_card_theme: theme } as any).eq("id", userId);
+    setSavingCardTheme(false);
+    if (error) {
+      setMessage("保存に失敗しました。画面を更新してもう一度試してください。");
+      return;
+    }
+    setProfile((current: any) => ({ ...current, default_post_card_theme: theme }));
+    setMessage("投稿カードの柄を保存しました。次の投稿から反映されます。");
+  };
+
   if (!profile) return null;
 
   const sectionForm = (title: string, icon: string, onSubmit: (e: React.FormEvent) => Promise<void>, children: React.ReactNode) => (
@@ -245,6 +270,24 @@ export default function EditProfilePage() {
       }
 
       {sectionCard("SNS連携", "fa-share-nodes", <XConnectionCard />)}
+
+      {sectionCard("Pro投稿カード", "fa-palette",
+        isPro ? <>
+          <p className="text-xs text-gray-500">ここで選んだ柄が、変更するまで次の投稿すべてに使われます。</p>
+          <div className="flex flex-wrap gap-2">
+            {([['default','標準'], ['ocean','オーシャン'], ['sunset','サンセット'], ['midnight','ミッドナイト'], ['photo','写真背景']] as const).map(([value, label]) => (
+              <button key={value} type="button" disabled={savingCardTheme} onClick={() => saveDefaultCardTheme(value)}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold border cursor-pointer disabled:opacity-50 ${defaultCardTheme === value ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-purple-200 text-purple-700'}`}>
+                {defaultCardTheme === value && <i className="fas fa-check mr-1" />}{label}
+              </button>
+            ))}
+          </div>
+          {defaultCardTheme === "photo" && <p className="text-[11px] text-purple-700">投稿に添付する最初の写真を背景にします。写真がない投稿は標準表示です。</p>}
+        </> : <a href="/pro" className="flex items-center justify-between rounded-xl bg-purple-50 border border-purple-100 p-3 no-underline cursor-pointer">
+          <span className="text-sm font-bold text-purple-800"><i className="fas fa-lock mr-1" />投稿カードの柄はPro限定</span>
+          <i className="fas fa-chevron-right text-purple-500 text-xs" />
+        </a>
+      )}
 
       {sectionCard("ログインボーナス", "fa-calendar-check",
         <Link href="/gacha" className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 no-underline">
