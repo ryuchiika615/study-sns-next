@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
     userIds.length ? admin.from("profiles").select("id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url").in("id", userIds) : { data: [] },
     userIds.length ? admin.from("studying_sessions").select("user_id").in("user_id", userIds).gt("heartbeat_at", threeMinutesAgo) : { data: [] },
     postIds.length ? admin.from("activity_cheers").select("activity_post_id, user_id").in("activity_post_id", postIds) : { data: [] },
-    userIds.length ? admin.from("active_pro_users").select("user_id").in("user_id", userIds).is("revoked_at", null).lte("starts_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`) : { data: [] },
+    // active_pro_users is a safe public view containing only active IDs.
+    // Do not filter it by columns from the private pro_grants table.
+    userIds.length ? admin.from("active_pro_users").select("user_id").in("user_id", userIds) : { data: [] },
   ]);
   const profileMap = new Map((profilesResult.data || []).map((profile: any) => [profile.id, profile]));
   const proUserIds = new Set((grantsResult.data || []).map((grant: any) => grant.user_id));

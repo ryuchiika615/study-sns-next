@@ -3,16 +3,12 @@ export async function attachActiveProToPosts<T extends { user_id: string; user?:
   const userIds = [...new Set(posts.map((post) => post.user_id).filter(Boolean))];
   if (!userIds.length) return posts;
 
-  const now = new Date().toISOString();
-  // pro_grants itself is private. This public view intentionally exposes only
-  // the active user IDs so every viewer can render an author's Pro-only card.
+  // pro_grants itself is private. This view is already restricted to active
+  // Pro users and intentionally exposes only their IDs.
   const { data: grants } = await supabase
     .from("active_pro_users")
     .select("user_id")
-    .in("user_id", userIds)
-    .is("revoked_at", null)
-    .lte("starts_at", now)
-    .or(`expires_at.is.null,expires_at.gt.${now}`);
+    .in("user_id", userIds);
   const activeProUserIds = new Set((grants || []).map((grant: any) => grant.user_id));
 
   return posts.map((post) => post.user
