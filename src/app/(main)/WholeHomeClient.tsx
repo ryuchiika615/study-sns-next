@@ -241,10 +241,14 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   useEffect(() => {
     const fetchActive = async () => {
+      if (document.hidden) return;
       const res = await fetch("/api/study/active-users");
       if (res.ok) setActiveUsers(await res.json());
     };
     fetchActive();
+    const refreshActiveWhenVisible = () => {
+      if (!document.hidden) fetchActive();
+    };
     // Listen for restore event from AppShell gear menu
     const restoreHandler = () => setShowWeeklyReport(true);
     window.addEventListener("restore-weekly-report", restoreHandler);
@@ -266,9 +270,13 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
         }
       }
     });
-    const iv = setInterval(fetchActive, 30000);
+    // The count is informational, so refresh it gently and never while the
+    // tab is in the background.
+    const iv = setInterval(fetchActive, 2 * 60 * 1000);
+    document.addEventListener("visibilitychange", refreshActiveWhenVisible);
     return () => {
       clearInterval(iv);
+      document.removeEventListener("visibilitychange", refreshActiveWhenVisible);
       window.removeEventListener("restore-weekly-report", restoreHandler);
       window.removeEventListener("post-created", postHandler);
     };

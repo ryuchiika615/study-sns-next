@@ -79,6 +79,19 @@ export function itemDisplayName(name: string): string {
 
 const SUPABASE_STORAGE_RE = /^https:\/\/([^.]+)\.supabase\.co\/storage\/v1\/object\/public\/(.+)$/;
 
+// Keep uploads predictable on the free tier. Audio is intentionally capped
+// lower than the storage provider limit because it is served repeatedly.
+export const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+export const MAX_AUDIO_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+export function getUploadValidationError(file: File, kind: "image" | "audio"): string | null {
+  const maxBytes = kind === "image" ? MAX_IMAGE_UPLOAD_BYTES : MAX_AUDIO_UPLOAD_BYTES;
+  const label = kind === "image" ? "画像" : "音声";
+  if (!file.type.startsWith(`${kind}/`)) return `${label}ファイルを選択してください。`;
+  if (file.size > maxBytes) return `${label}は${maxBytes / 1024 / 1024}MB以下にしてください。`;
+  return null;
+}
+
 export function compressImage(file: File, quality = 0.8, maxWidth = 1920): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();

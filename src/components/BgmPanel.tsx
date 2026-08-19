@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
+import { getUploadValidationError } from "@/lib/utils";
 import Link from "next/link";
 import { BottomNav } from "./BottomNav";
 
@@ -129,6 +130,8 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const handleLocalFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = getUploadValidationError(file, "audio");
+    if (validationError) { alert(validationError); e.target.value = ""; return; }
     const name = file.name.replace(/\.[^/.]+$/, "").slice(0, 50);
     const id = `local-${Date.now()}`;
     await idbSave(id, file);
@@ -142,6 +145,8 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = getUploadValidationError(file, "audio");
+    if (validationError) { alert(validationError); e.target.value = ""; return; }
     setUploading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setUploading(false); return; }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
 import StudyTimer from "@/components/StudyTimer";
-import { compressImage, notifyMentions } from "@/lib/utils";
+import { compressImage, getUploadValidationError, notifyMentions } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
 import ImageCropper from "@/components/ImageCropper";
 import MentionAutocomplete from "@/components/MentionAutocomplete";
@@ -371,9 +371,14 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               onChange={(e) => {
                 const files = e.target.files;
                 if (!files) return;
-                const newImages = Array.from(files).map(file => ({
-                  blob: file,
-                  originalUrl: URL.createObjectURL(file),
+                const selected = Array.from(files);
+                const invalid = selected.map(file => getUploadValidationError(file, "image")).find(Boolean);
+                if (invalid) { addToast({ message: invalid, type: "error" }); e.target.value = ""; return; }
+                const newImages = await Promise.all(selected.map(async file => {
+                  // Some browser formats cannot be drawn on canvas. Keep the
+                  // original in that rare case after the size check above.
+                  const blob = await compressImage(file).catch(() => file);
+                  return { blob, originalUrl: URL.createObjectURL(blob) };
                 }));
                 setAttachedImages(prev => [...prev, ...newImages]);
                 e.target.value = "";
@@ -408,7 +413,12 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               <i className="fas fa-music" />
               音声ファイルを添付
               <input type="file" accept="audio/*" className="hidden"
-                onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  const error = file ? getUploadValidationError(file, "audio") : null;
+                  if (error) { addToast({ message: error, type: "error" }); e.target.value = ""; return; }
+                  setAudioFile(file);
+                }} />
             </label>
             {audioFile && (
               <span className="text-xs text-green-600 flex items-center gap-1">

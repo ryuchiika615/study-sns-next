@@ -31,11 +31,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     dismissedRef.current = new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]"));
 
     const doPing = () => {
+      if (document.hidden) return;
       navigator.sendBeacon("/api/auth/ping", JSON.stringify({}));
     };
 
     doPing();
-    const interval = setInterval(doPing, 5 * 60 * 1000);
+    // This is only a presence hint. A longer interval is enough and keeps
+    // background tabs from continually invoking the server.
+    const interval = setInterval(doPing, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
