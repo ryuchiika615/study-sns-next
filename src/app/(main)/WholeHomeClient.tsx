@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import PostCard from "@/components/PostCard";
+import HomeActivityFeed from "@/components/HomeActivityFeed";
 import { useToast } from "@/components/ToastProvider";
 const SurveyPopup = dynamic(() => import("@/components/SurveyPopup"), { ssr: false });
 const ChallengePopup = dynamic(() => import("@/components/ChallengePopup"), { ssr: false });
@@ -377,6 +378,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
         </div>
       )}
+      <HomeActivityFeed />
       <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (
