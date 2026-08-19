@@ -697,14 +697,17 @@ const handleCommentQuote = (c: any) => {
       </div>
 
       {showComments && (
-        <div className="px-4 pb-4 bg-white">
+        <section className="mt-1 border-t border-white/20 bg-slate-950/85 px-4 pb-4 pt-3 backdrop-blur-sm">
+          <div className="mb-3 flex items-center justify-between"><p className="text-xs font-black text-white"><i className="fas fa-comments mr-1.5 text-sky-300" />返信 {comments.length ? `${comments.length}件` : ""}</p><button onClick={toggleComments} className="text-[11px] font-bold text-slate-300">閉じる</button></div>
+          {comments.length === 0 && <div className="mb-3 rounded-xl border border-dashed border-slate-600 bg-white/5 px-3 py-4 text-center text-xs text-slate-300">まだ返信はありません。最初のひとことを送ってみよう。</div>}
           {comments.map((c: any) => (
-            <div key={c.id} className="mb-2.5 pb-2.5 border-b border-gray-100 text-sm">
+            <div key={c.id} className="mb-2.5 rounded-xl border border-white/10 bg-white/10 p-3 text-sm shadow-sm">
               <div className="flex items-start gap-2">
+                <Link href={`/profile/${c.user?.id || c.user_id}`} className="shrink-0"><img src={c.user?.icon_url || "/default-icon.png"} alt="" className="h-8 w-8 rounded-full border border-white/40 object-cover" /></Link>
                 <div className="flex-1 min-w-0">
-                  <strong>{c.user?.display_name || "ユーザー"}</strong>
-                  <span className="text-gray-500 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
-                  <span className="text-gray-400 text-xs ml-1">· {formatRelativeTime(c.created_at)}</span>
+                  <strong className="text-white">{c.user?.display_name || "ユーザー"}</strong>
+                  <span className="text-slate-300 text-xs ml-1">@{c.user?.username || c.user_id?.slice(0, 8)}</span>
+                  <span className="text-slate-400 text-xs ml-1">· {formatRelativeTime(c.created_at)}</span>
                   {editCommentId === c.id ? (
                     <div className="mt-1 flex gap-1">
                       <input
@@ -724,11 +727,11 @@ const handleCommentQuote = (c: any) => {
                     </div>
                   ) : (
                     <>
-                      <p className="mt-1 text-gray-900 whitespace-pre-wrap">{highlightMentions(c.text)}</p>
+                      <p className="mt-1 text-white whitespace-pre-wrap">{highlightMentions(c.text)}</p>
                       {c.image_urls?.length > 0 && (
                         <div className="mt-2 flex gap-2">
                           {c.image_urls.map((url: string, i: number) => (
-                            <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/30">
                               <Image src={url} fill className="object-cover cursor-pointer" onClick={() => setViewingImage(url)} sizes="80px" alt="" />
                             </div>
                           ))}
@@ -740,11 +743,11 @@ const handleCommentQuote = (c: any) => {
                 {c.user_id === currentUserId && (
                   <div className="flex gap-1 items-center shrink-0">
                     <button onClick={() => startEditComment(c)}
-                      className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs p-1">
+                    className="text-slate-400 hover:text-sky-300 bg-none border-none cursor-pointer text-xs p-1">
                       <i className="fas fa-pen" />
                     </button>
                     <button onClick={() => deleteComment(c.id)}
-                      className="text-gray-400 hover:text-red-500 bg-none border-none cursor-pointer text-xs p-1">
+                    className="text-slate-400 hover:text-red-300 bg-none border-none cursor-pointer text-xs p-1">
                       <i className="fas fa-times" />
                     </button>
                   </div>
@@ -753,40 +756,41 @@ const handleCommentQuote = (c: any) => {
               {editCommentId !== c.id && (
                 <div className="flex items-center gap-2 mt-1">
                   <button onClick={() => handleReply(c.user?.username || c.user_id?.slice(0, 8))}
-                    className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs">
+                    className="text-slate-300 hover:text-sky-300 bg-none border-none cursor-pointer text-xs">
                     <i className="fas fa-reply mr-1" />返信
                   </button>
                   <button onClick={() => toggleCommentLike(c.id)}
                     className={`bg-none border-none cursor-pointer text-xs flex items-center gap-0.5 ${
-                      commentLikes[c.id] ? "text-red-500" : "text-gray-400 hover:text-red-500"
+                      commentLikes[c.id] ? "text-rose-400" : "text-slate-300 hover:text-rose-300"
                     }`}>
                     <i className={`${commentLikes[c.id] ? "fas" : "far"} fa-heart`} />
                     <span>{(commentLikesCount[c.id] || 0) > 0 ? commentLikesCount[c.id] : ""}</span>
                   </button>
                   <button onClick={() => handleCommentQuote(c)}
-                    className="text-gray-400 hover:text-blue-500 bg-none border-none cursor-pointer text-xs">
+                    className="text-slate-300 hover:text-sky-300 bg-none border-none cursor-pointer text-xs">
                     <i className="fas fa-retweet mr-0.5" />引用
                   </button>
                 </div>
               )}
             </div>
           ))}
-          <div className="flex gap-2 mt-2">
-            <div className="flex-1 flex items-center gap-1 bg-gray-100 rounded-full px-3 focus-within:bg-white focus-within:border focus-within:border-primary">
+          <div className="mt-3 rounded-2xl border border-sky-300/30 bg-slate-800/90 p-2 shadow-inner">
+            <p className="px-2 pb-1 text-[10px] font-bold text-sky-200">💬 この投稿に返信する</p><div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-1 rounded-xl bg-slate-900 px-3 ring-1 ring-white/10 focus-within:ring-sky-300">
               <div className="relative flex-1">
                 <input
                   ref={commentInputRef}
                   type="text"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
-                  placeholder="返信をリュイート"
-                  className="w-full bg-transparent border-none outline-none py-2 text-sm"
+                  placeholder="返信を書く…"
+                  className="w-full bg-transparent border-none outline-none py-2.5 text-sm text-white placeholder:text-slate-400"
                   maxLength={500}
                   onKeyDown={(e) => e.key === "Enter" && addComment()}
                 />
                 <MentionAutocomplete textareaRef={commentInputRef} content={commentText} onChange={(v) => setCommentText(v)} />
               </div>
-              <label className="text-gray-400 hover:text-primary cursor-pointer text-xs p-1">
+              <label className="text-slate-300 hover:text-sky-300 cursor-pointer text-xs p-1">
                 <i className="fas fa-camera" />
                 <input type="file" accept="image/*" multiple className="hidden"
                   onChange={(e) => {
@@ -802,14 +806,15 @@ const handleCommentQuote = (c: any) => {
               </label>
             </div>
             <button onClick={addComment}
-              className="bg-primary text-white rounded-full px-4 text-sm font-bold border-none cursor-pointer">
+              className="rounded-xl bg-sky-500 px-4 text-sm font-bold text-white shadow-sm hover:bg-sky-400 border-none cursor-pointer">
               返信
             </button>
+            </div>
           </div>
           {commentImages.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {commentImages.map((img, i) => (
-                <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200">
+                <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-white/30">
                   <img src={img.originalUrl} alt="" className="w-full h-full object-cover" />
                   <button type="button" onClick={() => {
                     setCommentImages(prev => prev.filter((_, j) => j !== i));
@@ -822,7 +827,7 @@ const handleCommentQuote = (c: any) => {
               ))}
             </div>
           )}
-        </div>
+        </section>
       )}
 
       {viewingImage && (
