@@ -89,3 +89,9 @@ create policy "posts_insert" on public.posts for insert with check (
     select 1 from public.study_group_members m where m.group_id = posts.group_id and m.user_id = auth.uid()
   ))
 );
+drop policy if exists "posts_update" on public.posts;
+create policy "posts_update" on public.posts for update using (auth.uid() = user_id) with check (
+  auth.uid() = user_id and (group_id is null or exists (
+    select 1 from public.study_group_members m where m.group_id = posts.group_id and m.user_id = auth.uid()
+  ))
+);
