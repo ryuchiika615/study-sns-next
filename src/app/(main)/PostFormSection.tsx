@@ -39,6 +39,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
   const [attachedImages, setAttachedImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
   const [subjectTemplates, setSubjectTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [isPro, setIsPro] = useState(false);
+  const [cardTheme, setCardTheme] = useState<"default" | "ocean" | "sunset" | "midnight" | "photo">("default");
   const subjectRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,8 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       setSubjectTemplates(tmplRes.data || []);
     });
   }, [userId]);
+
+  useEffect(() => { fetch("/api/pro/status").then(async r => r.ok && setIsPro((await r.json()).isPro)).catch(() => {}); }, []);
 
   useEffect(() => {
     if (matchedTextbook && !tbPages) {
@@ -161,6 +165,9 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
       addToast({ message: "投稿失敗: 応答がありません", type: "error" });
       return;
     }
+    if (isPro && cardTheme !== "default") {
+      await supabase.from("posts").update({ card_theme: cardTheme, card_background_image_url: cardTheme === "photo" ? imageUrls[0] || null : null } as any).eq("id", data.post_id);
+    }
     if (data.streak) {
       addToast({ message: "", type: "streak", streak: data.streak.streak, bonus: data.streak.bonus_points });
     }
@@ -191,6 +198,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
     setTbPages("");
     setBeeryualResult(null);
     setSilentPost(false);
+    setCardTheme("default");
     setAudioFile(null);
     setAttachedImages([]);
 
@@ -407,6 +415,14 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
               </div>
             )}
           </div>
+
+          {isPro && <div className="mt-2.5 rounded-xl border border-purple-200 bg-purple-50 p-3">
+            <p className="text-xs font-bold text-purple-800"><i className="fas fa-crown mr-1" />Pro投稿カード</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {([['default','標準'], ['ocean','オーシャン'], ['sunset','サンセット'], ['midnight','ミッドナイト'], ['photo','写真背景']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setCardTheme(value)} className={`rounded-full px-3 py-1 text-xs font-bold border cursor-pointer ${cardTheme === value ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-purple-200 text-purple-700'}`}>{label}</button>)}
+            </div>
+            {cardTheme === 'photo' && <p className="mt-2 text-[11px] text-purple-700">添付した最初の写真をカード背景にします。</p>}
+          </div>}
 
           <div className="mt-2.5 flex items-center gap-2">
             <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100">
