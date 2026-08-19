@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Chart } from "@/lib/chart-registry";
 import ProPlanCard from "@/components/ProPlanCard";
@@ -180,6 +181,7 @@ export default function TasksClient({
   textbookLogs: TextbookLog[]; calendarData: CalendarDay[]; initialTodos: Todo[];
 }) {
   const supabase = createClient();
+  const router = useRouter();
   const [habits, setHabits] = useState<Habit[]>(initialHabits);
   const [logs, setLogs] = useState<HabitLog[]>(initialLogs);
   const [textbooks, setTextbooks] = useState<Textbook[]>(initialTextbooks);
@@ -318,7 +320,7 @@ export default function TasksClient({
       setTextbooks(prev => prev.map(t => t.id === editTextbookId ? { ...t, title: formTitle.trim(), total_pages: total, pages_completed: Math.min(parseInt(formProgress) || 0, total), target_end_date: formTarget || null } : t));
       addToast("更新しました");
     } else {
-      if (!isPro && textbooks.length >= 3) { addToast("FREEでは教材は3冊までです。Proなら無制限にできます。"); return; }
+      if (!isPro && textbooks.length >= 3) { router.push("/pro?from=textbook-limit"); return; }
       const { data, error } = await supabase.from("textbooks").insert({ user_id: userId, title: formTitle.trim(), total_pages: total, pages_completed: 0, target_end_date: formTarget || null }).select().single();
       if (error) { addToast(error.message); return; }
       setTextbooks(prev => [data, ...prev]);
@@ -380,7 +382,7 @@ export default function TasksClient({
 
   const addTodo = async () => {
     if (!newTodoTitle.trim() || !newTodoDue) return;
-    if (!isPro && todos.length >= 5) { addToast("FREEではタスクは5件までです。Proなら無制限にできます。"); return; }
+    if (!isPro && todos.length >= 5) { router.push("/pro?from=task-limit"); return; }
     const maxOrder = todos.reduce((m, t) => Math.max(m, t.sort_order), 0);
     const { data, error } = await supabase.from("todos").insert({
       user_id: userId, title: newTodoTitle.trim(), due_date: newTodoDue, sort_order: maxOrder + 1,
