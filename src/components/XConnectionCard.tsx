@@ -60,21 +60,28 @@ export default function XConnectionCard() {
   }, []);
 
   return (
-    <div className="flex items-center gap-3 min-w-0">
-      <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center font-bold text-sm">𝕏</div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold">X {connection && <span className="ml-1 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">✓ 連携済み</span>}</p>
-        {loading ? <p className="text-xs text-gray-500">確認中...</p> : connection ? <div className="text-xs text-gray-500 space-y-0.5">
-          <p>リュッター：{ryutter?.display_name || ryutter?.username || "ユーザー"} <span className="text-gray-400">@{ryutter?.username || "—"}</span></p>
-          <p>X：<b className="text-gray-700">@{connection.username || connection.display_name || "Xユーザー"}</b> と連携中</p>
-        </div> : <p className="text-xs text-gray-500">学習記録をXでシェアできます</p>}
+    <div className="space-y-3">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+        <div className="w-10 h-10 shrink-0 rounded-full bg-black text-white flex items-center justify-center font-bold text-base">𝕏</div>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm font-bold">Xアカウント</p>
+            {connection ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">✓ 連携済み</span> : <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">未連携</span>}
+          </div>
+          {loading ? <p className="text-xs text-gray-500 mt-0.5">連携状態を確認中...</p> : connection ? <div className="text-xs text-gray-500 mt-1 space-y-0.5 break-words">
+            <p>リュッター：<b className="text-gray-700">{ryutter?.display_name || ryutter?.username || "ユーザー"}</b> <span className="text-gray-400">@{ryutter?.username || "—"}</span></p>
+            <p>X：<b className="text-gray-700">@{connection.username || connection.display_name || "Xユーザー"}</b> を連携中</p>
+          </div> : <p className="text-xs text-gray-500 mt-1">連携すると、リュッターの投稿をXでシェアできます。</p>}
+        </div>
+        <div className="col-span-2 sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          {connection ? (
+            <button onClick={disconnect} className="w-full sm:w-auto text-xs border border-gray-200 rounded-full px-4 py-2 text-gray-600 hover:bg-gray-50 cursor-pointer whitespace-nowrap">連携を解除</button>
+          ) : (
+            <button onClick={connect} className="w-full sm:w-auto text-xs bg-black text-white rounded-full px-4 py-2 font-bold cursor-pointer whitespace-nowrap">Xと連携する</button>
+          )}
+        </div>
       </div>
-      {connection ? (
-        <button onClick={disconnect} className="text-xs border border-gray-200 rounded-full px-3 py-1.5 text-gray-600 hover:bg-gray-50 cursor-pointer whitespace-nowrap">解除</button>
-      ) : (
-        <button onClick={connect} className="text-xs bg-black text-white rounded-full px-3 py-1.5 font-bold cursor-pointer">Xと連携する</button>
-      )}
-      {message && <p className="basis-full text-xs text-primary -mt-1">{message}</p>}
+      {message && <p className="text-xs text-primary">{message}</p>}
     </div>
   );
 }
