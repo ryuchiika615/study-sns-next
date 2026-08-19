@@ -19,6 +19,19 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   }
 }
 
+async function syncCheckout(session: Stripe.Checkout.Session) {
+  if (session.mode !== "subscription" || !session.subscription || !session.client_reference_id) return;
+  const stripe = getStripe();
+  const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  // Checkout reliably contains the signed-in Ryutter user ID. Store it on the
+  // subscription too, then sync immediately instead of waiting for another event.
+  const linked = await stripe.subscriptions.update(subscription.id, {
+    metadata: { ...subscription.metadata, user_id: session.client_reference_id },
+  });
+  await syncSubscription(linked);
+}
+
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -26,7 +39,9 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
   try { event = getStripe().webhooks.constructEvent(await request.text(), signature, secret); }
   catch { return new NextResponse("署名が正しくありません", { status: 400 }); }
-  if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+  if (event.type === "checkout.session.completed") {
+    await syncCheckout(event.data.object as Stripe.Checkout.Session);
+  } else if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
     await syncSubscription(event.data.object as Stripe.Subscription);
   }
   return NextResponse.json({ received: true });
