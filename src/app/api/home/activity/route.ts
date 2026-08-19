@@ -28,12 +28,17 @@ export async function GET(request: NextRequest) {
   const postIds = (posts || []).map((post: any) => post.id);
   const userIds = [...new Set((posts || []).map((post: any) => post.user_id))];
   const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-  const [profilesResult, sessionsResult, cheersResult] = await Promise.all([
-    userIds.length ? admin.from("profiles").select("id, display_name, username, icon_url").in("id", userIds) : { data: [] },
+  const [profilesResult, sessionsResult, cheersResult, grantsResult] = await Promise.all([
+    userIds.length ? admin.from("profiles").select("id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url").in("id", userIds) : { data: [] },
     userIds.length ? admin.from("studying_sessions").select("user_id").in("user_id", userIds).gt("heartbeat_at", threeMinutesAgo) : { data: [] },
     postIds.length ? admin.from("activity_cheers").select("activity_post_id, user_id").in("activity_post_id", postIds) : { data: [] },
+    userIds.length ? admin.from("active_pro_users").select("user_id").in("user_id", userIds).is("revoked_at", null).lte("starts_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`) : { data: [] },
   ]);
   const profileMap = new Map((profilesResult.data || []).map((profile: any) => [profile.id, profile]));
+  const proUserIds = new Set((grantsResult.data || []).map((grant: any) => grant.user_id));
+  const itemIds = [...new Set((profilesResult.data || []).flatMap((profile: any) => [profile.current_title_id, profile.current_avatar_id]).filter(Boolean))];
+  const { data: items } = itemIds.length ? await admin.from("gacha_items").select("id, name, rarity").in("id", itemIds) : { data: [] };
+  const itemMap = new Map((items || []).map((item: any) => [item.id, item]));
   const studyingIds = new Set((sessionsResult.data || []).map((session: any) => session.user_id));
   const cheers = new Map<string, { count: number; mine: boolean }>();
   for (const cheer of (cheersResult.data || []) as any[]) {
@@ -51,7 +56,18 @@ export async function GET(request: NextRequest) {
     studyMinutes: post.study_minutes || 0,
     workoutMinutes: post.workout_minutes || 0,
     createdAt: post.created_at,
-    user: profileMap.get(post.user_id) || null,
+    user: (() => {
+      const profile = profileMap.get(post.user_id);
+      if (!profile) return null;
+      const hasActivePro = proUserIds.has(post.user_id);
+      return {
+        ...profile,
+        hasActivePro,
+        currentTitle: profile.current_title_id ? itemMap.get(profile.current_title_id) || null : null,
+        currentAvatar: profile.current_avatar_id ? itemMap.get(profile.current_avatar_id) || null : null,
+        postCardBackgroundUrl: hasActivePro ? profile.post_card_background_url : null,
+      };
+    })(),
     isStudying: studyingIds.has(post.user_id),
     cheerCount: cheers.get(post.id)?.count || 0,
     cheeredByMe: cheers.get(post.id)?.mine || false,
