@@ -28,6 +28,7 @@ export default function AnalyticsPage() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [workoutMode, setWorkoutMode] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -144,6 +145,7 @@ export default function AnalyticsPage() {
       setUser(authData.user);
       // unread count fetched by AppShell
     });
+    fetch("/api/pro/status").then(async (res) => res.ok && setIsPro(Boolean((await res.json()).isPro))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -152,6 +154,7 @@ export default function AnalyticsPage() {
 
   const handleDateSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPro) { router.push("/pro?from=analytics"); return; }
     fetchData(start, end, workoutMode);
   };
 
@@ -186,20 +189,10 @@ export default function AnalyticsPage() {
         </div>
 
         {/* 日付範囲 */}
-        <form onSubmit={handleDateSearch}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center gap-2">
-            <input type="date" value={start} onChange={(e) => setStart(e.target.value)}
-              className="flex-1 rounded-lg border-gray-200 text-sm bg-gray-50 px-3 py-2" />
-            <span className="text-gray-400 text-sm">〜</span>
-            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)}
-              className="flex-1 rounded-lg border-gray-200 text-sm bg-gray-50 px-3 py-2" />
-            <button type="submit"
-              className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-600 active:scale-95 transition">
-              表示
-            </button>
-          </div>
-        </form>
+        {isPro ? <form onSubmit={handleDateSearch} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <p className="mb-2 text-xs font-bold text-purple-700"><i className="fas fa-crown mr-1" />Pro：好きな期間で分析</p>
+          <div className="flex items-center gap-2"><input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="flex-1 rounded-lg border-gray-200 text-sm bg-gray-50 px-3 py-2" /><span className="text-gray-400 text-sm">〜</span><input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className="flex-1 rounded-lg border-gray-200 text-sm bg-gray-50 px-3 py-2" /><button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer">表示</button></div>
+        </form> : <button onClick={() => router.push("/pro?from=analytics")} className="w-full rounded-xl border border-purple-200 bg-purple-50 p-4 text-left cursor-pointer"><p className="text-sm font-bold text-purple-900"><i className="fas fa-lock mr-1.5" />好きな期間で詳しく分析</p><p className="mt-1 text-xs text-purple-700">30日より前の記録や、科目別の週次推移を見るにはProへ</p></button>}
 
         {/* 科目別内訳 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -227,7 +220,7 @@ export default function AnalyticsPage() {
           <BarChart labels={data.bar_labels} data={data.bar_data} />
         </div>
 
-        {data.weeklyLabels?.length > 0 && (
+        {isPro && data.weeklyLabels?.length > 0 && (
           <WeeklyChart labels={data.weeklyLabels} datasets={data.weeklyDatasets.map((d: any) => ({
             ...d,
             backgroundColor: d.backgroundColor,

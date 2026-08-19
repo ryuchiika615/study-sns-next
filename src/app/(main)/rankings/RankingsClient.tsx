@@ -16,6 +16,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
   const [loading, setLoading] = useState(true);
   const [workoutMode, setWorkoutMode] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const supabase = createClient();
 
   const fetchRankings = async (d: number, isWorkout: boolean) => {
@@ -64,6 +65,7 @@ export default function RankingsClient({ initialRanking, initialDays }: {
   useEffect(() => {
     fetchRankings(initialDays, false);
     supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
+    fetch("/api/pro/status").then(async (res) => res.ok && setIsPro(Boolean((await res.json()).isPro))).catch(() => {});
   }, []);
 
   const toggleWorkout = (isWorkout: boolean) => {
@@ -106,11 +108,11 @@ export default function RankingsClient({ initialRanking, initialDays }: {
         {/* 期間選択 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 flex">
           {[7, 30, 90, 365].map((d) => (
-            <button key={d} onClick={() => { setDays(d); fetchRankings(d, workoutMode); }}
+            <button key={d} onClick={() => { if (d > 30 && !isPro) { window.location.href = "/pro?from=ranking-history"; return; } setDays(d); fetchRankings(d, workoutMode); }}
               className={`flex-1 py-2 text-sm font-bold rounded-lg cursor-pointer transition active:scale-95 ${
                 days === d ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}>
-              {d === 7 ? "週間" : d === 30 ? "月間" : d === 90 ? "3ヶ月" : "年間"}
+              {d > 30 && !isPro && <i className="fas fa-lock mr-1 text-[10px]" />}{d === 7 ? "週間" : d === 30 ? "月間" : d === 90 ? "3ヶ月" : "年間"}
             </button>
           ))}
         </div>

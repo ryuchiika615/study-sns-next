@@ -7,12 +7,17 @@ const rows = [
   ["毎日の習慣", "ずっと無料", "ずっと使える"],
   ["教材の進捗管理", "3冊まで", "無制限"],
   ["試験日から逆算する学習計画", "—", "使える"],
-  ["長期の分析・コーチング", "基本表示", "今後Proに追加"],
+  ["詳細分析・AIコーチング", "30日間の基本分析", "任意期間・週次推移・AI"],
+  ["復習の記憶保持予測", "—", "使える"],
+  ["ランキング履歴", "週間・月間", "3か月・年間も使える"],
 ];
 
 const entryMessage: Record<string, string> = {
   "task-limit": "タスクがFREEの上限（5件）に達しました。Proなら無制限に追加できます。",
   "textbook-limit": "教材がFREEの上限（3冊）に達しました。Proなら無制限に追加できます。",
+  "analytics": "任意期間の分析と科目別の週次推移はPro限定です。",
+  "study-stats": "復習の記憶保持予測・詳細な学習統計はPro限定です。",
+  "ranking-history": "3か月・年間のランキング履歴はPro限定です。",
 };
 
 export default function ProPage({ searchParams }: { searchParams?: { from?: string } }) {

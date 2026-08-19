@@ -1,11 +1,15 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { getProUser } from "@/lib/pro-server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import StatsClient from "./StatsClient";
 
 export default async function StatsPage() {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
+  const { isPro } = await getProUser();
+  if (!isPro) return <div className="mx-auto max-w-md p-6 text-center"><div className="mt-10 rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-6"><p className="text-3xl">🧠</p><h1 className="mt-3 text-lg font-bold text-purple-950">詳細な学習統計はPro限定</h1><p className="mt-2 text-sm leading-6 text-purple-800">復習の記憶保持予測、カードの定着度、今後の復習予定をまとめて確認できます。</p><Link href="/pro?from=study-stats" className="mt-5 inline-block rounded-full bg-purple-600 px-5 py-3 text-sm font-bold text-white no-underline">月額240円でProを見る</Link></div></div>;
 
   const today = new Date().toISOString().split("T")[0];
 
