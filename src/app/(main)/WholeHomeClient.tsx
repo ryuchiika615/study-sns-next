@@ -388,6 +388,15 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
       )}
       <div className="mx-4 mb-3 rounded-xl bg-slate-800 p-1.5"><div className="flex"><button onClick={() => changeFeed("all")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "all" ? "bg-blue-500 text-white" : "text-slate-300"}`}>すべて</button><button onClick={() => changeFeed("recruitment")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "recruitment" ? "bg-amber-500 text-white" : "text-slate-300"}`}>📣 募集だけ</button><button onClick={() => changeFeed("activity")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "activity" ? "bg-emerald-500 text-white" : "text-slate-300"}`}>⚡ 活動だけ</button></div></div>
       {feedFilter !== "recruitment" && <HomeActivityFeed onCountChange={setActivityCount} />}
+      {feedFilter === "all" && <a href="/pro" className="relative mx-4 mb-4 block overflow-hidden rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 p-4 text-white no-underline shadow-lg">
+        <div className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/15" />
+        <div className="relative flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/50 bg-slate-950/35 text-2xl shadow">👑</div>
+          <div className="min-w-0 flex-1"><p className="text-sm font-black">投稿を、あなたらしく。</p><p className="mt-0.5 text-xs text-white/90">Proなら投稿カードもプロフィールも自分のスタイルに。</p></div>
+          <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-violet-700">Proを見る</span>
+        </div>
+        <div className="relative mt-3 flex gap-2 overflow-hidden text-[11px] font-bold"><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">🖼 背景を設定</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">👤 アイコン枠</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">🏷 称号</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">👑 PRO表示</span></div>
+      </a>}
       {feedFilter !== "activity" && <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (

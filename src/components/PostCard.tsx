@@ -324,7 +324,7 @@ const handleCommentQuote = (c: any) => {
                 {post.user?.display_name || "ユーザー"}
               </Link>
             </strong>
-            {proPost.pro_badge && <span className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-1.5 py-0.5 text-[10px] font-bold text-white" title="リュッター Pro">👑 PRO</span>}
+            {post.user?.has_active_pro && <span className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-1.5 py-0.5 text-[10px] font-bold text-white" title="リュッター Pro">👑 PRO</span>}
             {post.user?.consecutive_post_days ? (
               <span className="text-xs font-bold text-orange-500" title={`${post.user.consecutive_post_days}日連続勉強中`}>
                 🔥{post.user.consecutive_post_days}
