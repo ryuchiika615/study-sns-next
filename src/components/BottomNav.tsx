@@ -9,6 +9,7 @@ const primaryItems = [
   { href: "/groups", icon: "fa-users", label: "グループ", customColor: "#60a5fa" },
   { href: "/tasks", icon: "fa-tasks", label: "タスク", customColor: "#4ade80" },
   { href: "/study", icon: "fa-brain", label: "学習", customColor: "#a78bfa" },
+  { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール", customColor: "#34d399" },
 ];
 
 const moreItems = [
@@ -16,7 +17,6 @@ const moreItems = [
   { href: "/rankings", icon: "fa-trophy", label: "ランキング", description: "学習の成果を確認", customColor: "#f472b6" },
   { href: "/analytics", icon: "fa-chart-pie", label: "分析", description: "学習の振り返り", customColor: "#c084fc" },
   { href: "/shop", icon: "fa-store", label: "ショップ", customColor: "#fb923c" },
-  { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール・設定", description: "アカウントとカスタマイズ", customColor: "#34d399" },
 ];
 
  function BottomNavInner() {
