@@ -7,7 +7,10 @@ export default function ProPlanCard({ compact = false }: { compact?: boolean }) 
   const [status, setStatus] = useState<{ isPro: boolean; expiresAt?: string | null; source?: string | null } | null>(null);
 
   useEffect(() => {
-    fetch("/api/pro/status").then(async (res) => res.ok && setStatus(await res.json())).catch(() => {});
+    const load = () => fetch("/api/pro/status").then(async (res) => res.ok && setStatus(await res.json())).catch(() => {});
+    if (window.location.search.includes("checkout=success")) {
+      fetch("/api/stripe/sync", { method: "POST" }).finally(load);
+    } else load();
   }, []);
 
   if (status?.isPro) {
