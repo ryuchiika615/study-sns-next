@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { compressImage } from "@/lib/utils";
 import XConnectionCard from "@/components/XConnectionCard";
+import ProPlanCard from "@/components/ProPlanCard";
 
 const sectionCard = (title: string, icon: string, children: React.ReactNode) => (
   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -49,6 +50,7 @@ export default function SettingsClient() {
         )}
 
         {sectionCard("SNS連携", "fa-share-nodes", <XConnectionCard />)}
+        {sectionCard("プラン", "fa-crown", <ProPlanCard />)}
 
         {/* 要望・報告 */}
         {sectionCard("要望・報告", "fa-envelope",

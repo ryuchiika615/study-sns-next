@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { Chart } from "@/lib/chart-registry";
+import ProPlanCard from "@/components/ProPlanCard";
 
 type Habit = { id: string; name: string; sort_order: number; days: number[] | null; notify_enabled: boolean; notify_time: string };
 
@@ -209,6 +210,7 @@ export default function TasksClient({
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
   const [editingTodoTitle, setEditingTodoTitle] = useState("");
   const [editingTodoDue, setEditingTodoDue] = useState("");
+  const [isPro, setIsPro] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -227,6 +229,10 @@ export default function TasksClient({
   }, [habits, userId]);
 
   useEffect(() => { if (habits.length === 0) seedHabits(); }, []);
+
+  useEffect(() => {
+    fetch("/api/pro/status").then(async (res) => { if (res.ok) setIsPro((await res.json()).isPro); }).catch(() => {});
+  }, []);
 
   const toggleHabit = async (habitId: string) => {
     const existing = logs.find(l => l.habit_id === habitId && l.date === today);
@@ -312,6 +318,7 @@ export default function TasksClient({
       setTextbooks(prev => prev.map(t => t.id === editTextbookId ? { ...t, title: formTitle.trim(), total_pages: total, pages_completed: Math.min(parseInt(formProgress) || 0, total), target_end_date: formTarget || null } : t));
       addToast("更新しました");
     } else {
+      if (!isPro && textbooks.length >= 3) { addToast("FREEでは教材は3冊までです。Proなら無制限にできます。"); return; }
       const { data, error } = await supabase.from("textbooks").insert({ user_id: userId, title: formTitle.trim(), total_pages: total, pages_completed: 0, target_end_date: formTarget || null }).select().single();
       if (error) { addToast(error.message); return; }
       setTextbooks(prev => [data, ...prev]);
@@ -373,6 +380,7 @@ export default function TasksClient({
 
   const addTodo = async () => {
     if (!newTodoTitle.trim() || !newTodoDue) return;
+    if (!isPro && todos.length >= 5) { addToast("FREEではタスクは5件までです。Proなら無制限にできます。"); return; }
     const maxOrder = todos.reduce((m, t) => Math.max(m, t.sort_order), 0);
     const { data, error } = await supabase.from("todos").insert({
       user_id: userId, title: newTodoTitle.trim(), due_date: newTodoDue, sort_order: maxOrder + 1,
@@ -423,6 +431,8 @@ export default function TasksClient({
           {message}
         </div>
       )}
+
+      {!isPro && <ProPlanCard compact />}
 
       <div className="flex gap-2">
         <button onClick={() => setActiveTab("records")}
