@@ -1,10 +1,13 @@
 import ProPlanCard from "@/components/ProPlanCard";
+import { ProCheckoutButton } from "@/components/ProCheckoutButton";
+import Link from "next/link";
 
 const rows = [
   ["学習記録・投稿・交流", "ずっと無料", "ずっと使える"],
   ["タスク管理", "5件まで", "無制限"],
   ["毎日の習慣", "ずっと無料", "ずっと使える"],
   ["教材の進捗管理", "3冊まで", "無制限"],
+  ["試験日から逆算する学習計画", "—", "使える"],
   ["長期の分析・コーチング", "基本表示", "今後Proに追加"],
 ];
 
@@ -23,9 +26,12 @@ export default function ProPage() {
       {rows.map(([feature, free, pro]) => <div key={feature} className="grid grid-cols-[1fr_90px_90px] border-t border-gray-100 px-3 py-3 text-sm"><span className="font-medium">{feature}</span><span className="text-gray-500">{free}</span><span className="font-bold text-purple-700">{pro}</span></div>)}
     </div>
 
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-      <p className="font-bold">Proの決済は準備中です</p>
-      <p className="mt-1 text-xs leading-5">現在は運営からの無料付与でProを利用できます。有料開始時は、この画面から安全に申し込めるようにします。</p>
+    <Link href="/pro/planner" className="block rounded-xl border border-purple-200 bg-purple-50 p-4 no-underline"><p className="font-bold text-purple-900">🎯 試験逆算プラン</p><p className="mt-1 text-xs text-purple-800">試験日までの残り期間を見ながら、毎週の学習ペースを作る。</p></Link>
+
+    <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-900">
+      <p className="font-bold">Pro 月額240円（税込）</p>
+      <p className="mt-1 mb-3 text-xs leading-5">いつでもStripeの契約管理画面から解約できます。決済情報はリュッターには保存されません。</p>
+      <ProCheckoutButton />
     </div>
   </div>;
 }
