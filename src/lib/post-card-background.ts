@@ -4,8 +4,10 @@ export async function attachActiveProToPosts<T extends { user_id: string; user?:
   if (!userIds.length) return posts;
 
   const now = new Date().toISOString();
+  // pro_grants itself is private. This public view intentionally exposes only
+  // the active user IDs so every viewer can render an author's Pro-only card.
   const { data: grants } = await supabase
-    .from("pro_grants")
+    .from("active_pro_users")
     .select("user_id")
     .in("user_id", userIds)
     .is("revoked_at", null)
