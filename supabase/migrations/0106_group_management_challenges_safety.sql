@@ -43,6 +43,16 @@ alter table public.study_group_challenges enable row level security;
 alter table public.user_blocks enable row level security;
 alter table public.reports enable row level security;
 
+-- 途中で実行が止まっても、そのまま再実行できるよう既存ポリシーを置き換える。
+drop policy if exists "group_members_update_own_settings" on public.study_group_members;
+drop policy if exists "group_challenges_read_members" on public.study_group_challenges;
+drop policy if exists "group_challenges_create_owner" on public.study_group_challenges;
+drop policy if exists "group_challenges_update_owner" on public.study_group_challenges;
+drop policy if exists "group_challenges_delete_owner" on public.study_group_challenges;
+drop policy if exists "user_blocks_manage_own" on public.user_blocks;
+drop policy if exists "reports_create_own" on public.reports;
+drop policy if exists "reports_read_own" on public.reports;
+
 create policy "group_members_update_own_settings" on public.study_group_members for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "group_challenges_read_members" on public.study_group_challenges for select using (exists (select 1 from public.study_group_members m where m.group_id = study_group_challenges.group_id and m.user_id = auth.uid()));
 create policy "group_challenges_create_owner" on public.study_group_challenges for insert with check (created_by = auth.uid() and exists (select 1 from public.study_groups g where g.id = group_id and g.owner_id = auth.uid()));
