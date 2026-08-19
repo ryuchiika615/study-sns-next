@@ -75,6 +75,8 @@ export default function SignupPage() {
       }
     }
 
+    // 新規登録直後だけ、ホーム画面追加と通知設定の案内を表示する。
+    sessionStorage.setItem("ryutter_show_notification_setup", "1");
     router.push("/");
     fetch("/api/referrals/complete", { method: "POST" }).catch(() => {});
     router.refresh();
