@@ -99,9 +99,9 @@ export default function RankingsClient({ initialRanking, initialDays }: {
           </button>
         </div>
 
-        {myEntry && !workoutMode && (
+        {myEntry && (
           <div className="flex justify-end"><XShareButton shareType="ranking" entityId={`${days}:${myEntry.rank}`}
-            text={`🏆 リュッターランキング\n\n${myEntry.rank === 1 ? "🥇1位になりました！" : `${myEntry.rank}位です！`}\n${days === 30 ? "今月" : `${days}日間`}の勉強時間：${myEntry.display_time}\n\n次も頑張ります🔥\n\n#リュッター #勉強垢`}
+            text={`🏆 リュッターランキング\n\n${myEntry.rank === 1 ? "🥇1位になりました！" : `${myEntry.rank}位です！`}\n${days === 30 ? "今月" : `${days}日間`}の${workoutMode ? "筋トレ" : "勉強"}時間：${myEntry.display_time}\n\n次も頑張ります🔥\n\n#リュッター #${workoutMode ? "筋トレ記録" : "勉強垢"}`}
             sharePath={`/share/ranking/${currentUserId}/current`} /></div>
         )}
 
