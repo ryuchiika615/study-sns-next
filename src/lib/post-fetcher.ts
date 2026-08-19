@@ -1,5 +1,6 @@
 import { formatRelativeTime, formatStudyTime, subjectColor } from "./utils";
 import type { PostWithDetails } from "./types";
+import { attachActiveProToPosts } from "./post-card-background";
 
 async function buildReactionsWithUsers(
   supabase: any,
@@ -31,7 +32,7 @@ export async function fetchPostById(
     .from("posts")
     .select(`
       *,
-      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
+      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url),
       likes_count:likes(count),
       comments_count:comments!post_id(count)
     `)
@@ -40,9 +41,10 @@ export async function fetchPostById(
 
   if (error || !post) return null;
 
+  const [postWithPro] = await attachActiveProToPosts(supabase, [post]);
   const allItemIds: string[] = [];
-  if (post.user?.current_title_id) allItemIds.push(post.user.current_title_id);
-  if (post.user?.current_avatar_id) allItemIds.push(post.user.current_avatar_id);
+  if (postWithPro.user?.current_title_id) allItemIds.push(postWithPro.user.current_title_id);
+  if (postWithPro.user?.current_avatar_id) allItemIds.push(postWithPro.user.current_avatar_id);
 
   const [likesResult, itemsResult, myReactionResult, reactionRowsResult, textbooksResult] = await Promise.all([
     supabase.from("likes").select("post_id").eq("post_id", post.id).eq("user_id", currentUserId),
@@ -64,20 +66,20 @@ export async function fetchPostById(
   const reactionsCount = await buildReactionsWithUsers(supabase, post.id, reactionRows);
 
   return {
-    ...post,
-    is_liked: likedPostIds.has(post.id),
-    likes_count: post.likes_count?.[0]?.count ?? 0,
-    comments_count: post.comments_count?.[0]?.count ?? 0,
+    ...postWithPro,
+    is_liked: likedPostIds.has(postWithPro.id),
+    likes_count: postWithPro.likes_count?.[0]?.count ?? 0,
+    comments_count: postWithPro.comments_count?.[0]?.count ?? 0,
     reactions_count: reactionsCount,
     my_reaction: myReaction?.reaction || null,
-    display_study_time: formatStudyTime(post.study_minutes),
-    display_workout_time: formatStudyTime(post.workout_minutes),
-    subject_color: subjectColor(post.subject),
-    formatted_time: formatRelativeTime(post.created_at),
-    current_title: post.user?.current_title_id ? itemMap.get(post.user.current_title_id) || null : null,
-    current_avatar: post.user?.current_avatar_id ? itemMap.get(post.user.current_avatar_id) || null : null,
-    pages_completed: post.pages_completed || textbook?.pages_completed || 0,
-    total_pages: post.total_pages || textbook?.total_pages || 0,
+    display_study_time: formatStudyTime(postWithPro.study_minutes),
+    display_workout_time: formatStudyTime(postWithPro.workout_minutes),
+    subject_color: subjectColor(postWithPro.subject),
+    formatted_time: formatRelativeTime(postWithPro.created_at),
+    current_title: postWithPro.user?.current_title_id ? itemMap.get(postWithPro.user.current_title_id) || null : null,
+    current_avatar: postWithPro.user?.current_avatar_id ? itemMap.get(postWithPro.user.current_avatar_id) || null : null,
+    pages_completed: postWithPro.pages_completed || textbook?.pages_completed || 0,
+    total_pages: postWithPro.total_pages || textbook?.total_pages || 0,
   };
 }
 
@@ -94,7 +96,7 @@ export async function fetchAndEnrichPosts(
     .from("posts")
     .select(`
       *,
-      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
+      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url),
       likes_count:likes(count),
       comments_count:comments!post_id(count)
     `, { count: "estimated" })
@@ -172,7 +174,8 @@ export async function fetchAndEnrichPosts(
   const quotedCommentMap = new Map((quotedCommentsResult.data || []).map((qc: any) => [qc.id, qc]));
   const itemMap = new Map((itemsResult.data || []).map((i: any) => [i.id, i]));
 
-  const enriched = (posts || []).map((post: any) => {
+  const postsWithPro = await attachActiveProToPosts(supabase, posts || []);
+  const enriched = postsWithPro.map((post: any) => {
     const postReactionGroups = reactionsByPost.get(post.id) || new Map();
     const quotedPost = post.quote_post_id ? quotedPostMap.get(post.quote_post_id) : null;
     const quotedComment = post.quote_comment_id ? quotedCommentMap.get(post.quote_comment_id) : null;

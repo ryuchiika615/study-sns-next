@@ -264,6 +264,16 @@ html.dark input[type="file"] {
   border-color: var(--border-card);
 }
 
+/* Proのカスタム背景上でも投稿情報を読みやすく保つ。 */
+.post-card.custom-post-background .text-gray-900,
+.post-card.custom-post-background .text-gray-800,
+.post-card.custom-post-background .text-gray-700,
+.post-card.custom-post-background .text-gray-600,
+.post-card.custom-post-background .text-gray-500,
+.post-card.custom-post-background .text-gray-400 {
+  color: rgba(255, 255, 255, .88) !important;
+}
+
 /* 固定ボトムナビ */
 .bottom-nav {
   @apply fixed bottom-0 left-0 w-full flex justify-around items-start pt-2 pb-6 border-t z-50;

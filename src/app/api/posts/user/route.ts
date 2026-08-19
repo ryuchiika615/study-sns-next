@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 import { formatRelativeTime, formatStudyTime, subjectColor } from "@/lib/utils";
+import { attachActiveProToPosts } from "@/lib/post-card-background";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     .from("posts")
     .select(`
       *,
-      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
+      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url),
       likes_count:likes(count),
       comments_count:comments!post_id(count)
     `, { count: "estimated" })
@@ -62,7 +63,8 @@ export async function GET(request: NextRequest) {
     : { data: [] };
   const itemMap = new Map((items || []).map((i: any) => [i.id, i]));
 
-  const enriched = posts.map((post: any) => {
+  const postsWithPro = await attachActiveProToPosts(admin, posts);
+  const enriched = postsWithPro.map((post: any) => {
     const postReactions = reactionsGrouped.get(post.id) || new Map();
     const textbook = post.total_pages > 0 ? null : textbookMap.get(post.subject);
     return {

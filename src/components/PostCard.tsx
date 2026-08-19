@@ -277,10 +277,11 @@ const handleCommentQuote = (c: any) => {
 
   const isOwn = post.user_id === currentUserId;
   const proPost = post as any;
-  const themeStyle = proPost.card_theme === "ocean" ? { background: "linear-gradient(135deg,#e0f2fe,#dbeafe)" } : proPost.card_theme === "sunset" ? { background: "linear-gradient(135deg,#fff1f2,#ffedd5)" } : proPost.card_theme === "midnight" ? { background: "linear-gradient(135deg,#172554,#312e81)", color: "white" } : proPost.card_theme === "photo" && proPost.card_background_image_url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.72),rgba(15,23,42,.78)),url(${proPost.card_background_image_url})`, backgroundSize: "cover", backgroundPosition: "center", color: "white" } : undefined;
+  const customBackground = post.user?.has_active_pro ? post.user?.post_card_background_url : null;
+  const themeStyle = customBackground ? { backgroundImage: `linear-gradient(rgba(15,23,42,.72),rgba(15,23,42,.80)),url(${customBackground})`, backgroundSize: "cover", backgroundPosition: "center", color: "white" } : proPost.card_theme === "ocean" ? { background: "linear-gradient(135deg,#e0f2fe,#dbeafe)" } : proPost.card_theme === "sunset" ? { background: "linear-gradient(135deg,#fff1f2,#ffedd5)" } : proPost.card_theme === "midnight" ? { background: "linear-gradient(135deg,#172554,#312e81)", color: "white" } : proPost.card_theme === "photo" && proPost.card_background_image_url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.72),rgba(15,23,42,.78)),url(${proPost.card_background_image_url})`, backgroundSize: "cover", backgroundPosition: "center", color: "white" } : undefined;
 
   return (
-    <div className={`post-card relative overflow-hidden ${isOwn ? "border-l-4 border-l-primary" : ""} ${post.user_id === championUserId ? "relative overflow-hidden" : ""}`} style={themeStyle}>
+    <div className={`post-card relative overflow-hidden ${customBackground ? "custom-post-background" : ""} ${isOwn ? "border-l-4 border-l-primary" : ""} ${post.user_id === championUserId ? "relative overflow-hidden" : ""}`} style={themeStyle}>
       {post.user_id === championUserId && (
         <>
           {/* 雫デコレーション（月間王者） */}

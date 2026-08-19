@@ -6,6 +6,8 @@ export interface Profile {
   department: string | null;
   theme_color: string;
   icon_url: string | null;
+  post_card_background_url?: string | null;
+  has_active_pro?: boolean;
   target_date: string | null;
   target_minutes: number;
   /** @deprecated 合併により exchange_points を使用 */

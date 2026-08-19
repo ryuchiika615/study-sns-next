@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 import { formatRelativeTime, formatStudyTime, subjectColor } from "@/lib/utils";
+import { attachActiveProToPosts } from "@/lib/post-card-background";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     .from("posts")
     .select(`
       *,
-      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id),
+      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url),
       likes_count:likes(count),
       comments_count:comments!post_id(count)
     `)
@@ -90,8 +91,9 @@ export async function GET(request: NextRequest) {
   const itemMap = new Map((items || []).map((i: any) => [i.id, i]));
 
   // Reorder posts to match the original liked order
+  const postsWithPro = await attachActiveProToPosts(admin, posts);
   const ordered = pageIds
-    .map((id) => posts.find((p: any) => p.id === id))
+    .map((id) => postsWithPro.find((p: any) => p.id === id))
     .filter(Boolean)
     .map((post: any) => {
       const postReactions = reactionsGrouped.get(post.id) || new Map();

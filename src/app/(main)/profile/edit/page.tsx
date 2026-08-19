@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
-import { formatStudyTime, subjectColor } from "@/lib/utils";
+import { compressImage, formatStudyTime, subjectColor } from "@/lib/utils";
 import ImageCropper from "@/components/ImageCropper";
 import ProfileHeader from "./ProfileHeader";
 import TitleManager from "./TitleManager";
@@ -39,6 +39,7 @@ export default function EditProfilePage() {
   const [isPro, setIsPro] = useState(false);
   const [defaultCardTheme, setDefaultCardTheme] = useState<"default" | "ocean" | "sunset" | "midnight" | "photo">("default");
   const [savingCardTheme, setSavingCardTheme] = useState(false);
+  const [uploadingCardBackground, setUploadingCardBackground] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -64,7 +65,7 @@ export default function EditProfilePage() {
     const id = uid || userIdRef.current;
     if (!id) return;
     const [profileResult, userItemsResult] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id, default_post_card_theme").eq("id", id).single(),
+      supabase.from("profiles").select("id, display_name, username, bio, icon_url, target_date, target_minutes, points, exchange_points, current_title_id, current_avatar_id, default_post_card_theme, post_card_background_url, post_card_background_path").eq("id", id).single(),
       supabase.from("user_items").select("*, item:item_id(*)").eq("user_id", id),
     ]);
 
@@ -108,11 +109,11 @@ export default function EditProfilePage() {
     setMyPostsError("");
     setPostPage(1);
     const { data: myPostsData } = await supabase.from("posts")
-      .select("*, user:user_id(id, display_name, username, icon_url)")
+      .select("*, user:user_id(id, display_name, username, icon_url, post_card_background_url)")
       .eq("user_id", userIdRef.current)
       .order("created_at", { ascending: false });
     if (myPostsData === null) setMyPostsError("読み込み失敗");
-    else setMyPosts(myPostsData);
+    else setMyPosts(myPostsData.map((post: any) => ({ ...post, user: { ...post.user, has_active_pro: isPro } })));
     setMyPostsLoading(false);
   };
 
@@ -171,6 +172,10 @@ export default function EditProfilePage() {
 
   const saveDefaultCardTheme = async (theme: "default" | "ocean" | "sunset" | "midnight" | "photo") => {
     if (!isPro || !userId) return;
+    if (theme === "photo" && !profile?.post_card_background_url) {
+      setMessage("先にカスタム背景画像をアップロードしてください。");
+      return;
+    }
     setDefaultCardTheme(theme);
     setSavingCardTheme(true);
     const { error } = await supabase.from("profiles").update({ default_post_card_theme: theme } as any).eq("id", userId);
@@ -181,6 +186,48 @@ export default function EditProfilePage() {
     }
     setProfile((current: any) => ({ ...current, default_post_card_theme: theme }));
     setMessage("投稿カードの柄を保存しました。次の投稿から反映されます。");
+  };
+
+  const uploadCardBackground = async (file: File) => {
+    if (!isPro || !userId) return;
+    if (!file.type.startsWith("image/")) { setMessage("画像ファイルを選択してください。"); return; }
+    if (file.size > 10 * 1024 * 1024) { setMessage("画像は10MB以下にしてください。"); return; }
+    setUploadingCardBackground(true);
+    try {
+      const compressed = await compressImage(file, 0.82, 1600);
+      if (compressed.size > 5 * 1024 * 1024) { setMessage("圧縮後も画像が大きすぎます。別の画像を選んでください。"); return; }
+      const path = `${userId}/background.jpg`;
+      const { error: uploadError } = await supabase.storage.from("post-card-backgrounds").upload(path, compressed, {
+        upsert: true, contentType: "image/jpeg", cacheControl: "31536000",
+      });
+      if (uploadError) { setMessage(`画像アップロードに失敗しました: ${uploadError.message}`); return; }
+      const { data: urlData } = supabase.storage.from("post-card-backgrounds").getPublicUrl(path);
+      const url = urlData.publicUrl ? `${urlData.publicUrl}?v=${Date.now()}` : null;
+      const { error } = await supabase.from("profiles").update({ post_card_background_url: url, post_card_background_path: path } as any).eq("id", userId);
+      if (error || !url) { setMessage(error?.message || "背景画像の保存に失敗しました。"); return; }
+      setProfile((current: any) => ({ ...current, post_card_background_url: url, post_card_background_path: path }));
+      setMessage("背景画像を保存しました。自分の投稿カードすべてに反映されます。");
+    } catch {
+      setMessage("画像の読み込みまたは圧縮に失敗しました。");
+    } finally {
+      setUploadingCardBackground(false);
+    }
+  };
+
+  const removeCardBackground = async () => {
+    if (!isPro || !userId || !profile?.post_card_background_url) return;
+    setUploadingCardBackground(true);
+    const path = profile.post_card_background_path || `${userId}/background.jpg`;
+    const nextTheme = defaultCardTheme === "photo" ? "default" : defaultCardTheme;
+    const { error } = await supabase.from("profiles").update({ post_card_background_url: null, post_card_background_path: null, default_post_card_theme: nextTheme } as any).eq("id", userId);
+    if (error) setMessage(error.message || "背景画像の削除に失敗しました。");
+    else {
+      await supabase.storage.from("post-card-backgrounds").remove([path]);
+      setProfile((current: any) => ({ ...current, post_card_background_url: null, post_card_background_path: null, default_post_card_theme: nextTheme }));
+      setDefaultCardTheme(nextTheme);
+      setMessage("背景画像を削除しました。投稿カードは通常デザインに戻ります。");
+    }
+    setUploadingCardBackground(false);
   };
 
   if (!profile) return null;
@@ -273,16 +320,34 @@ export default function EditProfilePage() {
 
       {sectionCard("Pro投稿カード", "fa-palette",
         isPro ? <>
-          <p className="text-xs text-gray-500">ここで選んだ柄が、変更するまで次の投稿すべてに使われます。</p>
+          <p className="text-xs text-gray-500">ここで選んだ柄・背景が、変更するまで自分の投稿カードすべてに使われます。</p>
           <div className="flex flex-wrap gap-2">
-            {([['default','標準'], ['ocean','オーシャン'], ['sunset','サンセット'], ['midnight','ミッドナイト'], ['photo','写真背景']] as const).map(([value, label]) => (
+            {([['default','標準'], ['ocean','オーシャン'], ['sunset','サンセット'], ['midnight','ミッドナイト'], ['photo','カスタム画像']] as const).map(([value, label]) => (
               <button key={value} type="button" disabled={savingCardTheme} onClick={() => saveDefaultCardTheme(value)}
                 className={`rounded-full px-3 py-1.5 text-xs font-bold border cursor-pointer disabled:opacity-50 ${defaultCardTheme === value ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-purple-200 text-purple-700'}`}>
                 {defaultCardTheme === value && <i className="fas fa-check mr-1" />}{label}
               </button>
             ))}
           </div>
-          {defaultCardTheme === "photo" && <p className="text-[11px] text-purple-700">投稿に添付する最初の写真を背景にします。写真がない投稿は標準表示です。</p>}
+          <div className="rounded-xl border border-purple-100 bg-purple-50 p-3 space-y-2">
+            <p className="text-xs font-bold text-purple-900"><i className="fas fa-image mr-1" />カスタム背景画像</p>
+            {profile.post_card_background_url ? <>
+              <div className="h-32 rounded-lg bg-cover bg-center relative overflow-hidden" style={{ backgroundImage: `linear-gradient(rgba(15,23,42,.45),rgba(15,23,42,.62)),url(${profile.post_card_background_url})` }}>
+                <div className="absolute inset-x-3 bottom-3 text-white text-xs drop-shadow"><b>{profile.display_name || profile.username}</b><br />今日も積み上げました！</div>
+              </div>
+              <div className="flex gap-2">
+                <label className="flex-1 text-center bg-purple-600 text-white rounded-full py-2 text-xs font-bold cursor-pointer">
+                  {uploadingCardBackground ? "処理中..." : "画像を変更"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingCardBackground} onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadCardBackground(file); e.target.value = ""; }} />
+                </label>
+                <button type="button" disabled={uploadingCardBackground} onClick={removeCardBackground} className="bg-white border border-red-200 text-red-600 rounded-full px-4 py-2 text-xs font-bold cursor-pointer disabled:opacity-50">背景を削除</button>
+              </div>
+            </> : <label className="block border-2 border-dashed border-purple-200 rounded-lg p-4 text-center cursor-pointer hover:bg-white/70">
+              <i className="fas fa-cloud-arrow-up text-purple-500" /><p className="text-xs font-bold text-purple-800 mt-1">背景画像をアップロード</p><p className="text-[10px] text-purple-600 mt-1">JPG / PNG / WebP・10MBまで（自動で1600pxに圧縮）</p>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingCardBackground} onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadCardBackground(file); e.target.value = ""; }} />
+            </label>}
+          </div>
+          {defaultCardTheme === "photo" && <p className="text-[11px] text-purple-700">保存済みのカスタム背景が、添付画像の有無に関係なく自分の全投稿に表示されます。</p>}
         </> : <a href="/pro" className="flex items-center justify-between rounded-xl bg-purple-50 border border-purple-100 p-3 no-underline cursor-pointer">
           <span className="text-sm font-bold text-purple-800"><i className="fas fa-lock mr-1" />投稿カードの柄はPro限定</span>
           <i className="fas fa-chevron-right text-purple-500 text-xs" />
