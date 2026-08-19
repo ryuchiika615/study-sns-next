@@ -21,12 +21,12 @@ create policy "post_card_backgrounds_pro_insert" on storage.objects for insert t
 
 drop policy if exists "post_card_backgrounds_pro_update" on storage.objects;
 create policy "post_card_backgrounds_pro_update" on storage.objects for update to authenticated
-  using (bucket_id = 'post-card-backgrounds' and (storage.foldername(name))[1] = auth.uid() and exists (select 1 from public.pro_grants g where g.user_id = auth.uid() and g.revoked_at is null and g.starts_at <= now() and (g.expires_at is null or g.expires_at > now())))
-  with check (bucket_id = 'post-card-backgrounds' and (storage.foldername(name))[1] = auth.uid() and exists (select 1 from public.pro_grants g where g.user_id = auth.uid() and g.revoked_at is null and g.starts_at <= now() and (g.expires_at is null or g.expires_at > now())));
+  using (bucket_id = 'post-card-backgrounds' and (storage.foldername(name))[1] = auth.uid()::text and exists (select 1 from public.pro_grants g where g.user_id = auth.uid() and g.revoked_at is null and g.starts_at <= now() and (g.expires_at is null or g.expires_at > now())))
+  with check (bucket_id = 'post-card-backgrounds' and (storage.foldername(name))[1] = auth.uid()::text and exists (select 1 from public.pro_grants g where g.user_id = auth.uid() and g.revoked_at is null and g.starts_at <= now() and (g.expires_at is null or g.expires_at > now())));
 
 drop policy if exists "post_card_backgrounds_pro_delete" on storage.objects;
 create policy "post_card_backgrounds_pro_delete" on storage.objects for delete to authenticated
-  using (bucket_id = 'post-card-backgrounds' and (storage.foldername(name))[1] = auth.uid() and exists (select 1 from public.pro_grants g where g.user_id = auth.uid() and g.revoked_at is null and g.starts_at <= now() and (g.expires_at is null or g.expires_at > now())));
+  using (bucket_id = 'post-card-backgrounds' and (storage.foldername(name))[1] = auth.uid()::text and exists (select 1 from public.pro_grants g where g.user_id = auth.uid() and g.revoked_at is null and g.starts_at <= now() and (g.expires_at is null or g.expires_at > now())));
 
 -- Freeユーザーが直接APIで背景URLを書き換えることを防ぐ。設定値自体はPro終了後も残す。
 create or replace function public.enforce_post_card_background_pro()
