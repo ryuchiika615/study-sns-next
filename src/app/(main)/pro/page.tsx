@@ -19,6 +19,7 @@ const entryMessage: Record<string, string> = {
   "study-stats": "復習の記憶保持予測・詳細な学習統計はPro限定です。",
   "ranking-history": "3か月・年間のランキング履歴はPro限定です。",
   "card-background": "投稿カードの背景・柄のカスタマイズはPro限定です。",
+  "group-limit": "FREEではグループを1個まで作成できます。Proなら無制限に作成できます。",
 };
 
 export default function ProPage({ searchParams }: { searchParams?: { from?: string } }) {

@@ -1,0 +1,40 @@
+"use client";
+
+import Link from "next/link";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
+import { formatStudyTime, getOptimizedIconUrl } from "@/lib/utils";
+
+export default function GroupDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  const [userId, setUserId] = useState(""); const [group, setGroup] = useState<any>(null); const [member, setMember] = useState(false); const [posts, setPosts] = useState<any[]>([]); const [ranking, setRanking] = useState<any[]>([]); const [content, setContent] = useState(""); const [subject, setSubject] = useState(""); const [minutes, setMinutes] = useState(""); const [message, setMessage] = useState(""); const [joining, setJoining] = useState(false);
+  const invite = searchParams.get("invite") || "";
+
+  const load = async (uid?: string) => {
+    const currentId = uid || userId; if (!currentId || !id) return;
+    const [{ data: groupData }, { data: membership }] = await Promise.all([supabase.from("study_groups").select("*").eq("id", id).maybeSingle(), supabase.from("study_group_members").select("group_id").eq("group_id", id).eq("user_id", currentId).maybeSingle()]);
+    setGroup(groupData); setMember(Boolean(membership));
+    if (!membership) return;
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [{ data: postData }, { data: weekPosts }] = await Promise.all([supabase.from("posts").select("id, content, subject, study_minutes, workout_minutes, created_at, user:user_id(id, display_name, username, icon_url)").eq("group_id", id).order("created_at", { ascending: false }).limit(40), supabase.from("posts").select("user_id, study_minutes").eq("group_id", id).gte("created_at", weekAgo)]);
+    setPosts(postData || []);
+    const totals = new Map<string, number>(); (weekPosts || []).forEach((p: any) => totals.set(p.user_id, (totals.get(p.user_id) || 0) + (p.study_minutes || 0)));
+    const ids = [...totals.keys()]; const { data: profiles } = ids.length ? await supabase.from("profiles").select("id, display_name, username, icon_url").in("id", ids) : { data: [] };
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p])); setRanking([...totals.entries()].sort((a, b) => b[1] - a[1]).map(([uid, total], index) => ({ rank: index + 1, total, user: profileMap.get(uid) })));
+  };
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => { const uid = data.user?.id || ""; setUserId(uid); if (uid) load(uid); }); }, [id]);
+  const join = async () => { if (!invite) { setMessage("参加には招待リンクが必要です。グループ作成者からリンクを受け取ってください。"); return; } setJoining(true); const r = await fetch("/api/groups/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ groupId: id, inviteCode: invite }) }); const data = await r.json(); setJoining(false); if (!r.ok) { setMessage(data.error || "参加できませんでした"); return; } setMessage("グループに参加しました！"); load(); };
+  const post = async (event: React.FormEvent) => { event.preventDefault(); if (!content.trim()) return; const { error } = await supabase.from("posts").insert({ user_id: userId, group_id: id, content: content.trim(), subject: subject.trim() || "その他", study_minutes: Math.max(0, Number(minutes) || 0) }); if (error) { setMessage(error.message); return; } setContent(""); setSubject(""); setMinutes(""); load(); };
+  const copyInvite = async () => { const url = `${window.location.origin}/groups/${id}?invite=${group.invite_code}`; await navigator.clipboard.writeText(url); setMessage("招待リンクをコピーしました。友達に送ってね！"); };
+
+  if (!userId) return <div className="p-8 text-center text-gray-500">読み込み中...</div>;
+  if (!member) return <div className="mx-auto max-w-md p-4"><div className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center"><p className="text-3xl">🔒</p><h1 className="mt-3 text-lg font-bold">学習グループに招待されています</h1><p className="mt-2 text-sm text-gray-600">参加すると、仲間だけの投稿と週間ランキングが見られます。</p>{message && <p className="mt-3 text-xs text-red-600">{message}</p>}<button onClick={join} disabled={joining} className="mt-5 w-full rounded-full bg-blue-600 py-3 text-sm font-bold text-white cursor-pointer disabled:opacity-50">{joining ? "参加中..." : "グループに参加する"}</button><Link href="/groups" className="mt-4 inline-block text-sm text-blue-600">グループ一覧へ戻る</Link></div></div>;
+  return <div className="mx-auto max-w-2xl space-y-4 p-4"><Link href="/groups" className="text-sm text-gray-500 no-underline"><i className="fas fa-arrow-left mr-1" />グループ一覧</Link><div className="rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 p-5 text-white"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold text-cyan-100">{group?.visibility === "private" ? "🔒 非公開グループ" : "🌍 公開グループ"}</p><h1 className="mt-1 text-xl font-bold">{group?.name}</h1><p className="mt-2 text-xs text-cyan-50">{group?.description}</p></div>{group?.owner_id === userId && <button onClick={copyInvite} className="rounded-full bg-white/20 px-3 py-2 text-xs font-bold text-white cursor-pointer"><i className="fas fa-link mr-1" />招待</button>}</div></div>{message && <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">{message}</p>}
+    <form onSubmit={post} className="rounded-xl border border-gray-200 bg-white p-4 space-y-2"><p className="text-sm font-bold">グループに投稿</p><textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={2000} placeholder="今日の学び・進捗を書こう" rows={3} className="w-full rounded-lg border-gray-300 text-sm" /><div className="grid grid-cols-2 gap-2"><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="科目（任意）" className="rounded-lg border-gray-300 text-sm" /><input value={minutes} onChange={(e) => setMinutes(e.target.value)} type="number" min="0" placeholder="勉強時間（分）" className="rounded-lg border-gray-300 text-sm" /></div><button className="w-full rounded-lg bg-blue-600 py-2 text-sm font-bold text-white cursor-pointer">グループに投稿する</button></form>
+    <section className="rounded-xl border border-amber-200 bg-amber-50 p-4"><h2 className="text-sm font-bold text-amber-900">🏆 今週の勉強時間ランキング</h2><div className="mt-3 space-y-2">{ranking.length ? ranking.map((entry) => <div key={entry.user?.id} className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-2"><b className="w-6 text-amber-700">{entry.rank}</b>{entry.user?.icon_url ? <img src={getOptimizedIconUrl(entry.user.icon_url, 80)} className="h-7 w-7 rounded-full object-cover" alt="" /> : <i className="fas fa-user-circle text-xl text-gray-300" />}<span className="min-w-0 flex-1 truncate text-sm font-bold">{entry.user?.display_name || entry.user?.username || "ユーザー"}</span><span className="text-sm font-bold text-amber-700">{formatStudyTime(entry.total)}</span></div>) : <p className="py-3 text-center text-xs text-amber-800">今週の勉強記録はまだありません。</p>}</div></section>
+    <section className="space-y-2"><h2 className="text-sm font-bold text-gray-700">グループの投稿</h2>{posts.length ? posts.map((post) => <article key={post.id} className="rounded-xl border border-gray-200 bg-white p-4"><div className="flex items-center gap-2">{post.user?.icon_url ? <img src={getOptimizedIconUrl(post.user.icon_url, 80)} className="h-8 w-8 rounded-full object-cover" alt="" /> : <i className="fas fa-user-circle text-2xl text-gray-300" />}<div><p className="text-sm font-bold">{post.user?.display_name || post.user?.username || "ユーザー"}</p><p className="text-[11px] text-gray-400">{new Date(post.created_at).toLocaleString("ja-JP")}</p></div></div><p className="mt-3 whitespace-pre-wrap text-sm text-gray-800">{post.content}</p>{post.study_minutes > 0 && <p className="mt-2 text-xs font-bold text-blue-600">📘 {post.subject}　{formatStudyTime(post.study_minutes)}</p>}</article>) : <div className="rounded-xl border border-dashed border-gray-300 py-10 text-center text-sm text-gray-500">最初の投稿をしてみよう！</div>}</section>
+  </div>;
+}
