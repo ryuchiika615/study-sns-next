@@ -7,13 +7,17 @@ function formatTime(minutes: number) {
   return minutes >= 60 ? `${Math.floor(minutes / 60)}時間${minutes % 60 ? `${minutes % 60}分` : ""}` : `${minutes}分`;
 }
 
-export default function HomeActivityFeed() {
+export default function HomeActivityFeed({ onCountChange }: { onCountChange?: (count: number) => void }) {
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     const response = await fetch("/api/home/activity");
-    if (response.ok) setActivities(await response.json());
+    if (response.ok) {
+      const data = await response.json();
+      setActivities(data);
+      onCountChange?.(data.length);
+    } else onCountChange?.(0);
     setLoading(false);
   };
 

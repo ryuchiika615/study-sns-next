@@ -204,7 +204,7 @@ export async function fetchAndEnrichPosts(
 
   return {
     posts: enriched,
-    totalPages: Math.ceil((count || 0) / limit),
+    totalPages: Math.max(1, Math.ceil((count || 0) / limit)),
     currentPage: page,
   };
 }

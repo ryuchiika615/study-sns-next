@@ -56,6 +56,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [activityCount, setActivityCount] = useState(0);
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
@@ -378,7 +379,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
         </div>
       )}
-      <HomeActivityFeed />
+      <HomeActivityFeed onCountChange={setActivityCount} />
       <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (
@@ -401,14 +402,14 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...(data as any), subject_color: (data as any).subject ? subjectColor((data as any).subject) : p.subject_color, display_study_time: formatStudyTime((data as any).study_minutes ?? p.study_minutes), display_workout_time: formatStudyTime((data as any).workout_minutes ?? p.workout_minutes) } : p))} />
       ))}
 
-      {posts.length === 0 && !loading && (
+      {posts.length === 0 && !loading && activityCount === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 py-12 text-center">
           <p className="text-gray-400"><i className="far fa-frown text-3xl mb-2 block" /></p>
           <p className="text-gray-500">まだポストがありません</p>
         </div>
       )}
 
-      <div className="flex items-center justify-center gap-3 mx-4 my-5 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
+      {posts.length > 0 && <div className="flex items-center justify-center gap-3 mx-4 my-5 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
         {page > 1 && (
           <button onClick={() => setPage(page - 1)}
             className="px-4 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50">
@@ -422,7 +423,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
             次へ &raquo;
           </button>
         )}
-      </div>
+      </div>}
       </PullToRefresh>
 
       {rankingPopup && (
