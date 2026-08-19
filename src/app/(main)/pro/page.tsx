@@ -18,6 +18,7 @@ const entryMessage: Record<string, string> = {
   "analytics": "任意期間の分析と科目別の週次推移はPro限定です。",
   "study-stats": "復習の記憶保持予測・詳細な学習統計はPro限定です。",
   "ranking-history": "3か月・年間のランキング履歴はPro限定です。",
+  "card-background": "投稿カードの背景・柄のカスタマイズはPro限定です。",
 };
 
 export default function ProPage({ searchParams }: { searchParams?: { from?: string } }) {

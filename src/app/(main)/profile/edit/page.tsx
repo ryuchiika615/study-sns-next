@@ -348,9 +348,16 @@ export default function EditProfilePage() {
             </label>}
           </div>
           {defaultCardTheme === "photo" && <p className="text-[11px] text-purple-700">保存済みのカスタム背景が、添付画像の有無に関係なく自分の全投稿に表示されます。</p>}
-        </> : <a href="/pro" className="flex items-center justify-between rounded-xl bg-purple-50 border border-purple-100 p-3 no-underline cursor-pointer">
-          <span className="text-sm font-bold text-purple-800"><i className="fas fa-lock mr-1" />投稿カードの柄はPro限定</span>
-          <i className="fas fa-chevron-right text-purple-500 text-xs" />
+        </> : <a href="/pro?from=card-background" className="block rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4 no-underline cursor-pointer">
+          <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold text-purple-950"><i className="fas fa-lock mr-1.5" />投稿カードの背景・柄はPro限定</p><p className="mt-1 text-xs text-purple-800">投稿を自分らしいデザインにカスタマイズできます。</p></div><i className="fas fa-chevron-right text-purple-500 text-xs" /></div>
+          <div className="mt-3 grid grid-cols-5 gap-1.5 opacity-80">
+            <span className="h-10 rounded-md border border-gray-200 bg-white" />
+            <span className="h-10 rounded-md bg-gradient-to-br from-sky-200 to-blue-400" />
+            <span className="h-10 rounded-md bg-gradient-to-br from-orange-200 to-rose-400" />
+            <span className="h-10 rounded-md bg-gradient-to-br from-slate-900 to-indigo-700" />
+            <span className="relative h-10 rounded-md overflow-hidden bg-gradient-to-br from-violet-400 via-pink-300 to-amber-200"><i className="fas fa-image absolute inset-0 flex items-center justify-center text-white/90" /></span>
+          </div>
+          <p className="mt-2 text-[11px] font-bold text-purple-700"><i className="fas fa-crown mr-1" />好きな画像も背景に設定できます</p>
         </a>
       )}
 
