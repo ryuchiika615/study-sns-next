@@ -10,13 +10,18 @@ function formatTime(minutes: number) {
 export default function HomeActivityFeed({ onCountChange }: { onCountChange?: (count: number) => void }) {
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const load = async () => {
-    const response = await fetch("/api/home/activity");
+  const load = async (targetPage = 1) => {
+    setLoading(true);
+    const response = await fetch(`/api/home/activity?page=${targetPage}`);
     if (response.ok) {
       const data = await response.json();
-      setActivities(data);
-      onCountChange?.(data.length);
+      setActivities(data.activities || []);
+      setPage(data.currentPage || targetPage);
+      setTotalPages(data.totalPages || 1);
+      onCountChange?.(data.activities?.length || 0);
     } else onCountChange?.(0);
     setLoading(false);
   };
@@ -30,7 +35,8 @@ export default function HomeActivityFeed({ onCountChange }: { onCountChange?: (c
     setActivities((current) => current.map((activity) => activity.id === activityId ? { ...activity, cheeredByMe: true, cheerCount: data.count } : activity));
   };
 
-  if (loading || activities.length === 0) return null;
+  if (loading && activities.length === 0) return null;
+  if (activities.length === 0) return null;
 
   return <section className="mx-4 mb-4">
     <div className="mb-2 flex items-center justify-between"><div><h2 className="text-sm font-bold text-emerald-300"><i className="fas fa-bolt mr-1.5 text-emerald-400" />みんなの活動</h2><p className="mt-0.5 text-[11px] text-slate-300">グループ内の本文は公開されません。科目・時間だけが表示されます。</p></div><span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">活動記録</span></div>
@@ -43,5 +49,6 @@ export default function HomeActivityFeed({ onCountChange }: { onCountChange?: (c
         <div className="mt-3 flex items-center gap-3"><button disabled={activity.isMine || activity.cheeredByMe} onClick={() => cheer(activity.id)} className={`rounded-full border bg-white px-3 py-1.5 text-xs font-bold disabled:cursor-default disabled:opacity-60 ${isWorkout ? "border-pink-200 text-pink-700" : "border-emerald-200 text-emerald-700"}`}><i className="fas fa-hands-clapping mr-1" />{activity.cheeredByMe ? "応援した" : "応援する"}{activity.cheerCount ? ` ${activity.cheerCount}` : ""}</button><Link href={`/profile/${activity.user?.id}`} className="text-xs font-bold text-white no-underline"><i className="fas fa-user mr-1" />プロフィール</Link></div>
       </article>;
     })}</div>
+    {totalPages > 1 && <div className="mt-3 flex items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-800 px-4 py-3"><button disabled={page <= 1 || loading} onClick={() => load(page - 1)} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-white disabled:opacity-40">&laquo; 前へ</button><span className="min-w-16 text-center text-sm font-bold text-white">{page} / {totalPages}</span><button disabled={page >= totalPages || loading} onClick={() => load(page + 1)} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-white disabled:opacity-40">次へ &raquo;</button></div>}
   </section>;
 }

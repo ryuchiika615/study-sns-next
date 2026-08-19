@@ -22,6 +22,7 @@ type WholeHomeClientProps = {
   initialTotalPages?: number;
   search?: string;
 };
+type FeedFilter = "all" | "recruitment" | "activity";
 
 export default function WholeHomeClient({ userId, profile: initialProfile, totalMinutes: initialTotal, initialPosts, initialTotalPages, search = "" }: WholeHomeClientProps) {
   const supabase = createClient();
@@ -57,6 +58,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [activityCount, setActivityCount] = useState(0);
+  const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
@@ -66,9 +68,9 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const latestCreatedAt = useRef<string | null>(null);
   const addToast = useToast();
 
-  const fetchPosts = async (p: number, q: string) => {
+  const fetchPosts = async (p: number, q: string, filter = feedFilter) => {
     setLoading(true);
-    const result = await fetchAndEnrichPosts(supabase, userId, { page: p, search: q });
+    const result = await fetchAndEnrichPosts(supabase, userId, { page: p, search: q, subjects: filter === "recruitment" ? ["グループ募集", "勉強仲間募集"] : [] });
     setPosts(result.posts);
     setTotalPages(result.totalPages);
     if (result.posts.length > 0) {
@@ -76,6 +78,11 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
     }
     setHasNewPosts(false);
     setLoading(false);
+  };
+  const changeFeed = (filter: FeedFilter) => {
+    setFeedFilter(filter);
+    setPage(1);
+    if (filter !== "activity") fetchPosts(1, search, filter);
   };
 
   const pollNotifications = async () => {
@@ -379,8 +386,9 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
         </div>
       )}
-      <HomeActivityFeed onCountChange={setActivityCount} />
-      <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
+      <div className="mx-4 mb-3 rounded-xl bg-slate-800 p-1.5"><div className="flex"><button onClick={() => changeFeed("all")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "all" ? "bg-blue-500 text-white" : "text-slate-300"}`}>すべて</button><button onClick={() => changeFeed("recruitment")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "recruitment" ? "bg-amber-500 text-white" : "text-slate-300"}`}>📣 募集だけ</button><button onClick={() => changeFeed("activity")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "activity" ? "bg-emerald-500 text-white" : "text-slate-300"}`}>⚡ 活動だけ</button></div></div>
+      {feedFilter !== "recruitment" && <HomeActivityFeed onCountChange={setActivityCount} />}
+      {feedFilter !== "activity" && <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (
         <>
@@ -402,10 +410,10 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...(data as any), subject_color: (data as any).subject ? subjectColor((data as any).subject) : p.subject_color, display_study_time: formatStudyTime((data as any).study_minutes ?? p.study_minutes), display_workout_time: formatStudyTime((data as any).workout_minutes ?? p.workout_minutes) } : p))} />
       ))}
 
-      {posts.length === 0 && !loading && activityCount === 0 && (
+      {posts.length === 0 && !loading && (feedFilter === "recruitment" || activityCount === 0) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 py-12 text-center">
           <p className="text-gray-400"><i className="far fa-frown text-3xl mb-2 block" /></p>
-          <p className="text-gray-500">まだポストがありません</p>
+          <p className="text-gray-500">{feedFilter === "recruitment" ? "まだ募集投稿がありません" : "まだポストがありません"}</p>
         </div>
       )}
 
@@ -424,7 +432,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </button>
         )}
       </div>}
-      </PullToRefresh>
+      </PullToRefresh>}
 
       {rankingPopup && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setRankingPopup(null)}>

@@ -86,9 +86,9 @@ export async function fetchPostById(
 export async function fetchAndEnrichPosts(
   supabase: any,
   currentUserId: string,
-  options?: { page?: number; search?: string; userId?: string; groupId?: string }
+  options?: { page?: number; search?: string; userId?: string; groupId?: string; subjects?: string[] }
 ) {
-  const { page = 1, search = "", userId = "", groupId = "" } = options ?? {};
+  const { page = 1, search = "", userId = "", groupId = "", subjects = [] } = options ?? {};
   const limit = 10;
   const offset = (page - 1) * limit;
 
@@ -107,6 +107,7 @@ export async function fetchAndEnrichPosts(
     query = query.or(`content.ilike.%${search}%,subject.ilike.%${search}%`);
   }
   if (userId) query = query.eq("user_id", userId);
+  if (subjects.length) query = query.in("subject", subjects);
   // ホームは全体公開の掲示板のみ。グループ投稿は、対象グループのタイムラインでだけ取得する。
   query = groupId ? query.eq("group_id", groupId) : query.is("group_id", null);
 

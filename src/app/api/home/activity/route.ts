@@ -10,17 +10,19 @@ async function getUser() {
   return user;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
 
+  const page = Math.max(1, Number(new URL(request.url).searchParams.get("page")) || 1);
+  const limit = 10;
   const admin = createAdminClient();
   const { data: posts, error } = await admin.from("posts")
     .select("id, user_id, subject, study_minutes, workout_minutes, created_at")
     .not("group_id", "is", null)
     .or("study_minutes.gte.1,workout_minutes.gte.1")
     .order("created_at", { ascending: false })
-    .limit(20);
+    .range((page - 1) * limit, page * limit - 1);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const postIds = (posts || []).map((post: any) => post.id);
@@ -41,7 +43,9 @@ export async function GET() {
     cheers.set(cheer.activity_post_id, current);
   }
 
-  return NextResponse.json((posts || []).map((post: any) => ({
+  const { count } = await admin.from("posts").select("*", { count: "exact", head: true })
+    .not("group_id", "is", null).or("study_minutes.gte.1,workout_minutes.gte.1");
+  return NextResponse.json({ activities: (posts || []).map((post: any) => ({
     id: post.id,
     subject: post.subject || "学習",
     studyMinutes: post.study_minutes || 0,
@@ -52,7 +56,7 @@ export async function GET() {
     cheerCount: cheers.get(post.id)?.count || 0,
     cheeredByMe: cheers.get(post.id)?.mine || false,
     isMine: post.user_id === user.id,
-  })));
+  })), totalPages: Math.max(1, Math.ceil((count || 0) / limit)), currentPage: page });
 }
 
 export async function POST(request: NextRequest) {
