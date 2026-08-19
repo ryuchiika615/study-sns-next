@@ -11,6 +11,7 @@ import TitleManager from "./TitleManager";
 import IconManager from "./IconManager";
 import FollowRecommendations from "@/components/FollowRecommendations";
 import XConnectionCard from "@/components/XConnectionCard";
+import { useTheme, type HomeSkin } from "@/components/ThemeProvider";
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -44,6 +45,7 @@ export default function EditProfilePage() {
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
   const [userId, setUserId] = useState("");
+  const { homeSkin, setHomeSkin } = useTheme();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -317,6 +319,16 @@ export default function EditProfilePage() {
       }
 
       {sectionCard("SNS連携", "fa-share-nodes", <XConnectionCard />)}
+
+      {sectionCard("Proホームテーマ", "fa-wand-magic-sparkles",
+        isPro ? <>
+          <p className="text-xs text-gray-500">LINEの着せかえのように、自分のリュッター画面だけ色を変えられます。ほかの人の画面・投稿には影響しません。</p>
+          <div className="grid grid-cols-2 gap-2">
+            {([['default', 'スタンダード', 'from-slate-800 to-slate-950'], ['ocean', 'オーシャン', 'from-cyan-500 to-blue-800'], ['sakura', 'さくら', 'from-pink-400 to-fuchsia-700'], ['midnight', 'ミッドナイト', 'from-indigo-700 to-violet-950']] as const).map(([value, label, colors]) => <button key={value} type="button" onClick={() => setHomeSkin(value as HomeSkin)} className={`relative overflow-hidden rounded-xl border-2 p-3 text-left ${homeSkin === value ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200'}`}><span className={`block h-9 rounded-lg bg-gradient-to-br ${colors}`} /><b className="mt-2 block text-xs text-gray-900">{label}</b>{homeSkin === value && <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[10px] text-white"><i className="fas fa-check" /></span>}</button>)}
+          </div>
+          <p className="text-[11px] font-bold text-purple-700"><i className="fas fa-crown mr-1" />この端末でだけ保存されます。いつでも変更できます。</p>
+        </> : <Link href="/pro?from=home-theme" className="block rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4 no-underline"><p className="text-sm font-bold text-purple-950"><i className="fas fa-lock mr-1.5" />ホームテーマはPro限定</p><p className="mt-1 text-xs text-purple-800">自分だけの画面カラーに着せかえできます。</p><div className="mt-3 flex gap-1.5"><span className="h-7 flex-1 rounded bg-gradient-to-br from-cyan-500 to-blue-800" /><span className="h-7 flex-1 rounded bg-gradient-to-br from-pink-400 to-fuchsia-700" /><span className="h-7 flex-1 rounded bg-gradient-to-br from-indigo-700 to-violet-950" /></div></Link>
+      )}
 
       {sectionCard("Pro投稿カード", "fa-palette",
         isPro ? <>

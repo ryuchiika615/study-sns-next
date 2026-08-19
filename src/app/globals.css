@@ -44,6 +44,14 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Proホームテーマ。端末ごとの見た目だけを変え、投稿・ほかの利用者には影響しない。 */
+html[data-home-skin="ocean"] body { background: radial-gradient(circle at 15% 5%, #164e63 0, #0f172a 42%, #082f49 100%) fixed; }
+html[data-home-skin="sakura"] body { background: radial-gradient(circle at 85% 0, #831843 0, #0f172a 46%, #4a044e 100%) fixed; }
+html[data-home-skin="midnight"] body { background: radial-gradient(circle at 50% 0, #312e81 0, #0f172a 48%, #020617 100%) fixed; }
+html[data-home-skin="ocean"] .ryutter-home-banner { background-image: linear-gradient(to bottom, #155e75, #0c4a6e); }
+html[data-home-skin="sakura"] .ryutter-home-banner { background-image: linear-gradient(to bottom, #9d174d, #701a75); }
+html[data-home-skin="midnight"] .ryutter-home-banner { background-image: linear-gradient(to bottom, #3730a3, #1e1b4b); }
+
 /* Dark mode overrides for Tailwind utility classes */
 html.dark .bg-white { background-color: var(--bg-card); }
 html.dark .bg-gray-50 { background-color: var(--bg-surface); }
