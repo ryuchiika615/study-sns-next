@@ -351,6 +351,14 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
               {weeklyReport.aiComment}
             </div>
           )}
+          {!weeklyReport.isPro && (
+            <button onClick={() => { window.location.href = "/pro"; }}
+              className="mt-2 w-full bg-white/15 hover:bg-white/25 rounded-lg p-3 text-left text-sm transition cursor-pointer">
+              <i className="fas fa-lock mr-1.5 text-indigo-100" />
+              <span className="font-bold">AIコーチのひとことはPro限定</span>
+              <span className="block text-[11px] text-indigo-100 mt-0.5">あなたの学習記録に合わせたアドバイスを見る</span>
+            </button>
+          )}
         </div>
       )}
       {activeUsers.length > 0 && (

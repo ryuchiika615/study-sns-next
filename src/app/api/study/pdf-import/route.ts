@@ -1,13 +1,13 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+import { getProUser } from "@/lib/pro-server";
 import { NextRequest, NextResponse } from "next/server";
 import { PDFParse } from "pdf-parse";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, isPro } = await getProUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isPro) return NextResponse.json({ error: "PDFからのAIカード生成はPro限定です。Proプランから利用できます。" }, { status: 403 });
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { groqGenerate } from "@/lib/gemini";
+import { getProUser } from "@/lib/pro-server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, isPro } = await getProUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();
@@ -119,9 +118,9 @@ export async function GET() {
   let aiComment: string | null = null;
   let aiError: string | null = null;
   const cachedComment = profile?.weekly_ai_week_start === todayStr ? profile?.weekly_ai_comment : null;
-  if (cachedComment) {
+  if (cachedComment && isPro) {
     aiComment = cachedComment;
-  } else if (hasGroqKey) {
+  } else if (hasGroqKey && isPro) {
     try {
       const diff = totalMinutes - prevTotalMinutes;
       const diffText = diff >= 0 ? `先週より${Math.floor(diff / 60)}時間${diff % 60}分増えました` : `先週より${Math.floor(Math.abs(diff) / 60)}時間${Math.abs(diff) % 60}分減りました`;
@@ -180,6 +179,7 @@ ${targetText}
     bestHour,
     aiComment,
     aiError,
-    hasGroqKey,
+    hasGroqKey: hasGroqKey && isPro,
+    isPro,
   });
 }

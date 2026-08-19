@@ -1,12 +1,12 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+import { getProUser } from "@/lib/pro-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, isPro } = await getProUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isPro) return NextResponse.json({ error: "AI解説はPro限定です。Proプランから利用できます。" }, { status: 403 });
 
   const { front, back } = await request.json();
   if (!front?.trim()) return NextResponse.json({ error: "front required" }, { status: 400 });

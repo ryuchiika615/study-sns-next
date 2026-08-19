@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,16 @@ export default function DeckDetailClient({
   const router = useRouter();
   const [cards, setCards] = useState(initialCards);
   const supabase = createClient();
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/pro/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setIsPro(Boolean(data?.isPro)))
+      .catch(() => setIsPro(false));
+  }, []);
+
+  const openProPlan = () => router.push("/pro");
 
   const COLORS = [
     { value: "", label: "標準", class: "" },
@@ -261,6 +271,7 @@ export default function DeckDetailClient({
   };
 
   const handleAIGenerate = async () => {
+    if (!isPro) return openProPlan();
     if (!aiTopic.trim()) return;
     setAiGenerating(true);
     setError("");
@@ -329,6 +340,7 @@ export default function DeckDetailClient({
   };
 
   const handlePDFImport = async () => {
+    if (!isPro) return openProPlan();
     if (!pdfFile) return;
     pdfAbortRef.current = new AbortController();
     setPdfProcessing(true);
@@ -389,6 +401,7 @@ export default function DeckDetailClient({
   };
 
   const handleExplain = async (card: any) => {
+    if (!isPro) return openProPlan();
     setExplainingId(card.id);
     setExplanation("");
     const res = await fetch("/api/study/ai/explain", {
@@ -450,13 +463,13 @@ export default function DeckDetailClient({
             className="bg-primary text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-primary/90 transition">
             + 手動追加
           </button>
-          <button onClick={() => setShowAIGenerate(!showAIGenerate)}
-            className="bg-purple-600 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-purple-700 transition">
-            <i className="fas fa-magic mr-1" /> AI生成
+          <button onClick={() => isPro ? setShowAIGenerate(!showAIGenerate) : openProPlan()}
+            className={`text-white font-bold rounded-xl py-3 text-sm cursor-pointer transition ${isPro ? "bg-purple-600 hover:bg-purple-700" : "bg-purple-400 hover:bg-purple-500"}`}>
+            <i className={`fas ${isPro ? "fa-magic" : "fa-lock"} mr-1`} /> {isPro ? "AI生成" : "AI生成 Pro限定"}
           </button>
-          <button onClick={() => setShowPDFImport(!showPDFImport)}
-            className="bg-red-500 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-red-600 transition">
-            <i className="fas fa-file-pdf mr-1" /> PDFインポート
+          <button onClick={() => isPro ? setShowPDFImport(!showPDFImport) : openProPlan()}
+            className={`text-white font-bold rounded-xl py-3 text-sm cursor-pointer transition ${isPro ? "bg-red-500 hover:bg-red-600" : "bg-red-400 hover:bg-red-500"}`}>
+            <i className={`fas ${isPro ? "fa-file-pdf" : "fa-lock"} mr-1`} /> {isPro ? "PDFインポート" : "PDFインポート Pro限定"}
           </button>
           <button onClick={() => setShowImport(!showImport)}
             className="bg-gray-700 text-white font-bold rounded-xl py-3 text-sm cursor-pointer hover:bg-gray-800 transition">
@@ -1089,7 +1102,7 @@ export default function DeckDetailClient({
                         )}
                         <button onClick={(e) => { e.stopPropagation(); handleExplain(card); }}
                           className="mt-2 text-xs text-purple-500 font-bold cursor-pointer hover:text-purple-700 transition">
-                          <i className="fas fa-robot mr-0.5" /> AI解説
+                          <i className={`fas ${isPro ? "fa-robot" : "fa-lock"} mr-0.5`} /> {isPro ? "AI解説" : "AI解説 Pro限定"}
                         </button>
                       </div>
                     )}
