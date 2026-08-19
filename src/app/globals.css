@@ -281,28 +281,53 @@ html.dark input[type="file"] {
   background: rgba(17, 17, 17, 0.92);
   border-color: #374151;
 }
-.bottom-nav a {
+.bottom-nav a, .bottom-nav button {
   @apply text-gray-500 no-underline flex flex-col items-center gap-0.5 transition-all duration-200 active:scale-90;
   min-width: 48px;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
-.bottom-nav a i {
+.bottom-nav a i, .bottom-nav button > i {
   @apply text-xl transition-all duration-200;
 }
-.bottom-nav a .nav-label {
+.bottom-nav a .nav-label, .bottom-nav button .nav-label {
   @apply text-[10px] font-medium transition-all duration-200;
 }
-.bottom-nav a.active i {
+.bottom-nav a.active i, .bottom-nav button.active > i {
   @apply text-primary scale-110;
 }
-.bottom-nav a.active .nav-label {
+.bottom-nav a.active .nav-label, .bottom-nav button.active .nav-label {
   @apply text-primary;
 }
-.bottom-nav a:not(.active):hover i {
+.bottom-nav a:not(.active):hover i, .bottom-nav button:not(.active):hover > i {
   @apply text-gray-300;
 }
-.bottom-nav a:not(.active):hover .nav-label {
+.bottom-nav a:not(.active):hover .nav-label, .bottom-nav button:not(.active):hover .nav-label {
   @apply text-gray-400;
 }
+.bottom-more-menu {
+  position: fixed;
+  z-index: 50;
+  left: 12px;
+  right: 12px;
+  bottom: 82px;
+  border: 1px solid #374151;
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(24, 35, 55, .98);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, .35);
+}
+.bottom-more-link {
+  display: grid;
+  grid-template-columns: 28px 1fr 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 8px;
+  color: #f8fafc !important;
+}
+.bottom-more-link b { display: block; font-size: 14px; }
+.bottom-more-link small { display: block; margin-top: 2px; color: #94a3b8; font-size: 11px; }
 
 /* ページフェードイン */
 .page-enter {
