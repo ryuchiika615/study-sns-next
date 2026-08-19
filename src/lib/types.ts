@@ -48,6 +48,8 @@ export interface PostWithDetails {
   quote_post_id: string | null;
   quote_comment_id: string | null;
   group_id?: string | null;
+  public_group_id?: string | null;
+  public_group_invite_code?: string | null;
   created_at: string;
   updated_at: string | null;
   user: Profile;

@@ -394,6 +394,7 @@ const handleCommentQuote = (c: any) => {
         ) : (
           <>
             <p className="whitespace-pre-wrap">{highlightMentions(post.content)}</p>
+            {post.public_group_id && <Link href={`/groups/${post.public_group_id}${post.public_group_invite_code ? `?invite=${post.public_group_invite_code}` : ""}`} className="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white no-underline"><i className="fas fa-users" />このグループに参加する <i className="fas fa-chevron-right text-xs" /></Link>}
 
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="subject-chip" style={{ backgroundColor: post.subject_color }}>
