@@ -9,6 +9,7 @@ import { formatRelativeTime, formatStudyTime, subjectColor, rarityClass, getOpti
 import type { PostWithDetails } from "@/lib/types";
 import MentionAutocomplete from "./MentionAutocomplete";
 import XShareButton from "./XShareButton";
+import { useLanguage } from "@/lib/use-language";
 
 function highlightMentions(text: string) {
   const parts: (string | JSX.Element)[] = [];
@@ -72,6 +73,12 @@ const PostCard = memo(function PostCard({
   const swipeDist = useRef(0);
   const [swipeTranslate, setSwipeTranslate] = useState(0);
   const router = useRouter();
+  const { isEnglish } = useLanguage();
+  const openGoogleTranslate = () => {
+    const targetLanguage = localStorage.getItem("ryutter_language") === "en" ? "ja" : "en";
+    const url = `https://translate.google.com/?sl=auto&tl=${targetLanguage}&text=${encodeURIComponent(post.content)}&op=translate`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   useEffect(() => {
     if (editing && subjectOptions.length === 0) {
@@ -394,6 +401,7 @@ const handleCommentQuote = (c: any) => {
         ) : (
           <>
             <p className="whitespace-pre-wrap">{highlightMentions(post.content)}</p>
+            {post.content.trim() && <button type="button" onClick={openGoogleTranslate} className="mt-2 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-bold text-sky-700"><i className="fas fa-language mr-1" />{isEnglish ? "Translate to Japanese" : "English translation"}</button>}
             {post.public_group_id && <Link href={`/groups/${post.public_group_id}${post.public_group_invite_code ? `?invite=${post.public_group_invite_code}` : ""}`} className="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white no-underline"><i className="fas fa-users" />このグループに参加する <i className="fas fa-chevron-right text-xs" /></Link>}
 
             <div className="mt-3 flex items-center gap-2 flex-wrap">

@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/lib/use-language";
 
 const primaryItems = [
   { href: "/", icon: "fa-home", label: "ホーム", customColor: "#f59e0b" },
@@ -22,11 +23,13 @@ const moreItems = [
  function BottomNavInner() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { isEnglish } = useLanguage();
+  const label = (ja: string, en: string) => isEnglish ? en : ja;
   const isMoreActive = moreItems.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   return (
     <nav className="bottom-nav">
-      {moreOpen && <><button aria-label="メニューを閉じる" className="fixed inset-0 z-40 bg-black/40" onClick={() => setMoreOpen(false)} /><div className="bottom-more-menu"><p className="mb-2 text-center text-xs font-bold text-gray-400">その他の機能</p>{moreItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)} className="bottom-more-link"><i className={`fas ${item.icon}`} style={{ color: item.customColor }} /><span><b>{item.label}</b>{item.description && <small>{item.description}</small>}</span><i className="fas fa-chevron-right text-xs text-gray-500" /></Link>)}</div></>}
+      {moreOpen && <><button aria-label={label("メニューを閉じる", "Close menu")} className="fixed inset-0 z-40 bg-black/40" onClick={() => setMoreOpen(false)} /><div className="bottom-more-menu"><p className="mb-2 text-center text-xs font-bold text-gray-400">{label("その他の機能", "More features")}</p>{moreItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)} className="bottom-more-link"><i className={`fas ${item.icon}`} style={{ color: item.customColor }} /><span><b>{item.href === "/pro" ? "Pro" : item.href === "/rankings" ? label("ランキング", "Rankings") : item.href === "/analytics" ? label("分析", "Analytics") : label("ショップ", "Shop")}</b>{item.description && <small>{item.href === "/pro" ? label("計画・限定機能", "Plans & exclusive features") : item.href === "/rankings" ? label("学習の成果を確認", "See your learning progress") : label("学習の振り返り", "Review your progress")}</small>}</span><i className="fas fa-chevron-right text-xs text-gray-500" /></Link>)}</div></>}
       {primaryItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
         return (
@@ -36,13 +39,13 @@ const moreItems = [
               <i className={`fas ${item.icon} ${isActive ? "scale-110" : ""}`}
                 style={item.customColor && !isActive ? { color: item.customColor } : undefined} />
             </div>
-            <span className="nav-label">{item.label}</span>
+            <span className="nav-label">{item.href === "/" ? label("ホーム", "Home") : item.href === "/groups" ? label("グループ", "Groups") : item.href === "/tasks" ? label("タスク", "Tasks") : item.href === "/study" ? label("学習", "Study") : label("プロフィール", "Profile")}</span>
           </Link>
         );
       })}
       <button type="button" onClick={() => setMoreOpen((open) => !open)} className={`nav-item ${isMoreActive || moreOpen ? "active" : ""}`} aria-expanded={moreOpen}>
         <i className={`fas fa-ellipsis-h ${moreOpen ? "scale-110" : ""}`} style={!isMoreActive && !moreOpen ? { color: "#cbd5e1" } : undefined} />
-        <span className="nav-label">その他</span>
+        <span className="nav-label">{label("その他", "More")}</span>
       </button>
     </nav>
   );
