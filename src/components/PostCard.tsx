@@ -603,10 +603,16 @@ const handleCommentQuote = (c: any) => {
       <div className="flex items-center gap-3 px-4 pb-3 flex-wrap">
         <XShareButton compact shareType="study_record" entityId={post.id}
           text={post.study_minutes > 0
-            ? `📚 ${post.user?.display_name || post.user?.username || "リュッターユーザー"}さんの勉強記録をシェア\n\n勉強時間：${formatStudyTime(post.study_minutes)}\n科目：${post.subject}\n🔥 連続学習：${post.user?.consecutive_post_days || 0}日\n\n今日も積み上げました！\n\n#リュッター #勉強記録`
+            ? post.user_id === currentUserId
+              ? `📚 今日の勉強記録\n\n勉強時間：${formatStudyTime(post.study_minutes)}\n科目：${post.subject}\n🔥 連続学習：${post.user?.consecutive_post_days || 0}日\n\n今日も積み上げました！\n\n#リュッター #勉強記録`
+              : `🔁 ${post.user?.display_name || post.user?.username || "リュッターユーザー"}さんの勉強記録をシェア\n\n勉強時間：${formatStudyTime(post.study_minutes)}\n科目：${post.subject}\n\nリュッターで応援しよう！\n\n#リュッター #勉強記録`
             : post.workout_minutes > 0
-              ? `💪 ${post.user?.display_name || post.user?.username || "リュッターユーザー"}さんの運動記録をシェア\n\n運動時間：${formatStudyTime(post.workout_minutes)}\n🔥 継続中：${post.user?.consecutive_post_days || 0}日\n\n今日も積み上げました！\n\n#リュッター #運動記録`
-              : `📝 ${post.user?.display_name || post.user?.username || "リュッターユーザー"}さんの投稿をシェア\n\n${post.content.slice(0, 180)}\n\n#リュッター`}
+              ? post.user_id === currentUserId
+                ? `💪 今日の運動記録\n\n運動時間：${formatStudyTime(post.workout_minutes)}\n🔥 継続中：${post.user?.consecutive_post_days || 0}日\n\n今日も積み上げました！\n\n#リュッター #運動記録`
+                : `🔁 ${post.user?.display_name || post.user?.username || "リュッターユーザー"}さんの運動記録をシェア\n\n運動時間：${formatStudyTime(post.workout_minutes)}\n\nリュッターで応援しよう！\n\n#リュッター #運動記録`
+              : post.user_id === currentUserId
+                ? `📝 リュッターに投稿しました\n\n${post.content.slice(0, 180)}\n\n#リュッター`
+                : `🔁 ${post.user?.display_name || post.user?.username || "リュッターユーザー"}さんの投稿をシェア\n\n${post.content.slice(0, 180)}\n\n#リュッター`}
           sharePath={`/share/study/${post.user_id}/${post.id}`} />
         <button onClick={toggleComments} className="flex items-center gap-1.5 text-gray-500 text-sm bg-none border-none cursor-pointer hover:text-primary">
           <i className="far fa-comment" /> <span>{post.comments_count}</span>
