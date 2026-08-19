@@ -266,6 +266,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <PullToRefresh onRefresh={async () => { window.location.reload(); }}>
           <div className="container mx-auto max-w-2xl px-0 page-enter">
             {children}
+            <footer className="px-4 pb-24 pt-6 text-center text-[10px] text-slate-400">
+              <Link href="/terms" className="underline">利用規約</Link><span className="mx-2">・</span><Link href="/privacy" className="underline">プライバシーポリシー</Link><span className="mx-2">・</span><Link href="/tokusho" className="underline">特定商取引法に基づく表記</Link>
+            </footer>
           </div>
         </PullToRefresh>
       </SwipeBack>

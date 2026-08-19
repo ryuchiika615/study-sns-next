@@ -41,6 +41,7 @@ export default function ProPage({ searchParams }: { searchParams?: { from?: stri
       <div className="mt-4 space-y-2 text-sm text-purple-950"><p><i className="fas fa-check text-purple-600 mr-2" />タスク・教材を無制限に管理</p><p><i className="fas fa-check text-purple-600 mr-2" />AIカード生成・AI解説・AIコーチ</p><p><i className="fas fa-check text-purple-600 mr-2" />試験逆算プラン・投稿カードのカスタマイズ</p></div>
       <div className="mt-4"><ProCheckoutButton /></div>
       <p className="mt-2 text-center text-[10px] text-purple-700">カード情報はリュッターに保存されません</p>
+      <p className="mt-3 text-center text-[10px] text-purple-800"><Link href="/terms" className="underline">利用規約</Link><span className="mx-2">・</span><Link href="/privacy" className="underline">プライバシーポリシー</Link><span className="mx-2">・</span><Link href="/tokusho" className="underline">特定商取引法に基づく表記</Link></p>
     </div>
 
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
