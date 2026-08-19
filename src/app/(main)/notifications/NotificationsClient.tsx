@@ -60,6 +60,9 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "follow_post": return "が投稿しました";
       case "gift": return "からプレゼントが届きました 🎁";
       case "mention": return "からメンションが来ました";
+      case "group_post": return notif.message || "がグループに投稿しました";
+      case "group_rank": return notif.message || "グループの順位が変わりました";
+      case "group_challenge": return notif.message || "グループの勝負が始まりました";
       default: return "";
     }
   };
@@ -76,6 +79,9 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "like": return "fa-smile text-yellow-500";
       case "reply": return "fa-reply text-blue-500";
       case "follow": return "fa-user-plus text-green-500";
+      case "group_post": return "fa-users text-blue-500";
+      case "group_rank": return "fa-trophy text-amber-500";
+      case "group_challenge": return "fa-fire text-rose-500";
       case "follow_post": return "fa-retweet text-blue-400";
       case "gift": return "fa-gift text-purple-500";
       case "mention": return "fa-at text-purple-500";
@@ -99,7 +105,9 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       }).catch(() => setShowGift(null)).finally(() => setGiftLoading(false));
       return;
     }
-    if (notif.notification_type === "follow") {
+    if (notif.group_id) {
+      router.push(`/groups/${notif.group_id}`);
+    } else if (notif.notification_type === "follow") {
       router.push(`/profile/${notif.sender?.id}`);
     } else if (notif.post_id) {
       router.push(`/post/${notif.post_id}`);

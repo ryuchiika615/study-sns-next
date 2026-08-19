@@ -87,7 +87,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
 
     const [notifResult, countResult] = await Promise.all([
       supabase.from("notifications")
-        .select("id, notification_type, sender_id, post_id, created_at, sender:sender_id(id, display_name, username)")
+        .select("id, notification_type, sender_id, post_id, group_id, message, created_at, sender:sender_id(id, display_name, username)")
         .eq("recipient_id", userId)
         .eq("is_read", false)
         .order("created_at", { ascending: false })
@@ -126,6 +126,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
         addToast({ message: `${sender}があなたの投稿を引用しました`, type: "info", href: lastNotif.post_id ? `/post/${lastNotif.post_id}` : undefined });
       } else if (lastNotif.notification_type === "challenge") {
         addToast({ message: `🔥 ${sender}から勝負が仕掛けられました！`, type: "info", href: "/challenges" });
+      } else if (lastNotif.notification_type === "group_post" || lastNotif.notification_type === "group_rank" || lastNotif.notification_type === "group_challenge") {
+        addToast({ message: lastNotif.message || "グループに新しい通知があります", type: "info", href: lastNotif.group_id ? `/groups/${lastNotif.group_id}` : "/groups" });
       }
       if (vibratePrefs.current[lastNotif.notification_type]) vibrateDevice();
     }
