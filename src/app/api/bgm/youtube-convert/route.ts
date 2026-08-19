@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Innertube, ClientType } from "youtubei.js";
+import { getProUser } from "@/lib/pro-server";
 import { createServerSupabase } from "@/lib/supabase-server";
 
 const CLIENT_ORDER: ClientType[] = [
@@ -55,9 +56,11 @@ async function tryDownload(videoId: string): Promise<{ buffer: Uint8Array; title
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user, isPro } = await getProUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!isPro) return NextResponse.json({ error: "YouTubeからのBGM追加はPro限定です。" }, { status: 403 });
+
+    const supabase = createServerSupabase();
 
     const { youtubeUrl, title: customTitle } = await request.json();
     if (!youtubeUrl || (!youtubeUrl.includes("youtube.com") && !youtubeUrl.includes("youtu.be"))) {

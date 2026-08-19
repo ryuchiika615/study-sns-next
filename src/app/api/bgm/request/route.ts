@@ -1,10 +1,13 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
+import { getProUser } from "@/lib/pro-server";
 
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { isPro } = await getProUser();
+  if (!isPro) return NextResponse.json({ error: "YouTubeからのBGM追加はPro限定です。" }, { status: 403 });
 
   const { youtubeUrl, title } = await request.json();
   if (!youtubeUrl || !youtubeUrl.includes("youtube.com") && !youtubeUrl.includes("youtu.be")) {

@@ -80,6 +80,7 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [bgmId, setBgmId] = useState("none");
+  const [isPro, setIsPro] = useState<boolean | null>(null);
   const [userBgms, setUserBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlName, setUrlName] = useState("");
@@ -104,6 +105,13 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
   const albumShuffleRef = useRef(false);
   const albumModeRef = useRef(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    fetch("/api/pro/status")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setIsPro(Boolean(data?.isPro)))
+      .catch(() => setIsPro(false));
+  }, []);
 
   useEffect(() => {
     const saved = getStartTime();
@@ -278,6 +286,7 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
 
   // Play track from album
   const playTrack = useCallback(async (track: any) => {
+    if (!isPro) return;
     const el = audioElRef.current;
     if (!el) return;
     if (ytPlayerRef.current) {
@@ -351,10 +360,11 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
     el.volume = 0.3;
     el.onended = () => advanceTrack();
     el.play().catch(() => {});
-  }, [advanceTrack]);
+  }, [advanceTrack, isPro]);
 
   // Play single BGM (non-album mode)
   const playSingleBgm = useCallback(async (targetId: string) => {
+    if (!isPro) return;
     const el = audioElRef.current;
     if (el) { el.pause(); el.src = ""; el.onended = null; }
     if (ytPlayerRef.current) {
@@ -400,7 +410,7 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
         el.play().catch(() => {});
       }
     }
-  }, [userBgms, localBgms]);
+  }, [userBgms, localBgms, isPro]);
 
   // Sync refs when state changes
   useEffect(() => { albumModeRef.current = albumMode; }, [albumMode]);
@@ -487,6 +497,10 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
   };
 
   const addUrlBgm = async () => {
+    if (!isPro) {
+      window.location.assign("/pro?from=bgm");
+      return;
+    }
     if (!urlName.trim() || !urlValue.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -513,6 +527,10 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
   }, [onStop]);
 
   const playYt = () => {
+    if (!isPro) {
+      window.location.assign("/pro?from=bgm");
+      return;
+    }
     if (!ytVideoId) return;
     setYtPlaying(true);
     if (ytPlayerRef.current) {
@@ -628,8 +646,8 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
           </div>
         ) : (
           <>
-        <select value={bgmId} onChange={(e) => setBgmId(e.target.value)}
-          className="flex-1 min-w-0 rounded-lg border-gray-300 text-xs py-1">
+        <select value={bgmId} onChange={(e) => setBgmId(e.target.value)} disabled={!isPro}
+          className="flex-1 min-w-0 rounded-lg border-gray-300 text-xs py-1 disabled:cursor-not-allowed disabled:opacity-60">
           <optgroup label="プリセット">
             {PRESET_TRACKS.map((t) => (
               <option key={t.id} value={t.id}>{t.label}</option>
@@ -675,14 +693,20 @@ export default function StudyTimer({ onStop, workoutMode = false, onToggleWorkou
             </div>
           )}
         </select>
-        <button onClick={() => setShowUrlInput(true)}
+        <button onClick={() => isPro ? setShowUrlInput(true) : window.location.assign("/pro?from=bgm")}
           className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-1 cursor-pointer hover:bg-gray-200 shrink-0"
-          title="YouTubeのURLを追加">
-          <i className="fas fa-link" />
+          title={isPro ? "YouTubeのURLを追加" : "ProでYouTube BGMを使う"}>
+          <i className={isPro ? "fas fa-link" : "fas fa-lock"} />
         </button>
           </>
         )}
       </div>
+      {isPro === false && (
+        <button onClick={() => window.location.assign("/pro?from=bgm")}
+          className="mx-1 text-[11px] text-purple-700 font-semibold cursor-pointer bg-transparent border-none text-left">
+          <i className="fas fa-lock mr-1" />BGM再生・YouTube URL追加はPro限定
+        </button>
+      )}
       {showUrlInput && (
         <div className="flex flex-col gap-1 px-1">
           <div className="flex items-center gap-2">

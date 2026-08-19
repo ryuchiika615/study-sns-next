@@ -24,11 +24,19 @@ export default function StudyPomodoro() {
   const [sessionCount, setSessionCount] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [bgmId, setBgmId] = useState("none");
+  const [isPro, setIsPro] = useState<boolean | null>(null);
   const [userBgms, setUserBgms] = useState<{ id: string; name: string; audio_url: string }[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const supabase = createClient();
+
+  useEffect(() => {
+    fetch("/api/pro/status")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setIsPro(Boolean(data?.isPro)))
+      .catch(() => setIsPro(false));
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_SESSION_KEY);
@@ -75,7 +83,7 @@ export default function StudyPomodoro() {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    if (bgmId && bgmId !== "none") {
+    if (isPro && bgmId && bgmId !== "none") {
       const preset = PRESET_TRACKS.find((t) => t.id === bgmId);
       if (preset?.url) {
         const audio = new Audio(preset.url);
@@ -100,7 +108,7 @@ export default function StudyPomodoro() {
         audioRef.current = null;
       }
     };
-  }, [bgmId]);
+  }, [bgmId, isPro, userBgms]);
 
   const handlePhaseEnd = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -202,8 +210,8 @@ export default function StudyPomodoro() {
           {/* BGM */}
           <div className="flex items-center gap-2 pt-1">
             <i className="fas fa-music text-xs text-gray-400" />
-            <select value={bgmId} onChange={(e) => setBgmId(e.target.value)}
-              className="flex-1 rounded-lg border-gray-300 text-xs py-1">
+            <select value={bgmId} onChange={(e) => setBgmId(e.target.value)} disabled={!isPro}
+              className="flex-1 rounded-lg border-gray-300 text-xs py-1 disabled:cursor-not-allowed disabled:opacity-60">
               <optgroup label="プリセット">
                 {PRESET_TRACKS.map((t) => (
                   <option key={t.id} value={t.id}>{t.label}</option>
@@ -217,6 +225,12 @@ export default function StudyPomodoro() {
                 </optgroup>
               )}
             </select>
+            {isPro === false && (
+              <button onClick={() => window.location.assign("/pro?from=bgm")}
+                className="text-[11px] text-purple-700 font-semibold cursor-pointer bg-transparent border-none whitespace-nowrap">
+                <i className="fas fa-lock mr-1" />Pro
+              </button>
+            )}
           </div>
         </div>
       )}
