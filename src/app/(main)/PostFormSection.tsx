@@ -368,7 +368,7 @@ export default function PostFormSection({ userId, profile }: { userId: string; p
 
           <div className="mt-2.5">
             <input type="file" accept="image/*" multiple className="text-sm"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const files = e.target.files;
                 if (!files) return;
                 const selected = Array.from(files);
