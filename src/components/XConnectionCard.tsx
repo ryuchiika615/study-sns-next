@@ -20,6 +20,21 @@ export default function XConnectionCard() {
       setConnection(data.connection);
       setRyutter(data.ryutter || null);
     }
+
+    // OAuth完了直後は、サーバー側の反映が数秒遅れることがある。
+    // ログイン中のブラウザが確認できたIdentityも見て、連携完了を見逃さない。
+    const { data: identities, error } = await supabase.auth.getUserIdentities();
+    const xIdentity: any = identities?.identities?.find((item: any) => item.provider === "x" || item.provider === "twitter");
+    if (!error && xIdentity) {
+      const identityData = xIdentity.identity_data || {};
+      setConnection((current) => current || {
+        username: identityData.user_name || identityData.username || identityData.preferred_username || null,
+        display_name: identityData.full_name || identityData.name || null,
+        connected_at: xIdentity.created_at || new Date().toISOString(),
+      });
+      // 次回以降も安定して表示できるようテーブルにも同期する。
+      fetch("/api/x/connection", { method: "POST" }).catch(() => {});
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -36,7 +51,7 @@ export default function XConnectionCard() {
 
   const disconnect = async () => {
     const { data, error } = await supabase.auth.getUserIdentities();
-    const identity = data?.identities?.find((item: any) => item.provider === "x");
+    const identity = data?.identities?.find((item: any) => item.provider === "x" || item.provider === "twitter");
     if (error || !identity) { setMessage("X連携情報を取得できませんでした"); return; }
     const result = await supabase.auth.unlinkIdentity(identity);
     if (result.error) { setMessage("ログイン方法がXのみの場合は解除できません"); return; }
