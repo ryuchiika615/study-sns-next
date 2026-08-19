@@ -20,3 +20,7 @@ $$;
 drop trigger if exists apply_post_pro_style_trigger on public.posts;
 create trigger apply_post_pro_style_trigger before insert or update on public.posts
   for each row execute function public.apply_post_pro_style();
+
+-- Show the badge on existing posts by users who are already Pro today.
+update public.posts set pro_badge = pro_badge
+where exists (select 1 from public.pro_grants where user_id = posts.user_id and revoked_at is null and starts_at <= now() and (expires_at is null or expires_at > now()));
