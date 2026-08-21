@@ -457,9 +457,14 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
         <ImageCropper
           imageUrl={cropImageUrl}
           aspect={4 / 3}
+          allowAspectChange
           onComplete={(blob) => {
             if (cropIndex >= 0) {
-              setAttachedImages(prev => prev.map((img, j) => j === cropIndex ? { ...img, blob } : img));
+              setAttachedImages(prev => prev.map((img, j) => {
+                if (j !== cropIndex) return img;
+                URL.revokeObjectURL(img.originalUrl);
+                return { blob, originalUrl: URL.createObjectURL(blob) };
+              }));
             }
             setCropImageUrl(null);
             setCropIndex(-1);
