@@ -41,6 +41,7 @@ export default function EditProfilePage() {
   const [defaultCardTheme, setDefaultCardTheme] = useState<"default" | "ocean" | "sunset" | "midnight" | "photo">("default");
   const [savingCardTheme, setSavingCardTheme] = useState(false);
   const [uploadingCardBackground, setUploadingCardBackground] = useState(false);
+  const [cardBackgroundCropUrl, setCardBackgroundCropUrl] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
   const userIdRef = useRef<string | null>(null);
@@ -216,6 +217,21 @@ export default function EditProfilePage() {
     }
   };
 
+  const openCardBackgroundCropper = (file: File) => {
+    if (!isPro) return;
+    if (!file.type.startsWith("image/")) { setMessage("画像ファイルを選択してください。"); return; }
+    if (file.size > 10 * 1024 * 1024) { setMessage("画像は10MB以下にしてください。"); return; }
+    setCardBackgroundCropUrl(URL.createObjectURL(file));
+  };
+
+  const saveCardBackgroundCrop = async (blob: Blob) => {
+    const file = new File([blob], "post-card-background.jpg", { type: "image/jpeg" });
+    const oldUrl = cardBackgroundCropUrl;
+    setCardBackgroundCropUrl(null);
+    if (oldUrl?.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
+    await uploadCardBackground(file);
+  };
+
   const removeCardBackground = async () => {
     if (!isPro || !userId || !profile?.post_card_background_url) return;
     setUploadingCardBackground(true);
@@ -350,13 +366,14 @@ export default function EditProfilePage() {
               <div className="flex gap-2">
                 <label className="flex-1 text-center bg-purple-600 text-white rounded-full py-2 text-xs font-bold cursor-pointer">
                   {uploadingCardBackground ? "処理中..." : "画像を変更"}
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingCardBackground} onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadCardBackground(file); e.target.value = ""; }} />
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingCardBackground} onChange={(e) => { const file = e.target.files?.[0]; if (file) openCardBackgroundCropper(file); e.target.value = ""; }} />
                 </label>
+                <button type="button" disabled={uploadingCardBackground} onClick={() => setCardBackgroundCropUrl(profile.post_card_background_url)} className="bg-white border border-purple-200 text-purple-700 rounded-full px-3 py-2 text-xs font-bold cursor-pointer disabled:opacity-50">切り取りを調整</button>
                 <button type="button" disabled={uploadingCardBackground} onClick={removeCardBackground} className="bg-white border border-red-200 text-red-600 rounded-full px-4 py-2 text-xs font-bold cursor-pointer disabled:opacity-50">背景を削除</button>
               </div>
             </> : <label className="block border-2 border-dashed border-purple-200 rounded-lg p-4 text-center cursor-pointer hover:bg-white/70">
               <i className="fas fa-cloud-arrow-up text-purple-500" /><p className="text-xs font-bold text-purple-800 mt-1">背景画像をアップロード</p><p className="text-[10px] text-purple-600 mt-1">JPG / PNG / WebP・10MBまで（自動で1600pxに圧縮）</p>
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingCardBackground} onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadCardBackground(file); e.target.value = ""; }} />
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingCardBackground} onChange={(e) => { const file = e.target.files?.[0]; if (file) openCardBackgroundCropper(file); e.target.value = ""; }} />
             </label>}
           </div>
           {defaultCardTheme === "photo" && <p className="text-[11px] text-purple-700">保存済みのカスタム背景が、添付画像の有無に関係なく自分の全投稿に表示されます。</p>}
@@ -404,6 +421,19 @@ export default function EditProfilePage() {
                 className="w-full rounded-lg border-gray-300 text-sm py-1.5 mt-0.5" min={0} />
             </div>
           </div>
+      )}
+
+      {cardBackgroundCropUrl && (
+        <ImageCropper
+          imageUrl={cardBackgroundCropUrl}
+          aspect={16 / 9}
+          allowAspectChange
+          onComplete={saveCardBackgroundCrop}
+          onCancel={() => {
+            if (cardBackgroundCropUrl.startsWith("blob:")) URL.revokeObjectURL(cardBackgroundCropUrl);
+            setCardBackgroundCropUrl(null);
+          }}
+        />
       )}
 
       {cropImageUrl && (
