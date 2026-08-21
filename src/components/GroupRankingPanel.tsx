@@ -20,8 +20,9 @@ export default function GroupRankingPanel({ groupId, userId }: { groupId: string
     setLoading(true);
     const field = workout ? "workout_minutes" : "study_minutes";
     const since = new Date(Date.now() - period * 86400000).toISOString();
-    const { data: posts } = await supabase.from("posts").select(`user_id, ${field}`)
-      .eq("group_id", groupId).gt(field, 0).gte("created_at", since);
+    const { data: shares } = await supabase.from("post_group_shares").select(`post:post_id(user_id, ${field}, created_at)`)
+      .eq("group_id", groupId);
+    const posts = (shares || []).map((share: any) => share.post).filter((post: any) => post && (post[field] || 0) > 0 && post.created_at >= since);
     const totals = new Map<string, { total: number; count: number }>();
     (posts || []).forEach((post: any) => {
       const current = totals.get(post.user_id) || { total: 0, count: 0 };

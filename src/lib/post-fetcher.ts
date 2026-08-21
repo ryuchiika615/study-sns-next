@@ -92,26 +92,35 @@ export async function fetchAndEnrichPosts(
   const limit = 10;
   const offset = (page - 1) * limit;
 
-  let query = supabase
-    .from("posts")
-    .select(`
-      *,
-      user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url),
-      likes_count:likes(count),
-      comments_count:comments!post_id(count)
-    `, { count: "estimated" })
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (search) {
-    query = query.or(`content.ilike.%${search}%,subject.ilike.%${search}%`);
+  const postFields = `
+    *,
+    user:user_id(id, display_name, username, icon_url, current_title_id, current_avatar_id, post_card_background_url),
+    likes_count:likes(count),
+    comments_count:comments!post_id(count)
+  `;
+  let posts: any[] | null = [];
+  let count: number | null = 0;
+  if (groupId) {
+    // 中間テーブルから取得するので、同じ投稿が複数グループに共有されても
+    // このグループでは1件としてだけ表示される。
+    const { data: shares, count: shareCount } = await supabase
+      .from("post_group_shares")
+      .select(`post:post_id(${postFields})`, { count: "estimated" })
+      .eq("group_id", groupId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+    posts = (shares || []).map((share: any) => share.post).filter(Boolean);
+    count = shareCount;
+  } else {
+    let query = supabase.from("posts").select(postFields, { count: "estimated" })
+      .order("created_at", { ascending: false }).range(offset, offset + limit - 1).is("group_id", null);
+    if (search) query = query.or(`content.ilike.%${search}%,subject.ilike.%${search}%`);
+    if (userId) query = query.eq("user_id", userId);
+    if (subjects.length) query = query.in("subject", subjects);
+    const result = await query;
+    posts = result.data;
+    count = result.count;
   }
-  if (userId) query = query.eq("user_id", userId);
-  if (subjects.length) query = query.in("subject", subjects);
-  // ホームは全体公開の掲示板のみ。グループ投稿は、対象グループのタイムラインでだけ取得する。
-  query = groupId ? query.eq("group_id", groupId) : query.is("group_id", null);
-
-  const { data: posts, count } = await query;
 
   const postIds = (posts || []).map((p: any) => p.id);
 

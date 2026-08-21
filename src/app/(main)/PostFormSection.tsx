@@ -39,6 +39,10 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
   const [attachedImages, setAttachedImages] = useState<{ blob: Blob; originalUrl: string }[]>([]);
   const [subjectTemplates, setSubjectTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [otherGroups, setOtherGroups] = useState<{ id: string; name: string; visibility: string }[]>([]);
+  const [sharedGroupIds, setSharedGroupIds] = useState<string[]>([]);
+  const [sharePickerOpen, setSharePickerOpen] = useState(false);
+  const [groupSearch, setGroupSearch] = useState("");
   const subjectRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,6 +59,18 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
       setSubjectTemplates(tmplRes.data || []);
     });
   }, [userId]);
+
+  useEffect(() => {
+    if (!groupId) return;
+    const loadGroups = async () => {
+      const { data: memberships } = await supabase.from("study_group_members").select("group_id").eq("user_id", userId);
+      const ids = (memberships || []).map((membership: any) => membership.group_id).filter((id: string) => id !== groupId);
+      if (!ids.length) return setOtherGroups([]);
+      const { data } = await supabase.from("study_groups").select("id,name,visibility").in("id", ids).order("name");
+      setOtherGroups(data || []);
+    };
+    loadGroups();
+  }, [groupId, userId]);
 
   useEffect(() => {
     if (matchedTextbook && !tbPages) {
@@ -151,7 +167,10 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
       p_pages_completed: matchedTextbook ? (parseInt(tbPages) || matchedTextbook.pages_completed) : 0,
       p_total_pages: matchedTextbook ? matchedTextbook.total_pages : 0,
     };
-    if (groupId) postPayload.p_group_id = groupId;
+    if (groupId) {
+      postPayload.p_group_id = groupId;
+      postPayload.p_shared_group_ids = sharedGroupIds;
+    }
     const { data, error } = await supabase.rpc(groupId ? "create_group_post" : "create_post", postPayload);
 
     setIsSubmitting(false);
@@ -195,6 +214,8 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
     setSilentPost(false);
     setAudioFile(null);
     setAttachedImages([]);
+    setSharedGroupIds([]);
+    setSharePickerOpen(false);
 
     if (data?.post_id) {
       // グループ外のフォロー通知から、非公開投稿の存在を漏らさない。
@@ -280,6 +301,22 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
             </div>
             <p className="text-xs text-gray-400">{content.length}/2000</p>
           </div>
+          {groupId && otherGroups.length > 0 && <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3">
+            <button type="button" onClick={() => setSharePickerOpen(v => !v)} className="flex w-full items-center justify-between gap-3 border-0 bg-transparent p-0 text-left text-xs font-bold text-blue-800">
+              <span><i className="fas fa-share-nodes mr-1.5" />他のグループにも共有{sharedGroupIds.length ? `（${sharedGroupIds.length}件選択中）` : ""}</span>
+              <i className={`fas fa-chevron-${sharePickerOpen ? "up" : "down"}`} />
+            </button>
+            <p className="mt-1 text-[10px] text-blue-700">このグループには必ず投稿されます。選んだグループにも、同じ1件の投稿として共有されます。</p>
+            {sharePickerOpen && <div className="mt-3 border-t border-blue-100 pt-3">
+              {otherGroups.length > 6 && <input value={groupSearch} onChange={(e) => setGroupSearch(e.target.value)} placeholder="共有先グループを検索" className="mb-2 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs" />}
+              <div className="max-h-48 space-y-1 overflow-y-auto pr-1">
+                {otherGroups.filter(group => group.name.toLowerCase().includes(groupSearch.toLowerCase())).map(group => <label key={group.id} className="flex cursor-pointer items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-xs text-slate-700">
+                  <input type="checkbox" checked={sharedGroupIds.includes(group.id)} onChange={(e) => setSharedGroupIds(current => e.target.checked ? [...current, group.id] : current.filter(id => id !== group.id))} className="h-4 w-4 accent-blue-600" />
+                  <span>{group.visibility === "private" ? "🔒" : "🌍"} {group.name}</span>
+                </label>)}
+              </div>
+            </div>}
+          </div>}
           <div className="relative mt-2.5">
             <input
               ref={subjectRef}
