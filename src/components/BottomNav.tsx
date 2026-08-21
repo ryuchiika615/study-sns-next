@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/use-language";
 
 const primaryItems = [
-  { href: "/", icon: "fa-home", label: "ホーム", customColor: "#f59e0b" },
   { href: "/groups", icon: "fa-users", label: "グループ", customColor: "#60a5fa" },
+  { href: "/board", icon: "fa-bullhorn", label: "掲示板", customColor: "#f59e0b" },
   { href: "/tasks", icon: "fa-tasks", label: "タスク", customColor: "#4ade80" },
   { href: "/study", icon: "fa-brain", label: "学習", customColor: "#a78bfa" },
   { href: "/profile/edit", icon: "fa-user-circle", label: "プロフィール", customColor: "#34d399" },
@@ -39,7 +39,7 @@ const moreItems = [
               <i className={`fas ${item.icon} ${isActive ? "scale-110" : ""}`}
                 style={item.customColor && !isActive ? { color: item.customColor } : undefined} />
             </div>
-            <span className="nav-label">{item.href === "/" ? label("ホーム", "Home") : item.href === "/groups" ? label("グループ", "Groups") : item.href === "/tasks" ? label("タスク", "Tasks") : item.href === "/study" ? label("学習", "Study") : label("プロフィール", "Profile")}</span>
+            <span className="nav-label">{item.href === "/groups" ? label("グループ", "Groups") : item.href === "/board" ? label("掲示板", "Board") : item.href === "/tasks" ? label("タスク", "Tasks") : item.href === "/study" ? label("学習", "Study") : label("プロフィール", "Profile")}</span>
           </Link>
         );
       })}

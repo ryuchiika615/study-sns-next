@@ -244,8 +244,8 @@ export default function BgmPanel({ onClose }: { onClose: () => void }) {
           </button>
           {settingsOpen && (
             <div className="absolute top-14 left-2 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 min-w-[180px]">
-              <Link href="/" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
-                <i className="fas fa-home w-5" /> ホーム
+              <Link href="/groups" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
+                <i className="fas fa-users w-5" /> グループ
               </Link>
               <Link href="/rankings" onClick={onClose} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
                 <i className="fas fa-trophy w-5" /> ランキング
