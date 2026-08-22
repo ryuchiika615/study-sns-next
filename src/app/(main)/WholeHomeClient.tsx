@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import PostCard from "@/components/PostCard";
-import HomeActivityFeed from "@/components/HomeActivityFeed";
+import HomeActivityFeed, { HomeActivityCard } from "@/components/HomeActivityFeed";
 import { useToast } from "@/components/ToastProvider";
 const SurveyPopup = dynamic(() => import("@/components/SurveyPopup"), { ssr: false });
 const ChallengePopup = dynamic(() => import("@/components/ChallengePopup"), { ssr: false });
@@ -61,6 +61,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [unreadRecruitments, setUnreadRecruitments] = useState(0);
   const [unreadActivities, setUnreadActivities] = useState(0);
+  const [boardActivities, setBoardActivities] = useState<any[]>([]);
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
@@ -416,7 +417,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
         </div>
         <div className="relative mt-3 flex gap-2 overflow-hidden text-[11px] font-bold"><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">🖼 背景を設定</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">👤 アイコン枠</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">🏷 称号</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">👑 PRO表示</span></div>
       </a>}
-      {feedFilter !== "recruitment" && <HomeActivityFeed onCountChange={setActivityCount} compact={feedFilter === "all"} />}
+      {feedFilter !== "recruitment" && <HomeActivityFeed onCountChange={setActivityCount} onActivitiesChange={setBoardActivities} visible={feedFilter === "activity"} />}
       {feedFilter !== "activity" && <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (
@@ -433,11 +434,9 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
         </button>
       )}
 
-      {posts.map((post: any) => (
-        <PostCard key={post.id} post={post} currentUserId={userId}
-          onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-          onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...(data as any), subject_color: (data as any).subject ? subjectColor((data as any).subject) : p.subject_color, display_study_time: formatStudyTime((data as any).study_minutes ?? p.study_minutes), display_workout_time: formatStudyTime((data as any).workout_minutes ?? p.workout_minutes) } : p))} />
-      ))}
+      {(feedFilter === "all" ? [...posts.map((post: any) => ({ type: "post", value: post, createdAt: post.created_at })), ...boardActivities.map((activity: any) => ({ type: "activity", value: activity, createdAt: activity.createdAt }))].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : posts.map((post: any) => ({ type: "post", value: post, createdAt: post.created_at }))).map((item: any) => item.type === "activity" ? <div key={`activity-${item.value.id}`} className="mx-4"><HomeActivityCard activity={item.value} onCheer={(id, count) => setBoardActivities(current => current.map(activity => activity.id === id ? { ...activity, cheeredByMe: true, cheerCount: count } : activity))} /></div> : <PostCard key={item.value.id} post={item.value} currentUserId={userId}
+        onDelete={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+        onUpdate={(id, data) => setPosts((prev) => prev.map((p) => p.id === id ? { ...p, ...(data as any), subject_color: (data as any).subject ? subjectColor((data as any).subject) : p.subject_color, display_study_time: formatStudyTime((data as any).study_minutes ?? p.study_minutes), display_workout_time: formatStudyTime((data as any).workout_minutes ?? p.workout_minutes) } : p))} />)}
 
       {posts.length === 0 && !loading && (feedFilter === "recruitment" || activityCount === 0) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 py-12 text-center">
