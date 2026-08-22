@@ -59,6 +59,8 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [activityCount, setActivityCount] = useState(0);
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
+  const [unreadRecruitments, setUnreadRecruitments] = useState(0);
+  const [unreadActivities, setUnreadActivities] = useState(0);
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [showWeeklyReport, setShowWeeklyReport] = useState(() => localStorage.getItem("weekly_report_dismissed") !== "1");
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
@@ -82,8 +84,26 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
   const changeFeed = (filter: FeedFilter) => {
     setFeedFilter(filter);
     setPage(1);
+    if (filter === "recruitment") { localStorage.setItem("board_recruitments_seen_at", new Date().toISOString()); setUnreadRecruitments(0); }
+    if (filter === "activity") { localStorage.setItem("board_activities_seen_at", new Date().toISOString()); setUnreadActivities(0); }
     if (filter !== "activity") fetchPosts(1, search, filter);
   };
+
+  useEffect(() => {
+    const loadBoardBadges = async () => {
+      const recruitmentSince = localStorage.getItem("board_recruitments_seen_at");
+      const activitySince = localStorage.getItem("board_activities_seen_at");
+      if (recruitmentSince) {
+        const recruitmentResult = await supabase.from("posts").select("id", { count: "exact", head: true }).is("group_id", null).in("subject", ["グループ募集", "勉強仲間募集"]).gt("created_at", recruitmentSince);
+        setUnreadRecruitments(Math.min(99, recruitmentResult.count || 0));
+      } else localStorage.setItem("board_recruitments_seen_at", new Date().toISOString());
+      if (activitySince) {
+        const response = await fetch(`/api/home/activity?since=${encodeURIComponent(activitySince)}`);
+        if (response.ok) setUnreadActivities(Math.min(99, (await response.json()).unreadCount || 0));
+      } else localStorage.setItem("board_activities_seen_at", new Date().toISOString());
+    };
+    loadBoardBadges();
+  }, []);
 
   const pollNotifications = async () => {
     try {
@@ -386,7 +406,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
           </div>
         </div>
       )}
-      <div className="mx-4 mb-3 rounded-xl bg-slate-800 p-1.5"><div className="flex"><button onClick={() => changeFeed("all")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "all" ? "bg-blue-500 text-white" : "text-slate-300"}`}>すべて</button><button onClick={() => changeFeed("recruitment")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "recruitment" ? "bg-amber-500 text-white" : "text-slate-300"}`}>📣 募集だけ</button><button onClick={() => changeFeed("activity")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "activity" ? "bg-emerald-500 text-white" : "text-slate-300"}`}>⚡ 活動だけ</button></div></div>
+      <div className="mx-4 mb-3 rounded-xl bg-slate-800 p-1.5"><div className="flex"><button onClick={() => changeFeed("all")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "all" ? "bg-blue-500 text-white" : "text-slate-300"}`}>すべて</button><button onClick={() => changeFeed("recruitment")} className={`relative flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "recruitment" ? "bg-amber-500 text-white" : "text-slate-300"}`}>📣 募集だけ{unreadRecruitments > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white">{unreadRecruitments}</span>}</button><button onClick={() => changeFeed("activity")} className={`relative flex-1 rounded-lg py-2 text-xs font-bold ${feedFilter === "activity" ? "bg-emerald-500 text-white" : "text-slate-300"}`}>⚡ 活動だけ{unreadActivities > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white">{unreadActivities}</span>}</button></div></div>
       {feedFilter === "all" && <a href="/pro" className="relative mx-4 mb-4 block overflow-hidden rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 p-4 text-white no-underline shadow-lg">
         <div className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/15" />
         <div className="relative flex items-start gap-3">
@@ -396,7 +416,7 @@ export default function WholeHomeClient({ userId, profile: initialProfile, total
         </div>
         <div className="relative mt-3 flex gap-2 overflow-hidden text-[11px] font-bold"><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">🖼 背景を設定</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">👤 アイコン枠</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">🏷 称号</span><span className="rounded-full bg-slate-950/30 px-2.5 py-1.5">👑 PRO表示</span></div>
       </a>}
-      {feedFilter !== "recruitment" && <HomeActivityFeed onCountChange={setActivityCount} />}
+      {feedFilter !== "recruitment" && <HomeActivityFeed onCountChange={setActivityCount} compact={feedFilter === "all"} />}
       {feedFilter !== "activity" && <PullToRefresh onRefresh={async () => { await fetchPosts(1, search); }}>
 
       {loading && posts.length === 0 ? (

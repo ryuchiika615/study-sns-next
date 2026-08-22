@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
 
   const page = Math.max(1, Number(new URL(request.url).searchParams.get("page")) || 1);
+  const since = new URL(request.url).searchParams.get("since");
   const limit = 10;
   const admin = createAdminClient();
   const { data: posts, error } = await admin.from("posts")
@@ -52,6 +53,12 @@ export async function GET(request: NextRequest) {
 
   const { count } = await admin.from("posts").select("*", { count: "exact", head: true })
     .not("group_id", "is", null).or("study_minutes.gte.1,workout_minutes.gte.1");
+  let unreadCount = 0;
+  if (since) {
+    const { count: unread } = await admin.from("posts").select("*", { count: "exact", head: true })
+      .not("group_id", "is", null).or("study_minutes.gte.1,workout_minutes.gte.1").gt("created_at", since);
+    unreadCount = unread || 0;
+  }
   return NextResponse.json({ activities: (posts || []).map((post: any) => ({
     id: post.id,
     subject: post.subject || "学習",
@@ -74,7 +81,7 @@ export async function GET(request: NextRequest) {
     cheerCount: cheers.get(post.id)?.count || 0,
     cheeredByMe: cheers.get(post.id)?.mine || false,
     isMine: post.user_id === user.id,
-  })), totalPages: Math.max(1, Math.ceil((count || 0) / limit)), currentPage: page });
+  })), totalPages: Math.max(1, Math.ceil((count || 0) / limit)), currentPage: page, unreadCount });
 }
 
 export async function POST(request: NextRequest) {
