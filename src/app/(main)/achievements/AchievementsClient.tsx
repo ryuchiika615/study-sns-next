@@ -73,9 +73,9 @@ export default function AchievementsClient({ userId }: { userId: string }) {
       <section className="mb-5 rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-fuchsia-100 p-3 shadow-sm">
         <div className="mb-2 px-1">
           <h2 className="text-base font-black text-violet-950">🔤 五十音称号コレクション</h2>
-          <p className="mt-0.5 text-xs leading-relaxed text-violet-900">実績を達成して「あ〜ん」を集めよう。集めた文字で、自分だけの称号を作れます。</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-violet-900">実績を達成して「あ〜ん」を集めよう。称号の作成・装備はプロフィール設定からできます。</p>
         </div>
-        <AchievementTitleForge onCreated={() => setTitleMessage("自作称号を作成して装備しました！プロフィールでいつでも変更できます。")} onMessage={setTitleMessage} />
+        <AchievementTitleForge collectionOnly onCreated={() => undefined} onMessage={setTitleMessage} />
         {titleMessage && <p className="mt-2 rounded-lg bg-white/80 px-3 py-2 text-xs font-bold text-violet-800">{titleMessage}</p>}
       </section>
 
