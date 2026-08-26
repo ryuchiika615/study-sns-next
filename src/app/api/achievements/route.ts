@@ -5,8 +5,10 @@ import { createAdminClient } from "@/lib/supabase-admin";
 export const dynamic = "force-dynamic";
 
 async function calcProgress(userId: string, admin: ReturnType<typeof createAdminClient>) {
-  const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", userId);
+  const { data: posts } = await admin.from("posts").select("study_minutes, workout_minutes, created_at").eq("user_id", userId);
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
+  const totalWorkoutMinutes = (posts || []).reduce((s, p) => s + (p.workout_minutes || 0), 0);
+  const activeDays = new Set((posts || []).map((p) => String(p.created_at || "").slice(0, 10)).filter(Boolean)).size;
 
   // 連続学習系の実績は、投稿が途切れた時点で下がる現在値ではなく、
   // 学習カードを続けた「最高連続学習日数」で判定する。
@@ -52,7 +54,7 @@ async function calcProgress(userId: string, admin: ReturnType<typeof createAdmin
     maxHabitStreak = Math.max(maxHabitStreak, current);
   }
 
-  return { totalMinutes, consecutiveDays, postCount, challengeWinCount: challengeWinCount || 0, subjectCount, maxHabitStreak };
+  return { totalMinutes, totalWorkoutMinutes, activeDays, consecutiveDays, postCount, challengeWinCount: challengeWinCount || 0, subjectCount, maxHabitStreak };
 }
 
 export async function GET() {
@@ -74,7 +76,7 @@ export async function GET() {
   const userAchievements = userResult.data || [];
   const titleRewardMap = new Map((titleRewardMapResult.data || []).map((row: any) => [row.achievement_id, row]));
   const titleRewardClaims = new Map((titleRewardResult.data || []).map((row: any) => [row.achievement_id, row]));
-  const { totalMinutes, consecutiveDays, postCount, challengeWinCount, subjectCount, maxHabitStreak } = progress;
+  const { totalMinutes, totalWorkoutMinutes, activeDays, consecutiveDays, postCount, challengeWinCount, subjectCount, maxHabitStreak } = progress;
 
   const newlyEarned: string[] = [];
 
@@ -84,6 +86,8 @@ export async function GET() {
     let currentProgress = ua?.progress || 0;
     switch (def.condition_type) {
       case "study_minutes": currentProgress = totalMinutes; break;
+      case "workout_minutes": currentProgress = totalWorkoutMinutes; break;
+      case "active_days": currentProgress = activeDays; break;
       case "consecutive_days": currentProgress = consecutiveDays; break;
       case "post_count": currentProgress = postCount; break;
       case "challenge_wins": currentProgress = challengeWinCount; break;

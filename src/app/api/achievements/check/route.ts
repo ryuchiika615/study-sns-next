@@ -20,8 +20,10 @@ export async function GET() {
   const defsList = defs.data || [];
 
   // Calc current progress for each unearned achievement
-  const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", user.id);
+  const { data: posts } = await admin.from("posts").select("study_minutes, workout_minutes, created_at").eq("user_id", user.id);
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
+  const totalWorkoutMinutes = (posts || []).reduce((s, p) => s + (p.workout_minutes || 0), 0);
+  const activeDays = new Set((posts || []).map((p) => String(p.created_at || "").slice(0, 10)).filter(Boolean)).size;
 
   // 実績では、現在の投稿連続数ではなく過去最高の連続学習日数を使う。
   const { data: studyStreak } = await admin
@@ -67,6 +69,8 @@ export async function GET() {
     let progress = 0;
     switch (def.condition_type) {
       case "study_minutes": progress = totalMinutes; break;
+      case "workout_minutes": progress = totalWorkoutMinutes; break;
+      case "active_days": progress = activeDays; break;
       case "consecutive_days": progress = consecutiveDays; break;
       case "post_count": progress = postCount; break;
       case "challenge_wins": progress = challengeWinCount || 0; break;
