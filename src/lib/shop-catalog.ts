@@ -132,7 +132,7 @@ export function isRefinedItem(item: { name: string }): boolean {
 
 export function itemDisplayName(itemOrName: { name: string } | string): string {
   const name = typeof itemOrName === "string" ? itemOrName : itemOrName.name;
-  return name.replace("精錬:", "").replace("邊ｾ骭ｬ:", "");
+  return name.replace("精錬:", "").replace("邊ｾ骭ｬ:", "").replace("自作：", "");
 }
 
 export function refinedPartRarity(part: string | null, items: any[]): number {

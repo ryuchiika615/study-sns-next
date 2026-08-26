@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { itemDisplayName, isRefinedItem, RARITY_ORDER } from "@/lib/shop-catalog";
 import RefineParts from "@/components/RefineParts";
+import AchievementTitleForge from "@/components/AchievementTitleForge";
 
 export default function TitleManager({
   items, profile, onRefresh, onMessage,
@@ -73,6 +74,8 @@ export default function TitleManager({
             <h3 className="text-xs font-bold mb-2">称号を精錬</h3>
             <RefineParts parts={ownedParts()} onRefine={handleRefineParts} />
           </div>
+
+          <AchievementTitleForge onCreated={() => { const u = profile?.id; if (u) onRefresh(u); }} onMessage={onMessage} />
 
           <div className="space-y-1">
             {(() => {

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase";
 import StudyBGMRecorder from "@/components/StudyBGMRecorder";
 import { SHOP_CATALOG, SELL_VALUES, BUY_COSTS, RARITY_ORDER, isRefinedItem, itemDisplayName } from "@/lib/shop-catalog";
 import RefineParts from "@/components/RefineParts";
+import AchievementTitleForge from "@/components/AchievementTitleForge";
 import { getOptimizedIconUrl, rarityClass } from "@/lib/utils";
 
 const RARITIES = ["N", "R", "SR", "SSR", "UR", "LR", "XR"];
@@ -280,6 +281,8 @@ export default function ShopClient() {
                 <h3 className="text-xs font-bold mb-2">称号を精錬（部位組み合わせ）</h3>
                 <RefineParts parts={ownedParts()} onRefine={handleRefineParts} />
               </div>
+
+              <AchievementTitleForge onCreated={() => { loadData(); loadInventory(); }} onMessage={setMessage} />
 
               {/* 一括売却 */}
               <div>
