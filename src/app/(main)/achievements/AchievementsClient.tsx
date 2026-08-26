@@ -154,7 +154,9 @@ export default function AchievementsClient({ userId }: { userId: string }) {
                             style={{ width: `${progressPct}%` }} />
                         </div>
                         <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
-                          {a.progress.toLocaleString()}/{a.condition_value.toLocaleString()}
+                          {a.condition_type === "consecutive_days"
+                            ? `最高 ${a.progress.toLocaleString()}日 / ${a.condition_value.toLocaleString()}日`
+                            : `${a.progress.toLocaleString()}/${a.condition_value.toLocaleString()}`}
                         </span>
                       </div>
 

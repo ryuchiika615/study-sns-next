@@ -8,8 +8,14 @@ async function calcProgress(userId: string, admin: ReturnType<typeof createAdmin
   const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", userId);
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
 
-  const { data: profile } = await admin.from("profiles").select("consecutive_post_days").eq("id", userId).single();
-  const consecutiveDays = profile?.consecutive_post_days || 0;
+  // 連続学習系の実績は、投稿が途切れた時点で下がる現在値ではなく、
+  // 学習カードを続けた「最高連続学習日数」で判定する。
+  const { data: studyStreak } = await admin
+    .from("study_streaks")
+    .select("longest_streak")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const consecutiveDays = studyStreak?.longest_streak || 0;
 
   const { data: postCountData, count: postCount } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", userId);
 

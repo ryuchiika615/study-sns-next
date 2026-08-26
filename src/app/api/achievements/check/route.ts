@@ -23,8 +23,13 @@ export async function GET() {
   const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", user.id);
   const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
 
-  const { data: profile } = await admin.from("profiles").select("consecutive_post_days").eq("id", user.id).single();
-  const consecutiveDays = profile?.consecutive_post_days || 0;
+  // 実績では、現在の投稿連続数ではなく過去最高の連続学習日数を使う。
+  const { data: studyStreak } = await admin
+    .from("study_streaks")
+    .select("longest_streak")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const consecutiveDays = studyStreak?.longest_streak || 0;
 
   const { count: postCount } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id);
 
