@@ -111,10 +111,11 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
             const unlocked = owned.has(item.id);
             const active = selected.includes(item.id);
             return <button key={item.id} type="button" onClick={() => unlocked ? !collectionOnly && toggle(item.id) : purchaseCharacter(item)} disabled={(unlocked && collectionOnly) || purchasingId === item.id}
-              className={`min-h-[76px] rounded-lg border p-1.5 text-left transition ${active ? "border-violet-600 bg-violet-600 text-white shadow" : unlocked ? "border-violet-200 bg-white hover:border-violet-400" : "border-fuchsia-200 bg-fuchsia-50 hover:border-fuchsia-500 hover:bg-fuchsia-100"}`}>
+              className={`min-h-[92px] rounded-lg border p-2 text-left transition ${active ? "border-violet-600 bg-violet-600 text-white shadow" : unlocked ? "border-violet-200 bg-white hover:border-violet-400" : "border-fuchsia-300 bg-gradient-to-br from-white via-fuchsia-50 to-violet-100 shadow-sm hover:border-fuchsia-600 hover:shadow-md"}`}>
               <div className="flex items-center justify-between"><span className="text-xl font-black">{unlocked ? item.character : "🔒"}</span><span className={`title-badge ${item.rarity} text-[9px]`}>{item.rarity}</span></div>
-              <p className={`mt-1 text-[10px] font-bold leading-tight ${active ? "text-white" : "text-gray-700"}`}>{item.label}</p>
-              <p className={`mt-0.5 text-[9px] leading-tight ${active ? "text-white/85" : unlocked ? "text-gray-500" : "font-bold text-fuchsia-700"}`}>{unlocked ? item.description : purchasingId === item.id ? "交換中…" : `${CHARACTER_PRICE.toLocaleString()}Pで交換`}</p>
+              <p className={`mt-1 text-[10px] font-black leading-tight ${active ? "text-white" : "text-slate-900"}`}>{item.label}</p>
+              <p className={`mt-0.5 text-[9px] font-medium leading-tight ${active ? "text-white/85" : "text-slate-700"}`}>{item.description}</p>
+              {!unlocked && <span className="mt-1 inline-flex rounded-full bg-fuchsia-700 px-1.5 py-0.5 text-[9px] font-black text-white">{purchasingId === item.id ? "交換中…" : `10,000Pで交換`}</span>}
             </button>;
           })}
         </div>
