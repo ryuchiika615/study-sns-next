@@ -25,6 +25,7 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
   const [subject, setSubject] = useState("");
   const [studyMinutes, setStudyMinutes] = useState("");
   const [workoutMode, setWorkoutMode] = useState(false);
+  const [timerMode, setTimerMode] = useState<"timer" | "focus">("timer");
   const [studyDate, setStudyDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [beeryualResult, setBeeryualResult] = useState<string | null>(null);
@@ -249,10 +250,15 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
   return (
     <>
       <div className={`${groupId ? "" : "mx-4"} mb-3 space-y-3`}>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} onToggleWorkout={() => setWorkoutMode(v => !v)} />
+        <div className="rounded-xl bg-white p-2 shadow-sm border border-gray-100">
+          <div className="flex rounded-lg bg-slate-100 p-1">
+            <button type="button" onClick={() => setTimerMode("timer")} className={`flex-1 rounded-md py-2 text-xs font-bold transition ${timerMode === "timer" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}>⏱ タイマー</button>
+            <button type="button" onClick={() => setTimerMode("focus")} className={`flex-1 rounded-md py-2 text-xs font-bold transition ${timerMode === "focus" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-500"}`}>🎯 集中</button>
+          </div>
+          <div className="pt-2">
+            {timerMode === "timer" ? <StudyTimer onStop={(m) => { setStudyMinutes(String(m)); }} workoutMode={workoutMode} onToggleWorkout={() => setWorkoutMode(v => !v)} /> : <StudyPomodoro />}
+          </div>
         </div>
-        <StudyPomodoro />
       </div>
 
       <div className={`bg-white rounded-xl shadow-sm border border-gray-100 ${groupId ? "" : "mx-4"} mb-4 overflow-hidden`}>
