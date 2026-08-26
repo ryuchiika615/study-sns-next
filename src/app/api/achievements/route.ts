@@ -45,14 +45,18 @@ export async function GET() {
 
   const admin = createAdminClient();
 
-  const [defsResult, userResult, progress] = await Promise.all([
+  const [defsResult, userResult, progress, titleRewardMapResult, titleRewardResult] = await Promise.all([
     admin.from("achievement_definitions").select("*").order("sort_order", { ascending: true }),
     admin.from("user_achievements").select("*").eq("user_id", user.id),
     calcProgress(user.id, admin),
+    admin.from("achievement_title_character_rewards").select("achievement_id, definition_id, title_character_definitions(character, rarity)"),
+    admin.from("user_achievement_title_rewards").select("achievement_id, claimed_at").eq("user_id", user.id),
   ]);
 
   const defs = defsResult.data || [];
   const userAchievements = userResult.data || [];
+  const titleRewardMap = new Map((titleRewardMapResult.data || []).map((row: any) => [row.achievement_id, row]));
+  const titleRewardClaims = new Map((titleRewardResult.data || []).map((row: any) => [row.achievement_id, row]));
   const { totalMinutes, consecutiveDays, postCount, challengeWinCount, subjectCount, maxHabitStreak } = progress;
 
   const newlyEarned: string[] = [];
@@ -92,12 +96,18 @@ export async function GET() {
       }, { onConflict: "user_id, achievement_id" });
     }
 
+    const titleReward = titleRewardMap.get(def.id);
+    const titleRewardClaim = titleRewardClaims.get(def.id);
     return {
       ...def,
       progress: currentProgress,
       earned: alreadyEarned || isComplete,
       earned_at: ua?.earned_at || (isComplete ? new Date().toISOString() : null),
       claimed: ua?.claimed || false,
+      title_character: titleReward?.title_character_definitions?.character || null,
+      title_character_rarity: titleReward?.title_character_definitions?.rarity || null,
+      title_reward_pending: Boolean((alreadyEarned || isComplete) && titleReward && !titleRewardClaim?.claimed_at),
+      title_reward_claimed: Boolean(titleRewardClaim?.claimed_at),
     };
   }));
 

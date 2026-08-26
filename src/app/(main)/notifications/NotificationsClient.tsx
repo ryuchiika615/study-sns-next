@@ -63,6 +63,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "group_post": return notif.message || "がグループに投稿しました";
       case "group_rank": return notif.message || "グループの順位が変わりました";
       case "group_challenge": return notif.message || "グループの勝負が始まりました";
+      case "achievement": return notif.message || "称号文字を受け取れます";
       default: return "";
     }
   };
@@ -71,6 +72,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
     if (notif.notification_type === "gift" && notif.sender?.is_admin) {
       return "管理者";
     }
+    if (notif.notification_type === "achievement") return "実績";
     return notif.sender?.display_name || "ユーザー";
   };
 
@@ -85,6 +87,7 @@ export default function NotificationsClient({ notifications: initial }: { notifi
       case "follow_post": return "fa-retweet text-blue-400";
       case "gift": return "fa-gift text-purple-500";
       case "mention": return "fa-at text-purple-500";
+      case "achievement": return "fa-medal text-amber-500";
       default: return "fa-bell text-gray-400";
     }
   };
@@ -107,6 +110,8 @@ export default function NotificationsClient({ notifications: initial }: { notifi
     }
     if (notif.group_id) {
       router.push(`/groups/${notif.group_id}`);
+    } else if (notif.notification_type === "achievement") {
+      router.push("/achievements");
     } else if (notif.notification_type === "follow") {
       router.push(`/profile/${notif.sender?.id}`);
     } else if (notif.post_id) {

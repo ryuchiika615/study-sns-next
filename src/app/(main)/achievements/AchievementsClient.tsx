@@ -18,6 +18,10 @@ type Achievement = {
   earned: boolean;
   earned_at: string | null;
   claimed: boolean;
+  title_character: string | null;
+  title_character_rarity: string | null;
+  title_reward_pending: boolean;
+  title_reward_claimed: boolean;
 };
 
 const categoryLabels: Record<string, string> = {
@@ -54,6 +58,21 @@ export default function AchievementsClient({ userId }: { userId: string }) {
     }
   };
 
+  const claimTitleCharacter = async (id: string) => {
+    const res = await fetch("/api/achievements/title-reward", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ achievement_id: id }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setAchievements(prev => prev.map(a => a.id === id ? { ...a, title_reward_pending: false, title_reward_claimed: true } : a));
+      setTitleMessage(`称号文字「${data.reward?.character || "？"}」を獲得しました！プロフィール設定の称号で使えます。`);
+    } else {
+      setTitleMessage(data.error || "称号文字を受け取れませんでした。");
+    }
+  };
+
   const categories = [...new Set(achievements.map(a => a.category))];
 
   let filtered = achievements;
@@ -67,12 +86,13 @@ export default function AchievementsClient({ userId }: { userId: string }) {
     acc[cat].push(a);
     return acc;
   }, {} as Record<string, Achievement[]>);
+  const pendingTitleCount = achievements.filter((achievement) => achievement.title_reward_pending).length;
 
   return (
     <div>
       <section className="mb-5 rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-fuchsia-100 p-3 shadow-sm">
         <div className="mb-2 px-1">
-          <h2 className="text-base font-black text-violet-950">🔤 五十音称号コレクション</h2>
+          <div className="flex items-center justify-between gap-2"><h2 className="text-base font-black text-violet-950">🔤 五十音称号コレクション</h2>{pendingTitleCount > 0 && <span className="rounded-full bg-red-500 px-2 py-1 text-[11px] font-black text-white">称号を獲得 {pendingTitleCount}</span>}</div>
           <p className="mt-0.5 text-xs leading-relaxed text-violet-900">実績を達成して「あ〜ん」を集めよう。称号の作成・装備はプロフィール設定からできます。</p>
         </div>
         <AchievementTitleForge collectionOnly onCreated={() => undefined} onMessage={setTitleMessage} />
@@ -155,6 +175,12 @@ export default function AchievementsClient({ userId }: { userId: string }) {
                             sharePath={`/share/achievement/${userId}/${a.id}`} />
                         )}
                       </div>
+                      {a.earned && a.title_character && (
+                        <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-2">
+                          <span className="text-xs font-bold text-violet-900">🔤 実績報酬の文字：<b className="text-base">{a.title_character}</b>{a.title_character_rarity && <span className="ml-1 text-[10px]">{a.title_character_rarity}</span>}</span>
+                          {a.title_reward_pending ? <button onClick={() => claimTitleCharacter(a.id)} className="relative shrink-0 rounded-full bg-violet-700 px-3 py-1.5 text-xs font-black text-white">称号を獲得<span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px]">!</span></button> : <span className="text-[11px] font-bold text-green-600">✓ 獲得済み</span>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
