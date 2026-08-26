@@ -55,10 +55,10 @@ export default function ProfileClient({
   useEffect(() => {
     if (user.id === profile.id) {
       fetch("/api/study/weekly-badge").then(r => r.ok && r.json()).then(d => { if (d) setBadges(d.badges || []); });
-      fetch("/api/focus-score").then(r => r.ok && r.json()).then(d => { if (d) setFocusScore(d); });
     } else {
       supabase.from("weekly_badges").select("*").eq("user_id", profile.id).order("week_start", { ascending: false }).then(({ data }) => { if (data) setBadges(data); });
     }
+    fetch(`/api/focus-score?user_id=${encodeURIComponent(profile.id)}`).then(r => r.ok && r.json()).then(d => { if (d) setFocusScore(d); });
   }, []);
   const [showNotifyPopover, setShowNotifyPopover] = useState(false);
   const [section, setSection] = useState<"posts" | "likes" | null>(null);
@@ -463,7 +463,7 @@ export default function ProfileClient({
         {focusScore && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold text-sm text-gray-500"><i className="fas fa-brain mr-1.5" />集中度スコア</h3>
+              <div><h3 className="font-bold text-sm text-gray-500"><i className="fas fa-brain mr-1.5" />集中度スコア</h3><p className="mt-0.5 text-[10px] text-gray-400">{user.id === profile.id ? "あなたの学習の積み上げ" : "このユーザーの公開スコア（投稿本文・習慣の詳細は非公開）"}</p></div>
               <span className={`text-lg font-bold ${focusScore.level === "S" ? "text-yellow-500" : focusScore.level === "A" ? "text-green-500" : focusScore.level === "B" ? "text-blue-500" : "text-gray-400"}`}>
                 {focusScore.level} <span className="text-sm text-gray-400">{focusScore.total}</span>
               </span>
