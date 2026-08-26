@@ -13,6 +13,8 @@ type CharacterDefinition = {
   sort_order: number;
 };
 
+const GOJUON = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "や", "ゆ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん"];
+
 export default function AchievementTitleForge({ onCreated, onMessage, collectionOnly = false }: { onCreated: () => void; onMessage: (message: string) => void; collectionOnly?: boolean }) {
   const supabase = createClient();
   const [definitions, setDefinitions] = useState<CharacterDefinition[]>([]);
@@ -38,6 +40,11 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
   useEffect(() => { load(); }, []);
 
   const selectedCharacters = useMemo(() => selected.map((id) => definitions.find((item) => item.id === id)?.character || "").join(""), [selected, definitions]);
+  const gojuonDefinitions = useMemo(() => [...definitions].sort((a, b) => {
+    const aOrder = GOJUON.indexOf(a.character);
+    const bOrder = GOJUON.indexOf(b.character);
+    return (aOrder < 0 ? 999 : aOrder) - (bOrder < 0 ? 999 : bOrder);
+  }), [definitions]);
 
   const toggle = (id: string) => {
     if (!owned.has(id)) return;
@@ -79,7 +86,7 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
 
       {loading ? <p className="py-4 text-center text-xs text-gray-400">文字を読み込み中…</p> : (
         <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-          {definitions.map((item) => {
+          {gojuonDefinitions.map((item) => {
             const unlocked = owned.has(item.id);
             const active = selected.includes(item.id);
             return <button key={item.id} type="button" onClick={() => !collectionOnly && toggle(item.id)} disabled={!unlocked}
