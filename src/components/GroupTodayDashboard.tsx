@@ -23,11 +23,13 @@ export default function GroupTodayDashboard({ userId, groupId }: { userId: strin
   const [isPro, setIsPro] = useState<boolean | null>(null);
   const [minimized, setMinimized] = useState(false);
   const [showMinimizeConfirm, setShowMinimizeConfirm] = useState(false);
-  const [showDisplayGuide, setShowDisplayGuide] = useState(false);
   const storageKey = `ryutter:group-today-dashboard:${userId}:${groupId}`;
 
   useEffect(() => {
-    setMinimized(window.localStorage.getItem(storageKey) === "minimized");
+    const syncDisplay = () => setMinimized(window.localStorage.getItem(storageKey) === "minimized");
+    syncDisplay();
+    window.addEventListener("ryutter:group-today-display", syncDisplay);
+    return () => window.removeEventListener("ryutter:group-today-display", syncDisplay);
   }, [storageKey]);
 
   useEffect(() => {
@@ -70,10 +72,9 @@ export default function GroupTodayDashboard({ userId, groupId }: { userId: strin
 
   if (minimized) return <>
     <section className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-400/30 bg-slate-900 px-4 py-3 text-white shadow-sm">
-      <div className="min-w-0"><p className="text-sm font-black">✨ 今日のスタート <span className="ml-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300">最小表示中</span></p><p className="mt-0.5 text-[11px] text-slate-400">表示設定からいつでも戻せます。</p></div>
-      <div className="flex shrink-0 gap-2"><button onClick={() => setShowDisplayGuide(true)} className="rounded-lg border border-slate-600 px-2.5 py-2 text-xs font-bold text-slate-200">表示設定</button><button onClick={restore} className="rounded-lg bg-emerald-500 px-2.5 py-2 text-xs font-bold text-white">戻す</button></div>
+      <div className="min-w-0"><p className="text-sm font-black">✨ 今日のスタート <span className="ml-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300">最小表示中</span></p><p className="mt-0.5 text-[11px] text-slate-400">⚙️ 編集・設定からも、いつでも戻せます。</p></div>
+      <button onClick={restore} className="shrink-0 rounded-lg bg-emerald-500 px-2.5 py-2 text-xs font-bold text-white">戻す</button>
     </section>
-    {showDisplayGuide && <DisplayGuide onClose={() => setShowDisplayGuide(false)} onRestore={restore} />}
   </>;
 
   return (
@@ -117,8 +118,4 @@ export default function GroupTodayDashboard({ userId, groupId }: { userId: strin
     {showMinimizeConfirm && <div className="fixed inset-0 z-[90] flex items-end bg-slate-950/80 p-4 sm:items-center"><section style={{ backgroundColor: "#17233a", color: "#f8fafc" }} className="mx-auto w-full max-w-md rounded-2xl border border-slate-500 p-5 shadow-2xl"><p className="text-lg">✨</p><h2 className="mt-1 text-base font-black text-white">今日のスタートを最小化しますか？</h2><p className="mt-2 text-sm leading-6 text-slate-200">このグループでは小さい表示になります。投稿やタイマーには影響しません。いつでも「表示設定」または「戻す」から元に戻せます。</p><div className="mt-4 flex gap-2"><button onClick={() => setShowMinimizeConfirm(false)} className="flex-1 rounded-xl border border-slate-300 bg-slate-700 py-3 text-sm font-bold text-white">キャンセル</button><button onClick={minimize} className="flex-1 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white">最小化する</button></div></section></div>}
     </>
   );
-}
-
-function DisplayGuide({ onClose, onRestore }: { onClose: () => void; onRestore: () => void }) {
-  return <div className="fixed inset-0 z-[90] flex items-end bg-slate-950/80 p-4 sm:items-center"><section style={{ backgroundColor: "#17233a", color: "#f8fafc" }} className="mx-auto w-full max-w-md rounded-2xl border border-slate-500 p-5 shadow-2xl"><div className="flex items-center justify-between"><h2 style={{ color: "#ffffff" }} className="text-base font-black">⚙️ 今日のスタートの表示設定</h2><button onClick={onClose} style={{ color: "#e2e8f0" }} className="text-sm font-bold">閉じる</button></div><p style={{ color: "#e2e8f0" }} className="mt-2 text-sm leading-6">最小化しても、今日の案内は消えていません。下の小さいバーからいつでも元に戻せます。</p><div className="mt-4 rounded-2xl bg-slate-800 p-3"><p style={{ color: "#cbd5e1" }} className="text-center text-[10px] font-bold">表示イメージ：戻すとこうなります</p><div className="mt-2 flex items-center justify-between rounded-xl bg-slate-900 px-3 py-2 text-white"><span className="text-xs font-bold">✨ 今日のスタート　最小表示中</span><span className="rounded bg-emerald-500 px-2 py-1 text-[10px] font-bold">戻す</span></div><p style={{ color: "#cbd5e1" }} className="my-2 text-center text-xl">↑</p><div className="rounded-xl bg-gradient-to-br from-emerald-900 to-cyan-950 p-3 text-white shadow"><p className="text-xs font-black">✨ 今日のスタート</p><div className="mt-2 grid grid-cols-3 gap-1"><span className="h-6 rounded bg-white/15" /><span className="h-6 rounded bg-white/15" /><span className="h-6 rounded bg-white/15" /></div></div></div><button onClick={() => { onRestore(); onClose(); }} className="mt-4 w-full rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white">通常表示に戻す</button></section></div>;
 }
