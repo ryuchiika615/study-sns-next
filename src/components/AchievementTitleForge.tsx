@@ -13,6 +13,8 @@ type CharacterDefinition = {
   sort_order: number;
 };
 
+const CHARACTER_PRICE = 10_000;
+
 const GOJUON = [
   "あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "や", "ゆ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん",
   "が", "ぎ", "ぐ", "げ", "ご", "ざ", "じ", "ず", "ぜ", "ぞ", "だ", "ぢ", "づ", "で", "ど", "ば", "び", "ぶ", "べ", "ぼ", "ぱ", "ぴ", "ぷ", "ぺ", "ぽ", "ゔ",
@@ -27,17 +29,21 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [points, setPoints] = useState(0);
 
   const load = async () => {
     setLoading(true);
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) { setLoading(false); return; }
-    const [defsResult, ownedResult] = await Promise.all([
+    const [defsResult, ownedResult, profileResult] = await Promise.all([
       supabase.from("title_character_definitions").select("id, character, label, description, rarity, sort_order").order("sort_order"),
       supabase.from("user_title_characters").select("definition_id").eq("user_id", userData.user.id),
+      supabase.from("profiles").select("exchange_points").eq("id", userData.user.id).maybeSingle(),
     ]);
     setDefinitions((defsResult.data || []) as CharacterDefinition[]);
     setOwned(new Set((ownedResult.data || []).map((item: any) => item.definition_id)));
+    setPoints(profileResult.data?.exchange_points || 0);
     setLoading(false);
   };
 
@@ -78,6 +84,17 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
     onCreated();
   };
 
+  const purchaseCharacter = async (item: CharacterDefinition) => {
+    if (owned.has(item.id) || purchasingId) return;
+    if (!window.confirm(`「${item.character}」を ${CHARACTER_PRICE.toLocaleString()}ポイントで交換しますか？\n現在のポイント：${points.toLocaleString()}P`)) return;
+    setPurchasingId(item.id);
+    const { data, error } = await supabase.rpc("purchase_title_character", { p_definition_id: item.id });
+    setPurchasingId(null);
+    if (error) { onMessage(error.message); return; }
+    await load();
+    onMessage(`「${data?.character || item.character}」を ${CHARACTER_PRICE.toLocaleString()}ポイントで交換しました！`);
+  };
+
   return (
     <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-3">
       <div className="flex items-start justify-between gap-3">
@@ -85,7 +102,7 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
         <button type="button" onClick={checkAchievements} disabled={checking} className="shrink-0 rounded-full bg-violet-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{checking ? "確認中…" : "実績を確認"}</button>
       </div>
 
-      {collectionOnly ? <div className="mt-3 rounded-lg bg-slate-950 px-3 py-2 text-center text-sm font-black text-white">解放済み：{owned.size}/{definitions.length || 46} 文字　プロフィール設定で称号を作れます</div> : <><div className="mt-3 rounded-lg bg-slate-950 px-3 py-2 text-center text-lg font-black tracking-[0.25em] text-white">{selectedCharacters || "称号を組み立てよう"}</div>
+      {collectionOnly ? <div className="mt-3 rounded-lg bg-slate-950 px-3 py-2 text-center text-sm font-black text-white">解放済み：{owned.size}/{definitions.length || 46} 文字　・　所持：{points.toLocaleString()}P<br /><span className="text-[11px] font-medium text-violet-200">未解放の文字は1文字 {CHARACTER_PRICE.toLocaleString()}Pで交換できます</span></div> : <><div className="mt-3 rounded-lg bg-slate-950 px-3 py-2 text-center text-lg font-black tracking-[0.25em] text-white">{selectedCharacters || "称号を組み立てよう"}</div>
       <p className="mt-1 text-center text-[10px] text-violet-700">{selected.length}/8文字選択中。強い実績の文字を入れるほどレア度も上がります。</p></>}
 
       {loading ? <p className="py-4 text-center text-xs text-gray-400">文字を読み込み中…</p> : (
@@ -93,11 +110,11 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
           {gojuonDefinitions.map((item) => {
             const unlocked = owned.has(item.id);
             const active = selected.includes(item.id);
-            return <button key={item.id} type="button" onClick={() => !collectionOnly && toggle(item.id)} disabled={!unlocked}
-              className={`min-h-[76px] rounded-lg border p-1.5 text-left transition ${active ? "border-violet-600 bg-violet-600 text-white shadow" : unlocked ? "border-violet-200 bg-white hover:border-violet-400" : "cursor-not-allowed border-gray-200 bg-gray-100 opacity-60"}`}>
+            return <button key={item.id} type="button" onClick={() => unlocked ? !collectionOnly && toggle(item.id) : purchaseCharacter(item)} disabled={(unlocked && collectionOnly) || purchasingId === item.id}
+              className={`min-h-[76px] rounded-lg border p-1.5 text-left transition ${active ? "border-violet-600 bg-violet-600 text-white shadow" : unlocked ? "border-violet-200 bg-white hover:border-violet-400" : "border-fuchsia-200 bg-fuchsia-50 hover:border-fuchsia-500 hover:bg-fuchsia-100"}`}>
               <div className="flex items-center justify-between"><span className="text-xl font-black">{unlocked ? item.character : "🔒"}</span><span className={`title-badge ${item.rarity} text-[9px]`}>{item.rarity}</span></div>
               <p className={`mt-1 text-[10px] font-bold leading-tight ${active ? "text-white" : "text-gray-700"}`}>{item.label}</p>
-              <p className={`mt-0.5 text-[9px] leading-tight ${active ? "text-white/85" : "text-gray-500"}`}>{item.description}</p>
+              <p className={`mt-0.5 text-[9px] leading-tight ${active ? "text-white/85" : unlocked ? "text-gray-500" : "font-bold text-fuchsia-700"}`}>{unlocked ? item.description : purchasingId === item.id ? "交換中…" : `${CHARACTER_PRICE.toLocaleString()}Pで交換`}</p>
             </button>;
           })}
         </div>
