@@ -23,6 +23,7 @@ export default function StudyClient({
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [importingSpi, setImportingSpi] = useState(false);
 
   const totalDue = decks.reduce((sum: number, d: any) => sum + (d.due_count || 0), 0);
   const newCards = stats.total_cards - initialStats.total_reviews;
@@ -72,6 +73,21 @@ export default function StudyClient({
       body: JSON.stringify({ id }),
     });
     if (res.ok) setDecks((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const handleImportSpi = async () => {
+    if (!confirm("志望企業13社分・各100問（合計1,300問）のSPI形式オリジナル問題を追加します。今あるデッキやカードは一切消えません。追加しますか？")) return;
+    setImportingSpi(true);
+    setError("");
+    const res = await fetch("/api/study/spi-pack", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    setImportingSpi(false);
+    if (!res.ok) {
+      setError(data.error || "SPI実戦パックの追加に失敗しました");
+      return;
+    }
+    alert(data.message || `SPI実戦パックを追加しました（${data.created_decks}社・${data.created_cards}問）。`);
+    window.location.reload();
   };
 
   const renderDeck = (deck: any) => (
@@ -211,6 +227,20 @@ export default function StudyClient({
             <i className="fas fa-globe mr-1" /> 公開デッキ
           </Link>
         </div>
+
+        <section className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-amber-950"><i className="fas fa-briefcase mr-1.5 text-amber-600" />志望企業SPI 実戦パック</p>
+              <p className="mt-1 text-xs leading-5 text-amber-800">JR東日本・CTC・NTTデータ・NEC・SCSK・TISなど13社分。各社「言語50問＋非言語50問」、解説つきで追加できます。</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[10px] font-bold text-amber-700 shadow-sm">無料</span>
+          </div>
+          <p className="mt-2 text-[10px] leading-4 text-amber-700">※ 実際の過去問を転載せず、SPIの一般的な出題形式をもとに作ったオリジナル問題です。企業ごとの出題形式を保証するものではありません。</p>
+          <button onClick={handleImportSpi} disabled={importingSpi} className="mt-3 w-full rounded-xl bg-amber-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60">
+            {importingSpi ? "追加中...（少し待ってね）" : "📚 13社・各100問（合計1,300問）を追加する"}
+          </button>
+        </section>
 
         {showCreate && (
           <form onSubmit={handleCreate} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
