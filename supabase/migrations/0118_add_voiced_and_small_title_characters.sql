@@ -1,0 +1,50 @@
+-- 五十音コレクションを拡張する。
+-- 濁音・半濁音・小文字も実績報酬として集め、自由な称号を作れるようにする。
+
+insert into public.title_character_definitions (id, character, label, description, condition_type, threshold, rarity, sort_order) values
+  ('kana_extra_ga', 'が', '実績文字「が」', '合計8時間学習する', 'study_minutes', 480, 'R', 501),
+  ('kana_extra_gi', 'ぎ', '実績文字「ぎ」', '5件投稿する', 'post_count', 5, 'R', 502),
+  ('kana_extra_gu', 'ぐ', '実績文字「ぐ」', '3日分の活動記録を残す', 'active_days', 3, 'R', 503),
+  ('kana_extra_ge', 'げ', '実績文字「げ」', '合計2時間筋トレする', 'workout_minutes', 120, 'R', 504),
+  ('kana_extra_go', 'ご', '実績文字「ご」', '最高3日連続で学習する', 'streak', 3, 'R', 505),
+  ('kana_extra_za', 'ざ', '実績文字「ざ」', '合計18時間学習する', 'study_minutes', 1080, 'SR', 506),
+  ('kana_extra_ji', 'じ', '実績文字「じ」', '12件投稿する', 'post_count', 12, 'SR', 507),
+  ('kana_extra_zu', 'ず', '実績文字「ず」', '7日分の活動記録を残す', 'active_days', 7, 'SR', 508),
+  ('kana_extra_ze', 'ぜ', '実績文字「ぜ」', '合計5時間筋トレする', 'workout_minutes', 300, 'SR', 509),
+  ('kana_extra_zo', 'ぞ', '実績文字「ぞ」', '最高7日連続で学習する', 'streak', 7, 'SR', 510),
+  ('kana_extra_da', 'だ', '実績文字「だ」', '合計40時間学習する', 'study_minutes', 2400, 'SSR', 511),
+  ('kana_extra_di', 'ぢ', '実績文字「ぢ」', '25件投稿する', 'post_count', 25, 'SSR', 512),
+  ('kana_extra_du', 'づ', '実績文字「づ」', '18日分の活動記録を残す', 'active_days', 18, 'SSR', 513),
+  ('kana_extra_de', 'で', '実績文字「で」', '合計12時間筋トレする', 'workout_minutes', 720, 'SSR', 514),
+  ('kana_extra_do', 'ど', '実績文字「ど」', '最高14日連続で学習する', 'streak', 14, 'SSR', 515),
+  ('kana_extra_ba', 'ば', '実績文字「ば」', '合計80時間学習する', 'study_minutes', 4800, 'UR', 516),
+  ('kana_extra_bi', 'び', '実績文字「び」', '50件投稿する', 'post_count', 50, 'UR', 517),
+  ('kana_extra_bu', 'ぶ', '実績文字「ぶ」', '40日分の活動記録を残す', 'active_days', 40, 'UR', 518),
+  ('kana_extra_be', 'べ', '実績文字「べ」', '合計25時間筋トレする', 'workout_minutes', 1500, 'UR', 519),
+  ('kana_extra_bo', 'ぼ', '実績文字「ぼ」', '最高30日連続で学習する', 'streak', 30, 'UR', 520),
+  ('kana_extra_pa', 'ぱ', '実績文字「ぱ」', '合計150時間学習する', 'study_minutes', 9000, 'LR', 521),
+  ('kana_extra_pi', 'ぴ', '実績文字「ぴ」', '100件投稿する', 'post_count', 100, 'LR', 522),
+  ('kana_extra_pu', 'ぷ', '実績文字「ぷ」', '75日分の活動記録を残す', 'active_days', 75, 'LR', 523),
+  ('kana_extra_pe', 'ぺ', '実績文字「ぺ」', '合計50時間筋トレする', 'workout_minutes', 3000, 'LR', 524),
+  ('kana_extra_po', 'ぽ', '実績文字「ぽ」', '対決で3勝する', 'challenge_wins', 3, 'LR', 525),
+  ('kana_extra_vu', 'ゔ', '実績文字「ゔ」', '最高60日連続で学習する', 'streak', 60, 'XR', 526),
+  ('kana_small_a', 'ぁ', '実績文字「ぁ」', '合計4時間学習する', 'study_minutes', 240, 'R', 527),
+  ('kana_small_i', 'ぃ', '実績文字「ぃ」', '2件投稿する', 'post_count', 2, 'R', 528),
+  ('kana_small_u', 'ぅ', '実績文字「ぅ」', '2日分の活動記録を残す', 'active_days', 2, 'R', 529),
+  ('kana_small_e', 'ぇ', '実績文字「ぇ」', '合計1時間筋トレする', 'workout_minutes', 60, 'R', 530),
+  ('kana_small_o', 'ぉ', '実績文字「ぉ」', '最高2日連続で学習する', 'streak', 2, 'R', 531),
+  ('kana_small_ya', 'ゃ', '実績文字「ゃ」', '合計25時間学習する', 'study_minutes', 1500, 'SR', 532),
+  ('kana_small_yu', 'ゅ', '実績文字「ゅ」', '15件投稿する', 'post_count', 15, 'SR', 533),
+  ('kana_small_yo', 'ょ', '実績文字「ょ」', '10日分の活動記録を残す', 'active_days', 10, 'SR', 534),
+  ('kana_small_tsu', 'っ', '実績文字「っ」', '合計8時間筋トレする', 'workout_minutes', 480, 'SR', 535),
+  ('kana_small_wa', 'ゎ', '実績文字「ゎ」', '対決で1勝する', 'challenge_wins', 1, 'SR', 536)
+on conflict (id) do update set
+  character = excluded.character,
+  label = excluded.label,
+  description = excluded.description,
+  condition_type = excluded.condition_type,
+  threshold = excluded.threshold,
+  rarity = excluded.rarity,
+  sort_order = excluded.sort_order;
+
+grant execute on function public.sync_title_characters() to authenticated;

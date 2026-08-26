@@ -13,7 +13,11 @@ type CharacterDefinition = {
   sort_order: number;
 };
 
-const GOJUON = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "や", "ゆ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん"];
+const GOJUON = [
+  "あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "や", "ゆ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん",
+  "が", "ぎ", "ぐ", "げ", "ご", "ざ", "じ", "ず", "ぜ", "ぞ", "だ", "ぢ", "づ", "で", "ど", "ば", "び", "ぶ", "べ", "ぼ", "ぱ", "ぴ", "ぷ", "ぺ", "ぽ", "ゔ",
+  "ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゃ", "ゅ", "ょ", "っ", "ゎ",
+];
 
 export default function AchievementTitleForge({ onCreated, onMessage, collectionOnly = false }: { onCreated: () => void; onMessage: (message: string) => void; collectionOnly?: boolean }) {
   const supabase = createClient();
@@ -77,7 +81,7 @@ export default function AchievementTitleForge({ onCreated, onMessage, collection
   return (
     <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-3">
       <div className="flex items-start justify-between gap-3">
-        <div><h3 className="text-sm font-black text-violet-950">✦ 実績で五十音を解放</h3><p className="mt-0.5 text-[11px] leading-relaxed text-violet-800">あ〜んの文字を実績で集めよう。解放順・難易度はランダム。{collectionOnly ? "称号の作成・装備はプロフィール設定から行えます。" : "集めた文字を2〜8個並べて、自分だけの称号を作れます。"}</p></div>
+        <div><h3 className="text-sm font-black text-violet-950">✦ 実績で文字を解放</h3><p className="mt-0.5 text-[11px] leading-relaxed text-violet-800">あ〜ん・濁音・小文字を実績で集めよう。解放順・難易度はランダム。{collectionOnly ? "称号の作成・装備はプロフィール設定から行えます。" : "集めた文字を2〜8個並べて、自分だけの称号を作れます。"}</p></div>
         <button type="button" onClick={checkAchievements} disabled={checking} className="shrink-0 rounded-full bg-violet-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{checking ? "確認中…" : "実績を確認"}</button>
       </div>
 
