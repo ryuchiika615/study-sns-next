@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import XShareButton from "@/components/XShareButton";
+import AchievementTitleForge from "@/components/AchievementTitleForge";
 
 type Achievement = {
   id: string;
@@ -33,6 +34,7 @@ export default function AchievementsClient({ userId }: { userId: string }) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [category, setCategory] = useState<string>("all");
   const [tab, setTab] = useState<"all" | "earned" | "unearned">("all");
+  const [titleMessage, setTitleMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/achievements").then(r => r.json()).then(d => {
@@ -68,6 +70,15 @@ export default function AchievementsClient({ userId }: { userId: string }) {
 
   return (
     <div>
+      <section className="mb-5 rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-fuchsia-100 p-3 shadow-sm">
+        <div className="mb-2 px-1">
+          <h2 className="text-base font-black text-violet-950">🔤 五十音称号コレクション</h2>
+          <p className="mt-0.5 text-xs leading-relaxed text-violet-900">実績を達成して「あ〜ん」を集めよう。集めた文字で、自分だけの称号を作れます。</p>
+        </div>
+        <AchievementTitleForge onCreated={() => setTitleMessage("自作称号を作成して装備しました！プロフィールでいつでも変更できます。")} onMessage={setTitleMessage} />
+        {titleMessage && <p className="mt-2 rounded-lg bg-white/80 px-3 py-2 text-xs font-bold text-violet-800">{titleMessage}</p>}
+      </section>
+
       {/* Tab bar */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         <button onClick={() => setTab("all")}
