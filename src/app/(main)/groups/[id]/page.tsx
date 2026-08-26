@@ -700,16 +700,16 @@ export default function GroupDetailPage() {
 function TodayStartDisplaySettings({ minimized, onChange }: { minimized: boolean; onChange: (shouldMinimize: boolean) => void }) {
   return (
     <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-      <p className="text-xs font-black text-emerald-900">✨ あなたの表示設定</p>
-      <p className="mt-1 text-[11px] leading-5 text-emerald-800">「今日のスタート」は自分の画面だけで最小化できます。グループの他のメンバーには影響しません。</p>
-      <div className="mt-3 rounded-lg border border-emerald-200 bg-white p-2.5">
-        <p className="text-[10px] font-bold text-slate-500">いまの表示</p>
+      <p style={{ color: "#065f46" }} className="text-xs font-black">✨ あなたの表示設定</p>
+      <p style={{ color: "#047857" }} className="mt-1 text-[11px] leading-5">「今日のスタート」は自分の画面だけで最小化できます。グループの他のメンバーには影響しません。</p>
+      <div style={{ backgroundColor: "#ffffff" }} className="mt-3 rounded-lg border border-emerald-200 p-2.5">
+        <p style={{ color: "#64748b" }} className="text-[10px] font-bold">いまの表示</p>
         <div className="mt-1 flex items-center justify-between gap-2">
-          <span className="text-xs font-bold text-slate-800">{minimized ? "✨ 今日のスタート　最小表示中" : "✨ 今日のスタート　通常表示中"}</span>
-          <span className="rounded bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700">自分だけ</span>
+          <span style={{ color: "#0f172a" }} className="text-xs font-bold">{minimized ? "✨ 今日のスタート　最小表示中" : "✨ 今日のスタート　通常表示中"}</span>
+          <span style={{ backgroundColor: "#d1fae5", color: "#047857" }} className="rounded px-2 py-1 text-[10px] font-bold">自分だけ</span>
         </div>
       </div>
-      <p className="mt-2 text-[11px] text-emerald-800">{minimized ? "下の小さいバーは「通常表示に戻す」で、いつでも元に戻せます。" : "カードを小さくして、投稿欄を広く使いたいときに最小化できます。"}</p>
+      <p style={{ color: "#047857" }} className="mt-2 text-[11px]">{minimized ? "最小化中でも、この設定画面からいつでも通常表示へ戻せます。" : "カードを小さくして、投稿欄を広く使いたいときに最小化できます。"}</p>
       <button onClick={() => onChange(!minimized)} className="mt-3 w-full rounded-lg bg-emerald-500 py-2.5 text-xs font-bold text-white">
         {minimized ? "通常表示に戻す" : "今日のスタートを最小化する"}
       </button>

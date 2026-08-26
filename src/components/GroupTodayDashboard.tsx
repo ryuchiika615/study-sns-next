@@ -17,6 +17,10 @@ function formatMinutes(minutes: number) {
   return `${Math.floor(minutes / 60)}時間${minutes % 60 ? `${minutes % 60}分` : ""}`;
 }
 
+function localDateString(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 export default function GroupTodayDashboard({ userId, groupId }: { userId: string; groupId: string }) {
   const [data, setData] = useState<TodayData>(emptyData);
   const [loading, setLoading] = useState(true);
@@ -41,7 +45,8 @@ export default function GroupTodayDashboard({ userId, groupId }: { userId: strin
 
   useEffect(() => {
     const supabase = createClient();
-    const today = new Date().toISOString().slice(0, 10);
+    // タスク画面と同じローカル日付で比較する。UTC日付だと日本時間の朝に前日扱いになる。
+    const today = localDateString();
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - 6);
 
@@ -65,17 +70,7 @@ export default function GroupTodayDashboard({ userId, groupId }: { userId: strin
     setMinimized(true);
     setShowMinimizeConfirm(false);
   };
-  const restore = () => {
-    window.localStorage.removeItem(storageKey);
-    setMinimized(false);
-  };
-
-  if (minimized) return <>
-    <section className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-400/30 bg-slate-900 px-4 py-3 text-white shadow-sm">
-      <div className="min-w-0"><p className="text-sm font-black">✨ 今日のスタート <span className="ml-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300">最小表示中</span></p><p className="mt-0.5 text-[11px] text-slate-400">⚙️ 編集・設定からも、いつでも戻せます。</p></div>
-      <button onClick={restore} className="shrink-0 rounded-lg bg-emerald-500 px-2.5 py-2 text-xs font-bold text-white">戻す</button>
-    </section>
-  </>;
+  if (minimized) return null;
 
   return (
     <>
