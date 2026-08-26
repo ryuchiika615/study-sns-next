@@ -196,6 +196,15 @@ html.dark input[type="file"] {
 .avatar-frame[data-icon="星海を裂く王冠"]::after { background-image: url('/frames/stellar-crown.svg'); }
 .avatar-frame[data-icon="黒炎の神印"]::after { background-image: url('/frames/divine-seal.svg'); }
 .avatar-frame[data-icon="答案破壊の光輪"]::after { background-image: url('/frames/destroyer-halo.svg'); }
+.avatar-frame[data-icon="紫電の回路環"]::after { background-image: url('/frames/violet-circuit.svg'); }
+.avatar-frame[data-icon="緋月の双翼"]::after { background-image: url('/frames/crimson-wings.svg'); }
+.avatar-frame[data-icon="蒼天の量子環"]::after { background-image: url('/frames/quantum-ring.svg'); }
+.avatar-frame[data-icon="深海の王冠"]::after { background-image: url('/frames/abyss-crown.svg'); }
+.avatar-frame[data-icon="黒曜の皇帝冠"]::after { background-image: url('/frames/obsidian-crown.svg'); }
+.avatar-frame[data-icon="紅蓮の竜脈"]::after { background-image: url('/frames/dragon-vein.svg'); }
+.avatar-frame[data-icon="星環クロノス"]::after { background-image: url('/frames/chronos-ring.svg'); }
+.avatar-frame[data-icon="銀河の設計者"]::after { background-image: url('/frames/galaxy-architect.svg'); }
+.avatar-frame[data-icon="永久機関の心臓"]::after { background-image: url('/frames/perpetual-heart.svg'); }
 
 /* XR: 季節オーラ */
 .avatar-frame[data-icon="雨雫オーラ"]::after { background-image: url('/frames/raindrop-aura.svg'); }
