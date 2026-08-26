@@ -90,6 +90,9 @@ export default function AchievementsClient({ userId }: { userId: string }) {
 
   return (
     <div>
+      <div className="mb-4 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-3 text-amber-950 shadow-sm">
+        <div className="flex items-start gap-2"><span className="mt-0.5 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-black text-white">NEW</span><div><p className="text-sm font-black">実績アップデート：過去の実績にも称号文字を追加！</p><p className="mt-0.5 text-xs leading-relaxed">以前にポイントや称号を受け取った実績でも、今回はもう一度「称号を獲得」できます。受取待ちがあると赤い数字でお知らせします。</p></div></div>
+      </div>
       <section className="mb-5 rounded-2xl border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-fuchsia-100 p-3 shadow-sm">
         <div className="mb-2 px-1">
           <div className="flex items-center justify-between gap-2"><h2 className="text-base font-black text-violet-950">🔤 五十音称号コレクション</h2>{pendingTitleCount > 0 && <span className="rounded-full bg-red-500 px-2 py-1 text-[11px] font-black text-white">称号を獲得 {pendingTitleCount}</span>}</div>
