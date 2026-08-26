@@ -106,6 +106,10 @@ export default function AdminDashboard() {
             <div className="text-2xl mb-1">✨</div><div className="font-bold text-sm">Pro管理</div><div className="text-xs text-gray-500 mt-1">無料Proの付与・解除</div>
           </Link>
 
+          <Link href="/admin/ranking-rewards" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
+            <div className="text-2xl mb-1">👑</div><div className="font-bold text-sm">月間報酬</div><div className="text-xs text-gray-500 mt-1">覇者称号を付与</div>
+          </Link>
+
           <Link href="/admin/stats" className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition text-center">
             <div className="text-2xl mb-1">📊</div>
             <div className="font-bold text-sm">統計</div>

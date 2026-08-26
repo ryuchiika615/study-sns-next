@@ -1,121 +1,22 @@
-import { createAdminClient } from "@/lib/supabase-admin";
+import { awardMonthlyRanking, previousYearMonth } from "@/lib/monthly-ranking-reward";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-async function ensureSpecialItem(admin: any, name: string, category: string, rarity: string) {
-  const { data: existing } = await admin
-    .from("gacha_items")
-    .select("id, rarity")
-    .eq("name", name)
-    .eq("category", category)
-    .maybeSingle();
-  if (existing) {
-    if (existing.rarity !== rarity) {
-      await admin.from("gacha_items").update({ rarity }).eq("id", existing.id);
-    }
-    return existing.id;
-  }
-
-  const { data } = await admin
-    .from("gacha_items")
-    .insert({ name, category, rarity })
-    .select("id")
-    .single();
-  return data?.id;
-}
-
-export async function POST(request: NextRequest) {
+async function run(request: NextRequest) {
   const auth = request.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.WEBHOOK_SECRET}`) {
+  const secrets = [process.env.CRON_SECRET, process.env.WEBHOOK_SECRET].filter(Boolean);
+  if (!secrets.some((secret) => auth === `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  const admin = createAdminClient();
-  const now = new Date();
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const yearMonth = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
-
-  const OLD_MONTH_NAMES = ["睦月", "如月", "弥生", "卯月", "皐月", "水無月", "文月", "葉月", "長月", "神無月", "霜月", "師走"];
-  const ICON_FRAMES = ["氷晶オーラ", "氷晶オーラ", "桜花オーラ", "桜花オーラ", "若葉オーラ", "雨雫オーラ", "向日葵オーラ", "向日葵オーラ", "紅葉オーラ", "紅葉オーラ", "霜華オーラ", "雪華オーラ"];
-
-  const monthIdx = prevMonth.getMonth();
-  const titleName = `${OLD_MONTH_NAMES[monthIdx]}の覇者`;
-  const iconName = ICON_FRAMES[monthIdx];
-
-  // Check if already awarded
-  const { data: existingReward } = await admin
-    .from("ranking_rewards")
-    .select("id")
-    .eq("year_month", yearMonth)
-    .eq("rank", 1)
-    .maybeSingle();
-  if (existingReward) return NextResponse.json({ ok: true, alreadyAwarded: true });
-
-  // Calculate top 1 for previous month
-  const monthStart = `${yearMonth}-01T00:00:00Z`;
-  const monthEnd = now.toISOString().split("T")[0] + "T23:59:59Z";
-
-  const { data: rankings } = await admin
-    .from("posts")
-    .select("user_id, study_minutes")
-    .gte("created_at", monthStart)
-    .lte("created_at", monthEnd);
-
-  const totals = new Map<string, number>();
-  for (const p of (rankings || [])) {
-    totals.set(p.user_id, (totals.get(p.user_id) || 0) + (p.study_minutes || 0));
+  const requestedMonth = new URL(request.url).searchParams.get("month");
+  try {
+    return NextResponse.json(await awardMonthlyRanking(requestedMonth || previousYearMonth()));
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || "月間報酬の処理に失敗しました。" }, { status: 400 });
   }
-
-  const sorted = Array.from(totals.entries())
-    .map(([user_id, total]) => ({ user_id, total }))
-    .sort((a, b) => b.total - a.total);
-
-  if (sorted.length === 0) return NextResponse.json({ ok: true, noData: true });
-
-  const winner = sorted[0];
-
-  // Create special gacha items if not exist
-  const titleId = await ensureSpecialItem(admin, titleName, "title", "XR");
-  const iconId = await ensureSpecialItem(admin, iconName, "icon", "XR");
-
-  // Award items to winner
-  for (const itemId of [titleId, iconId]) {
-    if (itemId) {
-      const { data: owned } = await admin
-        .from("user_items")
-        .select("user_id")
-        .eq("user_id", winner.user_id)
-        .eq("item_id", itemId)
-        .maybeSingle();
-      if (!owned) {
-        await admin.from("user_items").insert({ user_id: winner.user_id, item_id: itemId });
-      }
-    }
-  }
-
-  // Auto-equip crown icon and title for winner
-  await admin.from("profiles").update({
-    current_title_id: titleId,
-    current_avatar_id: iconId,
-  }).eq("id", winner.user_id);
-
-  // Record reward
-  await admin.from("ranking_rewards").insert({
-    year_month: yearMonth,
-    user_id: winner.user_id,
-    rank: 1,
-    study_minutes: winner.total,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    yearMonth,
-    winner: winner.user_id,
-    studyMinutes: winner.total,
-    items: [titleId, iconId],
-  });
 }
 
-export const GET = POST;
+export const GET = run;
+export const POST = run;

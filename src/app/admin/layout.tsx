@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/admin/posts", label: "リュイート管理", icon: "📝" },
   { href: "/admin/users", label: "ユーザー管理", icon: "👥" },
   { href: "/admin/pro", label: "Pro管理", icon: "✨" },
+  { href: "/admin/ranking-rewards", label: "月間報酬", icon: "👑" },
   { href: "/admin/stats", label: "統計", icon: "📊" },
   { href: "/admin/announcements", label: "お知らせ", icon: "📨" },
   { href: "/admin/feedback", label: "要望・報告", icon: "💬", badgeKey: "feedback" as const },
