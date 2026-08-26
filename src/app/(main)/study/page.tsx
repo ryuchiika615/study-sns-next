@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-server";
+import { getProUser } from "@/lib/pro-server";
 import { redirect } from "next/navigation";
 import StudyClient from "./StudyClient";
 
@@ -7,7 +8,7 @@ export default async function StudyPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const [decksRes, cardCountsRes, dueCountsRes, allCardsRes, totalCards, totalReviews, todayReviews, streakRes] = await Promise.all([
+  const [decksRes, cardCountsRes, dueCountsRes, allCardsRes, totalCards, totalReviews, todayReviews, streakRes, proStatus] = await Promise.all([
     supabase.from("decks").select("*").eq("user_id", user.id).order("sort_order").order("created_at"),
     supabase.from("cards").select("deck_id, id").eq("user_id", user.id),
     supabase.from("reviews").select("card_id").eq("user_id", user.id).lte("due_date", new Date().toISOString().split("T")[0]),
@@ -16,6 +17,7 @@ export default async function StudyPage() {
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("reviewed_at", new Date().toISOString().split("T")[0]),
     supabase.from("study_streaks").select("*").eq("user_id", user.id).maybeSingle(),
+    getProUser(),
   ]);
 
   const countMap = new Map<string, number>();
@@ -47,6 +49,7 @@ export default async function StudyPage() {
         today_reviews: todayReviews.count || 0,
       }}
       initialStreak={streak}
+      isPro={proStatus.isPro}
     />
   );
 }

@@ -8,10 +8,12 @@ export default function StudyClient({
   initialDecks,
   initialStats,
   initialStreak,
+  isPro,
 }: {
   initialDecks: any[];
   initialStats: { total_cards: number; total_reviews: number; today_reviews: number };
   initialStreak: { current_streak: number; longest_streak: number; last_study_date: string | null };
+  isPro: boolean;
 }) {
   const [decks, setDecks] = useState(initialDecks);
   const [stats] = useState(initialStats);
@@ -24,6 +26,13 @@ export default function StudyClient({
 
   const totalDue = decks.reduce((sum: number, d: any) => sum + (d.due_count || 0), 0);
   const newCards = stats.total_cards - initialStats.total_reviews;
+  const dueDeck = decks.find((d: any) => (d.due_count || 0) > 0);
+  const firstDeckWithCards = decks.find((d: any) => (d.card_count || 0) > 0);
+  const nextAction = dueDeck
+    ? { href: `/study/${dueDeck.id}/review`, label: `「${dueDeck.name}」を復習する`, detail: `復習待ち ${dueDeck.due_count}枚` }
+    : firstDeckWithCards
+      ? { href: `/study/${firstDeckWithCards.id}/quiz`, label: `「${firstDeckWithCards.name}」を5問テスト`, detail: "まずは短く定着チェック" }
+      : null;
 
   // Group decks by whether they have parent_id
   const rootDecks = decks.filter((d: any) => !d.parent_id);
@@ -142,6 +151,52 @@ export default function StudyClient({
             </div>
           </div>
         </div>
+
+        {/* Free daily learning route */}
+        <section className="overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-indigo-50 shadow-sm">
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-slate-900"><i className="fas fa-bullseye mr-1.5 text-sky-500" />今日の学習ルート</p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">迷ったら、まず5分。この順番で進めればOKです。</p>
+              </div>
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700">無料</span>
+            </div>
+
+            {nextAction ? (
+              <Link href={nextAction.href} className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white p-3 no-underline shadow-sm ring-1 ring-sky-100 transition hover:-translate-y-0.5 hover:shadow">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-sky-700">STEP 1　今日の一歩</p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-slate-900">{nextAction.label}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{nextAction.detail}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-sky-500 px-3 py-2 text-xs font-bold text-white">始める <i className="fas fa-arrow-right ml-1" /></span>
+              </Link>
+            ) : (
+              <button onClick={() => setShowCreate(true)} className="mt-3 flex w-full items-center justify-between rounded-xl bg-white p-3 text-left shadow-sm ring-1 ring-sky-100 transition hover:shadow">
+                <span><span className="block text-xs font-bold text-sky-700">STEP 1　最初の準備</span><span className="mt-0.5 block text-sm font-bold text-slate-900">覚えたいことをデッキに追加しよう</span></span>
+                <span className="rounded-full bg-sky-500 px-3 py-2 text-xs font-bold text-white">作る</span>
+              </button>
+            )}
+
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-lg bg-white/80 px-3 py-2 text-slate-600"><span className="font-bold text-slate-900">STEP 2</span>　終わったら記録<br /><span className="text-[11px]">今日 {stats.today_reviews}枚を復習済み</span></div>
+              <Link href="/study/discover" className="rounded-lg bg-white/80 px-3 py-2 text-slate-600 no-underline transition hover:bg-white"><span className="font-bold text-slate-900">STEP 3</span>　公開デッキも使う<br /><span className="text-[11px]">みんなの教材を探す</span></Link>
+            </div>
+          </div>
+
+          {isPro ? (
+            <div className="flex flex-col gap-2 border-t border-purple-100 bg-purple-50 px-4 py-3 sm:flex-row">
+              <Link href="/pro/planner" className="flex-1 rounded-lg bg-purple-600 px-3 py-2 text-center text-xs font-bold text-white no-underline">🎯 試験逆算プランを開く</Link>
+              <Link href="/study/stats" className="flex-1 rounded-lg border border-purple-200 bg-white px-3 py-2 text-center text-xs font-bold text-purple-700 no-underline">📈 詳細な学習分析を見る</Link>
+            </div>
+          ) : (
+            <Link href="/pro?from=study-route" className="flex items-center justify-between gap-3 border-t border-purple-100 bg-purple-50 px-4 py-3 no-underline transition hover:bg-purple-100">
+              <span><span className="block text-xs font-bold text-purple-900">🔒 Proで、次の学習をもっと計画的に</span><span className="mt-0.5 block text-[11px] text-purple-700">試験逆算プラン・長期の定着分析・復習予測を使えます</span></span>
+              <span className="shrink-0 text-xs font-bold text-purple-700">Proを見る <i className="fas fa-chevron-right ml-1" /></span>
+            </Link>
+          )}
+        </section>
 
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
 

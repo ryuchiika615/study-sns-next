@@ -21,6 +21,7 @@ const entryMessage: Record<string, string> = {
   "textbook-limit": "教材がFREEの上限（3冊）に達しました。Proなら無制限に追加できます。",
   "analytics": "任意期間の分析と科目別の週次推移はPro限定です。",
   "study-stats": "復習の記憶保持予測・詳細な学習統計はPro限定です。",
+  "study-route": "無料の毎日ルートに加えて、Proなら試験日から逆算した計画と長期の定着分析も使えます。",
   "ranking-history": "3か月・年間のランキング履歴はPro限定です。",
   "card-background": "投稿カードの背景・柄のカスタマイズはPro限定です。",
   "home-theme": "ホーム画面のカラー着せかえはPro限定です。",
