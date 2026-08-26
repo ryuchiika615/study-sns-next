@@ -17,7 +17,18 @@ async function calcProgress(userId: string, admin: ReturnType<typeof createAdmin
     .maybeSingle();
   const consecutiveDays = studyStreak?.longest_streak || 0;
 
-  const { data: postCountData, count: postCount } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", userId);
+  const { data: profile, error: lifetimeCountError } = await admin
+    .from("profiles")
+    .select("total_posts_created")
+    .eq("id", userId)
+    .maybeSingle();
+  // 削除済みも含めた、これまでに作成した投稿数。
+  let postCount = profile?.total_posts_created || 0;
+  // SQL移行前だけは、画面を止めずに従来の件数で表示する。
+  if (lifetimeCountError) {
+    const { count } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", userId);
+    postCount = count || 0;
+  }
 
   const { data: challengeWins, count: challengeWinCount } = await admin.from("challenges").select("id", { count: "exact", head: true }).eq("winner_id", userId);
 
@@ -41,7 +52,7 @@ async function calcProgress(userId: string, admin: ReturnType<typeof createAdmin
     maxHabitStreak = Math.max(maxHabitStreak, current);
   }
 
-  return { totalMinutes, consecutiveDays, postCount: postCount || 0, challengeWinCount: challengeWinCount || 0, subjectCount, maxHabitStreak };
+  return { totalMinutes, consecutiveDays, postCount, challengeWinCount: challengeWinCount || 0, subjectCount, maxHabitStreak };
 }
 
 export async function GET() {

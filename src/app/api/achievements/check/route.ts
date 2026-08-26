@@ -31,7 +31,17 @@ export async function GET() {
     .maybeSingle();
   const consecutiveDays = studyStreak?.longest_streak || 0;
 
-  const { count: postCount } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+  const { data: profile, error: lifetimeCountError } = await admin
+    .from("profiles")
+    .select("total_posts_created")
+    .eq("id", user.id)
+    .maybeSingle();
+  let postCount = profile?.total_posts_created || 0;
+  // SQL移行前は従来の件数を使い、実績画面を止めない。
+  if (lifetimeCountError) {
+    const { count } = await admin.from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+    postCount = count || 0;
+  }
 
   const { count: challengeWinCount } = await admin.from("challenges").select("id", { count: "exact", head: true }).eq("winner_id", user.id);
 
@@ -58,7 +68,7 @@ export async function GET() {
     switch (def.condition_type) {
       case "study_minutes": progress = totalMinutes; break;
       case "consecutive_days": progress = consecutiveDays; break;
-      case "post_count": progress = postCount || 0; break;
+      case "post_count": progress = postCount; break;
       case "challenge_wins": progress = challengeWinCount || 0; break;
       case "subject_count": progress = subjectCount; break;
       case "habit_rate": progress = maxHabitStreak; break;
