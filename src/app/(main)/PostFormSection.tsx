@@ -169,7 +169,9 @@ export default function PostFormSection({ userId, profile, groupId }: { userId: 
     };
     if (groupId) {
       postPayload.p_group_id = groupId;
-      postPayload.p_shared_group_ids = sharedGroupIds;
+      // 共有先を選んだ時だけ新しい引数を渡す。
+      // これにより、0110のDB移行が未実行でも通常のグループ投稿は止まらない。
+      if (sharedGroupIds.length > 0) postPayload.p_shared_group_ids = sharedGroupIds;
     }
     const { data, error } = await supabase.rpc(groupId ? "create_group_post" : "create_post", postPayload);
 
