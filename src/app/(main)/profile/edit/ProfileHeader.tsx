@@ -12,7 +12,7 @@ const PostCard = dynamic(() => import("@/components/PostCard"));
 
 export default function ProfileHeader({
   profile, items, followersCount, followingCount, userId,
-  activityTotals,
+  activityTotals, focusScore,
   editSection, setEditSection,
   myPosts, myPostsLoading, myPostsError, postPage, setPostPage,
   likedPosts, likedLoading, likedError, likedPage, setLikedPage,
@@ -20,6 +20,7 @@ export default function ProfileHeader({
 }: {
   profile: any; items: any[]; followersCount: number; followingCount: number; userId: string;
   activityTotals: { study: number; workout: number; monthStudy: number; monthWorkout: number };
+  focusScore: any;
   editSection: "posts" | "likes" | null; setEditSection: (s: "posts" | "likes" | null) => void;
   myPosts: any[]; myPostsLoading: boolean; myPostsError: string; postPage: number; setPostPage: (n: number | ((p: number) => number)) => void;
   likedPosts: any[]; likedLoading: boolean; likedError: string; likedPage: number; setLikedPage: (n: number | ((p: number) => number)) => void;
@@ -91,6 +92,18 @@ export default function ProfileHeader({
             <p className="mt-0.5 text-[10px] text-pink-600">今月 {Math.floor(activityTotals.monthWorkout / 60)}時間{activityTotals.monthWorkout % 60}分</p>
           </div>
         </div>
+        {focusScore && (
+          <div className="mt-2 rounded-xl border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 px-3 py-2.5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold text-violet-700"><i className="fas fa-brain mr-1" />集中度スコア</p>
+              <p className="mt-0.5 text-[10px] text-violet-600">学習の積み上げを4つの項目で評価</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className={`text-lg font-extrabold ${focusScore.level === "S" ? "text-yellow-600" : focusScore.level === "A" ? "text-green-600" : focusScore.level === "B" ? "text-blue-600" : "text-violet-700"}`}>{focusScore.level} <span className="text-sm">{focusScore.total}</span></p>
+              <p className="text-[10px] font-bold text-indigo-600">🏆 {focusScore.rank}位 / {focusScore.total_users}人中</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {!editSection && (

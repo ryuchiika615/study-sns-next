@@ -26,6 +26,7 @@ export default function EditProfilePage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [activityTotals, setActivityTotals] = useState({ study: 0, workout: 0, monthStudy: 0, monthWorkout: 0 });
+  const [focusScore, setFocusScore] = useState<any>(null);
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [myPostsLoading, setMyPostsLoading] = useState(false);
@@ -64,6 +65,14 @@ export default function EditProfilePage() {
       .then((data) => setIsPro(Boolean(data?.isPro)))
       .catch(() => setIsPro(false));
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`/api/focus-score?user_id=${encodeURIComponent(userId)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setFocusScore(data))
+      .catch(() => setFocusScore(null));
+  }, [userId]);
 
   const loadData = async (uid?: string) => {
     const id = uid || userIdRef.current;
@@ -296,6 +305,7 @@ export default function EditProfilePage() {
       <ProfileHeader
         profile={profile} items={items} followersCount={followersCount} followingCount={followingCount} userId={userId}
         activityTotals={activityTotals}
+        focusScore={focusScore}
         editSection={editSection} setEditSection={setEditSection}
         myPosts={myPosts} myPostsLoading={myPostsLoading} myPostsError={myPostsError}
         postPage={postPage} setPostPage={setPostPage}
