@@ -16,7 +16,8 @@ export async function POST() {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price, quantity: 1 }],
-      customer_email: user.email || undefined,
+      // Let the purchaser choose the receipt email in Stripe Checkout.
+      // The Ryutter account is linked separately with client_reference_id.
       client_reference_id: user.id,
       metadata: { purchase_type: "founder_member", user_id: user.id },
       success_url: `${appUrl}/pro?founder=success`,

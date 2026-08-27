@@ -13,7 +13,8 @@ export async function POST() {
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price, quantity: 1 }],
-      customer_email: user.email || undefined,
+      // Stripe Checkout itself asks for the receipt email. Do not pin it to
+      // the Ryutter sign-in email: users may want receipts elsewhere.
       client_reference_id: user.id,
       subscription_data: { metadata: { user_id: user.id } },
       success_url: `${appUrl}/pro?checkout=success`,
