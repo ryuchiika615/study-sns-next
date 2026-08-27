@@ -25,6 +25,7 @@ export default function EditProfilePage() {
   const [message, setMessage] = useState("");
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [activityTotals, setActivityTotals] = useState({ study: 0, workout: 0, monthStudy: 0, monthWorkout: 0 });
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [myPostsLoading, setMyPostsLoading] = useState(false);
@@ -99,12 +100,28 @@ export default function EditProfilePage() {
       setItems(userItemsResult.data.map((ui: any) => ui.item));
     }
 
-    const [{ count: followers }, { count: following }] = await Promise.all([
+    const [{ count: followers }, { count: following }, { data: activityPosts }] = await Promise.all([
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", id),
       supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", id),
+      supabase.from("posts").select("study_minutes, workout_minutes, created_at").eq("user_id", id),
     ]);
     setFollowersCount(followers ?? 0);
     setFollowingCount(following ?? 0);
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const totals = (activityPosts || []).reduce((result: { study: number; workout: number; monthStudy: number; monthWorkout: number }, post: any) => {
+      const study = Number(post.study_minutes) || 0;
+      const workout = Number(post.workout_minutes) || 0;
+      result.study += study;
+      result.workout += workout;
+      if (post.created_at && new Date(post.created_at) >= monthStart) {
+        result.monthStudy += study;
+        result.monthWorkout += workout;
+      }
+      return result;
+    }, { study: 0, workout: 0, monthStudy: 0, monthWorkout: 0 });
+    setActivityTotals(totals);
   };
 
   const loadMyPosts = async () => {
@@ -278,6 +295,7 @@ export default function EditProfilePage() {
 
       <ProfileHeader
         profile={profile} items={items} followersCount={followersCount} followingCount={followingCount} userId={userId}
+        activityTotals={activityTotals}
         editSection={editSection} setEditSection={setEditSection}
         myPosts={myPosts} myPostsLoading={myPostsLoading} myPostsError={myPostsError}
         postPage={postPage} setPostPage={setPostPage}

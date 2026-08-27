@@ -12,12 +12,14 @@ const PostCard = dynamic(() => import("@/components/PostCard"));
 
 export default function ProfileHeader({
   profile, items, followersCount, followingCount, userId,
+  activityTotals,
   editSection, setEditSection,
   myPosts, myPostsLoading, myPostsError, postPage, setPostPage,
   likedPosts, likedLoading, likedError, likedPage, setLikedPage,
   loadMyPosts, loadLikedPosts, onDeletePost, onUpdatePost,
 }: {
   profile: any; items: any[]; followersCount: number; followingCount: number; userId: string;
+  activityTotals: { study: number; workout: number; monthStudy: number; monthWorkout: number };
   editSection: "posts" | "likes" | null; setEditSection: (s: "posts" | "likes" | null) => void;
   myPosts: any[]; myPostsLoading: boolean; myPostsError: string; postPage: number; setPostPage: (n: number | ((p: number) => number)) => void;
   likedPosts: any[]; likedLoading: boolean; likedError: string; likedPage: number; setLikedPage: (n: number | ((p: number) => number)) => void;
@@ -77,6 +79,18 @@ export default function ProfileHeader({
             </div>
           ) : null;
         })()}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
+            <p className="text-[10px] font-bold text-blue-600">📚 総勉強時間</p>
+            <p className="mt-0.5 text-sm font-extrabold text-blue-950">{Math.floor(activityTotals.study / 60)}時間{activityTotals.study % 60}分</p>
+            <p className="mt-0.5 text-[10px] text-blue-600">今月 {Math.floor(activityTotals.monthStudy / 60)}時間{activityTotals.monthStudy % 60}分</p>
+          </div>
+          <div className="rounded-xl bg-pink-50 border border-pink-100 px-3 py-2">
+            <p className="text-[10px] font-bold text-pink-600">🏋️ 総筋トレ時間</p>
+            <p className="mt-0.5 text-sm font-extrabold text-pink-950">{Math.floor(activityTotals.workout / 60)}時間{activityTotals.workout % 60}分</p>
+            <p className="mt-0.5 text-[10px] text-pink-600">今月 {Math.floor(activityTotals.monthWorkout / 60)}時間{activityTotals.monthWorkout % 60}分</p>
+          </div>
+        </div>
       </div>
 
       {!editSection && (
