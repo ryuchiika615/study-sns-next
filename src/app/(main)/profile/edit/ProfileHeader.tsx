@@ -93,15 +93,27 @@ export default function ProfileHeader({
           </div>
         </div>
         {focusScore && (
-          <div className="mt-2 rounded-xl border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 px-3 py-2.5 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-bold text-violet-700"><i className="fas fa-brain mr-1" />集中度スコア</p>
-              <p className="mt-0.5 text-[10px] text-violet-600">学習の積み上げを4つの項目で評価</p>
+          <div className="mt-2 rounded-xl border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-violet-800"><i className="fas fa-brain mr-1" />集中度スコア</p>
+                <p className="mt-0.5 text-[10px] text-violet-600">8つの行動で評価。バーを伸ばすほどスコアUP。</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={`text-lg font-extrabold ${focusScore.level === "S" ? "text-yellow-600" : focusScore.level === "A" ? "text-green-600" : focusScore.level === "B" ? "text-blue-600" : "text-violet-700"}`}>{focusScore.level} <span className="text-sm">{focusScore.total}</span></p>
+                <p className="text-[10px] font-bold text-indigo-600">🏆 {focusScore.rank}位 / {focusScore.total_users}人中</p>
+              </div>
             </div>
-            <div className="text-right shrink-0">
-              <p className={`text-lg font-extrabold ${focusScore.level === "S" ? "text-yellow-600" : focusScore.level === "A" ? "text-green-600" : focusScore.level === "B" ? "text-blue-600" : "text-violet-700"}`}>{focusScore.level} <span className="text-sm">{focusScore.total}</span></p>
-              <p className="text-[10px] font-bold text-indigo-600">🏆 {focusScore.rank}位 / {focusScore.total_users}人中</p>
+            <div className="mt-3 space-y-1.5">
+              {Object.values(focusScore.breakdown).map((item: any) => (
+                <div key={item.label} className="flex items-center gap-2">
+                  <span className="w-[72px] shrink-0 text-[10px] font-bold text-violet-700">{item.label}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-violet-100"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500" style={{ width: `${(item.score / item.max) * 100}%` }} /></div>
+                  <span className="w-9 text-right text-[10px] text-violet-700">{item.score}/{item.max}</span>
+                </div>
+              ))}
             </div>
+            <p className="mt-2 rounded-lg bg-white/75 px-2 py-1.5 text-[10px] font-bold text-violet-800">💡 次は「{Object.values(focusScore.breakdown).sort((a: any, b: any) => (a.score / a.max) - (b.score / b.max))[0] && (Object.values(focusScore.breakdown).sort((a: any, b: any) => (a.score / a.max) - (b.score / b.max))[0] as any).hint}」で伸ばそう</p>
           </div>
         )}
       </div>
