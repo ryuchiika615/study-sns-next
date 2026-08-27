@@ -1,4 +1,5 @@
 import { ProCheckoutButton } from "@/components/ProCheckoutButton";
+import { FounderCheckoutButton } from "@/components/FounderCheckoutButton";
 import Link from "next/link";
 
 const rows = [
@@ -51,6 +52,12 @@ export default function ProPage({ searchParams }: { searchParams?: { from?: stri
       <div className="mt-4"><ProCheckoutButton /></div>
       <p className="mt-2 text-center text-[10px] text-purple-700">カード情報はリュッターに保存されません</p>
       <p className="mt-3 text-center text-[10px] text-purple-800"><Link href="/terms" className="underline">利用規約</Link><span className="mx-2">・</span><Link href="/privacy" className="underline">プライバシーポリシー</Link><span className="mx-2">・</span><Link href="/tokusho" className="underline">特定商取引法に基づく表記</Link></p>
+    </div>
+
+    <div className="rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3"><div><p className="font-black text-amber-950">🎉 X公式アカウント開始記念</p><h2 className="mt-1 text-lg font-black text-amber-950">創設メンバー・永久Pro ¥500</h2><p className="mt-1 text-xs leading-5 text-amber-900">先着30名だけ。月額課金なしで、現在のPro基本機能をずっと使えます。</p></div><span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-black text-white">先着30名</span></div>
+      <div className="mt-3 rounded-xl bg-white/80 p-3 text-xs leading-5 text-amber-950"><p>👑 限定称号「創設メンバー」</p><p>✨ 限定XRフレーム「創設者の星冠」</p><p className="mt-1 text-[10px] text-amber-800">※ AIなど将来追加される外部コストの高い機能は、対象外または利用上限を設ける場合があります。月額Proを利用中の人は、購入後にStripeから月額契約を解約してください。</p></div>
+      <div className="mt-4"><FounderCheckoutButton /></div>
     </div>
 
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">

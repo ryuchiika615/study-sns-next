@@ -32,6 +32,13 @@ async function syncCheckout(session: Stripe.Checkout.Session) {
   await syncSubscription(linked);
 }
 
+async function syncFounderCheckout(session: Stripe.Checkout.Session) {
+  if (session.mode !== "payment" || session.metadata?.purchase_type !== "founder_member") return;
+  if (session.payment_status !== "paid") return;
+  const { data, error } = await createAdminClient().rpc("confirm_founder_member_slot", { p_checkout_session_id: session.id });
+  if (error || !data) throw new Error(error?.message || "創設メンバー枠を確定できませんでした。");
+}
+
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -40,7 +47,8 @@ export async function POST(request: Request) {
   try { event = getStripe().webhooks.constructEvent(await request.text(), signature, secret); }
   catch { return new NextResponse("署名が正しくありません", { status: 400 }); }
   if (event.type === "checkout.session.completed") {
-    await syncCheckout(event.data.object as Stripe.Checkout.Session);
+    const session = event.data.object as Stripe.Checkout.Session;
+    await Promise.all([syncCheckout(session), syncFounderCheckout(session)]);
   } else if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
     await syncSubscription(event.data.object as Stripe.Subscription);
   }

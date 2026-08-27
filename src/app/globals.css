@@ -194,6 +194,7 @@ html.dark input[type="file"] {
 .avatar-frame[data-icon="終焉のオーラ"]::after { background-image: url('/frames/apocalypse-aura.svg'); }
 .avatar-frame[data-icon="不可視の翼"]::after { background-image: url('/frames/ethereal-wings.svg'); }
 .avatar-frame[data-icon="星海を裂く王冠"]::after { background-image: url('/frames/stellar-crown.svg'); }
+.avatar-frame[data-icon="創設者の星冠"]::after { background-image: url('/frames/stellar-crown.svg'); }
 .avatar-frame[data-icon="黒炎の神印"]::after { background-image: url('/frames/divine-seal.svg'); }
 .avatar-frame[data-icon="答案破壊の光輪"]::after { background-image: url('/frames/destroyer-halo.svg'); }
 .avatar-frame[data-icon="紫電の回路環"]::after { background-image: url('/frames/violet-circuit.svg'); }
