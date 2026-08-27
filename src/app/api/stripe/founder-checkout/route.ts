@@ -15,6 +15,10 @@ export async function POST() {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      // PayPay is supported by Stripe for one-time JPY Checkout payments.
+      // The monthly subscription remains card-only because PayPay does not
+      // support Stripe's subscription mode.
+      payment_method_types: ["card", "paypay"],
       line_items: [{ price, quantity: 1 }],
       // Let the purchaser choose the receipt email in Stripe Checkout.
       // The Ryutter account is linked separately with client_reference_id.
