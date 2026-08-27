@@ -410,7 +410,7 @@ const handleCommentQuote = (c: any) => {
               </span>
               {post.study_minutes > 0 && (
                 <span className="text-primary font-bold text-sm">
-                  <i className="fas fa-book-open" /> {post.display_study_time}
+                  <i className="fas fa-book-open" /> {post.display_study_time || formatStudyTime(post.study_minutes)}
                   {post.total_pages > 0 && (
                     <span className="text-gray-500 font-normal ml-1">({post.pages_completed}/{post.total_pages}P)</span>
                   )}
@@ -418,7 +418,7 @@ const handleCommentQuote = (c: any) => {
               )}
               {post.workout_minutes > 0 && (
                 <span className="text-pink-500 font-bold text-sm">
-                  <i className="fas fa-dumbbell" /> {post.display_workout_time}
+                  <i className="fas fa-dumbbell" /> {post.display_workout_time || formatStudyTime(post.workout_minutes)}
                 </span>
               )}
             </div>
