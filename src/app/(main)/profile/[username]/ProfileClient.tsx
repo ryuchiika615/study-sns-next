@@ -9,6 +9,7 @@ import Image from "next/image";
 import StudyCalendar from "@/components/StudyCalendar";
 const PieChart = dynamic(() => import("@/components/Charts").then(m => m.PieChart), { ssr: false });
 import { formatStudyTime, subjectColor, getOptimizedIconUrl } from "@/lib/utils";
+import { useLanguage } from "@/lib/use-language";
 
 const PER_PAGE = 10;
 
@@ -39,6 +40,7 @@ export default function ProfileClient({
   calendarData,
 }: ProfileClientProps) {
   const supabase = createClient();
+  const { isEnglish } = useLanguage();
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
   const [notifySettings, setNotifySettings] = useState<{ notify_posts: boolean; notify_likes: boolean; notify_comments: boolean } | null>(null);
   const [badges, setBadges] = useState<any[]>([]);
@@ -463,18 +465,18 @@ export default function ProfileClient({
         {focusScore && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-2">
-              <div><h3 className="font-bold text-sm text-gray-500"><i className="fas fa-brain mr-1.5" />集中度スコア</h3><p className="mt-0.5 text-[10px] text-gray-400">{user.id === profile.id ? "あなたの学習の積み上げ" : "このユーザーの公開スコア（投稿本文・習慣の詳細は非公開）"}</p></div>
+              <div><h3 className="font-bold text-sm text-gray-500"><i className="fas fa-brain mr-1.5" />{isEnglish ? "Focus score" : "集中度スコア"}</h3><p className="mt-0.5 text-[10px] text-gray-400">{isEnglish ? (user.id === profile.id ? "Your learning progress" : "Public score only — post and habit details stay private") : (user.id === profile.id ? "あなたの学習の積み上げ" : "このユーザーの公開スコア（投稿本文・習慣の詳細は非公開）")}</p></div>
               <div className="text-right">
                 <span className={`text-lg font-bold ${focusScore.level === "S" ? "text-yellow-500" : focusScore.level === "A" ? "text-green-500" : focusScore.level === "B" ? "text-blue-500" : "text-gray-400"}`}>
                   {focusScore.level} <span className="text-sm text-gray-400">{focusScore.total}</span>
                 </span>
-                {focusScore.rank && <p className="mt-0.5 text-[10px] font-bold text-indigo-600">🏆 {focusScore.rank}位 / {focusScore.total_users}人中</p>}
+                {focusScore.rank && <p className="mt-0.5 text-[10px] font-bold text-indigo-600">🏆 {isEnglish ? `#${focusScore.rank} of ${focusScore.total_users}` : `${focusScore.rank}位 / ${focusScore.total_users}人中`}</p>}
               </div>
             </div>
             <div className="space-y-1.5">
               {Object.values(focusScore.breakdown).map((b: any) => (
                 <div key={b.label} className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 w-16">{b.label}</span>
+                  <span className="text-xs text-gray-500 w-16">{isEnglish ? b.label_en : b.label}</span>
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-indigo-400" style={{ width: `${(b.score / b.max) * 100}%` }} />
                   </div>

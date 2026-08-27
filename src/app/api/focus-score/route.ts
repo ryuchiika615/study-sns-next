@@ -53,14 +53,14 @@ export async function GET(req: NextRequest) {
     const workoutScore = Math.min(5, Math.round((totalWorkoutMinutes / 600) * 5));
     const progressScore = Math.min(8, Math.round(averageProgress * 8));
     const breakdown = {
-      consistency: { score: consistencyScore, max: 18, label: "学習継続", hint: "連続して記録する" },
-      volume: { score: volumeScore, max: 18, label: "学習量", hint: "勉強時間を積む" },
-      active_days: { score: activeScore, max: 14, label: "活動日数", hint: "今月あと1日記録" },
-      habits: { score: habitRate, max: 15, label: "習慣達成", hint: "習慣をチェックする" },
-      tasks: { score: taskScore, max: 12, label: "タスク完了", hint: "タスクを完了にする" },
-      variety: { score: varietyScore, max: 10, label: "科目幅", hint: "新しい科目も記録" },
-      workout: { score: workoutScore, max: 5, label: "運動", hint: "筋トレも記録する" },
-      progress: { score: progressScore, max: 8, label: "教材進捗", hint: "教材のページを進める" },
+      consistency: { score: consistencyScore, max: 18, label: "学習継続", label_en: "Consistency", hint: "連続して記録する", hint_en: "Keep your learning streak going" },
+      volume: { score: volumeScore, max: 18, label: "学習量", label_en: "Study time", hint: "勉強時間を積む", hint_en: "Add more study time" },
+      active_days: { score: activeScore, max: 14, label: "活動日数", label_en: "Active days", hint: "今月あと1日記録", hint_en: "Record your activity on another day" },
+      habits: { score: habitRate, max: 15, label: "習慣達成", label_en: "Habits", hint: "習慣をチェックする", hint_en: "Complete your habits" },
+      tasks: { score: taskScore, max: 12, label: "タスク完了", label_en: "Tasks", hint: "タスクを完了にする", hint_en: "Complete your tasks" },
+      variety: { score: varietyScore, max: 10, label: "科目幅", label_en: "Subjects", hint: "新しい科目も記録", hint_en: "Record another subject" },
+      workout: { score: workoutScore, max: 5, label: "運動", label_en: "Workout", hint: "筋トレも記録する", hint_en: "Log a workout" },
+      progress: { score: progressScore, max: 8, label: "教材進捗", label_en: "Textbook progress", hint: "教材のページを進める", hint_en: "Update textbook progress" },
     };
     return {
       total: Object.values(breakdown).reduce((sum, item) => sum + item.score, 0),

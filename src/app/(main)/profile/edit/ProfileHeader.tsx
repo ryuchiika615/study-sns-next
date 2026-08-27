@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getOptimizedIconUrl } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
+import { useLanguage } from "@/lib/use-language";
 import { itemDisplayName } from "@/lib/shop-catalog";
 
 const PostCard = dynamic(() => import("@/components/PostCard"));
@@ -28,6 +29,8 @@ export default function ProfileHeader({
   onDeletePost: (id: string) => void; onUpdatePost: (id: string, data: any) => void;
 }) {
   const { theme, toggleTheme } = useTheme();
+  const { isEnglish } = useLanguage();
+  const text = (ja: string, en: string) => isEnglish ? en : ja;
   const [viewingImage, setViewingImage] = useState<string | null>(null);
 
   return (
@@ -52,11 +55,11 @@ export default function ProfileHeader({
             <div className="flex gap-3 mt-0.5">
               <Link href={`/profile/${encodeURIComponent(profile?.username || userId)}/follow?tab=following`}
                 className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
-                <strong className="text-gray-800">{followingCount}</strong> フォロー
+                <strong className="text-gray-800">{followingCount}</strong> {text("フォロー", "Following")}
               </Link>
               <Link href={`/profile/${encodeURIComponent(profile?.username || userId)}/follow?tab=followers`}
                 className="text-xs text-gray-500 hover:opacity-70 cursor-pointer no-underline">
-                <strong className="text-gray-800">{followersCount}</strong> フォロワー
+                <strong className="text-gray-800">{followersCount}</strong> {text("フォロワー", "Followers")}
               </Link>
             </div>
           </div>
@@ -68,7 +71,7 @@ export default function ProfileHeader({
             <div className="text-center">
               <p className="text-xl font-bold text-orange-500">{profile.exchange_points || 0}</p>
               <p className="text-[9px] text-gray-400">pt</p>
-              <Link href="/shop" className="text-[9px] text-primary hover:underline block">交換所</Link>
+              <Link href="/shop" className="text-[9px] text-primary hover:underline block">{text("交換所", "Shop")}</Link>
             </div>
           </div>
         </div>
@@ -76,44 +79,44 @@ export default function ProfileHeader({
           const equippedTitle = items.find((i: any) => i.id === profile.current_title_id);
           return equippedTitle ? (
             <div className="text-xs text-gray-600 ml-0.5">
-              <span className="text-gray-400">称号:</span> <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
+              <span className="text-gray-400">{text("称号:", "Title:")}</span> <span className="font-medium">{itemDisplayName(equippedTitle)}</span>
             </div>
           ) : null;
         })()}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
-            <p className="text-[10px] font-bold text-blue-600">📚 総勉強時間</p>
-            <p className="mt-0.5 text-sm font-extrabold text-blue-950">{Math.floor(activityTotals.study / 60)}時間{activityTotals.study % 60}分</p>
-            <p className="mt-0.5 text-[10px] text-blue-600">今月 {Math.floor(activityTotals.monthStudy / 60)}時間{activityTotals.monthStudy % 60}分</p>
+            <p className="text-[10px] font-bold text-blue-600">📚 {text("総勉強時間", "Total study time")}</p>
+            <p className="mt-0.5 text-sm font-extrabold text-blue-950">{isEnglish ? `${Math.floor(activityTotals.study / 60)}h ${activityTotals.study % 60}m` : `${Math.floor(activityTotals.study / 60)}時間${activityTotals.study % 60}分`}</p>
+            <p className="mt-0.5 text-[10px] text-blue-600">{isEnglish ? `This month ${Math.floor(activityTotals.monthStudy / 60)}h ${activityTotals.monthStudy % 60}m` : `今月 ${Math.floor(activityTotals.monthStudy / 60)}時間${activityTotals.monthStudy % 60}分`}</p>
           </div>
           <div className="rounded-xl bg-pink-50 border border-pink-100 px-3 py-2">
-            <p className="text-[10px] font-bold text-pink-600">🏋️ 総筋トレ時間</p>
-            <p className="mt-0.5 text-sm font-extrabold text-pink-950">{Math.floor(activityTotals.workout / 60)}時間{activityTotals.workout % 60}分</p>
-            <p className="mt-0.5 text-[10px] text-pink-600">今月 {Math.floor(activityTotals.monthWorkout / 60)}時間{activityTotals.monthWorkout % 60}分</p>
+            <p className="text-[10px] font-bold text-pink-600">🏋️ {text("総筋トレ時間", "Total workout time")}</p>
+            <p className="mt-0.5 text-sm font-extrabold text-pink-950">{isEnglish ? `${Math.floor(activityTotals.workout / 60)}h ${activityTotals.workout % 60}m` : `${Math.floor(activityTotals.workout / 60)}時間${activityTotals.workout % 60}分`}</p>
+            <p className="mt-0.5 text-[10px] text-pink-600">{isEnglish ? `This month ${Math.floor(activityTotals.monthWorkout / 60)}h ${activityTotals.monthWorkout % 60}m` : `今月 ${Math.floor(activityTotals.monthWorkout / 60)}時間${activityTotals.monthWorkout % 60}分`}</p>
           </div>
         </div>
         {focusScore && (
           <div className="mt-2 rounded-xl border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold text-violet-800"><i className="fas fa-brain mr-1" />集中度スコア</p>
-                <p className="mt-0.5 text-[10px] text-violet-600">8つの行動で評価。バーを伸ばすほどスコアUP。</p>
+                <p className="text-xs font-bold text-violet-800"><i className="fas fa-brain mr-1" />{text("集中度スコア", "Focus score")}</p>
+                <p className="mt-0.5 text-[10px] text-violet-600">{text("8つの行動で評価。バーを伸ばすほどスコアUP。", "Based on 8 actions. Grow each bar to raise your score.")}</p>
               </div>
               <div className="text-right shrink-0">
                 <p className={`text-lg font-extrabold ${focusScore.level === "S" ? "text-yellow-600" : focusScore.level === "A" ? "text-green-600" : focusScore.level === "B" ? "text-blue-600" : "text-violet-700"}`}>{focusScore.level} <span className="text-sm">{focusScore.total}</span></p>
-                <p className="text-[10px] font-bold text-indigo-600">🏆 {focusScore.rank}位 / {focusScore.total_users}人中</p>
+                <p className="text-[10px] font-bold text-indigo-600">🏆 {isEnglish ? `#${focusScore.rank} of ${focusScore.total_users}` : `${focusScore.rank}位 / ${focusScore.total_users}人中`}</p>
               </div>
             </div>
             <div className="mt-3 space-y-1.5">
               {Object.values(focusScore.breakdown).map((item: any) => (
                 <div key={item.label} className="flex items-center gap-2">
-                  <span className="w-[72px] shrink-0 text-[10px] font-bold text-violet-700">{item.label}</span>
+                  <span className="w-[72px] shrink-0 text-[10px] font-bold text-violet-700">{isEnglish ? item.label_en : item.label}</span>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-violet-100"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500" style={{ width: `${(item.score / item.max) * 100}%` }} /></div>
                   <span className="w-9 text-right text-[10px] text-violet-700">{item.score}/{item.max}</span>
                 </div>
               ))}
             </div>
-            <p className="mt-2 rounded-lg bg-white/75 px-2 py-1.5 text-[10px] font-bold text-violet-800">💡 次は「{Object.values(focusScore.breakdown).sort((a: any, b: any) => (a.score / a.max) - (b.score / b.max))[0] && (Object.values(focusScore.breakdown).sort((a: any, b: any) => (a.score / a.max) - (b.score / b.max))[0] as any).hint}」で伸ばそう</p>
+            <p className="mt-2 rounded-lg bg-white/75 px-2 py-1.5 text-[10px] font-bold text-violet-800">💡 {isEnglish ? "Next: " : "次は「"}{Object.values(focusScore.breakdown).sort((a: any, b: any) => (a.score / a.max) - (b.score / b.max))[0] && (Object.values(focusScore.breakdown).sort((a: any, b: any) => (a.score / a.max) - (b.score / b.max))[0] as any)[isEnglish ? "hint_en" : "hint"]}{isEnglish ? "" : "」で伸ばそう"}</p>
           </div>
         )}
       </div>
@@ -123,12 +126,12 @@ export default function ProfileHeader({
           <button onClick={() => { setEditSection("posts"); loadMyPosts(); }}
             className="flex items-center justify-center gap-2 py-3 hover:bg-blue-50 transition cursor-pointer text-left border-r border-gray-100">
             <i className="far fa-file-alt text-blue-500 text-sm" />
-            <span className="text-sm font-bold">自分の投稿</span>
+            <span className="text-sm font-bold">{text("自分の投稿", "My posts")}</span>
           </button>
           <button onClick={() => { setEditSection("likes"); loadLikedPosts(); }}
             className="flex items-center justify-center gap-2 py-3 hover:bg-red-50 transition cursor-pointer text-left">
             <i className="far fa-heart text-red-500 text-sm" />
-            <span className="text-sm font-bold">いいねした投稿</span>
+            <span className="text-sm font-bold">{text("いいねした投稿", "Liked posts")}</span>
           </button>
         </div>
       )}
