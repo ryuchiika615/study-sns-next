@@ -14,41 +14,49 @@ export async function GET(req: NextRequest) {
   // 投稿本文や習慣の詳細は返さず、集計結果だけを公開する。
   const targetUserId = req.nextUrl.searchParams.get("user_id") || user.id;
 
-  const { data: profile } = await admin.from("profiles").select("consecutive_post_days, created_at").eq("id", targetUserId).single();
+  // ランキングも同じ計算式で出すため、公開プロフィールの集計値だけをまとめて取得する。
+  // 投稿本文や個別の習慣はレスポンスに含めない。
+  const [{ data: profiles }, { data: posts }, { data: habitLogs }] = await Promise.all([
+    admin.from("profiles").select("id, consecutive_post_days"),
+    admin.from("posts").select("user_id, study_minutes, subject"),
+    admin.from("habit_logs").select("user_id, date, achieved").order("date", { ascending: false }),
+  ]);
+  const profile = (profiles || []).find((item: any) => item.id === targetUserId);
   if (!profile) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  // 1. Study consistency (0-40 points): based on consecutive days
-  const consecutiveDays = profile.consecutive_post_days || 0;
-  const consistencyScore = Math.min(40, Math.round((consecutiveDays / 30) * 40));
+  const calculateScore = (profileId: string, consecutivePostDays: number) => {
+    const userPosts = (posts || []).filter((post: any) => post.user_id === profileId);
+    const totalMinutes = userPosts.reduce((sum: number, post: any) => sum + (Number(post.study_minutes) || 0), 0);
+    const subjectCount = new Set(userPosts.map((post: any) => String(post.subject || "").trim()).filter(Boolean)).size;
+    const recentHabitLogs = (habitLogs || []).filter((log: any) => log.user_id === profileId).slice(0, 30);
+    const consistencyScore = Math.min(40, Math.round(((Number(consecutivePostDays) || 0) / 30) * 40));
+    const volumeScore = Math.min(25, Math.round((totalMinutes / 6000) * 25));
+    const habitRate = recentHabitLogs.length > 0
+      ? Math.round((recentHabitLogs.filter((log: any) => log.achieved).length / recentHabitLogs.length) * 20)
+      : 0;
+    const varietyScore = Math.min(15, subjectCount * 3);
+    return {
+      total: consistencyScore + volumeScore + habitRate + varietyScore,
+      breakdown: {
+        consistency: { score: consistencyScore, max: 40, label: "学習継続" },
+        volume: { score: volumeScore, max: 25, label: "学習量" },
+        habits: { score: habitRate, max: 20, label: "習慣達成" },
+        variety: { score: varietyScore, max: 15, label: "科目幅" },
+      },
+    };
+  };
 
-  // 2. Study volume (0-25 points): based on total study minutes (target: 100h = 6000min)
-  const { data: posts } = await admin.from("posts").select("study_minutes").eq("user_id", targetUserId);
-  const totalMinutes = (posts || []).reduce((s, p) => s + (p.study_minutes || 0), 0);
-  const volumeScore = Math.min(25, Math.round((totalMinutes / 6000) * 25));
-
-  // 3. Habit completion (0-20 points): recent habit streak
-  const { data: habitLogs } = await admin.from("habit_logs").select("date, achieved").eq("user_id", targetUserId).order("date", { ascending: false }).limit(30);
-  const habitRate = habitLogs && habitLogs.length > 0
-    ? Math.round((habitLogs.filter(l => l.achieved).length / habitLogs.length) * 20)
-    : 0;
-
-  // 4. Subject variety (0-15 points): how many distinct subjects
-  const { data: distinctSubjects } = await admin.rpc("get_distinct_subjects", { p_user_id: targetUserId });
-  const subjectCount = distinctSubjects || 0;
-  const varietyScore = Math.min(15, subjectCount * 3);
-
-  const total = consistencyScore + volumeScore + habitRate + varietyScore;
-  const level = total >= 90 ? "S" : total >= 75 ? "A" : total >= 60 ? "B" : total >= 45 ? "C" : total >= 30 ? "D" : "E";
+  const result = calculateScore(targetUserId, profile.consecutive_post_days || 0);
+  const allScores = (profiles || []).map((item: any) => calculateScore(item.id, item.consecutive_post_days || 0).total);
+  const rank = 1 + allScores.filter((score) => score > result.total).length;
+  const level = result.total >= 90 ? "S" : result.total >= 75 ? "A" : result.total >= 60 ? "B" : result.total >= 45 ? "C" : result.total >= 30 ? "D" : "E";
 
   return NextResponse.json({
     user_id: targetUserId,
-    total,
+    total: result.total,
     level,
-    breakdown: {
-      consistency: { score: consistencyScore, max: 40, label: "学習継続" },
-      volume: { score: volumeScore, max: 25, label: "学習量" },
-      habits: { score: habitRate, max: 20, label: "習慣達成" },
-      variety: { score: varietyScore, max: 15, label: "科目幅" },
-    },
+    rank,
+    total_users: allScores.length,
+    breakdown: result.breakdown,
   });
 }

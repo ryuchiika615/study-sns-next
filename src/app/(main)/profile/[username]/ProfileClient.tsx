@@ -464,9 +464,12 @@ export default function ProfileClient({
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-2">
               <div><h3 className="font-bold text-sm text-gray-500"><i className="fas fa-brain mr-1.5" />集中度スコア</h3><p className="mt-0.5 text-[10px] text-gray-400">{user.id === profile.id ? "あなたの学習の積み上げ" : "このユーザーの公開スコア（投稿本文・習慣の詳細は非公開）"}</p></div>
-              <span className={`text-lg font-bold ${focusScore.level === "S" ? "text-yellow-500" : focusScore.level === "A" ? "text-green-500" : focusScore.level === "B" ? "text-blue-500" : "text-gray-400"}`}>
-                {focusScore.level} <span className="text-sm text-gray-400">{focusScore.total}</span>
-              </span>
+              <div className="text-right">
+                <span className={`text-lg font-bold ${focusScore.level === "S" ? "text-yellow-500" : focusScore.level === "A" ? "text-green-500" : focusScore.level === "B" ? "text-blue-500" : "text-gray-400"}`}>
+                  {focusScore.level} <span className="text-sm text-gray-400">{focusScore.total}</span>
+                </span>
+                {focusScore.rank && <p className="mt-0.5 text-[10px] font-bold text-indigo-600">🏆 {focusScore.rank}位 / {focusScore.total_users}人中</p>}
+              </div>
             </div>
             <div className="space-y-1.5">
               {Object.values(focusScore.breakdown).map((b: any) => (
