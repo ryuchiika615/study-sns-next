@@ -14,6 +14,8 @@ const primaryItems = [
 ];
 
 const moreItems = [
+  { href: "/start/rescue", icon: "fa-play-circle", label: "今日の1件", description: "選ぶ・取り組む・記録", customColor: "#a78bfa" },
+  { href: "/free/deadline-rescue", icon: "fa-file-excel", label: "無料テンプレ", description: "締切レスキューシート", customColor: "#a78bfa" },
   { href: "/pro", icon: "fa-crown", label: "Proメニュー", description: "計画・限定機能", customColor: "#c084fc" },
   { href: "/rankings", icon: "fa-trophy", label: "ランキング", description: "学習の成果を確認", customColor: "#f472b6" },
   { href: "/analytics", icon: "fa-chart-pie", label: "分析", description: "学習の振り返り", customColor: "#c084fc" },
@@ -28,6 +30,8 @@ const moreItems = [
   const label = (ja: string, en: string) => isEnglish ? en : ja;
   const isMoreActive = moreItems.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
   const moreText = (item: typeof moreItems[number]) => {
+    if (item.href === "/start/rescue") return { title: label("今日の1件", "Start one task"), description: label("選ぶ・取り組む・記録", "Choose, study, record") };
+    if (item.href === "/free/deadline-rescue") return { title: label("無料テンプレ", "Free template"), description: label("締切レスキューシート", "Deadline rescue (Japanese)") };
     if (item.href === "/pro") return { title: "Pro", description: label("計画・限定機能", "Plans & exclusive features") };
     if (item.href === "/rankings") return { title: label("ランキング", "Rankings"), description: label("学習の成果を確認", "See your learning progress") };
     if (item.href === "/analytics") return { title: label("分析", "Analytics"), description: label("学習の振り返り", "Review your progress") };

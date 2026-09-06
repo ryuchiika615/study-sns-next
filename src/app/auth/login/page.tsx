@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { safeAuthNext } from "@/lib/auth-next";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
@@ -12,6 +13,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const [next, setNext] = useState("/");
+  useEffect(() => { setNext(safeAuthNext(new URLSearchParams(window.location.search).get("next"))); }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,14 +56,14 @@ export default function LoginPage() {
           .select("is_admin")
           .eq("id", currentUser.id)
           .single();
-        if (profile?.is_admin) {
+        if (profile?.is_admin && next === "/") {
           router.push("/admin");
           router.refresh();
           return;
         }
       }
 
-      router.push("/");
+      router.push(next);
       router.refresh();
     } catch {
       setError("エラーが発生しました。");
@@ -117,7 +120,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-gray-500">
             アカウントがない方は{" "}
-            <Link href="/auth/signup" className="text-primary font-bold hover:underline">
+            <Link href={`/auth/signup?next=${encodeURIComponent(next)}`} className="text-primary font-bold hover:underline">
               新規登録
             </Link>
           </p>

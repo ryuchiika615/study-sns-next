@@ -39,6 +39,22 @@ async function syncFounderCheckout(session: Stripe.Checkout.Session) {
   if (error || !data) throw new Error(error?.message || "創設メンバー枠を確定できませんでした。");
 }
 
+async function syncDigitalProductCheckout(session: Stripe.Checkout.Session) {
+  if (session.mode !== "payment" || session.metadata?.purchase_type !== "rescue_semester_v1") return;
+  if (session.payment_status !== "paid" || !session.client_reference_id) return;
+  const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || null;
+  const { error } = await createAdminClient().from("digital_product_orders").upsert({
+    user_id: session.client_reference_id,
+    product_key: "rescue_semester_v1",
+    checkout_session_id: session.id,
+    payment_intent_id: paymentIntent,
+    amount_total: session.amount_total || 0,
+    currency: session.currency || "jpy",
+    paid_at: new Date().toISOString(),
+  }, { onConflict: "checkout_session_id" });
+  if (error) throw new Error(error.message);
+}
+
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -48,7 +64,7 @@ export async function POST(request: Request) {
   catch { return new NextResponse("署名が正しくありません", { status: 400 }); }
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    await Promise.all([syncCheckout(session), syncFounderCheckout(session)]);
+    await Promise.all([syncCheckout(session), syncFounderCheckout(session), syncDigitalProductCheckout(session)]);
   } else if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
     await syncSubscription(event.data.object as Stripe.Subscription);
   }

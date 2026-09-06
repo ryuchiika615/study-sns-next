@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { safeAuthNext } from "@/lib/auth-next";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
@@ -14,6 +15,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const [next, setNext] = useState("/");
+  useEffect(() => { setNext(safeAuthNext(new URLSearchParams(window.location.search).get("next"))); }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,8 +79,8 @@ export default function SignupPage() {
     }
 
     // 新規登録直後だけ、ホーム画面追加と通知設定の案内を表示する。
-    sessionStorage.setItem("ryutter_show_notification_setup", "1");
-    router.push("/");
+    try { sessionStorage.setItem("ryutter_show_notification_setup", "1"); } catch { /* Optional setup hint must not prevent sign-up navigation. */ }
+    router.push(next);
     fetch("/api/referrals/complete", { method: "POST" }).catch(() => {});
     router.refresh();
   };
@@ -91,6 +94,7 @@ export default function SignupPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">リュッター</h1>
           <p className="text-gray-500 text-sm mt-1">新規アカウント作成</p>
+          {next === "/start/rescue" && <p className="mt-3 rounded-xl bg-purple-50 p-3 text-sm text-purple-900">締切レスキューの続きへ。登録後は、今日の1件を選んで勉強を記録できます。無料・カード登録不要。</p>}
         </div>
 
         <form onSubmit={handleSignup} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
@@ -158,7 +162,7 @@ export default function SignupPage() {
 
           <p className="text-center text-sm text-gray-500">
             すでにアカウントをお持ちの方は{" "}
-            <Link href="/auth/login" className="text-primary font-bold hover:underline">
+            <Link href={`/auth/login?next=${encodeURIComponent(next)}`} className="text-primary font-bold hover:underline">
               ログイン
             </Link>
           </p>

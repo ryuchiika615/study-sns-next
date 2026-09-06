@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeAuthNext } from "@/lib/auth-next";
 
 export async function middleware(request: NextRequest) {
+  // The free resource must be available without an account or an auth-service call.
+  if (["/free/deadline-rescue", "/downloads/ryutter-deadline-rescue.xlsx"].includes(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -37,6 +42,8 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
+    url.search = "";
+    url.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
@@ -55,7 +62,9 @@ export async function middleware(request: NextRequest) {
 
     if (pathname === "/auth/login" || pathname === "/auth/signup") {
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      const target = new URL(safeAuthNext(request.nextUrl.searchParams.get("next")), request.url);
+      url.pathname = target.pathname;
+      url.search = target.search;
       return NextResponse.redirect(url);
     }
   }

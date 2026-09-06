@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { compressImage, getUploadValidationError } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
+import { publishPublicBoardPost } from "@/lib/public-board-publish";
 
 const categories = ["グループ募集", "勉強仲間募集", "質問", "情報共有", "雑談", "その他"];
 type OwnedGroup = { id: string; name: string; visibility: "private" | "public" };
@@ -40,18 +41,9 @@ export default function PublicBoardComposer({ userId }: { userId: string }) {
         if (uploadError) throw uploadError;
         imageUrl = supabase.storage.from("post-images").getPublicUrl(path).data.publicUrl;
       }
-      const { data: createdPost, error } = await supabase.rpc("create_post", {
-        p_content: content.trim(), p_subject: category, p_study_minutes: 0, p_workout_minutes: 0,
-        p_image_url: imageUrl, p_image_urls: imageUrl ? [imageUrl] : null, p_study_date: null,
-        p_quote_post_id: null, p_quote_comment_id: null, p_silent: false, p_audio_url: null,
-        p_audio_name: null, p_pages_completed: 0, p_total_pages: 0,
+      await publishPublicBoardPost(supabase, {
+        content, category, groupId, imageUrl,
       });
-      if (error) throw error;
-      if (category === "グループ募集") {
-        const postId = Array.isArray(createdPost) ? createdPost[0]?.post_id : createdPost?.post_id;
-        const { error: linkError } = await supabase.rpc("attach_group_recruitment", { p_post_id: postId, p_group_id: groupId });
-        if (linkError) throw linkError;
-      }
       setContent(""); setImage(null); setGroupId("");
       addToast({ message: "公開掲示板に投稿しました", type: "info" });
       window.dispatchEvent(new CustomEvent("post-created"));
