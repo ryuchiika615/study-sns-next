@@ -18,6 +18,11 @@ export default function DeadlineRescuePage() {
       <h1>締切が多すぎる。<br />まず、何からやる？</h1>
       <p className={styles.lead}>課題と締切を入れるだけで、<strong>今日取り組む3件</strong>が見える。<br />「締切レスキューシート」を無料で配布しています。</p>
       <RescueDownload />
+      <div className={styles.ryutterStart}>
+        <div><strong>シートの内容を、そのままRYUTTERのタスクに移せます。</strong><p>無料登録で、勉強記録・グループ・通知までひとつにまとめられます。</p></div>
+        <Link className={styles.ryutterButton} href="/auth/signup?next=%2Fstart%2Frescue">RYUTTERを無料で始める →</Link>
+        <Link className={styles.loginLink} href="/auth/login?next=%2Fstart%2Frescue">登録済みの人はこちら</Link>
+      </div>
       <div className={styles.preview} aria-label="今日の3件の表示例。架空の課題です。">
         <div className={styles.previewHeading}><strong>今日の3件</strong><span>表示イメージ</span></div>
         {[['01', '英語レポート', '今日締切', '60分'], ['02', '統計の演習', '明日締切', '30分'], ['03', 'ゼミの資料', '3日後', '90分']].map(([n, task, due, time]) => <div className={styles.task} key={n}><span>{n}</span><strong>{task}</strong><span>{due}</span><span>{time}</span></div>)}
