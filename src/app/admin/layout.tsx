@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/login-activity", label: "ログイン監視", icon: "👁️" },
   { href: "/admin/posts", label: "リュイート管理", icon: "📝" },
   { href: "/admin/users", label: "ユーザー管理", icon: "👥" },
+  { href: "/admin/group-members", label: "グループ参加管理", icon: "🤝" },
   { href: "/admin/pro", label: "Pro管理", icon: "✨" },
   { href: "/admin/ranking-rewards", label: "月間報酬", icon: "👑" },
   { href: "/admin/stats", label: "統計", icon: "📊" },
