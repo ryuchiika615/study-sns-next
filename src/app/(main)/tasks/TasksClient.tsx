@@ -427,10 +427,6 @@ export default function TasksClient({
       <h1 className="text-lg font-bold flex items-center gap-2">
         <i className="fas fa-tasks text-primary" /> リュッターのタスク
       </h1>
-      <a href="/tasks/import" className="block rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 no-underline">
-        <i className="fas fa-file-import mr-2" />締切レスキューシートからまとめて取り込む
-      </a>
-
       {message && (
         <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm cursor-pointer" onClick={() => setMessage("")}>
           {message}

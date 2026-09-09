@@ -3,9 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { safeAuthNext } from "@/lib/auth-next";
 
 export async function middleware(request: NextRequest) {
-  // The free resource must be available without an account or an auth-service call.
-  if (["/free/deadline-rescue", "/downloads/ryutter-deadline-rescue.xlsx"].includes(request.nextUrl.pathname)) {
-    return NextResponse.next();
+  // 締切レスキューは完成・再公開まで、既存の外部リンクも含めて案内を止める。
+  if (["/free/deadline-rescue", "/downloads/ryutter-deadline-rescue.xlsx", "/start/rescue", "/tasks/import"].includes(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = request.nextUrl.pathname === "/tasks/import" ? "/tasks" : "/";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
   let supabaseResponse = NextResponse.next({ request });
 
