@@ -304,8 +304,8 @@ export default function GroupDetailPage() {
     return (
       <div className="mx-auto max-w-md p-4">
         <div className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center">
-          <p className="text-3xl">🔒</p>
-          <h1 className="mt-3 text-lg font-bold">グループに招待されています</h1>
+          <p className="text-3xl">{group?.visibility === "public" ? "🌍" : "🔒"}</p>
+          <h1 className="mt-3 text-lg font-bold">{group?.visibility === "public" ? "公開グループに参加する" : "グループに招待されています"}</h1>
           <p className="mt-2 text-sm text-gray-600">
             参加すると、仲間だけの投稿とランキングが見られます。
           </p>
