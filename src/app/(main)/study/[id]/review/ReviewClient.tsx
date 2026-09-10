@@ -60,6 +60,8 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
   const [showAnswer, setShowAnswer] = useState(false);
   const [quitConfirm, setQuitConfirm] = useState(false);
   const [ratingFilter, setRatingFilter] = useState(-2);
+  const [savedRatingMap, setSavedRatingMap] = useState(ratingMap);
+  const [saveError, setSaveError] = useState("");
 
   const current = sessionCards[index];
   const isMultipleChoice = current?.card_type === "multiple_choice";
@@ -85,15 +87,26 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
   const handleRate = useCallback(async (rating: number) => {
     if (!current || submitting) return;
     setSubmitting(true);
-    setRatingCounts((prev) => { const next = [...prev]; next[rating]++; return next; });
-    const res = await fetch("/api/study/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ card_id: current.id, rating }),
-    });
-    if (res.ok) {
-      const data = await res.json();
+    setSaveError("");
+    try {
+      const res = await fetch("/api/study/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ card_id: current.id, rating }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSaveError(data.error || "評価を保存できませんでした。もう一度押してください。");
+        setSubmitting(false);
+        return;
+      }
+      setSavedRatingMap((prev) => ({ ...prev, [current.id]: rating }));
+      setRatingCounts((prev) => { const next = [...prev]; next[rating]++; return next; });
       if (data.streak) setLastStreak(data.streak);
+    } catch {
+      setSaveError("通信に失敗しました。接続を確認してもう一度押してください。");
+      setSubmitting(false);
+      return;
     }
     setSubmitting(false);
     setFlipped(false);
@@ -188,7 +201,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
 
   const handleStart = (count: number) => {
     const filtered = ratingFilter === -2 ? cards : cards.filter(c => {
-      const r = ratingMap[c.id];
+      const r = savedRatingMap[c.id];
       if (ratingFilter === -1) return r === undefined;
       return r === ratingFilter;
     });
@@ -205,7 +218,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
 
   if (!started) {
     const filteredCount = ratingFilter === -2 ? cards.length : cards.filter(c => {
-      const r = ratingMap[c.id];
+      const r = savedRatingMap[c.id];
       if (ratingFilter === -1) return r === undefined;
       return r === ratingFilter;
     }).length;
@@ -227,7 +240,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
             <div className="grid grid-cols-3 gap-1.5">
               {ratingFilters.map((f) => {
                 const count = f.value === -2 ? cards.length : cards.filter(c => {
-                  const r = ratingMap[c.id];
+                  const r = savedRatingMap[c.id];
                   if (f.value === -1) return r === undefined;
                   return r === f.value;
                 }).length;
