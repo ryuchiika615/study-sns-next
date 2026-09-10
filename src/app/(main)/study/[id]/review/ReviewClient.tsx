@@ -7,10 +7,10 @@ import Link from "next/link";
 import LatexText from "@/components/LatexText";
 
 const ratings = [
-  { value: 0, label: "Again", color: "bg-red-500", short: "もう一度" },
-  { value: 1, label: "Hard", color: "bg-orange-500", short: "難しい" },
-  { value: 2, label: "Good", color: "bg-green-500", short: "わかった" },
-  { value: 3, label: "Easy", color: "bg-blue-500", short: "簡単" },
+  { value: 0, label: "Weak", color: "bg-red-500", short: "苦手" },
+  { value: 1, label: "Developing", color: "bg-orange-500", short: "あと少し" },
+  { value: 2, label: "Almost", color: "bg-green-500", short: "やや完璧" },
+  { value: 3, label: "Perfect", color: "bg-blue-500", short: "完璧" },
 ];
 
 const ratingColors = ["bg-red-500", "bg-orange-500", "bg-green-500", "bg-blue-500"];
@@ -33,10 +33,10 @@ const blankLabels = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ", "ク", "�
 const ratingFilters = [
   { label: "全問", value: -2 },
   { label: "未学習", value: -1 },
-  { label: "もう一度", value: 0 },
-  { label: "難しい", value: 1 },
-  { label: "わかった", value: 2 },
-  { label: "簡単", value: 3 },
+  { label: "苦手", value: 0 },
+  { label: "あと少し", value: 1 },
+  { label: "やや完璧", value: 2 },
+  { label: "完璧", value: 3 },
 ];
 
 export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; cards: any[]; ratingMap: Record<string, number> }) {
@@ -223,7 +223,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
           <h2 className="text-lg font-bold">{deck.name}</h2>
           <p className="text-sm text-gray-500">全{cards.length}枚</p>
           <div className="space-y-1">
-            <p className="text-xs text-gray-400">絞り込み</p>
+            <p className="text-xs text-gray-400">出題範囲を選ぶ</p>
             <div className="grid grid-cols-3 gap-1.5">
               {ratingFilters.map((f) => {
                 const count = f.value === -2 ? cards.length : cards.filter(c => {
@@ -244,7 +244,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-xs text-gray-400">何問解答しますか？</p>
+            <p className="text-xs text-gray-400">出題数を選ぶ</p>
             <div className="grid grid-cols-2 gap-2">
               {options.map((o) => (
                 <button key={o.value} onClick={() => handleStart(o.value)}
