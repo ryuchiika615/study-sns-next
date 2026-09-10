@@ -340,9 +340,9 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
             )}
           </div>
           <div className="flex gap-2 justify-center">
-            <button onClick={() => window.location.assign(`/study/${deck.id}`)}
+            <button onClick={() => window.location.assign(`/study/${deck.id}/review`)}
               className="bg-white text-gray-800 border border-gray-300 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-50 transition">
-              デッキに戻る
+              出題範囲に戻る
             </button>
             <Link href="/study/stats"
               className="bg-white text-primary border border-primary rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-primary/5 transition no-underline">

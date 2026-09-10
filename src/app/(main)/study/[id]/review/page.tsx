@@ -42,14 +42,15 @@ export default async function ReviewPage({ params }: { params: { id: string } })
   const { data: reviews } = await supabase
     .from("reviews")
     .select("card_id, rating")
-    .in("card_id", cards.map(c => c.id))
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(5000);
 
   const ratingMap: Record<string, number> = {};
+  const cardIds = new Set(cards.map((card) => card.id));
   if (reviews) {
     for (const r of reviews) {
-      if (!(r.card_id in ratingMap)) {
+      if (cardIds.has(r.card_id) && !(r.card_id in ratingMap)) {
         ratingMap[r.card_id] = r.rating;
       }
     }
