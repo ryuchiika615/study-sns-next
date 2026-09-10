@@ -19,7 +19,8 @@ export default async function StudyPage() {
     .eq("is_public", false);
 
   const [decksRes, cardCountsRes, dueCountsRes, allCardsRes, totalCards, totalReviews, todayReviews, streakRes, proStatus] = await Promise.all([
-    supabase.from("decks").select("*").eq("user_id", user.id).eq("is_public", false).neq("name", "SPI実戦｜志望企業パック（オリジナル）").order("sort_order").order("created_at"),
+    // 公開元かどうかに関係なく、ユーザーが持つデッキは「自分のデッキ」に表示する。
+    supabase.from("decks").select("*").eq("user_id", user.id).order("sort_order").order("created_at"),
     supabase.from("cards").select("deck_id, id").eq("user_id", user.id),
     supabase.from("reviews").select("card_id").eq("user_id", user.id).lte("due_date", new Date().toISOString().split("T")[0]),
     supabase.from("cards").select("id, deck_id").eq("user_id", user.id),
