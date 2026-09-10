@@ -1,10 +1,12 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { redirect, notFound } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import ReviewClient from "./ReviewClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReviewPage({ params }: { params: { id: string } }) {
+  noStore();
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");

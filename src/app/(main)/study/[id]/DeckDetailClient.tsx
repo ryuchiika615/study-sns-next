@@ -429,7 +429,7 @@ export default function DeckDetailClient({
             <div className="flex items-center gap-2">
               {cards.length > 0 && (
                 <>
-                  <Link href={`/study/${deck.id}/review`}
+                  <Link href={`/study/${deck.id}/review`} prefetch={false}
                     className="bg-white border-2 border-primary text-primary text-sm font-bold rounded-full px-4 py-1.5 cursor-pointer hover:bg-primary/5 transition">
                     <i className="fas fa-book-open mr-1" /> 練習
                   </Link>

@@ -90,7 +90,7 @@ export default function StudyClient({
         <div className="flex items-center gap-1.5">
           {deck.card_count > 0 && (
             <>
-              <Link href={`/study/${deck.id}/review`}
+              <Link href={`/study/${deck.id}/review`} prefetch={false}
                 onClick={(e) => e.stopPropagation()}
                 className="text-[11px] bg-white border border-primary text-primary rounded-full px-2.5 py-1 font-bold cursor-pointer hover:bg-primary/5 transition whitespace-nowrap">
                 練習

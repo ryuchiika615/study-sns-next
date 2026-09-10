@@ -340,7 +340,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
             )}
           </div>
           <div className="flex gap-2 justify-center">
-            <button onClick={() => router.push(`/study/${deck.id}`)}
+            <button onClick={() => window.location.assign(`/study/${deck.id}`)}
               className="bg-white text-gray-800 border border-gray-300 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-50 transition">
               デッキに戻る
             </button>
@@ -363,7 +363,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 text-lg mb-4">カードがありません</p>
-          <button onClick={() => router.push(`/study/${deck.id}`)}
+          <button onClick={() => window.location.assign(`/study/${deck.id}`)}
             className="text-primary text-sm cursor-pointer">
             デッキに戻る
           </button>
