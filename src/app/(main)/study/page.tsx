@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getProUser } from "@/lib/pro-server";
+import { SPI_TARGET_COMPANIES } from "@/lib/spi-company-pack";
 import { redirect } from "next/navigation";
 import StudyClient from "./StudyClient";
 
@@ -8,8 +9,17 @@ export default async function StudyPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  // 以前「自分のデッキ」に追加したSPIパックは、公開デッキへ一度だけ移す。
+  const spiDeckNames = SPI_TARGET_COMPANIES.map((company) => `SPI実戦｜${company}`);
+  await supabase
+    .from("decks")
+    .update({ is_public: true })
+    .eq("user_id", user.id)
+    .in("name", spiDeckNames)
+    .eq("is_public", false);
+
   const [decksRes, cardCountsRes, dueCountsRes, allCardsRes, totalCards, totalReviews, todayReviews, streakRes, proStatus] = await Promise.all([
-    supabase.from("decks").select("*").eq("user_id", user.id).order("sort_order").order("created_at"),
+    supabase.from("decks").select("*").eq("user_id", user.id).eq("is_public", false).neq("name", "SPI実戦｜志望企業パック（オリジナル）").order("sort_order").order("created_at"),
     supabase.from("cards").select("deck_id, id").eq("user_id", user.id),
     supabase.from("reviews").select("card_id").eq("user_id", user.id).lte("due_date", new Date().toISOString().split("T")[0]),
     supabase.from("cards").select("id, deck_id").eq("user_id", user.id),

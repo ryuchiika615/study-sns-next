@@ -46,6 +46,7 @@ export async function POST() {
         parent_id: parent.id,
         name: `SPI実戦｜${company}`,
         description: "言語50問・非言語50問。SPIの公開された一般的な出題形式をもとにしたオリジナル実戦問題です。",
+        is_public: true,
         sort_order: nextSort++,
       })))
       .select("id, name");
@@ -57,6 +58,12 @@ export async function POST() {
     const name = `SPI実戦｜${company}`;
     return existingByName.get(name) || createdDecks.find((deck) => deck.name === name);
   }).filter(Boolean);
+
+  await supabase
+    .from("decks")
+    .update({ is_public: true })
+    .eq("user_id", user.id)
+    .in("name", SPI_TARGET_COMPANIES.map((company) => `SPI実戦｜${company}`));
 
   let createdCards = 0;
   for (const deck of targetDecks) {
