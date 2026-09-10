@@ -28,7 +28,7 @@ export default function StudyClient({
   const dueDeck = decks.find((d: any) => (d.due_count || 0) > 0);
   const firstDeckWithCards = decks.find((d: any) => (d.card_count || 0) > 0);
   const nextAction = dueDeck
-    ? { href: `/study/${dueDeck.id}/review`, label: `「${dueDeck.name}」を復習する`, detail: `復習待ち ${dueDeck.due_count}枚` }
+    ? { href: `/study/${dueDeck.id}/review?mode=due`, label: `「${dueDeck.name}」を復習する`, detail: `復習待ち ${dueDeck.due_count}枚` }
     : firstDeckWithCards
       ? { href: `/study/${firstDeckWithCards.id}/quiz`, label: `「${firstDeckWithCards.name}」を5問テスト`, detail: "まずは短く定着チェック" }
       : null;

@@ -45,10 +45,10 @@ const toeicParts = [
 
 const getPart = (card: any) => card.tags?.find((tag: string) => tag.startsWith("Part ")) || "Part 5｜短文穴埋め";
 
-export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; cards: any[]; ratingMap: Record<string, number> }) {
+export default function ReviewClient({ deck, cards, ratingMap, autoStart = false, autoCards = [], returnHref }: { deck: any; cards: any[]; ratingMap: Record<string, number>; autoStart?: boolean; autoCards?: any[]; returnHref?: string }) {
   const router = useRouter();
-  const [started, setStarted] = useState(false);
-  const [sessionCards, setSessionCards] = useState<any[]>([]);
+  const [started, setStarted] = useState(autoStart);
+  const [sessionCards, setSessionCards] = useState<any[]>(autoStart ? autoCards : []);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -340,9 +340,9 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
             )}
           </div>
           <div className="flex gap-2 justify-center">
-            <button onClick={() => window.location.assign(`/study/${deck.id}/review`)}
+            <button onClick={() => window.location.assign(returnHref || `/study/${deck.id}/review`)}
               className="bg-white text-gray-800 border border-gray-300 rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-gray-50 transition">
-              出題範囲に戻る
+              {returnHref ? "学習トップに戻る" : "出題範囲に戻る"}
             </button>
             <Link href="/study/stats"
               className="bg-white text-primary border border-primary rounded-full px-6 py-2 text-sm font-bold cursor-pointer hover:bg-primary/5 transition no-underline">
