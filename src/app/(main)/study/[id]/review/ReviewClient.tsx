@@ -244,8 +244,15 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
             <p className="text-xs text-gray-400">TOEIC Partを選ぶ</p>
             <div className="grid grid-cols-2 gap-1.5">
               {toeicParts.map((part) => {
-                const count = part === "全Part" ? cards.length : cards.filter((card) => getPart(card) === part).length;
-                return <button key={part} onClick={() => setPartFilter(part)} className={`rounded-lg py-1.5 text-xs font-bold transition ${partFilter === part ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{part} ({count})</button>;
+                const partCards = part === "全Part" ? cards : cards.filter((card) => getPart(card) === part);
+                const counts = [0, 0, 0, 0];
+                let unlearned = 0;
+                partCards.forEach((card) => {
+                  const rating = savedRatingMap[card.id];
+                  if (rating === undefined) unlearned++;
+                  else counts[rating]++;
+                });
+                return <button key={part} onClick={() => setPartFilter(part)} className={`rounded-lg px-2 py-1.5 text-left text-xs font-bold transition ${partFilter === part ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><span className="block">{part} ({partCards.length})</span><span className={`mt-0.5 block text-[9px] font-medium ${partFilter === part ? "text-indigo-100" : "text-gray-400"}`}>完璧 {counts[3]} · やや {counts[2]} · 苦手 {counts[0] + counts[1]} · 未 {unlearned}</span></button>;
               })}
             </div>
           </div>
