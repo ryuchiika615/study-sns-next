@@ -39,6 +39,12 @@ const ratingFilters = [
   { label: "完璧", value: 3 },
 ];
 
+const toeicParts = [
+  "全Part", "Part 1｜写真描写", "Part 2｜応答", "Part 3｜会話", "Part 4｜説明文", "Part 5｜短文穴埋め", "Part 6｜長文穴埋め", "Part 7｜読解",
+];
+
+const getPart = (card: any) => card.tags?.find((tag: string) => tag.startsWith("Part ")) || "Part 5｜短文穴埋め";
+
 export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; cards: any[]; ratingMap: Record<string, number> }) {
   const router = useRouter();
   const [started, setStarted] = useState(false);
@@ -62,6 +68,13 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
   const [ratingFilter, setRatingFilter] = useState(-2);
   const [savedRatingMap, setSavedRatingMap] = useState(ratingMap);
   const [saveError, setSaveError] = useState("");
+  const [partFilter, setPartFilter] = useState("全Part");
+
+  const filteredCards = () => cards.filter((card) => {
+    if (partFilter !== "全Part" && getPart(card) !== partFilter) return false;
+    const rating = savedRatingMap[card.id];
+    return ratingFilter === -2 || (ratingFilter === -1 ? rating === undefined : rating === ratingFilter);
+  });
 
   const current = sessionCards[index];
   const isMultipleChoice = current?.card_type === "multiple_choice";
@@ -200,11 +213,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
   }, [flipped, handleRate, isMultipleChoice, isSequence, showFeedback, seqSubmitted, seqOrder, blanks, current]);
 
   const handleStart = (count: number) => {
-    const filtered = ratingFilter === -2 ? cards : cards.filter(c => {
-      const r = savedRatingMap[c.id];
-      if (ratingFilter === -1) return r === undefined;
-      return r === ratingFilter;
-    });
+    const filtered = filteredCards();
     const shuffled = [...filtered].sort(() => Math.random() - 0.5);
     const selected = count === 0 ? shuffled : shuffled.slice(0, count);
     setSessionCards(selected);
@@ -217,11 +226,7 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
   };
 
   if (!started) {
-    const filteredCount = ratingFilter === -2 ? cards.length : cards.filter(c => {
-      const r = savedRatingMap[c.id];
-      if (ratingFilter === -1) return r === undefined;
-      return r === ratingFilter;
-    }).length;
+    const filteredCount = filteredCards().length;
     const options = [
       { label: "10問", value: 10 },
       { label: "20問", value: 20 },
@@ -236,10 +241,20 @@ export default function ReviewClient({ deck, cards, ratingMap }: { deck: any; ca
           <h2 className="text-lg font-bold">{deck.name}</h2>
           <p className="text-sm text-gray-500">全{cards.length}枚</p>
           <div className="space-y-1">
+            <p className="text-xs text-gray-400">TOEIC Partを選ぶ</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {toeicParts.map((part) => {
+                const count = part === "全Part" ? cards.length : cards.filter((card) => getPart(card) === part).length;
+                return <button key={part} onClick={() => setPartFilter(part)} className={`rounded-lg py-1.5 text-xs font-bold transition ${partFilter === part ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{part} ({count})</button>;
+              })}
+            </div>
+          </div>
+          <div className="space-y-1">
             <p className="text-xs text-gray-400">出題範囲を選ぶ</p>
             <div className="grid grid-cols-3 gap-1.5">
               {ratingFilters.map((f) => {
-                const count = f.value === -2 ? cards.length : cards.filter(c => {
+                const partCards = partFilter === "全Part" ? cards : cards.filter((card) => getPart(card) === partFilter);
+                const count = f.value === -2 ? partCards.length : partCards.filter(c => {
                   const r = savedRatingMap[c.id];
                   if (f.value === -1) return r === undefined;
                   return r === f.value;
