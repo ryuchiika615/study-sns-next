@@ -36,12 +36,15 @@ export const officialToeicDeck = {
   description: "800点以上を目指す人向け。職場・日常場面で使う重要語を、意味と定番の組み合わせで覚えるオリジナル600枚以上のカード。",
   category: "英語・資格",
   cardCount: vocabulary.length * 6,
-  cards: vocabulary.flatMap(([word, meaning, note]) => [
-    { front: word, back: `${meaning}\n\nよく使う形：${note}` },
-    { front: `${word} の意味は？`, back: `${meaning}\n\nよく使う形：${note}` },
-    { front: `「${meaning}」に当たる英単語は？`, back: `${word}\n\nよく使う形：${note}` },
-    { front: `${note} の中心語は？`, back: `${word}（${meaning}）` },
-    { front: `${word} を使う定番表現は？`, back: note },
-    { front: `${word}｜品詞・意味を即答`, back: `主に動詞・名詞・形容詞として使う重要語。意味：${meaning}\n\n${note}` },
-  ]),
+  cards: vocabulary.flatMap(([word, meaning, note]) => {
+    const phraseGuide = `定番表現：${note}\n意味：この表現では「${meaning}」という意味で使います。`;
+    return [
+      { front: word, back: `${meaning}\n\n${phraseGuide}` },
+      { front: `${word} の意味は？`, back: `${meaning}\n\n${phraseGuide}` },
+      { front: `「${meaning}」に当たる英単語は？`, back: `${word}\n\n${phraseGuide}` },
+      { front: `${note} の中心語は？`, back: `${word}（${meaning}）\n\n${phraseGuide}` },
+      { front: `${word} を使う定番表現は？`, back: phraseGuide },
+      { front: `${word}｜品詞・意味を即答`, back: `主に動詞・名詞・形容詞として使う重要語。意味：${meaning}\n\n${phraseGuide}` },
+    ];
+  }),
 };
